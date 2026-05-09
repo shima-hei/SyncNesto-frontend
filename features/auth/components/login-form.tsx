@@ -47,7 +47,7 @@ export function LoginForm({
     }
 
     setErrors({});
-    await login(result.data);
+    await login(result.data).catch(() => undefined);
   }
 
   function updateValue(field: keyof LoginFormValues, value: string) {
@@ -63,9 +63,6 @@ export function LoginForm({
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">ログイン</h1>
-                <p className="text-balance text-muted-foreground">
-                  登録済みのメールアドレスとパスワードを入力してください。
-                </p>
               </div>
 
               <Field data-invalid={errors.email ? true : undefined}>

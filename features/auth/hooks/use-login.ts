@@ -1,33 +1,36 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
+import { useLoginUserAuthLoginPost } from "@/lib/api/generated/auth/auth";
+
+import { ApiError } from "@/lib/api/error";
 import type { LoginFormValues } from "../types/login";
 
 export function useLogin() {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const loginMutation = useLoginUserAuthLoginPost();
 
   async function login(values: LoginFormValues) {
-    setIsPending(true);
-    setError(null);
-
-    try {
-      // TODO: Replace this with the real authentication API.
-      console.log(values);
-      router.push("/");
-    } catch {
-      setError("ログインに失敗しました。時間をおいて再度お試しください。");
-    } finally {
-      setIsPending(false);
-    }
+    await loginMutation.mutateAsync({ data: values });
+    router.push("/");
   }
 
   return {
     login,
-    isPending,
-    error,
+    isPending: loginMutation.isPending,
+    error: getLoginErrorMessage(loginMutation.error),
   };
+}
+
+function getLoginErrorMessage(error: unknown) {
+  if (!error) {
+    return null;
+  }
+
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  return "ログインに失敗しました。時間をおいて再度お試しください。";
 }
