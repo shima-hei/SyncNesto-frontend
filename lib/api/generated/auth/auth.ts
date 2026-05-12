@@ -5,18 +5,26 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   HTTPValidationError,
-  UserCreate,
   UserLogin,
   UserLoginResponse,
   UserRead
@@ -30,85 +38,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export const getRegisterUserAuthRegisterPostUrl = () => {
-
-
-
-
-  return `/auth/register`
-}
-
-/**
- * ユーザー登録を行う。
-
-Args:
-    user_in: ユーザー登録リクエストの入力値。
-    db: DBセッション。
-
-Returns:
-    作成されたユーザー情報。
- * @summary Register User
- */
-export const registerUserAuthRegisterPost = async (userCreate: UserCreate, options?: RequestInit): Promise<UserRead> => {
-
-  return apiClient<UserRead>(getRegisterUserAuthRegisterPostUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      userCreate,)
-  }
-);}
-
-
-
-
-export const getRegisterUserAuthRegisterPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUserAuthRegisterPost>>, TError,{data: BodyType<UserCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof registerUserAuthRegisterPost>>, TError,{data: BodyType<UserCreate>}, TContext> => {
-
-const mutationKey = ['registerUserAuthRegisterPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerUserAuthRegisterPost>>, {data: BodyType<UserCreate>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  registerUserAuthRegisterPost(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RegisterUserAuthRegisterPostMutationResult = NonNullable<Awaited<ReturnType<typeof registerUserAuthRegisterPost>>>
-    export type RegisterUserAuthRegisterPostMutationBody = BodyType<UserCreate>
-    export type RegisterUserAuthRegisterPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Register User
- */
-export const useRegisterUserAuthRegisterPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUserAuthRegisterPost>>, TError,{data: BodyType<UserCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof registerUserAuthRegisterPost>>,
-        TError,
-        {data: BodyType<UserCreate>},
-        TContext
-      > => {
-      return useMutation(getRegisterUserAuthRegisterPostMutationOptions(options), queryClient);
-    }
-    export const getLoginUserAuthLoginPostUrl = () => {
+export const getLoginUserAuthLoginPostUrl = () => {
 
 
 
@@ -187,3 +117,110 @@ export const useLoginUserAuthLoginPost = <TError = ErrorType<HTTPValidationError
       > => {
       return useMutation(getLoginUserAuthLoginPostMutationOptions(options), queryClient);
     }
+    export const getReadCurrentUserAuthMeGetUrl = () => {
+
+
+
+
+  return `/auth/me`
+}
+
+/**
+ * 現在のログインユーザーを取得する。
+
+Args:
+    current_user: 認証済みユーザー。
+
+Returns:
+    現在のログインユーザー情報。
+ * @summary Read Current User
+ */
+export const readCurrentUserAuthMeGet = async ( options?: RequestInit): Promise<UserRead> => {
+
+  return apiClient<UserRead>(getReadCurrentUserAuthMeGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadCurrentUserAuthMeGetQueryKey = () => {
+    return [
+    `/auth/me`
+    ] as const;
+    }
+
+
+export const getReadCurrentUserAuthMeGetQueryOptions = <TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadCurrentUserAuthMeGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>> = ({ signal }) => readCurrentUserAuthMeGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadCurrentUserAuthMeGetQueryResult = NonNullable<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>>
+export type ReadCurrentUserAuthMeGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+          TError,
+          Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+          TError,
+          Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read Current User
+ */
+
+export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReadCurrentUserAuthMeGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+

@@ -43,7 +43,7 @@ export async function apiClient<T>(
   return data as T;
 }
 
-function buildUrl(path: string, params?: Record<string, unknown>) {
+const buildUrl = (path: string, params?: Record<string, unknown>) => {
   const url = new URL(path, API_BASE_URL);
 
   if (params) {
@@ -62,9 +62,9 @@ function buildUrl(path: string, params?: Record<string, unknown>) {
   }
 
   return url.toString();
-}
+};
 
-function buildHeaders(headers: HeadersInit | undefined, body: unknown) {
+const buildHeaders = (headers: HeadersInit | undefined, body: unknown) => {
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Accept", "application/json");
 
@@ -73,9 +73,9 @@ function buildHeaders(headers: HeadersInit | undefined, body: unknown) {
   }
 
   return requestHeaders;
-}
+};
 
-function getRequestBody(body: unknown) {
+const getRequestBody = (body: unknown) => {
   if (body === undefined || body === null) {
     return undefined;
   }
@@ -90,9 +90,9 @@ function getRequestBody(body: unknown) {
   }
 
   return JSON.stringify(body);
-}
+};
 
-async function parseResponse(response: Response) {
+const parseResponse = async (response: Response) => {
   if (response.status === 204) {
     return null;
   }
@@ -104,9 +104,9 @@ async function parseResponse(response: Response) {
   }
 
   return response.text();
-}
+};
 
-function getErrorMessage(data: unknown) {
+const getErrorMessage = (data: unknown) => {
   if (isApiErrorResponse(data)) {
     return data.message;
   }
@@ -116,17 +116,17 @@ function getErrorMessage(data: unknown) {
   }
 
   return "APIリクエストに失敗しました。";
-}
+};
 
-function getErrorCode(data: unknown) {
+const getErrorCode = (data: unknown) => {
   if (isApiErrorResponse(data)) {
     return data.code;
   }
 
   return undefined;
-}
+};
 
-function isApiErrorResponse(data: unknown): data is ApiErrorResponse {
+const isApiErrorResponse = (data: unknown): data is ApiErrorResponse => {
   return (
     typeof data === "object" &&
     data !== null &&
@@ -135,15 +135,15 @@ function isApiErrorResponse(data: unknown): data is ApiErrorResponse {
     "code" in data &&
     typeof data.code === "string"
   );
-}
+};
 
-function isApiValidationErrorResponse(
+const isApiValidationErrorResponse = (
   data: unknown
-): data is ApiValidationErrorResponse {
+): data is ApiValidationErrorResponse => {
   return (
     typeof data === "object" &&
     data !== null &&
     "detail" in data &&
     Array.isArray(data.detail)
   );
-}
+};

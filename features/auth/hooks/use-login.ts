@@ -1,20 +1,28 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-import { useLoginUserAuthLoginPost } from "@/lib/api/generated/auth/auth";
+import {
+  getReadCurrentUserAuthMeGetQueryKey,
+  useLoginUserAuthLoginPost,
+} from "@/lib/api/generated/auth/auth";
 
 import { ApiError } from "@/lib/api/error";
 import type { LoginFormValues } from "../types/login";
 
 export function useLogin() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const loginMutation = useLoginUserAuthLoginPost();
 
-  async function login(values: LoginFormValues) {
+  const login = async (values: LoginFormValues) => {
     await loginMutation.mutateAsync({ data: values });
+    await queryClient.invalidateQueries({
+      queryKey: getReadCurrentUserAuthMeGetQueryKey(),
+    });
     router.push("/");
-  }
+  };
 
   return {
     login,
@@ -23,7 +31,7 @@ export function useLogin() {
   };
 }
 
-function getLoginErrorMessage(error: unknown) {
+const getLoginErrorMessage = (error: unknown) => {
   if (!error) {
     return null;
   }
@@ -33,4 +41,4 @@ function getLoginErrorMessage(error: unknown) {
   }
 
   return "ログインに失敗しました。時間をおいて再度お試しください。";
-}
+};

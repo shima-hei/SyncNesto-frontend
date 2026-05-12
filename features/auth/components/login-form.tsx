@@ -31,7 +31,7 @@ export function LoginForm({
   const [values, setValues] = useState<LoginFormValues>(loginInitialValues);
   const [errors, setErrors] = useState<LoginFormErrors>({});
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const result = loginSchema.safeParse(values);
@@ -48,12 +48,12 @@ export function LoginForm({
 
     setErrors({});
     await login(result.data).catch(() => undefined);
-  }
+  };
 
-  function updateValue(field: keyof LoginFormValues, value: string) {
+  const updateValue = (field: keyof LoginFormValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
