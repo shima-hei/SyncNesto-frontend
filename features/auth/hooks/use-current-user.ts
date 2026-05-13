@@ -1,6 +1,7 @@
 "use client";
 
 import { useReadCurrentUserAuthMeGet } from "@/lib/api/generated/auth/auth";
+import { ApiError } from "@/lib/api/error";
 import type { UserRead } from "@/lib/api/generated/model";
 
 export function useCurrentUser() {
@@ -13,12 +14,19 @@ export function useCurrentUser() {
     },
   });
 
+  const isUnauthorized = isUnauthorizedError(currentUserQuery.error);
+  const user = isUnauthorized ? null : currentUserQuery.data ?? null;
+
   return {
-    user: currentUserQuery.data ?? null,
+    user,
     isLoading: currentUserQuery.isLoading,
     isFetching: currentUserQuery.isFetching,
-    isAuthenticated: Boolean(currentUserQuery.data),
+    isAuthenticated: Boolean(user),
     error: currentUserQuery.error,
     refetchUser: currentUserQuery.refetch,
   };
 }
+
+const isUnauthorizedError = (error: unknown) => {
+  return error instanceof ApiError && error.status === 401;
+};

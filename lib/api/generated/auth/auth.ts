@@ -117,6 +117,79 @@ export const useLoginUserAuthLoginPost = <TError = ErrorType<HTTPValidationError
       > => {
       return useMutation(getLoginUserAuthLoginPostMutationOptions(options), queryClient);
     }
+    export const getLogoutUserAuthLogoutPostUrl = () => {
+
+
+
+
+  return `/auth/logout`
+}
+
+/**
+ * ユーザーログアウトを行う。
+
+Args:
+    response: HTTPレスポンス。
+ * @summary Logout User
+ */
+export const logoutUserAuthLogoutPost = async ( options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getLogoutUserAuthLogoutPostUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getLogoutUserAuthLogoutPostMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext> => {
+
+const mutationKey = ['logoutUserAuthLogoutPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, void> = () => {
+
+
+          return  logoutUserAuthLogoutPost(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogoutUserAuthLogoutPostMutationResult = NonNullable<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>>
+
+    export type LogoutUserAuthLogoutPostMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Logout User
+ */
+export const useLogoutUserAuthLogoutPost = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getLogoutUserAuthLogoutPostMutationOptions(options), queryClient);
+    }
     export const getReadCurrentUserAuthMeGetUrl = () => {
 
 

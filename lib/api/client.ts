@@ -97,13 +97,19 @@ const parseResponse = async (response: Response) => {
     return null;
   }
 
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
   const contentType = response.headers.get("content-type");
 
   if (contentType?.includes("application/json")) {
-    return response.json();
+    return JSON.parse(text);
   }
 
-  return response.text();
+  return text;
 };
 
 const getErrorMessage = (data: unknown) => {
