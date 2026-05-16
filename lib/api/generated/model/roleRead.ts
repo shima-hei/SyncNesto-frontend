@@ -5,8 +5,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ValidationError {
-  loc: (string | number)[];
-  msg: string;
-  type: string;
+/**
+ * ロール読み取り時に返すschema。
+ */
+export interface RoleRead {
+  key: string;
+  name: string;
 }

@@ -2,10 +2,10 @@
 
 import { useReadCurrentUserAuthMeGet } from "@/lib/api/generated/auth/auth";
 import { ApiError } from "@/lib/api/error";
-import type { UserRead } from "@/lib/api/generated/model";
+import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 export function useCurrentUser() {
-  const currentUserQuery = useReadCurrentUserAuthMeGet<UserRead | null>({
+  const currentUserQuery = useReadCurrentUserAuthMeGet<CurrentUserRead | null>({
     query: {
       retry: false,
       staleTime: 5 * 60 * 1000,

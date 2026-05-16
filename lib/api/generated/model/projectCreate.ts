@@ -6,10 +6,9 @@
  */
 
 /**
- * ユーザー読み取り時に返すschema。
+ * プロジェクト作成リクエストで受け取るschema。
  */
-export interface UserRead {
-  email: string;
+export interface ProjectCreate {
   name: string;
-  id: number;
+  description?: string | null;
 }

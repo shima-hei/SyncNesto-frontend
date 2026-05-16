@@ -3,7 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { UserRead } from "@/lib/api/generated/model";
+import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "access_token";
@@ -27,7 +27,7 @@ export const getCurrentUserOnServer = async () => {
     return null;
   }
 
-  return (await response.json()) as UserRead;
+  return (await response.json()) as CurrentUserRead;
 };
 
 export const requireUser = async () => {

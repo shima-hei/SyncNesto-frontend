@@ -13,8 +13,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import { hasAnySystemRole } from "@/features/auth/utils/authorization";
 
 import { mainNavigation, secondaryNavigation } from "../constants/navigation";
+import type { AppNavigationItem } from "../constants/navigation";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserMenu } from "./sidebar-user-menu";
 
@@ -22,6 +25,12 @@ export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
+  const visibleSecondaryNavigation = getVisibleNavigationItems(
+    secondaryNavigation,
+    user
+  );
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -41,9 +50,9 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarNav items={mainNavigation} pathname={pathname} />
+        <SidebarNav items={visibleMainNavigation} pathname={pathname} />
         <SidebarNav
-          items={secondaryNavigation}
+          items={visibleSecondaryNavigation}
           pathname={pathname}
           className="mt-auto"
         />
@@ -54,3 +63,16 @@ export function AppSidebar({
     </Sidebar>
   );
 }
+
+const getVisibleNavigationItems = (
+  items: AppNavigationItem[],
+  user: ReturnType<typeof useAuth>["user"]
+) => {
+  return items.filter((item) => {
+    if (!item.requiredSystemRoles?.length) {
+      return true;
+    }
+
+    return hasAnySystemRole(user, item.requiredSystemRoles);
+  });
+};

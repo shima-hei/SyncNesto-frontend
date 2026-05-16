@@ -8,7 +8,7 @@ import {
 } from "@/lib/security/csrf";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
-const ALLOWED_PREFIXES = ["/auth", "/users"];
+const ALLOWED_PREFIXES = ["/auth", "/users", "/projects"];
 const BODY_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
@@ -55,12 +55,15 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   }
 
   if (!isAllowedOrigin(request)) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    return NextResponse.json(
+      { message: "Forbidden", code: "FORBIDDEN" },
+      { status: 403 }
+    );
   }
 
   if (!validateCsrfToken(request)) {
     return NextResponse.json(
-      { message: "Invalid CSRF token" },
+      { message: "Invalid CSRF token", code: "INVALID_CSRF_TOKEN" },
       { status: 403 }
     );
   }

@@ -5,10 +5,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import type { SystemRoleKey } from "@/features/auth/constants/roles";
+
 export type AppNavigationItem = {
   title: string;
   href: string;
   icon: LucideIcon;
+  requiredSystemRoles?: readonly SystemRoleKey[];
 };
 
 export const mainNavigation: AppNavigationItem[] = [

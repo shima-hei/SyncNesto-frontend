@@ -2,12 +2,12 @@
 
 import { createContext, useContext } from "react";
 
-import type { UserRead } from "@/lib/api/generated/model";
+import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 import { useCurrentUser } from "../hooks/use-current-user";
 
 type AuthContextValue = {
-  user: UserRead | null;
+  user: CurrentUserRead | null;
   isLoading: boolean;
   isFetching: boolean;
   isAuthenticated: boolean;
