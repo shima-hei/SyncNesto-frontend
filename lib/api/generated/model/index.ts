@@ -18,6 +18,7 @@ export * from './roleRead';
 export * from './userCreate';
 export * from './userLogin';
 export * from './userLoginResponse';
+export * from './userProfileUpdate';
 export * from './userRead';
 export * from './userUpdate';
 export * from './validationError';

@@ -27,7 +27,8 @@ import type {
   CurrentUserRead,
   HTTPValidationError,
   UserLogin,
-  UserLoginResponse
+  UserLoginResponse,
+  UserProfileUpdate
 } from '../model';
 
 import { apiClient } from '../../client';
@@ -297,3 +298,81 @@ export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof re
 
 
 
+export const getUpdateCurrentUserAuthMePatchUrl = () => {
+
+
+
+
+  return `/auth/me`
+}
+
+/**
+ * 現在のログインユーザーのプロフィールを更新する。
+
+Args:
+    user_in: 本人プロフィール更新リクエストの入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された現在のログインユーザー情報。
+ * @summary Update Current User
+ */
+export const updateCurrentUserAuthMePatch = async (userProfileUpdate: UserProfileUpdate, options?: RequestInit): Promise<CurrentUserRead> => {
+
+  return apiClient<CurrentUserRead>(getUpdateCurrentUserAuthMePatchUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(userProfileUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateCurrentUserAuthMePatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, TError,{data: BodyType<UserProfileUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, TError,{data: BodyType<UserProfileUpdate>}, TContext> => {
+
+const mutationKey = ['updateCurrentUserAuthMePatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, {data: BodyType<UserProfileUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCurrentUserAuthMePatch(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCurrentUserAuthMePatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>>
+    export type UpdateCurrentUserAuthMePatchMutationBody = BodyType<UserProfileUpdate>
+    export type UpdateCurrentUserAuthMePatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Current User
+ */
+export const useUpdateCurrentUserAuthMePatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, TError,{data: BodyType<UserProfileUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>,
+        TError,
+        {data: BodyType<UserProfileUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateCurrentUserAuthMePatchMutationOptions(options), queryClient);
+    }
