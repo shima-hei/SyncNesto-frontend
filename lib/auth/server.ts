@@ -17,6 +17,7 @@ export const getCurrentUserOnServer = async () => {
 
   const response = await fetch(new URL("/auth/me", API_BASE_URL), {
     headers: {
+      // Server GuardはFastAPIを直接呼ぶため、ブラウザから受け取ったCookieを手動で転送する。
       Cookie: cookieStore.toString(),
       Accept: "application/json",
     },

@@ -20,6 +20,7 @@ export const validateCsrfToken = (request: NextRequest) => {
     return true;
   }
 
+  // Double Submit Cookie方式: Cookieとヘッダーの値が一致するかを検証する。
   const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
   const headerToken = request.headers.get(CSRF_HEADER_NAME);
 
@@ -28,6 +29,7 @@ export const validateCsrfToken = (request: NextRequest) => {
 
 export const getCsrfCookieOptions = () => {
   return {
+    // APIクライアントがCSRFヘッダーへ設定するため、ブラウザから読めるCookieにする。
     httpOnly: false,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

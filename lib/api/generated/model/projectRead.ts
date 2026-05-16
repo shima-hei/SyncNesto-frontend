@@ -12,4 +12,5 @@ export interface ProjectRead {
   name: string;
   description?: string | null;
   id: number;
+  version: number;
 }

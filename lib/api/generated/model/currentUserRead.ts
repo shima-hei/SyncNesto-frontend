@@ -13,5 +13,6 @@ export interface CurrentUserRead {
   email: string;
   name: string;
   id: number;
+  version: number;
   system_roles: RoleRead[];
 }

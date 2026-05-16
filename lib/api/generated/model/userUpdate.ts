@@ -9,6 +9,7 @@
  * ユーザー更新リクエストで受け取るschema。
  */
 export interface UserUpdate {
+  version: number;
   email?: string | null;
   name?: string | null;
   password?: string | null;

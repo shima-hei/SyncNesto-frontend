@@ -8,6 +8,8 @@ import {
 } from "@/lib/security/csrf";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
+
+// BFFでは、フロントエンドから呼び出す想定のAPIグループだけを公開する。
 const ALLOWED_PREFIXES = ["/auth", "/users", "/projects"];
 const BODY_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const HOP_BY_HOP_HEADERS = new Set([
@@ -138,6 +140,7 @@ const getUpstreamRequestHeaders = (request: NextRequest) => {
     }
 
     if (lowerKey === "cookie") {
+      // CSRFはBFFで検証するため、バックエンドには認証Cookieだけを転送する。
       const cookie = getUpstreamCookie(value);
 
       if (cookie) {

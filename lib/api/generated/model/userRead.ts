@@ -12,4 +12,5 @@ export interface UserRead {
   email: string;
   name: string;
   id: number;
+  version: number;
 }

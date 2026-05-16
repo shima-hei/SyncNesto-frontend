@@ -9,5 +9,6 @@
  * プロジェクトメンバー更新リクエストで受け取るschema。
  */
 export interface ProjectMemberUpdate {
+  version: number;
   role_id: number;
 }

@@ -9,6 +9,7 @@
  * プロジェクト更新リクエストで受け取るschema。
  */
 export interface ProjectUpdate {
+  version: number;
   name?: string | null;
   description?: string | null;
 }

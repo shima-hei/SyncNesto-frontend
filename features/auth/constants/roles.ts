@@ -1,3 +1,4 @@
+// UI分岐では表示名やDB IDではなく、安定したrole keyを使う。
 export const SYSTEM_ROLE_KEYS = {
   systemAdmin: "system_admin",
 } as const;
@@ -14,4 +15,3 @@ export type SystemRoleKey =
 
 export type ProjectRoleKey =
   (typeof PROJECT_ROLE_KEYS)[keyof typeof PROJECT_ROLE_KEYS];
-

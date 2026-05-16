@@ -13,4 +13,5 @@ export interface ProjectMemberRead {
   project_id: number;
   user_id: number;
   role_id: number;
+  version: number;
 }
