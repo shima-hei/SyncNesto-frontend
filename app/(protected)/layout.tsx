@@ -1,14 +1,12 @@
-import { AuthGuard } from "@/features/auth/components/auth-guard";
 import { ProtectedShell } from "@/features/app-shell/components/protected-shell";
+import { requireUser } from "@/lib/auth/server";
 
-export default function ProtectedLayout({
+export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthGuard>
-      <ProtectedShell>{children}</ProtectedShell>
-    </AuthGuard>
-  );
+  await requireUser();
+
+  return <ProtectedShell>{children}</ProtectedShell>;
 }

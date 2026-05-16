@@ -1,10 +1,8 @@
-import { GuestGuard } from "@/features/auth/components/auth-guard";
 import { LoginPage } from "@/features/auth/components/login-page";
+import { redirectIfAuthenticated } from "@/lib/auth/server";
 
-export default function Page() {
-  return (
-    <GuestGuard>
-      <LoginPage />
-    </GuestGuard>
-  );
+export default async function Page() {
+  await redirectIfAuthenticated();
+
+  return <LoginPage />;
 }
