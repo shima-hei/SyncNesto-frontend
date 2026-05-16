@@ -2,7 +2,7 @@ import { ApiError } from "./error";
 import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | string;
 
@@ -44,7 +44,12 @@ export async function apiClient<T>(
 }
 
 const buildUrl = (path: string, params?: Record<string, unknown>) => {
-  const url = new URL(path, API_BASE_URL);
+  const url = isAbsoluteUrl(API_BASE_URL)
+    ? new URL(path, API_BASE_URL)
+    : new URL(
+        `${normalizeBasePath(API_BASE_URL)}${normalizePath(path)}`,
+        "http://bff.local"
+      );
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -61,7 +66,27 @@ const buildUrl = (path: string, params?: Record<string, unknown>) => {
     });
   }
 
-  return url.toString();
+  if (isAbsoluteUrl(API_BASE_URL)) {
+    return url.toString();
+  }
+
+  return `${url.pathname}${url.search}`;
+};
+
+const isAbsoluteUrl = (url: string) => {
+  return /^https?:\/\//.test(url);
+};
+
+const normalizeBasePath = (basePath: string) => {
+  if (!basePath || basePath === "/") {
+    return "";
+  }
+
+  return basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
+};
+
+const normalizePath = (path: string) => {
+  return path.startsWith("/") ? path : `/${path}`;
 };
 
 const buildHeaders = (headers: HeadersInit | undefined, body: unknown) => {
