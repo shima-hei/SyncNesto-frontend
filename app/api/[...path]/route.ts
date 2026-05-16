@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
+  isCsrfProtectedMethod,
+  validateCsrfToken,
+} from "@/lib/security/csrf";
+
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 const ALLOWED_PREFIXES = ["/auth", "/users"];
 const BODY_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-const CSRF_CHECK_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
   "keep-alive",
@@ -52,6 +58,13 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
+  if (!validateCsrfToken(request)) {
+    return NextResponse.json(
+      { message: "Invalid CSRF token" },
+      { status: 403 }
+    );
+  }
+
   const upstreamUrl = getUpstreamUrl(upstreamPath, request.nextUrl.search);
   const upstreamResponse = await fetch(upstreamUrl, {
     method: request.method,
@@ -77,7 +90,7 @@ const isAllowedPath = (path: string) => {
 };
 
 const isAllowedOrigin = (request: NextRequest) => {
-  if (!CSRF_CHECK_METHODS.has(request.method)) {
+  if (!isCsrfProtectedMethod(request.method)) {
     return true;
   }
 
@@ -117,10 +130,32 @@ const getUpstreamRequestHeaders = (request: NextRequest) => {
       return;
     }
 
+    if (lowerKey === CSRF_HEADER_NAME.toLowerCase()) {
+      return;
+    }
+
+    if (lowerKey === "cookie") {
+      const cookie = getUpstreamCookie(value);
+
+      if (cookie) {
+        headers.set(key, cookie);
+      }
+
+      return;
+    }
+
     headers.set(key, value);
   });
 
   return headers;
+};
+
+const getUpstreamCookie = (cookie: string) => {
+  return cookie
+    .split(";")
+    .map((item) => item.trim())
+    .filter((item) => item && !item.startsWith(`${CSRF_COOKIE_NAME}=`))
+    .join("; ");
 };
 
 const getRequestBody = async (request: NextRequest) => {

@@ -3,6 +3,7 @@ import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+const CSRF_HEADER_NAME = "X-CSRF-Token";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | string;
 
@@ -12,8 +13,14 @@ type ApiClientOptions = Omit<RequestInit, "body" | "method"> & {
   body?: BodyInit | null;
 };
 
+type CsrfResponse = {
+  csrfToken: string;
+};
+
 export type ErrorType<Error> = ApiError & { data: Error };
 export type BodyType<BodyData> = BodyData;
+
+let csrfTokenCache: string | null = null;
 
 export async function apiClient<T>(
   url: string,
@@ -21,10 +28,11 @@ export async function apiClient<T>(
 ): Promise<T> {
   const { method, params, body, headers, signal } = options;
   const requestUrl = buildUrl(url, params);
+  const requestHeaders = await buildHeaders(headers, body, method);
   const response = await fetch(requestUrl, {
     method,
     credentials: "include",
-    headers: buildHeaders(headers, body),
+    headers: requestHeaders,
     body: getRequestBody(body),
     signal,
   });
@@ -89,7 +97,11 @@ const normalizePath = (path: string) => {
   return path.startsWith("/") ? path : `/${path}`;
 };
 
-const buildHeaders = (headers: HeadersInit | undefined, body: unknown) => {
+const buildHeaders = async (
+  headers: HeadersInit | undefined,
+  body: unknown,
+  method: string
+) => {
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Accept", "application/json");
 
@@ -97,7 +109,41 @@ const buildHeaders = (headers: HeadersInit | undefined, body: unknown) => {
     requestHeaders.set("Content-Type", "application/json");
   }
 
+  if (isCsrfProtectedMethod(method) && !requestHeaders.has(CSRF_HEADER_NAME)) {
+    requestHeaders.set(CSRF_HEADER_NAME, await getCsrfToken());
+  }
+
   return requestHeaders;
+};
+
+const getCsrfToken = async () => {
+  if (csrfTokenCache) {
+    return csrfTokenCache;
+  }
+
+  const response = await fetch(buildUrl("/csrf"), {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError({
+      status: response.status,
+      message: "CSRF token の取得に失敗しました。",
+    });
+  }
+
+  const data = (await response.json()) as CsrfResponse;
+  csrfTokenCache = data.csrfToken;
+
+  return csrfTokenCache;
+};
+
+const isCsrfProtectedMethod = (method: string) => {
+  return ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
 };
 
 const getRequestBody = (body: unknown) => {
