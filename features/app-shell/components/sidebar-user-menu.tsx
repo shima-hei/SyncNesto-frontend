@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   CircleUserRoundIcon,
   EllipsisVerticalIcon,
@@ -78,9 +79,11 @@ export function SidebarUserMenu() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <CircleUserRoundIcon />
-                アカウント
+              <DropdownMenuItem asChild>
+                <Link href="/account">
+                  <CircleUserRoundIcon />
+                  アカウント
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/table";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import type { UserListItem } from "@/lib/api/generated/model";
+import { useRouter } from "next/navigation";
+
+import { UserSystemRoles } from "./user-system-roles";
 
 type UsersTableProps = {
   users: UserListItem[];
@@ -17,6 +20,8 @@ type UsersTableProps = {
 };
 
 export function UsersTable({ users, isLoading }: UsersTableProps) {
+  const router = useRouter();
+
   if (isLoading) {
     return <UsersTableSkeleton />;
   }
@@ -28,6 +33,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
           <TableHead>ユーザー</TableHead>
           <TableHead>部署</TableHead>
           <TableHead>役職</TableHead>
+          <TableHead>権限</TableHead>
           <TableHead>状態</TableHead>
           <TableHead>最終ログイン</TableHead>
         </TableRow>
@@ -35,7 +41,18 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
       <TableBody>
         {users.length ? (
           users.map((user) => (
-            <TableRow key={user.id}>
+            <TableRow
+              key={user.id}
+              className="cursor-pointer"
+              tabIndex={0}
+              onClick={() => router.push(`/system/users/${user.id}`)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  router.push(`/system/users/${user.id}`);
+                }
+              }}
+            >
               <TableCell>
                 <div className="flex min-w-64 items-center gap-3">
                   <UserAvatar name={user.name} src={user.avatar_url} />
@@ -50,6 +67,9 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
               <TableCell>{user.department ?? "-"}</TableCell>
               <TableCell>{user.position ?? "-"}</TableCell>
               <TableCell>
+                <UserSystemRoles roles={user.system_roles} />
+              </TableCell>
+              <TableCell>
                 <Badge variant={user.is_active ? "secondary" : "outline"}>
                   {user.is_active ? "有効" : "無効"}
                 </Badge>
@@ -60,7 +80,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
         ) : (
           <TableRow>
             <TableCell
-              colSpan={5}
+              colSpan={6}
               className="h-24 text-center text-muted-foreground"
             >
               条件に一致するユーザーがありません。

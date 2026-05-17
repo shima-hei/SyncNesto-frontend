@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,11 @@ export function UsersPage() {
         <p className="text-sm text-muted-foreground">
           システムに登録されているユーザーを管理します。
         </p>
+      </div>
+      <div>
+        <Button asChild>
+          <Link href="/system/users/new">ユーザー登録</Link>
+        </Button>
       </div>
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <form

@@ -16,4 +16,5 @@ export interface UserCreate {
   department?: string | null;
   position?: string | null;
   is_active?: boolean;
+  system_role_keys?: string[];
 }

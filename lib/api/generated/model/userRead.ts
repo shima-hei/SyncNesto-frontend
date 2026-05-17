@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { RoleRead } from './roleRead';
 
 /**
  * ユーザー読み取り時に返すschema。
@@ -20,4 +21,5 @@ export interface UserRead {
   last_login_at?: string | null;
   created_by?: number | null;
   updated_by?: number | null;
+  system_roles?: RoleRead[];
 }

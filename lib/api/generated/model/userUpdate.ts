@@ -16,4 +16,5 @@ export interface UserUpdate {
   department?: string | null;
   position?: string | null;
   is_active?: boolean | null;
+  system_role_keys?: string[] | null;
 }
