@@ -5,8 +5,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './bodyUpdateCurrentUserAvatarAuthMeAvatarPut';
 export * from './currentUserRead';
 export * from './hTTPValidationError';
+export * from './listUsersUsersGetParams';
 export * from './projectCreate';
 export * from './projectMemberCreate';
 export * from './projectMemberRead';
@@ -16,6 +18,8 @@ export * from './projectUpdate';
 export * from './readRootGet200';
 export * from './roleRead';
 export * from './userCreate';
+export * from './userListItem';
+export * from './userListResponse';
 export * from './userLogin';
 export * from './userLoginResponse';
 export * from './userProfileUpdate';

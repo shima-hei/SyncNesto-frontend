@@ -25,7 +25,9 @@ import type {
 
 import type {
   HTTPValidationError,
+  ListUsersUsersGetParams,
   UserCreate,
+  UserListResponse,
   UserRead,
   UserUpdate
 } from '../model';
@@ -51,6 +53,7 @@ export const getCreateUserUsersPostUrl = () => {
 
 Args:
     user_in: ユーザー作成リクエストの入力値。
+    current_user: 認可済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -115,27 +118,38 @@ export const useCreateUserUsersPost = <TError = ErrorType<HTTPValidationError>,
       > => {
       return useMutation(getCreateUserUsersPostMutationOptions(options), queryClient);
     }
-    export const getListUsersUsersGetUrl = () => {
+    export const getListUsersUsersGetUrl = (params?: ListUsersUsersGetParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/users`
+  return stringifiedParams.length > 0 ? `/users?${stringifiedParams}` : `/users`
 }
 
 /**
  * ユーザー一覧を取得する。
 
 Args:
+    page: ページ番号。
+    page_size: 1ページあたりの件数。
+    q: 検索キーワード。
+    is_active: 有効状態の絞り込み。
     db: DBセッション。
 
 Returns:
     ユーザー一覧。
  * @summary List Users
  */
-export const listUsersUsersGet = async ( options?: RequestInit): Promise<UserRead[]> => {
+export const listUsersUsersGet = async (params?: ListUsersUsersGetParams, options?: RequestInit): Promise<UserListResponse> => {
 
-  return apiClient<UserRead[]>(getListUsersUsersGetUrl(),
+  return apiClient<UserListResponse>(getListUsersUsersGetUrl(params),
   {
     ...options,
     method: 'GET'
@@ -148,23 +162,23 @@ export const listUsersUsersGet = async ( options?: RequestInit): Promise<UserRea
 
 
 
-export const getListUsersUsersGetQueryKey = () => {
+export const getListUsersUsersGetQueryKey = (params?: ListUsersUsersGetParams,) => {
     return [
-    `/users`
+    `/users`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListUsersUsersGetQueryOptions = <TData = Awaited<ReturnType<typeof listUsersUsersGet>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+export const getListUsersUsersGetQueryOptions = <TData = Awaited<ReturnType<typeof listUsersUsersGet>>, TError = ErrorType<HTTPValidationError>>(params?: ListUsersUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListUsersUsersGetQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListUsersUsersGetQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsersUsersGet>>> = ({ signal }) => listUsersUsersGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsersUsersGet>>> = ({ signal }) => listUsersUsersGet(params, { signal, ...requestOptions });
 
 
 
@@ -178,7 +192,7 @@ export type ListUsersUsersGetQueryError = ErrorType<HTTPValidationError>
 
 
 export function useListUsersUsersGet<TData = Awaited<ReturnType<typeof listUsersUsersGet>>, TError = ErrorType<HTTPValidationError>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>> & Pick<
+ params: undefined |  ListUsersUsersGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listUsersUsersGet>>,
           TError,
@@ -188,7 +202,7 @@ export function useListUsersUsersGet<TData = Awaited<ReturnType<typeof listUsers
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListUsersUsersGet<TData = Awaited<ReturnType<typeof listUsersUsersGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>> & Pick<
+ params?: ListUsersUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listUsersUsersGet>>,
           TError,
@@ -198,7 +212,7 @@ export function useListUsersUsersGet<TData = Awaited<ReturnType<typeof listUsers
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListUsersUsersGet<TData = Awaited<ReturnType<typeof listUsersUsersGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ params?: ListUsersUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -206,11 +220,11 @@ export function useListUsersUsersGet<TData = Awaited<ReturnType<typeof listUsers
  */
 
 export function useListUsersUsersGet<TData = Awaited<ReturnType<typeof listUsersUsersGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ params?: ListUsersUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsersUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListUsersUsersGetQueryOptions(options)
+  const queryOptions = getListUsersUsersGetQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -344,6 +358,7 @@ export const getUpdateUserUsersUserIdPatchUrl = (userId: number,) => {
 Args:
     user_id: 更新対象ユーザーID。
     user_in: ユーザー更新リクエストの入力値。
+    current_user: 認可済みユーザー。
     db: DBセッション。
 
 Returns:

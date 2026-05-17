@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BodyUpdateCurrentUserAvatarAuthMeAvatarPut,
   CurrentUserRead,
   HTTPValidationError,
   UserLogin,
@@ -375,4 +376,84 @@ export const useUpdateCurrentUserAuthMePatch = <TError = ErrorType<HTTPValidatio
         TContext
       > => {
       return useMutation(getUpdateCurrentUserAuthMePatchMutationOptions(options), queryClient);
+    }
+    export const getUpdateCurrentUserAvatarAuthMeAvatarPutUrl = () => {
+
+
+
+
+  return `/auth/me/avatar`
+}
+
+/**
+ * 現在のログインユーザーのアイコン画像を更新する。
+
+Args:
+    file: アップロードされた画像ファイル。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された現在のログインユーザー情報。
+ * @summary Update Current User Avatar
+ */
+export const updateCurrentUserAvatarAuthMeAvatarPut = async (bodyUpdateCurrentUserAvatarAuthMeAvatarPut: BodyUpdateCurrentUserAvatarAuthMeAvatarPut, options?: RequestInit): Promise<CurrentUserRead> => {
+    const formData = new FormData();
+formData.append(`file`, bodyUpdateCurrentUserAvatarAuthMeAvatarPut.file);
+
+  return apiClient<CurrentUserRead>(getUpdateCurrentUserAvatarAuthMeAvatarPutUrl(),
+  {
+    ...options,
+    method: 'PUT'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+export const getUpdateCurrentUserAvatarAuthMeAvatarPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, TError,{data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, TError,{data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}, TContext> => {
+
+const mutationKey = ['updateCurrentUserAvatarAuthMeAvatarPut'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, {data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCurrentUserAvatarAuthMeAvatarPut(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>>
+    export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationBody = BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>
+    export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Current User Avatar
+ */
+export const useUpdateCurrentUserAvatarAuthMeAvatarPut = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, TError,{data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>,
+        TError,
+        {data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>},
+        TContext
+      > => {
+      return useMutation(getUpdateCurrentUserAvatarAuthMeAvatarPutMutationOptions(options), queryClient);
     }

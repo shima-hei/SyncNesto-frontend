@@ -13,4 +13,7 @@ export interface UserUpdate {
   email?: string | null;
   name?: string | null;
   password?: string | null;
+  department?: string | null;
+  position?: string | null;
+  is_active?: boolean | null;
 }

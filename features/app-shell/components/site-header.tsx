@@ -9,6 +9,7 @@ import {
   mainNavigation,
   secondaryNavigation,
 } from "../constants/navigation";
+import { findNavigationItemByPathname } from "../utils/navigation";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -30,9 +31,7 @@ export function SiteHeader() {
 
 const getHeaderTitle = (pathname: string) => {
   const navigationItems = [...mainNavigation, ...secondaryNavigation];
-  const currentItem = navigationItems.find((item) =>
-    item.href === "/" ? pathname === item.href : pathname.startsWith(item.href)
-  );
+  const currentItem = findNavigationItemByPathname(navigationItems, pathname);
 
   return currentItem?.title ?? "Syncnesto";
 };

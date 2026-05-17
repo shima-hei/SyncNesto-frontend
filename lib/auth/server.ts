@@ -3,6 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { isSystemAdmin } from "@/features/auth/utils/authorization";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
@@ -36,6 +37,16 @@ export const requireUser = async () => {
 
   if (!user) {
     redirect("/login");
+  }
+
+  return user;
+};
+
+export const requireSystemAdmin = async () => {
+  const user = await requireUser();
+
+  if (!isSystemAdmin(user)) {
+    redirect("/forbidden");
   }
 
   return user;

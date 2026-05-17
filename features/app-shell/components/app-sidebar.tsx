@@ -14,10 +14,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/providers/auth-provider";
-import { hasAnySystemRole } from "@/features/auth/utils/authorization";
 
 import { mainNavigation, secondaryNavigation } from "../constants/navigation";
-import type { AppNavigationItem } from "../constants/navigation";
+import { getVisibleNavigationItems } from "../utils/navigation";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserMenu } from "./sidebar-user-menu";
 
@@ -63,16 +62,3 @@ export function AppSidebar({
     </Sidebar>
   );
 }
-
-const getVisibleNavigationItems = (
-  items: AppNavigationItem[],
-  user: ReturnType<typeof useAuth>["user"]
-) => {
-  return items.filter((item) => {
-    if (!item.requiredSystemRoles?.length) {
-      return true;
-    }
-
-    return hasAnySystemRole(user, item.requiredSystemRoles);
-  });
-};

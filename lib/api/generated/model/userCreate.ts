@@ -13,4 +13,7 @@ export interface UserCreate {
   email: string;
   name: string;
   password: string;
+  department?: string | null;
+  position?: string | null;
+  is_active?: boolean;
 }

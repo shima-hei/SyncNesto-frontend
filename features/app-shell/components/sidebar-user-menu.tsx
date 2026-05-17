@@ -6,10 +6,7 @@ import {
   LogOutIcon,
 } from "lucide-react";
 
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +31,6 @@ export function SidebarUserMenu() {
   const { logout, isPending } = useLogout();
   const name = user?.name ?? "ユーザー";
   const email = user?.email ?? "";
-  const fallback = getUserFallback(name);
 
   const handleLogout = async () => {
     await logout().catch(() => undefined);
@@ -49,9 +45,7 @@ export function SidebarUserMenu() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="size-8 rounded-lg">
-                <AvatarFallback className="rounded-lg">{fallback}</AvatarFallback>
-              </Avatar>
+              <UserAvatar name={name} src={user?.avatar_url} />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{name}</span>
                 {email ? (
@@ -71,11 +65,7 @@ export function SidebarUserMenu() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="size-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg">
-                    {fallback}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar name={name} src={user?.avatar_url} />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{name}</span>
                   {email ? (
@@ -104,13 +94,3 @@ export function SidebarUserMenu() {
     </SidebarMenu>
   );
 }
-
-const getUserFallback = (name: string) => {
-  const trimmedName = name.trim();
-
-  if (!trimmedName) {
-    return "U";
-  }
-
-  return trimmedName.slice(0, 2).toUpperCase();
-};

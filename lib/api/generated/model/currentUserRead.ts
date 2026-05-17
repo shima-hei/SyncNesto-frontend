@@ -14,5 +14,12 @@ export interface CurrentUserRead {
   name: string;
   id: number;
   version: number;
+  department?: string | null;
+  position?: string | null;
+  avatar_url?: string | null;
+  is_active: boolean;
+  last_login_at?: string | null;
+  created_by?: number | null;
+  updated_by?: number | null;
   system_roles: RoleRead[];
 }
