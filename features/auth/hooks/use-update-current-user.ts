@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import {
   getReadCurrentUserAuthMeGetQueryKey,
@@ -22,13 +23,18 @@ export function useUpdateCurrentUser() {
       onSuccess: (user) => {
         setConflictCurrent(null);
         queryClient.setQueryData(getReadCurrentUserAuthMeGetQueryKey(), user);
+        toast.success("アカウント情報を更新しました。");
       },
       onError: (error) => {
         const current = getConflictCurrent<CurrentUserRead>(error);
 
         if (current) {
           setConflictCurrent(current);
+          toast.error("他の更新と競合しました。");
+          return;
         }
+
+        toast.error("アカウント情報の更新に失敗しました。");
       },
     },
   });

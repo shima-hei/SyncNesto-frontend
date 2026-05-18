@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { SYSTEM_ROLE_KEYS } from "@/features/auth/constants/roles";
 import { getConflictCurrent } from "@/lib/api/conflict";
@@ -25,13 +26,18 @@ export function useUpdateUser(userId: number) {
         await queryClient.invalidateQueries({
           queryKey: getListUsersUsersGetQueryKey(),
         });
+        toast.success("ユーザー情報を更新しました。");
       },
       onError: (error) => {
         const current = getConflictCurrent<UserRead>(error);
 
         if (current) {
           setConflictCurrent(current);
+          toast.error("他の更新と競合しました。");
+          return;
         }
+
+        toast.error("ユーザー情報の更新に失敗しました。");
       },
     },
   });

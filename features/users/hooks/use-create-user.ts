@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { SYSTEM_ROLE_KEYS } from "@/features/auth/constants/roles";
 import {
@@ -21,7 +22,11 @@ export function useCreateUser() {
         await queryClient.invalidateQueries({
           queryKey: getListUsersUsersGetQueryKey(),
         });
+        toast.success("ユーザーを登録しました。");
         router.push(`/system/users/${user.id}`);
+      },
+      onError: () => {
+        toast.error("ユーザーの登録に失敗しました。");
       },
     },
   });

@@ -457,3 +457,80 @@ export const useUpdateCurrentUserAvatarAuthMeAvatarPut = <TError = ErrorType<HTT
       > => {
       return useMutation(getUpdateCurrentUserAvatarAuthMeAvatarPutMutationOptions(options), queryClient);
     }
+    export const getDeleteCurrentUserAvatarAuthMeAvatarDeleteUrl = () => {
+
+
+
+
+  return `/auth/me/avatar`
+}
+
+/**
+ * 現在のログインユーザーのアイコン画像を削除する。
+
+Args:
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された現在のログインユーザー情報。
+ * @summary Delete Current User Avatar
+ */
+export const deleteCurrentUserAvatarAuthMeAvatarDelete = async ( options?: RequestInit): Promise<CurrentUserRead> => {
+
+  return apiClient<CurrentUserRead>(getDeleteCurrentUserAvatarAuthMeAvatarDeleteUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteCurrentUserAvatarAuthMeAvatarDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteCurrentUserAvatarAuthMeAvatarDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, void> = () => {
+
+
+          return  deleteCurrentUserAvatarAuthMeAvatarDelete(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCurrentUserAvatarAuthMeAvatarDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>>
+
+    export type DeleteCurrentUserAvatarAuthMeAvatarDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Current User Avatar
+ */
+export const useDeleteCurrentUserAvatarAuthMeAvatarDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getDeleteCurrentUserAvatarAuthMeAvatarDeleteMutationOptions(options), queryClient);
+    }

@@ -1,9 +1,9 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserAvatar } from "@/components/shared/user-avatar";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
+import { AccountAvatarSection } from "./account-avatar-section";
 import { AccountProfileForm } from "./account-profile-form";
 import { AccountReadonlyInfo } from "./account-readonly-info";
 
@@ -32,15 +32,7 @@ export function AccountPage() {
       </div>
 
       <section className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
-          <UserAvatar name={user.name} src={user.avatar_url} size="lg" />
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate font-medium">{user.name}</span>
-            <span className="truncate text-sm text-muted-foreground">
-              {user.email}
-            </span>
-          </div>
-        </div>
+        <AccountAvatarSection user={user} />
         <AccountReadonlyInfo user={user} />
       </section>
 
