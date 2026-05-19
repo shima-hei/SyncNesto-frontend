@@ -10,6 +10,10 @@
  */
 export interface ProjectUpdate {
   version: number;
+  project_code?: string | null;
   name?: string | null;
   description?: string | null;
+  status?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }

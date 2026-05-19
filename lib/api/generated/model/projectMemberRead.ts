@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { RoleRead } from './roleRead';
 
 /**
  * プロジェクトメンバー読み取り時に返すschema。
@@ -12,6 +13,6 @@ export interface ProjectMemberRead {
   id: number;
   project_id: number;
   user_id: number;
-  role_id: number;
+  role: RoleRead;
   version: number;
 }

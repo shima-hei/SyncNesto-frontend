@@ -10,5 +10,5 @@
  */
 export interface ProjectMemberCreate {
   user_id: number;
-  role_id: number;
+  role_key: string;
 }

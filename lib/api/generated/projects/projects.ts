@@ -25,7 +25,9 @@ import type {
 
 import type {
   HTTPValidationError,
+  ListProjectsProjectsGetParams,
   ProjectCreate,
+  ProjectListResponse,
   ProjectMemberCreate,
   ProjectMemberRead,
   ProjectMemberUpdate,
@@ -54,6 +56,7 @@ export const getCreateProjectProjectsPostUrl = () => {
 
 Args:
     project_in: プロジェクト作成リクエストの入力値。
+    current_user: 認可済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -118,18 +121,29 @@ export const useCreateProjectProjectsPost = <TError = ErrorType<HTTPValidationEr
       > => {
       return useMutation(getCreateProjectProjectsPostMutationOptions(options), queryClient);
     }
-    export const getListProjectsProjectsGetUrl = () => {
+    export const getListProjectsProjectsGetUrl = (params?: ListProjectsProjectsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/projects`
+  return stringifiedParams.length > 0 ? `/projects?${stringifiedParams}` : `/projects`
 }
 
 /**
  * プロジェクト一覧を取得する。
 
 Args:
+    page: ページ番号。
+    page_size: 1ページあたりの件数。
+    q: 検索キーワード。
+    status: ステータス絞り込み。
     current_user: 認証済みユーザー。
     db: DBセッション。
 
@@ -137,9 +151,9 @@ Returns:
     閲覧可能なプロジェクト一覧。
  * @summary List Projects
  */
-export const listProjectsProjectsGet = async ( options?: RequestInit): Promise<ProjectRead[]> => {
+export const listProjectsProjectsGet = async (params?: ListProjectsProjectsGetParams, options?: RequestInit): Promise<ProjectListResponse> => {
 
-  return apiClient<ProjectRead[]>(getListProjectsProjectsGetUrl(),
+  return apiClient<ProjectListResponse>(getListProjectsProjectsGetUrl(params),
   {
     ...options,
     method: 'GET'
@@ -152,23 +166,23 @@ export const listProjectsProjectsGet = async ( options?: RequestInit): Promise<P
 
 
 
-export const getListProjectsProjectsGetQueryKey = () => {
+export const getListProjectsProjectsGetQueryKey = (params?: ListProjectsProjectsGetParams,) => {
     return [
-    `/projects`
+    `/projects`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListProjectsProjectsGetQueryOptions = <TData = Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+export const getListProjectsProjectsGetQueryOptions = <TData = Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError = ErrorType<HTTPValidationError>>(params?: ListProjectsProjectsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListProjectsProjectsGetQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListProjectsProjectsGetQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProjectsProjectsGet>>> = ({ signal }) => listProjectsProjectsGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProjectsProjectsGet>>> = ({ signal }) => listProjectsProjectsGet(params, { signal, ...requestOptions });
 
 
 
@@ -182,7 +196,7 @@ export type ListProjectsProjectsGetQueryError = ErrorType<HTTPValidationError>
 
 
 export function useListProjectsProjectsGet<TData = Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError = ErrorType<HTTPValidationError>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>> & Pick<
+ params: undefined |  ListProjectsProjectsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listProjectsProjectsGet>>,
           TError,
@@ -192,7 +206,7 @@ export function useListProjectsProjectsGet<TData = Awaited<ReturnType<typeof lis
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListProjectsProjectsGet<TData = Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>> & Pick<
+ params?: ListProjectsProjectsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listProjectsProjectsGet>>,
           TError,
@@ -202,7 +216,7 @@ export function useListProjectsProjectsGet<TData = Awaited<ReturnType<typeof lis
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListProjectsProjectsGet<TData = Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ params?: ListProjectsProjectsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -210,11 +224,11 @@ export function useListProjectsProjectsGet<TData = Awaited<ReturnType<typeof lis
  */
 
 export function useListProjectsProjectsGet<TData = Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ params?: ListProjectsProjectsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectsProjectsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListProjectsProjectsGetQueryOptions(options)
+  const queryOptions = getListProjectsProjectsGetQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -348,6 +362,7 @@ export const getUpdateProjectProjectsProjectIdPatchUrl = (projectId: number,) =>
 Args:
     project_id: 更新対象プロジェクトID。
     project_in: プロジェクト更新リクエストの入力値。
+    current_user: 認可済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -426,6 +441,7 @@ export const useUpdateProjectProjectsProjectIdPatch = <TError = ErrorType<HTTPVa
 
 Args:
     project_id: 削除対象プロジェクトID。
+    current_user: 認可済みユーザー。
     db: DBセッション。
  * @summary Delete Project
  */
@@ -766,7 +782,7 @@ export const useUpdateProjectMemberProjectsProjectIdMembersUserIdPatch = <TError
 }
 
 /**
- * プロジェクトメンバーを論理削除する。
+ * プロジェクトメンバーを物理削除する。
 
 Args:
     project_id: プロジェクトID。

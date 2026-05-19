@@ -1,6 +1,9 @@
 import {
   CircleHelpIcon,
+  FolderKanbanIcon,
+  FolderOpenIcon,
   HomeIcon,
+  SettingsIcon,
   Settings2Icon,
   UsersIcon,
   type LucideIcon,
@@ -29,6 +32,23 @@ export const mainNavigation: AppNavigationItem[] = [
     title: "ホーム",
     href: "/",
     icon: HomeIcon,
+  },
+  {
+    title: "プロジェクト",
+    icon: FolderKanbanIcon,
+    children: [
+      {
+        title: "プロジェクト管理",
+        href: "/projects/management",
+        icon: SettingsIcon,
+        requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
+      },
+      {
+        title: "参加プロジェクト",
+        href: "/projects/joined",
+        icon: FolderOpenIcon,
+      },
+    ],
   },
   {
     title: "システム設定",

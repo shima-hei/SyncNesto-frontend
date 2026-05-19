@@ -9,6 +9,10 @@
  * プロジェクト作成リクエストで受け取るschema。
  */
 export interface ProjectCreate {
+  project_code: string;
   name: string;
   description?: string | null;
+  status?: string;
+  start_date?: string | null;
+  end_date?: string | null;
 }

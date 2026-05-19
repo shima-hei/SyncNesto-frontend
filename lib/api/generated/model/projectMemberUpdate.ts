@@ -10,5 +10,5 @@
  */
 export interface ProjectMemberUpdate {
   version: number;
-  role_id: number;
+  role_key: string;
 }

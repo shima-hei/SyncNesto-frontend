@@ -6,9 +6,9 @@
  */
 
 /**
- * プロジェクト読み取り時に返すschema。
+ * プロジェクト一覧で返す軽量schema。
  */
-export interface ProjectRead {
+export interface ProjectListItem {
   project_code: string;
   name: string;
   description?: string | null;
@@ -16,9 +16,5 @@ export interface ProjectRead {
   start_date?: string | null;
   end_date?: string | null;
   id: number;
-  version: number;
-  created_by?: number | null;
-  updated_by?: number | null;
-  created_at: string;
   updated_at: string;
 }
