@@ -18,6 +18,7 @@ type ProjectMembersPageProps = {
 export function ProjectMembersPage({ projectId }: ProjectMembersPageProps) {
   const { project, isLoading: isProjectLoading } = useProject(projectId);
   const { members, isLoading: isMembersLoading } = useProjectMembers(projectId);
+  const memberUserIds = members.map((member) => member.user_id);
   const { users } = useUsers({
     page: 1,
     page_size: 100,
@@ -74,6 +75,7 @@ export function ProjectMembersPage({ projectId }: ProjectMembersPageProps) {
       <div className="flex flex-col gap-3">
         <h3 className="text-sm font-medium">メンバー追加</h3>
         <ProjectMemberForm
+          excludedUserIds={memberUserIds}
           isPending={isAddPending}
           error={addError}
           onSubmit={addProjectMember}

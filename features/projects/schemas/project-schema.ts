@@ -11,10 +11,8 @@ export const projectSchema = z.object({
 
 export const projectMemberSchema = z.object({
   userId: z
-    .string()
-    .min(1, "ユーザーIDを入力してください。")
-    .refine((value) => Number.isInteger(Number(value)) && Number(value) > 0, {
-      message: "ユーザーIDは1以上の整数で入力してください。",
-    }),
+    .number("ユーザーを選択してください。")
+    .int("ユーザーを選択してください。")
+    .positive("ユーザーを選択してください。"),
   roleKey: z.string().min(1, "権限を選択してください。"),
 });

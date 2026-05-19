@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useId, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { useUsers } from "@/features/users/hooks/use-users";
+import type { UserListItem } from "@/lib/api/generated/model";
 
 import { PROJECT_ROLE_OPTIONS } from "../constants/project-roles";
 import { projectMemberSchema } from "../schemas/project-schema";
@@ -27,26 +28,37 @@ import type {
   ProjectMemberFormErrors,
   ProjectMemberFormValues,
 } from "../types/project-member-form";
+import { ProjectMemberUserSelect } from "./project-member-user-select";
 
 type ProjectMemberFormProps = {
+  excludedUserIds: readonly number[];
   isPending: boolean;
   error?: Error | null;
   onSubmit: (values: ProjectMemberFormValues) => Promise<unknown>;
 };
 
 const initialValues: ProjectMemberFormValues = {
-  userId: "",
+  userId: null,
   roleKey: "member",
 };
 
 export function ProjectMemberForm({
+  excludedUserIds,
   isPending,
   error,
   onSubmit,
 }: ProjectMemberFormProps) {
-  const userIdInputId = useId();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<ProjectMemberFormErrors>({});
+  const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
+  const [userSelectOpen, setUserSelectOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const { users, isLoading: isUsersLoading } = useUsers({
+    page: 1,
+    page_size: 20,
+    q: userSearch.trim() || undefined,
+    is_active: true,
+  });
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -65,7 +77,11 @@ export function ProjectMemberForm({
 
     setErrors({});
     await onSubmit(result.data)
-      .then(() => setValues(initialValues))
+      .then(() => {
+        setValues(initialValues);
+        setSelectedUser(null);
+        setUserSearch("");
+      })
       .catch(() => undefined);
   };
 
@@ -77,18 +93,28 @@ export function ProjectMemberForm({
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
+  const handleUserSelect = (user: UserListItem) => {
+    setSelectedUser(user);
+    updateValue("userId", user.id);
+    setUserSelectOpen(false);
+  };
+
   return (
     <form className="max-w-2xl" onSubmit={handleSubmit}>
       <FieldGroup>
         <div className="grid gap-4 md:grid-cols-[1fr_220px]">
           <Field data-invalid={errors.userId ? true : undefined}>
-            <FieldLabel htmlFor={userIdInputId}>ユーザーID</FieldLabel>
-            <Input
-              id={userIdInputId}
-              inputMode="numeric"
-              value={values.userId}
-              onChange={(event) => updateValue("userId", event.target.value)}
-              aria-invalid={Boolean(errors.userId)}
+            <FieldLabel>ユーザー</FieldLabel>
+            <ProjectMemberUserSelect
+              users={users}
+              selectedUser={selectedUser}
+              open={userSelectOpen}
+              search={userSearch}
+              isLoading={isUsersLoading}
+              excludedUserIds={excludedUserIds}
+              onOpenChange={setUserSelectOpen}
+              onSearchChange={setUserSearch}
+              onSelect={handleUserSelect}
             />
             {errors.userId ? <FieldError>{errors.userId}</FieldError> : null}
           </Field>

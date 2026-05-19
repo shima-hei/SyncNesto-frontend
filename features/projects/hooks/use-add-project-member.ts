@@ -50,7 +50,7 @@ const toProjectMemberCreate = (
   values: ProjectMemberFormValues
 ): ProjectMemberCreate => {
   return {
-    user_id: Number(values.userId),
+    user_id: values.userId ?? 0,
     role_key: values.roleKey,
   };
 };

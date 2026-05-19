@@ -1,5 +1,5 @@
 export type ProjectMemberFormValues = {
-  userId: string;
+  userId: number | null;
   roleKey: string;
 };
 
