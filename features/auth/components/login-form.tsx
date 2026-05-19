@@ -59,7 +59,11 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
+          <form
+            className="p-6 md:p-8"
+            onSubmit={handleSubmit}
+            autoComplete="on"
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">ログイン</h1>
@@ -69,8 +73,9 @@ export function LoginForm({
                 <FieldLabel htmlFor={emailId}>メールアドレス</FieldLabel>
                 <Input
                   id={emailId}
+                  name="email"
                   type="email"
-                  autoComplete="email"
+                  autoComplete="username"
                   placeholder="name@example.com"
                   value={values.email}
                   onChange={(event) => updateValue("email", event.target.value)}
@@ -90,6 +95,7 @@ export function LoginForm({
                 <FieldLabel htmlFor={passwordId}>パスワード</FieldLabel>
                 <Input
                   id={passwordId}
+                  name="password"
                   type="password"
                   autoComplete="current-password"
                   value={values.password}
