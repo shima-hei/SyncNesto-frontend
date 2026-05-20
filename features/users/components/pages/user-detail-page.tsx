@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
-import { getUserFormValues } from "../constants/user-form";
-import { useUpdateUser } from "../hooks/use-update-user";
-import { useUser } from "../hooks/use-user";
-import { UserForm } from "./user-form";
-import { UserSystemRoles } from "./user-system-roles";
+import { getUserFormValues } from "../../constants/user-form";
+import { useUpdateUser } from "../../hooks/use-update-user";
+import { useUser } from "../../hooks/use-user";
+import { UserForm } from "../forms/user-form";
+import { UserSystemRoles } from "../shared/user-system-roles";
 
 type UserDetailPageProps = {
   userId: number;

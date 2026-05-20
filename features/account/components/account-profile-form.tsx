@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
@@ -53,7 +52,9 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
       })
     : [];
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+  ) => {
     event.preventDefault();
 
     const result = accountProfileSchema.safeParse(values);

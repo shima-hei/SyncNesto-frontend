@@ -1,4 +1,4 @@
-import { ProjectFeaturePlaceholderPage } from "@/features/projects/components/project-feature-placeholder-page";
+import { ProjectFeaturePlaceholderPage } from "@/features/projects/components/joined/project-feature-placeholder-page";
 
 export default function Page() {
   return (

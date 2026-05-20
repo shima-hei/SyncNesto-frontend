@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { ProjectMembersPage } from "@/features/projects/components/project-members-page";
+import { ProjectMembersPage } from "@/features/projects/components/management/project-members-page";
 import { requireSystemAdmin } from "@/lib/auth/server";
 
 type PageProps = {

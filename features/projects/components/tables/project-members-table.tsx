@@ -31,7 +31,7 @@ import type {
 import {
   PROJECT_ROLE_OPTIONS,
   getProjectRoleLabel,
-} from "../constants/project-roles";
+} from "../../constants/project-roles";
 
 type ProjectMembersTableProps = {
   members: ProjectMemberRead[];
@@ -165,7 +165,9 @@ function ProjectMemberRow({
             size="sm"
             variant="outline"
             disabled={!isChanged || isUpdatePending}
-            onClick={() => onUpdateRole(member, roleKey)}
+            onClick={() => {
+              onUpdateRole(member, roleKey).catch(() => undefined);
+            }}
           >
             {isUpdatePending ? <Spinner data-icon="inline-start" /> : null}
             更新

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { UserDetailPage } from "@/features/users/components/user-detail-page";
+import { UserDetailPage } from "@/features/users/components/pages/user-detail-page";
 import { requireSystemAdmin } from "@/lib/auth/server";
 
 type PageProps = {

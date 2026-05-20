@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { useProject } from "../hooks/use-project";
-import { ProjectStatusBadge } from "./project-status-badge";
-import { formatDate, formatDateTime } from "./projects-table";
+import { useProject } from "../../hooks/use-project";
+import { ProjectStatusBadge } from "../shared/project-status-badge";
+import { formatDate, formatDateTime } from "../tables/projects-table";
 
 type JoinedProjectDetailPageProps = {
   projectId: number;

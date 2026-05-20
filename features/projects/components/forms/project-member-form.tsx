@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -22,13 +21,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { useUsers } from "@/features/users/hooks/use-users";
 import type { UserListItem } from "@/lib/api/generated/model";
 
-import { PROJECT_ROLE_OPTIONS } from "../constants/project-roles";
-import { projectMemberSchema } from "../schemas/project-schema";
+import { PROJECT_ROLE_OPTIONS } from "../../constants/project-roles";
+import { projectMemberSchema } from "../../schemas/project-schema";
 import type {
   ProjectMemberFormErrors,
   ProjectMemberFormValues,
-} from "../types/project-member-form";
-import { ProjectMemberUserSelect } from "./project-member-user-select";
+} from "../../types/project-member-form";
+import { ProjectMemberUserSelect } from "../shared/project-member-user-select";
 
 type ProjectMemberFormProps = {
   excludedUserIds: readonly number[];
@@ -60,7 +59,9 @@ export function ProjectMemberForm({
     is_active: true,
   });
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+  ) => {
     event.preventDefault();
 
     const result = projectMemberSchema.safeParse(values);

@@ -12,7 +12,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import type { UserListItem } from "@/lib/api/generated/model";
 import { useRouter } from "next/navigation";
 
-import { UserSystemRoles } from "./user-system-roles";
+import { UserSystemRoles } from "../shared/user-system-roles";
 
 type UsersTableProps = {
   users: UserListItem[];

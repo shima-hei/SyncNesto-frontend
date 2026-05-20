@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
@@ -23,9 +22,12 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { getConflictFields } from "@/lib/api/conflict";
 
-import { PROJECT_STATUS_OPTIONS } from "../constants/project-form";
-import { projectSchema } from "../schemas/project-schema";
-import type { ProjectFormErrors, ProjectFormValues } from "../types/project-form";
+import { PROJECT_STATUS_OPTIONS } from "../../constants/project-form";
+import { projectSchema } from "../../schemas/project-schema";
+import type {
+  ProjectFormErrors,
+  ProjectFormValues,
+} from "../../types/project-form";
 
 type ProjectFormProps = {
   mode: "create" | "update";
@@ -56,7 +58,9 @@ export function ProjectForm({
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<ProjectFormErrors>({});
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+  ) => {
     event.preventDefault();
 
     const result = projectSchema.safeParse(values);

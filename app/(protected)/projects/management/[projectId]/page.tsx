@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { ProjectDetailPage } from "@/features/projects/components/project-detail-page";
+import { ProjectDetailPage } from "@/features/projects/components/management/project-detail-page";
 import { requireSystemAdmin } from "@/lib/auth/server";
 
 type PageProps = {

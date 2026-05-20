@@ -1,8 +1,8 @@
 "use client";
 
-import { userInitialValues } from "../constants/user-form";
-import { useCreateUser } from "../hooks/use-create-user";
-import { UserForm } from "./user-form";
+import { userInitialValues } from "../../constants/user-form";
+import { useCreateUser } from "../../hooks/use-create-user";
+import { UserForm } from "../forms/user-form";
 
 export function UserCreatePage() {
   const { createUser, isPending, error } = useCreateUser();
@@ -25,4 +25,3 @@ export function UserCreatePage() {
     </div>
   );
 }
-

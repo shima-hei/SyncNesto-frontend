@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 
-import { UserSystemRoles } from "@/features/users/components/user-system-roles";
+import { UserSystemRoles } from "@/features/users/components/shared/user-system-roles";
 
 type AccountReadonlyInfoProps = {
   user: CurrentUserRead;
@@ -39,4 +39,3 @@ function ReadonlyItem({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

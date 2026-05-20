@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { JoinedProjectDetailPage } from "@/features/projects/components/joined-project-detail-page";
+import { JoinedProjectDetailPage } from "@/features/projects/components/joined/joined-project-detail-page";
 
 type PageProps = {
   params: Promise<{

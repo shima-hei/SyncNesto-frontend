@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
@@ -20,8 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { getConflictFields } from "@/lib/api/conflict";
 
-import { userCreateSchema, userUpdateSchema } from "../schemas/user-schema";
-import type { UserFormErrors, UserFormValues } from "../types/user-form";
+import { userCreateSchema, userUpdateSchema } from "../../schemas/user-schema";
+import type { UserFormErrors, UserFormValues } from "../../types/user-form";
 
 type UserFormProps = {
   mode: "create" | "update";
@@ -53,7 +52,9 @@ export function UserForm({
   const [errors, setErrors] = useState<UserFormErrors>({});
   const schema = mode === "create" ? userCreateSchema : userUpdateSchema;
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+  ) => {
     event.preventDefault();
 
     const result = schema.safeParse(values);

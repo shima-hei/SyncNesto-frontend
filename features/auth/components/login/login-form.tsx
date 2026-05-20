@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,10 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
-import { loginInitialValues } from "../constants/login-form";
-import { useLogin } from "../hooks/use-login";
-import { loginSchema } from "../schemas/login-schema";
-import type { LoginFormErrors, LoginFormValues } from "../types/login";
+import { loginInitialValues } from "../../constants/login-form";
+import { useLogin } from "../../hooks/use-login";
+import { loginSchema } from "../../schemas/login-schema";
+import type { LoginFormErrors, LoginFormValues } from "../../types/login";
 
 export function LoginForm({
   className,
@@ -31,7 +30,9 @@ export function LoginForm({
   const [values, setValues] = useState<LoginFormValues>(loginInitialValues);
   const [errors, setErrors] = useState<LoginFormErrors>({});
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+  ) => {
     event.preventDefault();
 
     const result = loginSchema.safeParse(values);

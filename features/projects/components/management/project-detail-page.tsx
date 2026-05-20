@@ -8,12 +8,12 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { getProjectFormValues } from "../constants/project-form";
-import { useDeleteProject } from "../hooks/use-delete-project";
-import { useProject } from "../hooks/use-project";
-import { useUpdateProject } from "../hooks/use-update-project";
-import { ProjectForm } from "./project-form";
-import { ProjectStatusBadge } from "./project-status-badge";
+import { getProjectFormValues } from "../../constants/project-form";
+import { useDeleteProject } from "../../hooks/use-delete-project";
+import { useProject } from "../../hooks/use-project";
+import { useUpdateProject } from "../../hooks/use-update-project";
+import { ProjectForm } from "../forms/project-form";
+import { ProjectStatusBadge } from "../shared/project-status-badge";
 
 type ProjectDetailPageProps = {
   projectId: number;

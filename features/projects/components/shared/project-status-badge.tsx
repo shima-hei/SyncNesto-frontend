@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 
-import { getProjectStatusLabel } from "../constants/project-form";
+import { getProjectStatusLabel } from "../../constants/project-form";
 
 type ProjectStatusBadgeProps = {
   status?: string | null;

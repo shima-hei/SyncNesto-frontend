@@ -22,6 +22,9 @@ type ConflictResolutionDialogProps<TValues extends Record<string, unknown>> = {
   localValues: TValues;
   currentValues: TValues;
   fieldLabels: Partial<Record<keyof TValues & string, string>>;
+  valueFormatters?: Partial<
+    Record<keyof TValues & string, (value: unknown) => string>
+  >;
   isPending?: boolean;
   onOpenChange: (open: boolean) => void;
   onResolve: (values: TValues) => Promise<unknown> | unknown;
@@ -33,6 +36,7 @@ export function ConflictResolutionDialog<TValues extends Record<string, unknown>
   localValues,
   currentValues,
   fieldLabels,
+  valueFormatters,
   isPending = false,
   onOpenChange,
   onResolve,
@@ -57,7 +61,7 @@ export function ConflictResolutionDialog<TValues extends Record<string, unknown>
   };
 
   const handleResolve = async () => {
-    await onResolve(resolvedValues);
+    await Promise.resolve(onResolve(resolvedValues)).catch(() => undefined);
   };
 
   return (
@@ -104,15 +108,21 @@ export function ConflictResolutionDialog<TValues extends Record<string, unknown>
                         label="自分の入力"
                         selected={choice === "local"}
                         value={field.localValue}
+                        formatter={valueFormatters?.[field.key]}
                       />
                       <ConflictValue
                         label="サーバー最新値"
                         selected={choice === "current"}
                         value={field.currentValue}
+                        formatter={valueFormatters?.[field.key]}
                       />
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      更新前: {formatConflictValue(field.originalValue)}
+                      更新前:{" "}
+                      {formatConflictValue(
+                        field.originalValue,
+                        valueFormatters?.[field.key]
+                      )}
                     </div>
                   </div>
                 </div>
@@ -147,10 +157,12 @@ function ConflictValue({
   label,
   value,
   selected,
+  formatter,
 }: {
   label: string;
   value: unknown;
   selected: boolean;
+  formatter?: (value: unknown) => string;
 }) {
   return (
     <div
@@ -162,7 +174,7 @@ function ConflictValue({
     >
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 break-words text-sm">
-        {formatConflictValue(value)}
+        {formatConflictValue(value, formatter)}
       </div>
     </div>
   );
@@ -200,7 +212,14 @@ const isConflictChoice = (value: string): value is ConflictChoice => {
   return value === "local" || value === "current";
 };
 
-const formatConflictValue = (value: unknown) => {
+const formatConflictValue = (
+  value: unknown,
+  formatter?: (value: unknown) => string
+) => {
+  if (formatter) {
+    return formatter(value);
+  }
+
   if (value === null || value === undefined || value === "") {
     return "-";
   }

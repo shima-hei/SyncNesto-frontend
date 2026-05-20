@@ -1,8 +1,8 @@
 "use client";
 
-import { projectInitialValues } from "../constants/project-form";
-import { useCreateProject } from "../hooks/use-create-project";
-import { ProjectForm } from "./project-form";
+import { projectInitialValues } from "../../constants/project-form";
+import { useCreateProject } from "../../hooks/use-create-project";
+import { ProjectForm } from "../forms/project-form";
 
 export function ProjectCreatePage() {
   const { createProject, isPending, error } = useCreateProject();

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import type { ProjectListItem } from "@/lib/api/generated/model";
 
-import { ProjectStatusBadge } from "./project-status-badge";
+import { ProjectStatusBadge } from "../shared/project-status-badge";
 
 type ProjectsTableProps = {
   projects: ProjectListItem[];

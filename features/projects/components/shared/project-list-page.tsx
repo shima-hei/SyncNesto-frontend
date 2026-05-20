@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
+import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,49 +15,64 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { useUsers } from "../hooks/use-users";
-import { UsersTable } from "./users-table";
+import { PROJECT_STATUS_OPTIONS } from "../../constants/project-form";
+import { useProjects } from "../../hooks/use-projects";
+import { ProjectsTable } from "../tables/projects-table";
 
 const PAGE_SIZE = 20;
+const ALL_STATUSES = "all";
 
-export function UsersPage() {
+type ProjectListPageProps = {
+  title: string;
+  description: string;
+  detailBasePath: string;
+  createHref?: string;
+};
+
+export function ProjectListPage({
+  title,
+  description,
+  detailBasePath,
+  createHref,
+}: ProjectListPageProps) {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [q, setQ] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
-  const isActive = getIsActiveParam(activeFilter);
-  const { users, total, isLoading, isFetching } = useUsers({
+  const [status, setStatus] = useState(ALL_STATUSES);
+  const { projects, total, isLoading, isFetching } = useProjects({
     page,
     page_size: PAGE_SIZE,
     q: q || undefined,
-    is_active: isActive,
+    status: status === ALL_STATUSES ? undefined : status,
   });
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSearch = (
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+  ) => {
     event.preventDefault();
     setPage(1);
     setQ(searchInput.trim());
   };
 
-  const handleActiveFilterChange = (value: string) => {
+  const handleStatusChange = (value: string) => {
     setPage(1);
-    setActiveFilter(value);
+    setStatus(value);
   };
 
   return (
     <div className="flex flex-col gap-4 p-4 lg:p-6">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">ユーザー一覧</h2>
-        <p className="text-sm text-muted-foreground">
-          システムに登録されているユーザーを管理します。
-        </p>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
-      <div>
-        <Button asChild>
-          <Link href="/system/users/new">ユーザー登録</Link>
-        </Button>
-      </div>
+      {createHref ? (
+        <div>
+          <Button asChild>
+            <Link href={createHref}>プロジェクト登録</Link>
+          </Button>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <form
           className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl"
@@ -66,30 +81,37 @@ export function UsersPage() {
           <Input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="名前、メール、部署、役職で検索"
+            placeholder="コード、名称、説明で検索"
           />
           <Button type="submit" variant="outline">
             <SearchIcon data-icon="inline-start" />
             検索
           </Button>
         </form>
-        <Select value={activeFilter} onValueChange={handleActiveFilterChange}>
-          <SelectTrigger className="w-full sm:w-36">
-            <SelectValue placeholder="状態" />
+        <Select value={status} onValueChange={handleStatusChange}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="ステータス" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="all">すべて</SelectItem>
-              <SelectItem value="active">有効</SelectItem>
-              <SelectItem value="inactive">無効</SelectItem>
+              <SelectItem value={ALL_STATUSES}>すべて</SelectItem>
+              {PROJECT_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectGroup>
           </SelectContent>
         </Select>
       </div>
-      <UsersTable users={users} isLoading={isLoading} />
+      <ProjectsTable
+        projects={projects}
+        isLoading={isLoading}
+        detailBasePath={detailBasePath}
+      />
       <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>
-          {total}件中 {users.length}件を表示
+          {total}件中 {projects.length}件を表示
           {isFetching && !isLoading ? "・更新中" : ""}
         </span>
         <div className="flex items-center gap-2">
@@ -123,15 +145,3 @@ export function UsersPage() {
     </div>
   );
 }
-
-const getIsActiveParam = (value: string) => {
-  if (value === "active") {
-    return true;
-  }
-
-  if (value === "inactive") {
-    return false;
-  }
-
-  return undefined;
-};
