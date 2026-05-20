@@ -56,25 +56,23 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
         </div>
       </div>
 
-      {conflictCurrent ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          他の更新と競合しました。最新の内容を確認してから再度更新してください。
-          <button
-            type="button"
-            className="ml-2 underline underline-offset-4"
-            onClick={resetConflict}
-          >
-            閉じる
-          </button>
-        </div>
-      ) : null}
-
       <UserForm
         key={user.version}
         mode="update"
         initialValues={getUserFormValues(user)}
         isPending={isPending}
         error={updateError}
+        conflictValues={
+          conflictCurrent ? getUserFormValues(conflictCurrent) : null
+        }
+        onCloseConflict={resetConflict}
+        onResolveConflict={(values) => {
+          if (!conflictCurrent) {
+            return Promise.resolve();
+          }
+
+          return updateUser(values, conflictCurrent.version);
+        }}
         onSubmit={(values) => updateUser(values, user.version)}
       />
     </div>

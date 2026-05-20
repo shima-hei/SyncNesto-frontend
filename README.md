@@ -79,10 +79,15 @@ npm run api:generate
 - `app/`: Next.js App Router のルーティング
 - `components/ui/`: shadcn/ui が生成する低レベルUIコンポーネント
 - `components/shared/`: アプリ共通コンポーネント
+- `docs/`: 実装状況、設計メモ、タスク整理
 - `features/`: 機能単位のコンポーネント、hooks、schemas、types
 - `lib/api/generated/`: Orvalの自動生成コード
 - `lib/api/`: APIクライアント、エラー、競合処理
 - `lib/auth/`: Server Guardなどの認証処理
+
+## タスク整理
+
+現在の実装状況と次タスクは [docs/frontend-tasks.md](docs/frontend-tasks.md) に整理しています。
 
 ## ライセンス
 

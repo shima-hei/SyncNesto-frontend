@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
+import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { getConflictFields } from "@/lib/api/conflict";
 
 import { userCreateSchema, userUpdateSchema } from "../schemas/user-schema";
 import type { UserFormErrors, UserFormValues } from "../types/user-form";
@@ -26,6 +28,9 @@ type UserFormProps = {
   initialValues: UserFormValues;
   isPending: boolean;
   error?: Error | null;
+  conflictValues?: UserFormValues | null;
+  onCloseConflict?: () => void;
+  onResolveConflict?: (values: UserFormValues) => Promise<unknown>;
   onSubmit: (values: UserFormValues) => Promise<unknown>;
 };
 
@@ -34,6 +39,9 @@ export function UserForm({
   initialValues,
   isPending,
   error,
+  conflictValues,
+  onCloseConflict,
+  onResolveConflict,
   onSubmit,
 }: UserFormProps) {
   const emailId = useId();
@@ -72,21 +80,29 @@ export function UserForm({
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
+  const conflictFields = conflictValues
+    ? getConflictFields({
+        original: initialValues as Record<string, unknown>,
+        local: values as Record<string, unknown>,
+        current: conflictValues as Record<string, unknown>,
+      })
+    : [];
 
   return (
-    <form className="max-w-2xl" onSubmit={handleSubmit}>
-      <FieldGroup>
-        <Field data-invalid={errors.email ? true : undefined}>
-          <FieldLabel htmlFor={emailId}>メールアドレス</FieldLabel>
-          <Input
-            id={emailId}
-            type="email"
-            value={values.email}
-            onChange={(event) => updateValue("email", event.target.value)}
-            aria-invalid={Boolean(errors.email)}
-          />
-          {errors.email ? <FieldError>{errors.email}</FieldError> : null}
-        </Field>
+    <>
+      <form className="max-w-2xl" onSubmit={handleSubmit}>
+        <FieldGroup>
+          <Field data-invalid={errors.email ? true : undefined}>
+            <FieldLabel htmlFor={emailId}>メールアドレス</FieldLabel>
+            <Input
+              id={emailId}
+              type="email"
+              value={values.email}
+              onChange={(event) => updateValue("email", event.target.value)}
+              aria-invalid={Boolean(errors.email)}
+            />
+            {errors.email ? <FieldError>{errors.email}</FieldError> : null}
+          </Field>
 
         <Field data-invalid={errors.name ? true : undefined}>
           <FieldLabel htmlFor={nameId}>名前</FieldLabel>
@@ -168,15 +184,42 @@ export function UserForm({
           </Field>
         </FieldSet>
 
-        {error ? <FieldError>{error.message}</FieldError> : null}
+          {error ? <FieldError>{error.message}</FieldError> : null}
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? <Spinner data-icon="inline-start" /> : null}
-            {mode === "create" ? "登録" : "更新"}
-          </Button>
-        </Field>
-      </FieldGroup>
-    </form>
+          <Field>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? <Spinner data-icon="inline-start" /> : null}
+              {mode === "create" ? "登録" : "更新"}
+            </Button>
+          </Field>
+        </FieldGroup>
+      </form>
+
+      {conflictValues && onCloseConflict && onResolveConflict ? (
+        <ConflictResolutionDialog
+          open
+          fields={conflictFields}
+          localValues={values}
+          currentValues={conflictValues}
+          fieldLabels={USER_CONFLICT_FIELD_LABELS}
+          isPending={isPending}
+          onOpenChange={(open) => !open && onCloseConflict()}
+          onResolve={async (resolvedValues) => {
+            setValues(resolvedValues);
+            await onResolveConflict(resolvedValues);
+          }}
+        />
+      ) : null}
+    </>
   );
 }
+
+const USER_CONFLICT_FIELD_LABELS = {
+  email: "メールアドレス",
+  name: "名前",
+  password: "パスワード",
+  department: "部署",
+  position: "役職",
+  isActive: "有効ユーザー",
+  isSystemAdmin: "システム管理者",
+} satisfies Partial<Record<keyof UserFormValues, string>>;

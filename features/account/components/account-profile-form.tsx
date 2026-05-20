@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
+import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -13,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useUpdateCurrentUser } from "@/features/auth/hooks/use-update-current-user";
+import { getConflictFields } from "@/lib/api/conflict";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 import { getAccountProfileFormValues } from "../constants/account-form";
@@ -40,6 +42,16 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
     getAccountProfileFormValues(user)
   );
   const [errors, setErrors] = useState<AccountProfileFormErrors>({});
+  const conflictValues = conflictCurrent
+    ? getAccountProfileFormValues(conflictCurrent)
+    : null;
+  const conflictFields = conflictValues
+    ? getConflictFields({
+        original: getAccountProfileFormValues(user) as Record<string, unknown>,
+        local: values as Record<string, unknown>,
+        current: conflictValues as Record<string, unknown>,
+      })
+    : [];
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -99,19 +111,6 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
           {errors.password ? <FieldError>{errors.password}</FieldError> : null}
         </Field>
 
-        {conflictCurrent ? (
-          <FieldError>
-            他の更新と競合しました。最新の内容を確認してから再度更新してください。
-            <button
-              type="button"
-              className="ml-2 underline underline-offset-4"
-              onClick={resetConflict}
-            >
-              閉じる
-            </button>
-          </FieldError>
-        ) : null}
-
         {error ? <FieldError>{error.message}</FieldError> : null}
 
         <Field>
@@ -121,7 +120,35 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
           </Button>
         </Field>
       </FieldGroup>
+
+      {conflictValues ? (
+        <ConflictResolutionDialog
+          open
+          fields={conflictFields}
+          localValues={values}
+          currentValues={conflictValues}
+          fieldLabels={ACCOUNT_PROFILE_CONFLICT_FIELD_LABELS}
+          isPending={isPending}
+          onOpenChange={(open) => !open && resetConflict()}
+          onResolve={async (resolvedValues) => {
+            if (!conflictCurrent) {
+              return;
+            }
+
+            setValues(resolvedValues);
+            await updateCurrentUser({
+              version: conflictCurrent.version,
+              name: resolvedValues.name,
+              password: resolvedValues.password || null,
+            });
+          }}
+        />
+      ) : null}
     </form>
   );
 }
 
+const ACCOUNT_PROFILE_CONFLICT_FIELD_LABELS = {
+  name: "名前",
+  password: "パスワード",
+} satisfies Partial<Record<keyof AccountProfileFormValues, string>>;

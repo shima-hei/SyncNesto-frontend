@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
+import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { getConflictFields } from "@/lib/api/conflict";
 
 import { PROJECT_STATUS_OPTIONS } from "../constants/project-form";
 import { projectSchema } from "../schemas/project-schema";
@@ -30,6 +32,9 @@ type ProjectFormProps = {
   initialValues: ProjectFormValues;
   isPending: boolean;
   error?: Error | null;
+  conflictValues?: ProjectFormValues | null;
+  onCloseConflict?: () => void;
+  onResolveConflict?: (values: ProjectFormValues) => Promise<unknown>;
   onSubmit: (values: ProjectFormValues) => Promise<unknown>;
 };
 
@@ -38,6 +43,9 @@ export function ProjectForm({
   initialValues,
   isPending,
   error,
+  conflictValues,
+  onCloseConflict,
+  onResolveConflict,
   onSubmit,
 }: ProjectFormProps) {
   const projectCodeId = useId();
@@ -75,24 +83,32 @@ export function ProjectForm({
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
+  const conflictFields = conflictValues
+    ? getConflictFields({
+        original: initialValues as Record<string, unknown>,
+        local: values as Record<string, unknown>,
+        current: conflictValues as Record<string, unknown>,
+      })
+    : [];
 
   return (
-    <form className="max-w-2xl" onSubmit={handleSubmit}>
-      <FieldGroup>
-        <Field data-invalid={errors.projectCode ? true : undefined}>
-          <FieldLabel htmlFor={projectCodeId}>プロジェクトコード</FieldLabel>
-          <Input
-            id={projectCodeId}
-            value={values.projectCode}
-            onChange={(event) =>
-              updateValue("projectCode", event.target.value)
-            }
-            aria-invalid={Boolean(errors.projectCode)}
-          />
-          {errors.projectCode ? (
-            <FieldError>{errors.projectCode}</FieldError>
-          ) : null}
-        </Field>
+    <>
+      <form className="max-w-2xl" onSubmit={handleSubmit}>
+        <FieldGroup>
+          <Field data-invalid={errors.projectCode ? true : undefined}>
+            <FieldLabel htmlFor={projectCodeId}>プロジェクトコード</FieldLabel>
+            <Input
+              id={projectCodeId}
+              value={values.projectCode}
+              onChange={(event) =>
+                updateValue("projectCode", event.target.value)
+              }
+              aria-invalid={Boolean(errors.projectCode)}
+            />
+            {errors.projectCode ? (
+              <FieldError>{errors.projectCode}</FieldError>
+            ) : null}
+          </Field>
 
         <Field data-invalid={errors.name ? true : undefined}>
           <FieldLabel htmlFor={nameId}>プロジェクト名</FieldLabel>
@@ -157,15 +173,41 @@ export function ProjectForm({
           </Field>
         </div>
 
-        {error ? <FieldError>{error.message}</FieldError> : null}
+          {error ? <FieldError>{error.message}</FieldError> : null}
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? <Spinner data-icon="inline-start" /> : null}
-            {mode === "create" ? "登録" : "更新"}
-          </Button>
-        </Field>
-      </FieldGroup>
-    </form>
+          <Field>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? <Spinner data-icon="inline-start" /> : null}
+              {mode === "create" ? "登録" : "更新"}
+            </Button>
+          </Field>
+        </FieldGroup>
+      </form>
+
+      {conflictValues && onCloseConflict && onResolveConflict ? (
+        <ConflictResolutionDialog
+          open
+          fields={conflictFields}
+          localValues={values}
+          currentValues={conflictValues}
+          fieldLabels={PROJECT_CONFLICT_FIELD_LABELS}
+          isPending={isPending}
+          onOpenChange={(open) => !open && onCloseConflict()}
+          onResolve={async (resolvedValues) => {
+            setValues(resolvedValues);
+            await onResolveConflict(resolvedValues);
+          }}
+        />
+      ) : null}
+    </>
   );
 }
+
+const PROJECT_CONFLICT_FIELD_LABELS = {
+  projectCode: "プロジェクトコード",
+  name: "プロジェクト名",
+  description: "説明",
+  status: "ステータス",
+  startDate: "開始日",
+  endDate: "終了日",
+} satisfies Partial<Record<keyof ProjectFormValues, string>>;
