@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Cropper, { type Area, type Point } from "react-easy-crop";
 import { ImageIcon } from "lucide-react";
 
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +19,7 @@ import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 import { useUpdateCurrentUserAvatar } from "@/features/auth/hooks/use-update-current-user-avatar";
 
-import { createCroppedImageBlob } from "../utils/crop-image";
+import { createCroppedImageBlob } from "../../utils/crop-image";
 
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024;

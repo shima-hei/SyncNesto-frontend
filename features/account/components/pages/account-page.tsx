@@ -3,9 +3,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
-import { AccountAvatarSection } from "./account-avatar-section";
-import { AccountProfileForm } from "./account-profile-form";
-import { AccountReadonlyInfo } from "./account-readonly-info";
+import { AccountAvatarSection } from "../avatar/account-avatar-section";
+import { AccountProfileForm } from "../forms/account-profile-form";
+import { AccountReadonlyInfo } from "../shared/account-readonly-info";
 
 export function AccountPage() {
   const { user, isLoading } = useAuth();

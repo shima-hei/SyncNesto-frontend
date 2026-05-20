@@ -8,8 +8,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   mainNavigation,
   secondaryNavigation,
-} from "../constants/navigation";
-import { findNavigationItemByPathname } from "../utils/navigation";
+} from "../../constants/navigation";
+import { findNavigationItemByPathname } from "../../utils/navigation";
 
 export function SiteHeader() {
   const pathname = usePathname();

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
+import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -16,12 +16,12 @@ import { useUpdateCurrentUser } from "@/features/auth/hooks/use-update-current-u
 import { getConflictFields } from "@/lib/api/conflict";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 
-import { getAccountProfileFormValues } from "../constants/account-form";
-import { accountProfileSchema } from "../schemas/account-schema";
+import { getAccountProfileFormValues } from "../../constants/account-form";
+import { accountProfileSchema } from "../../schemas/account-schema";
 import type {
   AccountProfileFormErrors,
   AccountProfileFormValues,
-} from "../types/account-form";
+} from "../../types/account-form";
 
 type AccountProfileFormProps = {
   user: CurrentUserRead;

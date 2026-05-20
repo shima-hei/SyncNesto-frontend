@@ -1,4 +1,4 @@
-import { ErrorPage } from "@/components/shared/error-page";
+import { ErrorPage } from "@/components/shared/feedback/error-page";
 
 export default function Page() {
   return (

@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { UserAvatar } from "@/components/shared/display/user-avatar";
 import type { UserListItem } from "@/lib/api/generated/model";
 import { useRouter } from "next/navigation";
 

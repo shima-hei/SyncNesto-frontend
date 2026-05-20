@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
+import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUsers } from "@/features/users/hooks/use-users";
 import { getConflictFields } from "@/lib/api/conflict";

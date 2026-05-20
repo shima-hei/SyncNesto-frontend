@@ -15,10 +15,10 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
-import { mainNavigation, secondaryNavigation } from "../constants/navigation";
-import { getVisibleNavigationItems } from "../utils/navigation";
-import { SidebarNav } from "./sidebar-nav";
-import { SidebarUserMenu } from "./sidebar-user-menu";
+import { mainNavigation, secondaryNavigation } from "../../constants/navigation";
+import { getVisibleNavigationItems } from "../../utils/navigation";
+import { SidebarNav } from "../navigation/sidebar-nav";
+import { SidebarUserMenu } from "../user/sidebar-user-menu";
 
 export function AppSidebar({
   ...props

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { ConflictResolutionDialog } from "@/components/shared/conflict-resolution-dialog";
+import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Field,

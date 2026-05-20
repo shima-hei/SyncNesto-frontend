@@ -1,4 +1,4 @@
-import { AccountPage } from "@/features/account/components/account-page";
+import { AccountPage } from "@/features/account/components/pages/account-page";
 
 export default function Page() {
   return <AccountPage />;

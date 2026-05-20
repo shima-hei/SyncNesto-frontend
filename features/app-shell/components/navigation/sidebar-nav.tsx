@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-import type { AppNavigationItem } from "../constants/navigation";
-import { isNavigationItemActive } from "../utils/navigation";
+import type { AppNavigationItem } from "../../constants/navigation";
+import { isNavigationItemActive } from "../../utils/navigation";
 
 export function SidebarNav({
   items,

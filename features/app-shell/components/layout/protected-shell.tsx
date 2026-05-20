@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { AppSidebar } from "./app-sidebar";
-import { SiteHeader } from "./site-header";
+import { SiteHeader } from "../header/site-header";
 
 export function ProtectedShell({ children }: { children: ReactNode }) {
   return (

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CameraIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { UserAvatar } from "@/components/shared/display/user-avatar";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 import { AvatarUploadDialog } from "./avatar-upload-dialog";
@@ -48,4 +48,3 @@ export function AccountAvatarSection({ user }: AccountAvatarSectionProps) {
     </>
   );
 }
-

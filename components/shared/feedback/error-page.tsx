@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
-import { BackButton } from "./back-button";
+import { BackButton } from "../navigation/back-button";
 
 type ErrorPageProps = {
   statusCode: string;

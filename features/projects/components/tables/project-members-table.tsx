@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Trash2Icon } from "lucide-react";
 
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,

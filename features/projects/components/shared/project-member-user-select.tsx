@@ -2,7 +2,7 @@
 
 import { ChevronsUpDownIcon } from "lucide-react";
 
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { UserAvatar } from "@/components/shared/display/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Command,

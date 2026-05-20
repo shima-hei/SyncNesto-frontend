@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { UserAvatar } from "@/components/shared/display/user-avatar";
 
 import { getUserFormValues } from "../../constants/user-form";
 import { useUpdateUser } from "../../hooks/use-update-user";

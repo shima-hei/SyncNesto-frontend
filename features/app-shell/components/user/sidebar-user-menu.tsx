@@ -7,7 +7,7 @@ import {
   LogOutIcon,
 } from "lucide-react";
 
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { UserAvatar } from "@/components/shared/display/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,

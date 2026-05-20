@@ -27,6 +27,36 @@ features/projects/components/
 └─ shared/     プロジェクト feature 内の共通部品
 ```
 
+`features/account` はアカウント画面の責務ごとに分類します。
+
+```text
+features/account/components/
+├─ pages/      アカウント画面
+├─ forms/      プロフィール更新フォーム
+├─ avatar/     アバター表示、アップロード、トリミング
+└─ shared/     アカウント feature 内の共通表示
+```
+
+`features/app-shell` はアプリ全体の枠組みを責務ごとに分類します。
+
+```text
+features/app-shell/components/
+├─ layout/     認証済みレイアウト、サイドバー本体
+├─ navigation/ サイドナビ
+├─ header/     ヘッダー
+└─ user/       サイドバー下部のユーザーメニュー
+```
+
+`components/shared` はアプリ全体で使う共通部品を用途別に分類します。
+
+```text
+components/shared/
+├─ dialogs/    確認、競合解決などのダイアログ
+├─ display/    アバターなどの表示部品
+├─ feedback/   エラー画面などのフィードバック表示
+└─ navigation/ 戻るボタンなどのナビゲーション補助
+```
+
 ### 基盤
 
 - Next.js App Router 構成
