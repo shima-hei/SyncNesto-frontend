@@ -14,7 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useProject } from "../../hooks/use-project";
-import { ProjectStatusBadge } from "../shared/project-status-badge";
 import { formatDate, formatDateTime } from "../tables/projects-table";
 
 type JoinedProjectDetailPageProps = {
@@ -41,10 +40,6 @@ export function JoinedProjectDetailPage({
   return (
     <div className="flex flex-col gap-6 p-4 lg:p-6">
       <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold">{project.name}</h2>
-          <ProjectStatusBadge status={project.status} />
-        </div>
         <p className="text-sm text-muted-foreground">{project.project_code}</p>
       </div>
 

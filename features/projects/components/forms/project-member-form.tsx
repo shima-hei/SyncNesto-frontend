@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { UserSelect } from "@/components/shared/forms/user-select";
 import { useUsers } from "@/features/users/hooks/use-users";
 import type { UserListItem } from "@/lib/api/generated/model";
 
@@ -27,7 +28,6 @@ import type {
   ProjectMemberFormErrors,
   ProjectMemberFormValues,
 } from "../../types/project-member-form";
-import { ProjectMemberUserSelect } from "../shared/project-member-user-select";
 
 type ProjectMemberFormProps = {
   excludedUserIds: readonly number[];
@@ -106,7 +106,7 @@ export function ProjectMemberForm({
         <div className="grid gap-4 md:grid-cols-[1fr_220px]">
           <Field data-invalid={errors.userId ? true : undefined}>
             <FieldLabel>ユーザー</FieldLabel>
-            <ProjectMemberUserSelect
+            <UserSelect
               users={users}
               selectedUser={selectedUser}
               open={userSelectOpen}

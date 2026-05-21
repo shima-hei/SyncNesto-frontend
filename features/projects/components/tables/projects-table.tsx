@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
-import { Skeleton } from "@/components/ui/skeleton";
+import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
+import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
+import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
 import {
   Table,
   TableBody,
@@ -26,10 +26,8 @@ export function ProjectsTable({
   isLoading,
   detailBasePath,
 }: ProjectsTableProps) {
-  const router = useRouter();
-
   if (isLoading) {
-    return <ProjectsTableSkeleton />;
+    return <TableListSkeleton widths={["w-48", "w-24", "w-20", "w-28"]} />;
   }
 
   return (
@@ -49,17 +47,9 @@ export function ProjectsTable({
             const href = `${detailBasePath}/${project.id}`;
 
             return (
-              <TableRow
+              <ClickableTableRow
                 key={project.id}
-                className="cursor-pointer"
-                tabIndex={0}
-                onClick={() => router.push(href)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    router.push(href);
-                  }
-                }}
+                href={href}
               >
                 <TableCell>
                   <div className="flex min-w-64 flex-col">
@@ -77,18 +67,14 @@ export function ProjectsTable({
                 <TableCell>{formatDate(project.start_date)}</TableCell>
                 <TableCell>{formatDate(project.end_date)}</TableCell>
                 <TableCell>{formatDateTime(project.updated_at)}</TableCell>
-              </TableRow>
+              </ClickableTableRow>
             );
           })
         ) : (
-          <TableRow>
-            <TableCell
-              colSpan={5}
-              className="h-24 text-center text-muted-foreground"
-            >
-              条件に一致するプロジェクトがありません。
-            </TableCell>
-          </TableRow>
+          <TableEmptyRow
+            colSpan={5}
+            message="条件に一致するプロジェクトがありません。"
+          />
         )}
       </TableBody>
     </Table>
@@ -115,20 +101,3 @@ export const formatDateTime = (dateTime?: string | null) => {
     timeStyle: "short",
   }).format(new Date(dateTime));
 };
-
-function ProjectsTableSkeleton() {
-  return (
-    <div className="flex flex-col gap-2">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <div key={index} className="flex items-center gap-3 px-2 py-2">
-          <div className="flex flex-1 flex-col gap-2">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-4 w-28" />
-        </div>
-      ))}
-    </div>
-  );
-}

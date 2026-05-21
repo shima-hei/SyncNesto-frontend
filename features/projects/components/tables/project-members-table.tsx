@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Trash2Icon } from "lucide-react";
 
-import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
+import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
+import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
+import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -13,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
@@ -57,7 +58,7 @@ export function ProjectMembersTable({
   );
 
   if (isLoading) {
-    return <ProjectMembersTableSkeleton />;
+    return <TableListSkeleton rows={4} widths={["w-40", "w-56", "w-52", "w-20"]} />;
   }
 
   return (
@@ -83,25 +84,19 @@ export function ProjectMembersTable({
               />
             ))
           ) : (
-            <TableRow>
-              <TableCell
-                colSpan={3}
-                className="h-24 text-center text-muted-foreground"
-              >
-                プロジェクトメンバーが登録されていません。
-              </TableCell>
-            </TableRow>
+            <TableEmptyRow
+              colSpan={3}
+              message="プロジェクトメンバーが登録されていません。"
+            />
           )}
         </TableBody>
       </Table>
 
-      <ConfirmDialog
+      <ResourceDeleteDialog
         open={Boolean(removeTarget)}
         onOpenChange={(open) => !open && setRemoveTarget(null)}
-        title="メンバーを削除しますか"
+        resourceName="メンバー"
         description="削除したメンバーは再度追加できます。"
-        confirmLabel="削除"
-        destructive
         isPending={isRemovePending}
         onConfirm={async () => {
           if (!removeTarget) {
@@ -184,22 +179,5 @@ function ProjectMemberRow({
         </Button>
       </TableCell>
     </TableRow>
-  );
-}
-
-function ProjectMembersTableSkeleton() {
-  return (
-    <div className="flex flex-col gap-2">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="flex items-center gap-3 px-2 py-2">
-          <div className="flex flex-1 flex-col gap-2">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-3 w-56" />
-          </div>
-          <Skeleton className="h-8 w-52" />
-          <Skeleton className="h-8 w-20" />
-        </div>
-      ))}
-    </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Trash2Icon, UsersIcon } from "lucide-react";
 
-import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
+import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -13,7 +13,6 @@ import { useDeleteProject } from "../../hooks/use-delete-project";
 import { useProject } from "../../hooks/use-project";
 import { useUpdateProject } from "../../hooks/use-update-project";
 import { ProjectForm } from "../forms/project-form";
-import { ProjectStatusBadge } from "../shared/project-status-badge";
 
 type ProjectDetailPageProps = {
   projectId: number;
@@ -48,10 +47,6 @@ export function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
     <div className="flex flex-col gap-6 p-4 lg:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate text-lg font-semibold">{project.name}</h2>
-            <ProjectStatusBadge status={project.status} />
-          </div>
           <p className="truncate text-sm text-muted-foreground">
             {project.project_code}
           </p>
@@ -94,13 +89,11 @@ export function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
         onSubmit={(values) => updateProject(values, project.version)}
       />
 
-      <ConfirmDialog
+      <ResourceDeleteDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="プロジェクトを削除しますか"
+        resourceName="プロジェクト"
         description="削除すると元に戻せません。関連するメンバー情報も利用できなくなります。"
-        confirmLabel="削除"
-        destructive
         isPending={isDeletePending}
         onConfirm={deleteProject}
       />

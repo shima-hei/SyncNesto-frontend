@@ -6,14 +6,15 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 import {
-  mainNavigation,
-  secondaryNavigation,
-} from "../../constants/navigation";
-import { findNavigationItemByPathname } from "../../utils/navigation";
+  getHeaderTitle,
+  getProjectIdFromHeaderPathname,
+} from "../../utils/header-title";
+import { ProjectHeaderTitle } from "./project-header-title";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const title = getHeaderTitle(pathname);
+  const projectId = getProjectIdFromHeaderPathname(pathname);
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -23,15 +24,12 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">{title}</h1>
+        {projectId ? (
+          <ProjectHeaderTitle projectId={projectId} fallbackTitle={title} />
+        ) : (
+          <h1 className="text-base font-medium">{title}</h1>
+        )}
       </div>
     </header>
   );
 }
-
-const getHeaderTitle = (pathname: string) => {
-  const navigationItems = [...mainNavigation, ...secondaryNavigation];
-  const currentItem = findNavigationItemByPathname(navigationItems, pathname);
-
-  return currentItem?.title ?? "Syncnesto";
-};

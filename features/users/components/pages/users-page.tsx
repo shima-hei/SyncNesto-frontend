@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
 
+import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
+import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -32,12 +32,8 @@ export function UsersPage() {
     q: q || undefined,
     is_active: isActive,
   });
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const handleSearch = (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
-  ) => {
-    event.preventDefault();
+  const handleSearch = () => {
     setPage(1);
     setQ(searchInput.trim());
   };
@@ -60,21 +56,12 @@ export function UsersPage() {
           <Link href="/system/users/new">ユーザー登録</Link>
         </Button>
       </div>
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <form
-          className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl"
-          onSubmit={handleSearch}
-        >
-          <Input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="名前、メール、部署、役職で検索"
-          />
-          <Button type="submit" variant="outline">
-            <SearchIcon data-icon="inline-start" />
-            検索
-          </Button>
-        </form>
+      <SearchFilterBar
+        searchValue={searchInput}
+        searchPlaceholder="名前、メール、部署、役職で検索"
+        onSearchValueChange={setSearchInput}
+        onSearch={handleSearch}
+      >
         <Select value={activeFilter} onValueChange={handleActiveFilterChange}>
           <SelectTrigger className="w-full sm:w-36">
             <SelectValue placeholder="状態" />
@@ -87,41 +74,17 @@ export function UsersPage() {
             </SelectGroup>
           </SelectContent>
         </Select>
-      </div>
+      </SearchFilterBar>
       <UsersTable users={users} isLoading={isLoading} />
-      <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          {total}件中 {users.length}件を表示
-          {isFetching && !isLoading ? "・更新中" : ""}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-          >
-            <ChevronLeftIcon data-icon="inline-start" />
-            前へ
-          </Button>
-          <span>
-            {page} / {totalPages}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() =>
-              setPage((current) => Math.min(totalPages, current + 1))
-            }
-          >
-            次へ
-            <ChevronRightIcon data-icon="inline-end" />
-          </Button>
-        </div>
-      </div>
+      <DataPagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={total}
+        currentCount={users.length}
+        isFetching={isFetching}
+        isLoading={isLoading}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

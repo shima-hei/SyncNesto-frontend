@@ -1,5 +1,8 @@
+import { UserAvatar } from "@/components/shared/display/user-avatar";
+import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
+import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
+import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -8,9 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserAvatar } from "@/components/shared/display/user-avatar";
 import type { UserListItem } from "@/lib/api/generated/model";
-import { useRouter } from "next/navigation";
 
 import { UserSystemRoles } from "../shared/user-system-roles";
 
@@ -20,10 +21,8 @@ type UsersTableProps = {
 };
 
 export function UsersTable({ users, isLoading }: UsersTableProps) {
-  const router = useRouter();
-
   if (isLoading) {
-    return <UsersTableSkeleton />;
+    return <TableListSkeleton avatar widths={["w-40", "w-56", "w-14"]} />;
   }
 
   return (
@@ -41,17 +40,9 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
       <TableBody>
         {users.length ? (
           users.map((user) => (
-            <TableRow
+            <ClickableTableRow
               key={user.id}
-              className="cursor-pointer"
-              tabIndex={0}
-              onClick={() => router.push(`/system/users/${user.id}`)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  router.push(`/system/users/${user.id}`);
-                }
-              }}
+              href={`/system/users/${user.id}`}
             >
               <TableCell>
                 <div className="flex min-w-64 items-center gap-3">
@@ -75,17 +66,10 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
                 </Badge>
               </TableCell>
               <TableCell>{formatLastLoginAt(user.last_login_at)}</TableCell>
-            </TableRow>
+            </ClickableTableRow>
           ))
         ) : (
-          <TableRow>
-            <TableCell
-              colSpan={6}
-              className="h-24 text-center text-muted-foreground"
-            >
-              条件に一致するユーザーがありません。
-            </TableCell>
-          </TableRow>
+          <TableEmptyRow colSpan={6} message="条件に一致するユーザーがありません。" />
         )}
       </TableBody>
     </Table>
@@ -102,20 +86,3 @@ const formatLastLoginAt = (lastLoginAt?: string | null) => {
     timeStyle: "short",
   }).format(new Date(lastLoginAt));
 };
-
-function UsersTableSkeleton() {
-  return (
-    <div className="flex flex-col gap-2">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <div key={index} className="flex items-center gap-3 px-2 py-2">
-          <Skeleton className="size-8 rounded-full" />
-          <div className="flex flex-1 flex-col gap-2">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-3 w-56" />
-          </div>
-          <Skeleton className="h-5 w-14" />
-        </div>
-      ))}
-    </div>
-  );
-}

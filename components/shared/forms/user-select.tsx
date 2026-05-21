@@ -20,29 +20,37 @@ import {
 import type { UserListItem } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 
-type ProjectMemberUserSelectProps = {
+type UserSelectProps = {
   users: UserListItem[];
   selectedUser: UserListItem | null;
   open: boolean;
   search: string;
   isLoading: boolean;
-  excludedUserIds: readonly number[];
+  excludedUserIds?: readonly number[];
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+  loadingMessage?: string;
   onOpenChange: (open: boolean) => void;
   onSearchChange: (value: string) => void;
   onSelect: (user: UserListItem) => void;
 };
 
-export function ProjectMemberUserSelect({
+export function UserSelect({
   users,
   selectedUser,
   open,
   search,
   isLoading,
-  excludedUserIds,
+  excludedUserIds = [],
+  placeholder = "ユーザーを選択",
+  searchPlaceholder = "名前またはメールで検索",
+  emptyMessage = "候補ユーザーがありません。",
+  loadingMessage = "検索中です。",
   onOpenChange,
   onSearchChange,
   onSelect,
-}: ProjectMemberUserSelectProps) {
+}: UserSelectProps) {
   const selectableUsers = users.filter(
     (user) => !excludedUserIds.includes(user.id)
   );
@@ -69,7 +77,7 @@ export function ProjectMemberUserSelect({
               <span className="truncate">{selectedUser.name}</span>
             </span>
           ) : (
-            "ユーザーを選択"
+            placeholder
           )}
           <ChevronsUpDownIcon data-icon="inline-end" />
         </Button>
@@ -79,12 +87,10 @@ export function ProjectMemberUserSelect({
           <CommandInput
             value={search}
             onValueChange={onSearchChange}
-            placeholder="名前またはメールで検索"
+            placeholder={searchPlaceholder}
           />
           <CommandList>
-            <CommandEmpty>
-              {isLoading ? "検索中です。" : "候補ユーザーがありません。"}
-            </CommandEmpty>
+            <CommandEmpty>{isLoading ? loadingMessage : emptyMessage}</CommandEmpty>
             <CommandGroup>
               {selectableUsers.map((user) => {
                 const isSelected = selectedUser?.id === user.id;
