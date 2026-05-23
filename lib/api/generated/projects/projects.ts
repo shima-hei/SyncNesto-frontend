@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CurrentProjectRoleRead,
   HTTPValidationError,
   ListProjectsProjectsGetParams,
   ProjectCreate,
@@ -503,7 +504,116 @@ export const useDeleteProjectProjectsProjectIdDelete = <TError = ErrorType<HTTPV
       > => {
       return useMutation(getDeleteProjectProjectsProjectIdDeleteMutationOptions(options), queryClient);
     }
-    export const getAddProjectMemberProjectsProjectIdMembersPostUrl = (projectId: number,) => {
+    export const getReadCurrentProjectRoleProjectsProjectIdMeGetUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/me`
+}
+
+/**
+ * 現在のログインユーザーの対象プロジェクト内ロールを取得する。
+
+Args:
+    project_id: 対象プロジェクトID。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    対象プロジェクト内ロールとsystem_admin判定。
+ * @summary Read Current Project Role
+ */
+export const readCurrentProjectRoleProjectsProjectIdMeGet = async (projectId: number, options?: RequestInit): Promise<CurrentProjectRoleRead> => {
+
+  return apiClient<CurrentProjectRoleRead>(getReadCurrentProjectRoleProjectsProjectIdMeGetUrl(projectId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadCurrentProjectRoleProjectsProjectIdMeGetQueryKey = (projectId: number,) => {
+    return [
+    `/projects/${projectId}/me`
+    ] as const;
+    }
+
+
+export const getReadCurrentProjectRoleProjectsProjectIdMeGetQueryOptions = <TData = Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadCurrentProjectRoleProjectsProjectIdMeGetQueryKey(projectId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>> = ({ signal }) => readCurrentProjectRoleProjectsProjectIdMeGet(projectId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadCurrentProjectRoleProjectsProjectIdMeGetQueryResult = NonNullable<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>>
+export type ReadCurrentProjectRoleProjectsProjectIdMeGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useReadCurrentProjectRoleProjectsProjectIdMeGet<TData = Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>,
+          TError,
+          Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadCurrentProjectRoleProjectsProjectIdMeGet<TData = Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>,
+          TError,
+          Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadCurrentProjectRoleProjectsProjectIdMeGet<TData = Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read Current Project Role
+ */
+
+export function useReadCurrentProjectRoleProjectsProjectIdMeGet<TData = Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentProjectRoleProjectsProjectIdMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReadCurrentProjectRoleProjectsProjectIdMeGetQueryOptions(projectId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getAddProjectMemberProjectsProjectIdMembersPostUrl = (projectId: number,) => {
 
 
 

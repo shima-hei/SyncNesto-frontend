@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   ClipboardListIcon,
   FileTextIcon,
+  ListChecksIcon,
   UsersIcon,
   FolderOpenIcon,
   PlaySquareIcon,
@@ -58,11 +59,17 @@ export function JoinedProjectDetailPage({
         </CardContent>
       </Card>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <Button asChild variant="outline">
           <Link href={`/projects/joined/${project.id}/members`}>
             <UsersIcon data-icon="inline-start" />
             メンバー
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={`/projects/joined/${project.id}/requirements`}>
+            <ListChecksIcon data-icon="inline-start" />
+            要件定義
           </Link>
         </Button>
         <Button asChild variant="outline">
