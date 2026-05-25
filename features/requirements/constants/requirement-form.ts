@@ -85,6 +85,7 @@ export const toOptionalNumber = (value: string) => {
     return null;
   }
 
+  // APIは未指定をnullで受け取るため、ID入力欄の空文字はnullへ寄せる。
   const parsedValue = Number(trimmedValue);
 
   return Number.isInteger(parsedValue) ? parsedValue : null;

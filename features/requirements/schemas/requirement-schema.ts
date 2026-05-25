@@ -31,3 +31,24 @@ export const requirementSchema = z.object({
   changeSummary: z.string(),
   reason: z.string(),
 });
+
+export const requirementCommentSchema = z.object({
+  comment: z.string().min(1, "コメントを入力してください。"),
+});
+
+export const requirementLinkSchema = z.object({
+  linkedType: z.string().min(1, "リンク種別を選択してください。"),
+  linkedId: z.string().min(1, "リンク先IDを入力してください。"),
+});
+
+export const requirementReviewSchema = z.object({
+  reviewerId: z
+    .string()
+    .min(1, "レビュー担当IDを入力してください。")
+    .refine((value) => Number.isInteger(Number(value)), {
+      message: "レビュー担当IDは数値で入力してください。",
+    }),
+  status: z.string().min(1, "ステータスを選択してください。"),
+  comment: z.string(),
+  reviewedAt: z.string(),
+});

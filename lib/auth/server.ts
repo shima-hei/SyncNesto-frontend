@@ -16,20 +16,29 @@ export const getCurrentUserOnServer = async () => {
     return null;
   }
 
-  const response = await fetch(new URL("/auth/me", API_BASE_URL), {
-    headers: {
-      // Server GuardはFastAPIを直接呼ぶため、ブラウザから受け取ったCookieを手動で転送する。
-      Cookie: cookieStore.toString(),
-      Accept: "application/json",
-    },
-    cache: "no-store",
-  });
+  const response = await fetchCurrentUser(cookieStore.toString());
 
   if (!response.ok) {
     return null;
   }
 
   return (await response.json()) as CurrentUserRead;
+};
+
+const fetchCurrentUser = async (cookieHeader: string) => {
+  try {
+    return await fetch(new URL("/auth/me", API_BASE_URL), {
+      headers: {
+        // Server GuardはFastAPIを直接呼ぶため、ブラウザから受け取ったCookieを手動で転送する。
+        Cookie: cookieHeader,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+  } catch {
+    // バックエンド未起動やネットワーク断では認証なし扱いにし、Next.jsの画面全体を落とさない。
+    return new Response(null, { status: 503 });
+  }
 };
 
 export const requireUser = async () => {

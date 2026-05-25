@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   canDeleteRequirement,
+  canCommentRequirement,
+  canLinkRequirement,
+  canReviewRequirement,
   canUpdateRequirement,
 } from "@/features/auth/utils/authorization";
 import { formatDateTime } from "@/features/projects/components/tables/projects-table";
@@ -22,6 +25,11 @@ import {
 } from "../../constants/requirement-options";
 import { useDeleteRequirement } from "../../hooks/use-delete-requirement";
 import { useRequirementSummary } from "../../hooks/use-requirement-summary";
+import { RequirementCommentsSection } from "../shared/requirement-comments-section";
+import { RequirementDetailsSection } from "../shared/requirement-details-section";
+import { RequirementLinksSection } from "../shared/requirement-links-section";
+import { RequirementReviewsSection } from "../shared/requirement-reviews-section";
+import { RequirementRevisionsSection } from "../shared/requirement-revisions-section";
 
 type RequirementDetailPageProps = {
   projectId: number;
@@ -128,12 +136,30 @@ export function RequirementDetailPage({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <SummaryCard title="詳細" count={summary.details.length} />
-        <SummaryCard title="関連成果物" count={summary.links.length} />
-        <SummaryCard title="コメント" count={summary.comments.length} />
-        <SummaryCard title="レビュー" count={summary.reviews.length} />
-        <SummaryCard title="改訂履歴" count={summary.revisions.length} />
+      {/* 詳細JSONは要件種別ごとの差分項目を保持するため、まずは読み取り専用で表示する。 */}
+      <RequirementDetailsSection details={summary.details} />
+
+      {/* コメント、リンク、レビュー、改訂履歴は要件のトレーサビリティ確認に使う。 */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <RequirementLinksSection
+          projectId={projectId}
+          requirementId={requirementId}
+          canLink={canLinkRequirement(currentProjectRole)}
+        />
+        <RequirementCommentsSection
+          projectId={projectId}
+          requirementId={requirementId}
+          canComment={canCommentRequirement(currentProjectRole)}
+        />
+        <RequirementReviewsSection
+          projectId={projectId}
+          requirementId={requirementId}
+          canReview={canReviewRequirement(currentProjectRole)}
+        />
+        <RequirementRevisionsSection
+          projectId={projectId}
+          requirementId={requirementId}
+        />
       </div>
 
       <ResourceDeleteDialog
@@ -154,19 +180,6 @@ function RequirementInfo({ label, value }: { label: string; value: string }) {
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="whitespace-pre-wrap text-sm">{value}</span>
     </div>
-  );
-}
-
-function SummaryCard({ title, count }: { title: string; count: number }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm text-muted-foreground">
-        {count}件のデータがあります。編集機能は後続タスクで実装します。
-      </CardContent>
-    </Card>
   );
 }
 

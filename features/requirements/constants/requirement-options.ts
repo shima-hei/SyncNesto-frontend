@@ -36,6 +36,23 @@ export const REQUIREMENT_TYPE_OPTIONS = [
   { value: "report", label: "帳票要件" },
 ] as const;
 
+export const REQUIREMENT_LINK_TYPE_OPTIONS = [
+  { value: "screen", label: "画面" },
+  { value: "api", label: "API" },
+  { value: "database", label: "DB" },
+  { value: "task", label: "タスク" },
+  { value: "test_case", label: "テストケース" },
+  { value: "document", label: "ドキュメント" },
+  { value: "project", label: "プロジェクト" },
+] as const;
+
+export const REQUIREMENT_REVIEW_STATUS_OPTIONS = [
+  { value: "pending", label: "未レビュー" },
+  { value: "approved", label: "承認" },
+  { value: "rejected", label: "差し戻し" },
+  { value: "commented", label: "コメント済み" },
+] as const;
+
 export const getRequirementDocumentStatusLabel = (status?: string | null) => {
   return (
     REQUIREMENT_DOCUMENT_STATUS_OPTIONS.find((option) => option.value === status)
@@ -67,6 +84,24 @@ export const getRequirementTypeLabel = (type?: string | null) => {
   return (
     REQUIREMENT_TYPE_OPTIONS.find((option) => option.value === type)?.label ??
     type ??
+    "-"
+  );
+};
+
+export const getRequirementLinkTypeLabel = (type?: string | null) => {
+  return (
+    REQUIREMENT_LINK_TYPE_OPTIONS.find((option) => option.value === type)
+      ?.label ??
+    type ??
+    "-"
+  );
+};
+
+export const getRequirementReviewStatusLabel = (status?: string | null) => {
+  return (
+    REQUIREMENT_REVIEW_STATUS_OPTIONS.find((option) => option.value === status)
+      ?.label ??
+    status ??
     "-"
   );
 };
