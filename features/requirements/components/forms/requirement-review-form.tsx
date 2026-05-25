@@ -16,6 +16,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { RequirementReviewRead } from "@/lib/api/generated/model";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { REQUIREMENT_REVIEW_STATUS_OPTIONS } from "../../constants/requirement-options";
 import { requirementReviewSchema } from "../../schemas/requirement-schema";
@@ -130,7 +131,7 @@ export function RequirementReviewForm({
             onChange={(event) => updateValue("comment", event.target.value)}
           />
         </Field>
-        {error ? <FieldError>{error.message}</FieldError> : null}
+        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
         <Field>
           <Button type="submit" disabled={isPending}>
             {isPending ? <Spinner data-icon="inline-start" /> : null}

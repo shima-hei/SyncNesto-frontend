@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { getConflictFields } from "@/lib/api/conflict";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { PROJECT_STATUS_OPTIONS } from "../../constants/project-form";
 import { projectSchema } from "../../schemas/project-schema";
@@ -177,7 +178,7 @@ export function ProjectForm({
           </Field>
         </div>
 
-          {error ? <FieldError>{error.message}</FieldError> : null}
+          {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
 
           <Field>
             <Button type="submit" disabled={isPending}>

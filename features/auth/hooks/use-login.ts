@@ -7,8 +7,11 @@ import {
   getReadCurrentUserAuthMeGetQueryKey,
   useLoginUserAuthLoginPost,
 } from "@/lib/api/generated/auth/auth";
+import {
+  API_ERROR_FALLBACK_MESSAGES,
+  getApiErrorMessage,
+} from "@/lib/messages/api-error-message";
 
-import { ApiError } from "@/lib/api/error";
 import type { LoginFormValues } from "../types/login";
 
 export function useLogin() {
@@ -32,13 +35,8 @@ export function useLogin() {
 }
 
 const getLoginErrorMessage = (error: unknown) => {
-  if (!error) {
-    return null;
-  }
-
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  return "ログインに失敗しました。時間をおいて再度お試しください。";
+  return getApiErrorMessage(
+    error,
+    API_ERROR_FALLBACK_MESSAGES.login
+  );
 };

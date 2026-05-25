@@ -22,6 +22,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { getConflictFields } from "@/lib/api/conflict";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { REQUIREMENT_DOCUMENT_STATUS_OPTIONS } from "../../constants/requirement-options";
 import { requirementDocumentSchema } from "../../schemas/requirement-schema";
@@ -242,7 +243,7 @@ export function RequirementDocumentForm({
             </Field>
           </div>
 
-          {error ? <FieldError>{error.message}</FieldError> : null}
+          {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
 
           <Field>
             <Button type="submit" disabled={isPending}>

@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { getConflictFields } from "@/lib/api/conflict";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { userCreateSchema, userUpdateSchema } from "../../schemas/user-schema";
 import type { UserFormErrors, UserFormValues } from "../../types/user-form";
@@ -185,7 +186,7 @@ export function UserForm({
           </Field>
         </FieldSet>
 
-          {error ? <FieldError>{error.message}</FieldError> : null}
+          {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
 
           <Field>
             <Button type="submit" disabled={isPending}>

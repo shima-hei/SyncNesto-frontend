@@ -21,6 +21,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { UserSelect } from "@/components/shared/forms/user-select";
 import { useUsers } from "@/features/users/hooks/use-users";
 import type { UserListItem } from "@/lib/api/generated/model";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { PROJECT_ROLE_OPTIONS } from "../../constants/project-roles";
 import { projectMemberSchema } from "../../schemas/project-schema";
@@ -143,7 +144,7 @@ export function ProjectMemberForm({
           </Field>
         </div>
 
-        {error ? <FieldError>{error.message}</FieldError> : null}
+        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
 
         <Field>
           <Button type="submit" disabled={isPending}>

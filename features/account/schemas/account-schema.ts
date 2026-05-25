@@ -1,12 +1,13 @@
 import { z } from "zod";
 
+import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
+
 export const accountProfileSchema = z.object({
-  name: z.string().min(1, "名前を入力してください。"),
+  name: z.string().min(1, VALIDATION_MESSAGES.required("名前")),
   password: z
     .string()
     .refine(
       (value) => value.length === 0 || value.length >= 8,
-      "パスワードを変更する場合は8文字以上で入力してください。"
+      VALIDATION_MESSAGES.optionalMinLength("パスワード", 8)
     ),
 });
-

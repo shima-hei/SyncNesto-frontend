@@ -1,3 +1,6 @@
+import { API_ERROR_FALLBACK_MESSAGES } from "@/lib/messages/api-error-message";
+import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
+
 import { ApiError } from "./error";
 import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
 
@@ -132,7 +135,7 @@ const getCsrfToken = async () => {
   if (!response.ok) {
     throw new ApiError({
       status: response.status,
-      message: "CSRF token の取得に失敗しました。",
+      message: API_ERROR_FALLBACK_MESSAGES.csrfToken,
     });
   }
 
@@ -189,10 +192,10 @@ const getErrorMessage = (data: unknown) => {
   }
 
   if (isApiValidationErrorResponse(data)) {
-    return data.detail?.[0]?.msg ?? "入力内容を確認してください。";
+    return data.detail?.[0]?.msg ?? VALIDATION_MESSAGES.confirmInput;
   }
 
-  return "APIリクエストに失敗しました。";
+  return API_ERROR_FALLBACK_MESSAGES.request;
 };
 
 const getErrorCode = (data: unknown) => {

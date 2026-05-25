@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useUpdateCurrentUser } from "@/features/auth/hooks/use-update-current-user";
 import { getConflictFields } from "@/lib/api/conflict";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { getAccountProfileFormValues } from "../../constants/account-form";
 import { accountProfileSchema } from "../../schemas/account-schema";
@@ -112,7 +113,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
           {errors.password ? <FieldError>{errors.password}</FieldError> : null}
         </Field>
 
-        {error ? <FieldError>{error.message}</FieldError> : null}
+        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
 
         <Field>
           <Button type="submit" disabled={isPending}>

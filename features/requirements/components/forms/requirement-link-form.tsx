@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { REQUIREMENT_LINK_TYPE_OPTIONS } from "../../constants/requirement-options";
 import { requirementLinkSchema } from "../../schemas/requirement-schema";
@@ -110,7 +111,7 @@ export function RequirementLinkForm({
             {errors.linkedId ? <FieldError>{errors.linkedId}</FieldError> : null}
           </Field>
         </div>
-        {error ? <FieldError>{error.message}</FieldError> : null}
+        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
         <Field>
           <Button type="submit" disabled={isPending}>
             {isPending ? <Spinner data-icon="inline-start" /> : null}

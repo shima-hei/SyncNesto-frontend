@@ -1,9 +1,13 @@
 import { z } from "zod";
 
+import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
+
 export const requirementDocumentSchema = z.object({
-  title: z.string().min(1, "タイトルを入力してください。"),
-  documentCode: z.string().min(1, "ドキュメントコードを入力してください。"),
-  status: z.string().min(1, "ステータスを選択してください。"),
+  title: z.string().min(1, VALIDATION_MESSAGES.required("タイトル")),
+  documentCode: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.required("ドキュメントコード")),
+  status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("ステータス")),
   purpose: z.string(),
   targetSystemName: z.string(),
   clientName: z.string(),
@@ -15,15 +19,15 @@ export const requirementDocumentSchema = z.object({
 });
 
 export const requirementSchema = z.object({
-  requirementCode: z.string().min(1, "要件コードを入力してください。"),
-  requirementType: z.string().min(1, "種別を選択してください。"),
+  requirementCode: z.string().min(1, VALIDATION_MESSAGES.required("要件コード")),
+  requirementType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("種別")),
   category: z.string(),
-  title: z.string().min(1, "タイトルを入力してください。"),
+  title: z.string().min(1, VALIDATION_MESSAGES.required("タイトル")),
   description: z.string(),
   rationale: z.string(),
   acceptanceCriteria: z.string(),
-  priority: z.string().min(1, "優先度を選択してください。"),
-  status: z.string().min(1, "ステータスを選択してください。"),
+  priority: z.string().min(1, VALIDATION_MESSAGES.selectRequired("優先度")),
+  status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("ステータス")),
   source: z.string(),
   ownerId: z.string(),
   approvedBy: z.string(),
@@ -33,22 +37,22 @@ export const requirementSchema = z.object({
 });
 
 export const requirementCommentSchema = z.object({
-  comment: z.string().min(1, "コメントを入力してください。"),
+  comment: z.string().min(1, VALIDATION_MESSAGES.required("コメント")),
 });
 
 export const requirementLinkSchema = z.object({
-  linkedType: z.string().min(1, "リンク種別を選択してください。"),
-  linkedId: z.string().min(1, "リンク先IDを入力してください。"),
+  linkedType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("リンク種別")),
+  linkedId: z.string().min(1, VALIDATION_MESSAGES.required("リンク先ID")),
 });
 
 export const requirementReviewSchema = z.object({
   reviewerId: z
     .string()
-    .min(1, "レビュー担当IDを入力してください。")
+    .min(1, VALIDATION_MESSAGES.required("レビュー担当ID"))
     .refine((value) => Number.isInteger(Number(value)), {
-      message: "レビュー担当IDは数値で入力してください。",
+      message: VALIDATION_MESSAGES.number("レビュー担当ID"),
     }),
-  status: z.string().min(1, "ステータスを選択してください。"),
+  status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("ステータス")),
   comment: z.string(),
   reviewedAt: z.string(),
 });

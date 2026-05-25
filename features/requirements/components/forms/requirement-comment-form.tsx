@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { requirementCommentSchema } from "../../schemas/requirement-schema";
 import type {
@@ -66,7 +67,7 @@ export function RequirementCommentForm({
           />
           {errors.comment ? <FieldError>{errors.comment}</FieldError> : null}
         </Field>
-        {error ? <FieldError>{error.message}</FieldError> : null}
+        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
         <Field>
           <Button type="submit" disabled={isPending}>
             {isPending ? <Spinner data-icon="inline-start" /> : null}

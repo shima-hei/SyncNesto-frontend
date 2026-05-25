@@ -18,6 +18,11 @@ import { FieldError } from "@/components/ui/field";
 import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 import { useUpdateCurrentUserAvatar } from "@/features/auth/hooks/use-update-current-user-avatar";
+import {
+  API_ERROR_FALLBACK_MESSAGES,
+  getApiErrorMessage,
+} from "@/lib/messages/api-error-message";
+import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
 
 import { createCroppedImageBlob } from "../../utils/crop-image";
 
@@ -64,12 +69,12 @@ export function AvatarUploadDialog({
     }
 
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      setError("PNG、JPEG、WebP の画像を選択してください。");
+      setError(VALIDATION_MESSAGES.imageFileType);
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE) {
-      setError("画像サイズは2MB以下にしてください。");
+      setError(VALIDATION_MESSAGES.imageFileSize("2MB"));
       return;
     }
 
@@ -85,7 +90,7 @@ export function AvatarUploadDialog({
 
   const handleConfirm = async () => {
     if (!imageSrc || !cropArea) {
-      setError("画像を選択してください。");
+      setError(VALIDATION_MESSAGES.imageRequired);
       return;
     }
 
@@ -97,7 +102,7 @@ export function AvatarUploadDialog({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "画像の更新に失敗しました。"
+          : API_ERROR_FALLBACK_MESSAGES.avatarUpload
       );
     }
   };
@@ -111,7 +116,7 @@ export function AvatarUploadDialog({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "画像の削除に失敗しました。"
+          : API_ERROR_FALLBACK_MESSAGES.avatarDelete
       );
     }
   };
@@ -192,7 +197,14 @@ export function AvatarUploadDialog({
         ) : null}
 
         {error ? <FieldError>{error}</FieldError> : null}
-        {uploadError ? <FieldError>{uploadError.message}</FieldError> : null}
+        {uploadError ? (
+          <FieldError>
+            {getApiErrorMessage(
+              uploadError,
+              API_ERROR_FALLBACK_MESSAGES.avatarUpload
+            )}
+          </FieldError>
+        ) : null}
 
         <DialogFooter className="sm:justify-between">
           <Button
