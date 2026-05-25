@@ -7,10 +7,7 @@ import {
   getReadCurrentUserAuthMeGetQueryKey,
   useLoginUserAuthLoginPost,
 } from "@/lib/api/generated/auth/auth";
-import {
-  API_ERROR_FALLBACK_MESSAGES,
-  getApiErrorMessage,
-} from "@/lib/messages/api-error-message";
+import { getLoginApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import type { LoginFormValues } from "../types/login";
 
@@ -35,8 +32,5 @@ export function useLogin() {
 }
 
 const getLoginErrorMessage = (error: unknown) => {
-  return getApiErrorMessage(
-    error,
-    API_ERROR_FALLBACK_MESSAGES.login
-  );
+  return getLoginApiErrorMessage(error);
 };
