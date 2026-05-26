@@ -3,7 +3,8 @@
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
-import { Button } from "@/components/ui/button";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
   Field,
   FieldError,
@@ -19,10 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { getConflictFields } from "@/lib/api/conflict";
-import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
+import { PROJECT_CONFLICT_FIELD_LABELS } from "../../constants/project-conflict-fields";
 import { PROJECT_STATUS_OPTIONS } from "../../constants/project-form";
 import { projectSchema } from "../../schemas/project-schema";
 import type {
@@ -115,77 +115,78 @@ export function ProjectForm({
             ) : null}
           </Field>
 
-        <Field data-invalid={errors.name ? true : undefined}>
-          <FieldLabel htmlFor={nameId}>プロジェクト名</FieldLabel>
-          <Input
-            id={nameId}
-            value={values.name}
-            onChange={(event) => updateValue("name", event.target.value)}
-            aria-invalid={Boolean(errors.name)}
-          />
-          {errors.name ? <FieldError>{errors.name}</FieldError> : null}
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor={descriptionId}>説明</FieldLabel>
-          <Input
-            id={descriptionId}
-            value={values.description}
-            onChange={(event) => updateValue("description", event.target.value)}
-          />
-        </Field>
-
-        <Field data-invalid={errors.status ? true : undefined}>
-          <FieldLabel>ステータス</FieldLabel>
-          <Select
-            value={values.status}
-            onValueChange={(value) => updateValue("status", value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="ステータスを選択" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {PROJECT_STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          {errors.status ? <FieldError>{errors.status}</FieldError> : null}
-        </Field>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor={startDateId}>開始日</FieldLabel>
+          <Field data-invalid={errors.name ? true : undefined}>
+            <FieldLabel htmlFor={nameId}>プロジェクト名</FieldLabel>
             <Input
-              id={startDateId}
-              type="date"
-              value={values.startDate}
-              onChange={(event) => updateValue("startDate", event.target.value)}
+              id={nameId}
+              value={values.name}
+              onChange={(event) => updateValue("name", event.target.value)}
+              aria-invalid={Boolean(errors.name)}
+            />
+            {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor={descriptionId}>説明</FieldLabel>
+            <Input
+              id={descriptionId}
+              value={values.description}
+              onChange={(event) =>
+                updateValue("description", event.target.value)
+              }
             />
           </Field>
-          <Field>
-            <FieldLabel htmlFor={endDateId}>終了日</FieldLabel>
-            <Input
-              id={endDateId}
-              type="date"
-              value={values.endDate}
-              onChange={(event) => updateValue("endDate", event.target.value)}
-            />
-          </Field>
-        </div>
 
-          {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
-
-          <Field>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? <Spinner data-icon="inline-start" /> : null}
-              {mode === "create" ? "登録" : "更新"}
-            </Button>
+          <Field data-invalid={errors.status ? true : undefined}>
+            <FieldLabel>ステータス</FieldLabel>
+            <Select
+              value={values.status}
+              onValueChange={(value) => updateValue("status", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="ステータスを選択" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {PROJECT_STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {errors.status ? <FieldError>{errors.status}</FieldError> : null}
           </Field>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor={startDateId}>開始日</FieldLabel>
+              <Input
+                id={startDateId}
+                type="date"
+                value={values.startDate}
+                onChange={(event) =>
+                  updateValue("startDate", event.target.value)
+                }
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={endDateId}>終了日</FieldLabel>
+              <Input
+                id={endDateId}
+                type="date"
+                value={values.endDate}
+                onChange={(event) => updateValue("endDate", event.target.value)}
+              />
+            </Field>
+          </div>
+
+          <FormApiError error={error} />
+
+          <FormSubmitButton isPending={isPending}>
+            {mode === "create" ? "登録" : "更新"}
+          </FormSubmitButton>
         </FieldGroup>
       </form>
 
@@ -207,12 +208,3 @@ export function ProjectForm({
     </>
   );
 }
-
-const PROJECT_CONFLICT_FIELD_LABELS = {
-  projectCode: "プロジェクトコード",
-  name: "プロジェクト名",
-  description: "説明",
-  status: "ステータス",
-  startDate: "開始日",
-  endDate: "終了日",
-} satisfies Partial<Record<keyof ProjectFormValues, string>>;

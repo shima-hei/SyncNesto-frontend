@@ -3,7 +3,8 @@
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
-import { Button } from "@/components/ui/button";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
   Field,
   FieldError,
@@ -19,10 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { getConflictFields } from "@/lib/api/conflict";
-import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { REQUIREMENT_DOCUMENT_CONFLICT_FIELD_LABELS } from "../../constants/requirement-conflict-fields";
 import { REQUIREMENT_DOCUMENT_STATUS_OPTIONS } from "../../constants/requirement-options";
@@ -239,14 +238,11 @@ export function RequirementDocumentForm({
             </Field>
           </div>
 
-          {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
+          <FormApiError error={error} />
 
-          <Field>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? <Spinner data-icon="inline-start" /> : null}
-              {mode === "create" ? "登録" : "更新"}
-            </Button>
-          </Field>
+          <FormSubmitButton isPending={isPending}>
+            {mode === "create" ? "登録" : "更新"}
+          </FormSubmitButton>
         </FieldGroup>
       </form>
 

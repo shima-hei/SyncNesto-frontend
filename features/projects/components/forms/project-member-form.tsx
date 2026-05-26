@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
   Field,
   FieldError,
@@ -17,11 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { UserSelect } from "@/components/shared/forms/user-select";
 import { useUsers } from "@/features/users/hooks/use-users";
 import type { UserListItem } from "@/lib/api/generated/model";
-import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { PROJECT_ROLE_OPTIONS } from "../../constants/project-roles";
 import { projectMemberSchema } from "../../schemas/project-schema";
@@ -144,14 +143,9 @@ export function ProjectMemberForm({
           </Field>
         </div>
 
-        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
+        <FormApiError error={error} />
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? <Spinner data-icon="inline-start" /> : null}
-            メンバー追加
-          </Button>
-        </Field>
+        <FormSubmitButton isPending={isPending}>メンバー追加</FormSubmitButton>
       </FieldGroup>
     </form>
   );

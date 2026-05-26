@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,8 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
-import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { REQUIREMENT_LINK_TYPE_OPTIONS } from "../../constants/requirement-options";
 import { requirementLinkSchema } from "../../schemas/requirement-schema";
@@ -111,13 +110,10 @@ export function RequirementLinkForm({
             {errors.linkedId ? <FieldError>{errors.linkedId}</FieldError> : null}
           </Field>
         </div>
-        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? <Spinner data-icon="inline-start" /> : null}
-            関連成果物追加
-          </Button>
-        </Field>
+        <FormApiError error={error} />
+        <FormSubmitButton isPending={isPending}>
+          関連成果物追加
+        </FormSubmitButton>
       </FieldGroup>
     </form>
   );

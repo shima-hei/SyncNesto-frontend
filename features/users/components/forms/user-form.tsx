@@ -3,7 +3,8 @@
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
-import { Button } from "@/components/ui/button";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
@@ -16,10 +17,9 @@ import {
   FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { getConflictFields } from "@/lib/api/conflict";
-import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
+import { USER_CONFLICT_FIELD_LABELS } from "../../constants/user-conflict-fields";
 import { userCreateSchema, userUpdateSchema } from "../../schemas/user-schema";
 import type { UserFormErrors, UserFormValues } from "../../types/user-form";
 
@@ -106,94 +106,95 @@ export function UserForm({
             {errors.email ? <FieldError>{errors.email}</FieldError> : null}
           </Field>
 
-        <Field data-invalid={errors.name ? true : undefined}>
-          <FieldLabel htmlFor={nameId}>名前</FieldLabel>
-          <Input
-            id={nameId}
-            value={values.name}
-            onChange={(event) => updateValue("name", event.target.value)}
-            aria-invalid={Boolean(errors.name)}
-          />
-          {errors.name ? <FieldError>{errors.name}</FieldError> : null}
-        </Field>
-
-        <Field data-invalid={errors.password ? true : undefined}>
-          <FieldLabel htmlFor={passwordId}>パスワード</FieldLabel>
-          <Input
-            id={passwordId}
-            type="password"
-            value={values.password}
-            placeholder={mode === "update" ? "変更する場合のみ入力" : undefined}
-            onChange={(event) => updateValue("password", event.target.value)}
-            aria-invalid={Boolean(errors.password)}
-          />
-          {errors.password ? <FieldError>{errors.password}</FieldError> : null}
-        </Field>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor={departmentId}>部署</FieldLabel>
+          <Field data-invalid={errors.name ? true : undefined}>
+            <FieldLabel htmlFor={nameId}>名前</FieldLabel>
             <Input
-              id={departmentId}
-              value={values.department}
-              onChange={(event) =>
-                updateValue("department", event.target.value)
-              }
+              id={nameId}
+              value={values.name}
+              onChange={(event) => updateValue("name", event.target.value)}
+              aria-invalid={Boolean(errors.name)}
             />
+            {errors.name ? <FieldError>{errors.name}</FieldError> : null}
           </Field>
 
-          <Field>
-            <FieldLabel htmlFor={positionId}>役職</FieldLabel>
+          <Field data-invalid={errors.password ? true : undefined}>
+            <FieldLabel htmlFor={passwordId}>パスワード</FieldLabel>
             <Input
-              id={positionId}
-              value={values.position}
-              onChange={(event) => updateValue("position", event.target.value)}
-            />
-          </Field>
-        </div>
-
-        <FieldSet>
-          <FieldLabel>状態・権限</FieldLabel>
-          <Field orientation="horizontal">
-            <Checkbox
-              id="is-active"
-              checked={values.isActive}
-              onCheckedChange={(checked) =>
-                updateValue("isActive", checked === true)
+              id={passwordId}
+              type="password"
+              value={values.password}
+              placeholder={
+                mode === "update" ? "変更する場合のみ入力" : undefined
               }
+              onChange={(event) => updateValue("password", event.target.value)}
+              aria-invalid={Boolean(errors.password)}
             />
-            <FieldContent>
-              <FieldTitle>有効ユーザー</FieldTitle>
-              <FieldDescription>
-                無効にするとログインや操作対象から除外されます。
-              </FieldDescription>
-            </FieldContent>
+            {errors.password ? <FieldError>{errors.password}</FieldError> : null}
           </Field>
-          <Field orientation="horizontal">
-            <Checkbox
-              id="is-system-admin"
-              checked={values.isSystemAdmin}
-              onCheckedChange={(checked) =>
-                updateValue("isSystemAdmin", checked === true)
-              }
-            />
-            <FieldContent>
-              <FieldTitle>システム管理者</FieldTitle>
-              <FieldDescription>
-                ユーザー管理や全プロジェクト管理を許可します。
-              </FieldDescription>
-            </FieldContent>
-          </Field>
-        </FieldSet>
 
-          {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor={departmentId}>部署</FieldLabel>
+              <Input
+                id={departmentId}
+                value={values.department}
+                onChange={(event) =>
+                  updateValue("department", event.target.value)
+                }
+              />
+            </Field>
 
-          <Field>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? <Spinner data-icon="inline-start" /> : null}
-              {mode === "create" ? "登録" : "更新"}
-            </Button>
-          </Field>
+            <Field>
+              <FieldLabel htmlFor={positionId}>役職</FieldLabel>
+              <Input
+                id={positionId}
+                value={values.position}
+                onChange={(event) =>
+                  updateValue("position", event.target.value)
+                }
+              />
+            </Field>
+          </div>
+
+          <FieldSet>
+            <FieldLabel>状態・権限</FieldLabel>
+            <Field orientation="horizontal">
+              <Checkbox
+                id="is-active"
+                checked={values.isActive}
+                onCheckedChange={(checked) =>
+                  updateValue("isActive", checked === true)
+                }
+              />
+              <FieldContent>
+                <FieldTitle>有効ユーザー</FieldTitle>
+                <FieldDescription>
+                  無効にするとログインや操作対象から除外されます。
+                </FieldDescription>
+              </FieldContent>
+            </Field>
+            <Field orientation="horizontal">
+              <Checkbox
+                id="is-system-admin"
+                checked={values.isSystemAdmin}
+                onCheckedChange={(checked) =>
+                  updateValue("isSystemAdmin", checked === true)
+                }
+              />
+              <FieldContent>
+                <FieldTitle>システム管理者</FieldTitle>
+                <FieldDescription>
+                  ユーザー管理や全プロジェクト管理を許可します。
+                </FieldDescription>
+              </FieldContent>
+            </Field>
+          </FieldSet>
+
+          <FormApiError error={error} />
+
+          <FormSubmitButton isPending={isPending}>
+            {mode === "create" ? "登録" : "更新"}
+          </FormSubmitButton>
         </FieldGroup>
       </form>
 
@@ -215,13 +216,3 @@ export function UserForm({
     </>
   );
 }
-
-const USER_CONFLICT_FIELD_LABELS = {
-  email: "メールアドレス",
-  name: "名前",
-  password: "パスワード",
-  department: "部署",
-  position: "役職",
-  isActive: "有効ユーザー",
-  isSystemAdmin: "システム管理者",
-} satisfies Partial<Record<keyof UserFormValues, string>>;
