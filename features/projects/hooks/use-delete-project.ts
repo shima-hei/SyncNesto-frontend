@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { useDeleteProjectProjectsProjectIdDelete } from "@/lib/api/generated/projects/projects";
+
+import { PROJECT_MESSAGES } from "../constants/project-messages";
 import {
-  getListProjectsProjectsGetQueryKey,
-  getReadProjectProjectsProjectIdGetQueryKey,
-  useDeleteProjectProjectsProjectIdDelete,
-} from "@/lib/api/generated/projects/projects";
+  invalidateProjectList,
+  removeProjectDetailCache,
+} from "../lib/project-cache";
 
 export function useDeleteProject(projectId: number) {
   const router = useRouter();
@@ -16,17 +18,13 @@ export function useDeleteProject(projectId: number) {
   const deleteProjectMutation = useDeleteProjectProjectsProjectIdDelete({
     mutation: {
       onSuccess: async () => {
-        queryClient.removeQueries({
-          queryKey: getReadProjectProjectsProjectIdGetQueryKey(projectId),
-        });
-        await queryClient.invalidateQueries({
-          queryKey: getListProjectsProjectsGetQueryKey(),
-        });
-        toast.success("プロジェクトを削除しました。");
+        removeProjectDetailCache(queryClient, projectId);
+        await invalidateProjectList(queryClient);
+        toast.success(PROJECT_MESSAGES.project.deleteSuccess);
         router.push("/projects/management");
       },
       onError: () => {
-        toast.error("プロジェクトの削除に失敗しました。");
+        toast.error(PROJECT_MESSAGES.project.deleteError);
       },
     },
   });

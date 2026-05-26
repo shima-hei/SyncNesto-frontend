@@ -5,13 +5,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getConflictCurrent } from "@/lib/api/conflict";
-import type { ProjectRead, ProjectUpdate } from "@/lib/api/generated/model";
-import {
-  getListProjectsProjectsGetQueryKey,
-  getReadProjectProjectsProjectIdGetQueryKey,
-  useUpdateProjectProjectsProjectIdPatch,
-} from "@/lib/api/generated/projects/projects";
+import type { ProjectRead } from "@/lib/api/generated/model";
+import { useUpdateProjectProjectsProjectIdPatch } from "@/lib/api/generated/projects/projects";
 
+import { PROJECT_MESSAGES } from "../constants/project-messages";
+import {
+  invalidateProjectList,
+  setProjectDetailCache,
+} from "../lib/project-cache";
+import { toProjectUpdate } from "../lib/project-mappers";
 import type { ProjectFormValues } from "../types/project-form";
 
 export function useUpdateProject(projectId: number) {
@@ -23,25 +25,20 @@ export function useUpdateProject(projectId: number) {
     mutation: {
       onSuccess: async (project) => {
         setConflictCurrent(null);
-        queryClient.setQueryData(
-          getReadProjectProjectsProjectIdGetQueryKey(projectId),
-          project
-        );
-        await queryClient.invalidateQueries({
-          queryKey: getListProjectsProjectsGetQueryKey(),
-        });
-        toast.success("プロジェクト情報を更新しました。");
+        setProjectDetailCache(queryClient, projectId, project);
+        await invalidateProjectList(queryClient);
+        toast.success(PROJECT_MESSAGES.project.updateSuccess);
       },
       onError: (error) => {
         const current = getConflictCurrent<ProjectRead>(error);
 
         if (current) {
           setConflictCurrent(current);
-          toast.error("他の更新と競合しました。");
+          toast.error(PROJECT_MESSAGES.conflict);
           return;
         }
 
-        toast.error("プロジェクト情報の更新に失敗しました。");
+        toast.error(PROJECT_MESSAGES.project.updateError);
       },
     },
   });
@@ -66,18 +63,3 @@ export function useUpdateProject(projectId: number) {
     error: updateProjectMutation.error,
   };
 }
-
-const toProjectUpdate = (
-  values: ProjectFormValues,
-  version: number
-): ProjectUpdate => {
-  return {
-    version,
-    project_code: values.projectCode,
-    name: values.name,
-    description: values.description || null,
-    status: values.status,
-    start_date: values.startDate || null,
-    end_date: values.endDate || null,
-  };
-};

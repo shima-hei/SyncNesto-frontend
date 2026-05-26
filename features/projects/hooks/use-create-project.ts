@@ -4,12 +4,11 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { ProjectCreate } from "@/lib/api/generated/model";
-import {
-  getListProjectsProjectsGetQueryKey,
-  useCreateProjectProjectsPost,
-} from "@/lib/api/generated/projects/projects";
+import { useCreateProjectProjectsPost } from "@/lib/api/generated/projects/projects";
 
+import { PROJECT_MESSAGES } from "../constants/project-messages";
+import { invalidateProjectList } from "../lib/project-cache";
+import { toProjectCreate } from "../lib/project-mappers";
 import type { ProjectFormValues } from "../types/project-form";
 
 export function useCreateProject() {
@@ -18,14 +17,12 @@ export function useCreateProject() {
   const createProjectMutation = useCreateProjectProjectsPost({
     mutation: {
       onSuccess: async (project) => {
-        await queryClient.invalidateQueries({
-          queryKey: getListProjectsProjectsGetQueryKey(),
-        });
-        toast.success("プロジェクトを登録しました。");
+        await invalidateProjectList(queryClient);
+        toast.success(PROJECT_MESSAGES.project.createSuccess);
         router.push(`/projects/management/${project.id}`);
       },
       onError: () => {
-        toast.error("プロジェクトの登録に失敗しました。");
+        toast.error(PROJECT_MESSAGES.project.createError);
       },
     },
   });
@@ -42,14 +39,3 @@ export function useCreateProject() {
     error: createProjectMutation.error,
   };
 }
-
-const toProjectCreate = (values: ProjectFormValues): ProjectCreate => {
-  return {
-    project_code: values.projectCode,
-    name: values.name,
-    description: values.description || null,
-    status: values.status,
-    start_date: values.startDate || null,
-    end_date: values.endDate || null,
-  };
-};

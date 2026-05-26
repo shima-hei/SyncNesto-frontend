@@ -3,34 +3,27 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { ProjectMemberCreate } from "@/lib/api/generated/model";
-import {
-  getListProjectMembersProjectsProjectIdMembersGetQueryKey,
-  useAddProjectMemberProjectsProjectIdMembersPost,
-} from "@/lib/api/generated/projects/projects";
+import { useAddProjectMemberProjectsProjectIdMembersPost } from "@/lib/api/generated/projects/projects";
 
+import { PROJECT_MESSAGES } from "../constants/project-messages";
+import { invalidateProjectMemberList } from "../lib/project-cache";
+import { toProjectMemberCreate } from "../lib/project-mappers";
 import type { ProjectMemberFormValues } from "../types/project-member-form";
 
 export function useAddProjectMember(projectId: number) {
   const queryClient = useQueryClient();
-  const addProjectMemberMutation = useAddProjectMemberProjectsProjectIdMembersPost(
-    {
+  const addProjectMemberMutation =
+    useAddProjectMemberProjectsProjectIdMembersPost({
       mutation: {
         onSuccess: async () => {
-          await queryClient.invalidateQueries({
-            queryKey:
-              getListProjectMembersProjectsProjectIdMembersGetQueryKey(
-                projectId
-              ),
-          });
-          toast.success("プロジェクトメンバーを追加しました。");
+          await invalidateProjectMemberList(queryClient, projectId);
+          toast.success(PROJECT_MESSAGES.member.addSuccess);
         },
         onError: () => {
-          toast.error("プロジェクトメンバーの追加に失敗しました。");
+          toast.error(PROJECT_MESSAGES.member.addError);
         },
       },
-    }
-  );
+    });
 
   const addProjectMember = async (values: ProjectMemberFormValues) => {
     return addProjectMemberMutation.mutateAsync({
@@ -45,12 +38,3 @@ export function useAddProjectMember(projectId: number) {
     error: addProjectMemberMutation.error,
   };
 }
-
-const toProjectMemberCreate = (
-  values: ProjectMemberFormValues
-): ProjectMemberCreate => {
-  return {
-    user_id: values.userId ?? 0,
-    role_key: values.roleKey,
-  };
-};

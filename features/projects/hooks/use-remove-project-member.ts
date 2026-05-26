@@ -3,10 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  getListProjectMembersProjectsProjectIdMembersGetQueryKey,
-  useRemoveProjectMemberProjectsProjectIdMembersUserIdDelete,
-} from "@/lib/api/generated/projects/projects";
+import { useRemoveProjectMemberProjectsProjectIdMembersUserIdDelete } from "@/lib/api/generated/projects/projects";
+
+import { PROJECT_MESSAGES } from "../constants/project-messages";
+import { invalidateProjectMemberList } from "../lib/project-cache";
 
 export function useRemoveProjectMember(projectId: number) {
   const queryClient = useQueryClient();
@@ -14,16 +14,11 @@ export function useRemoveProjectMember(projectId: number) {
     useRemoveProjectMemberProjectsProjectIdMembersUserIdDelete({
       mutation: {
         onSuccess: async () => {
-          await queryClient.invalidateQueries({
-            queryKey:
-              getListProjectMembersProjectsProjectIdMembersGetQueryKey(
-                projectId
-              ),
-          });
-          toast.success("プロジェクトメンバーを削除しました。");
+          await invalidateProjectMemberList(queryClient, projectId);
+          toast.success(PROJECT_MESSAGES.member.removeSuccess);
         },
         onError: () => {
-          toast.error("プロジェクトメンバーの削除に失敗しました。");
+          toast.error(PROJECT_MESSAGES.member.removeError);
         },
       },
     });

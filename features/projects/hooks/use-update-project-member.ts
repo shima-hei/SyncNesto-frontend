@@ -5,14 +5,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getConflictCurrent } from "@/lib/api/conflict";
-import type {
-  ProjectMemberRead,
-  ProjectMemberUpdate,
-} from "@/lib/api/generated/model";
-import {
-  getListProjectMembersProjectsProjectIdMembersGetQueryKey,
-  useUpdateProjectMemberProjectsProjectIdMembersUserIdPatch,
-} from "@/lib/api/generated/projects/projects";
+import type { ProjectMemberRead } from "@/lib/api/generated/model";
+import { useUpdateProjectMemberProjectsProjectIdMembersUserIdPatch } from "@/lib/api/generated/projects/projects";
+
+import { PROJECT_MESSAGES } from "../constants/project-messages";
+import { invalidateProjectMemberList } from "../lib/project-cache";
+import { toProjectMemberUpdate } from "../lib/project-mappers";
 
 export function useUpdateProjectMember(projectId: number) {
   const queryClient = useQueryClient();
@@ -23,24 +21,19 @@ export function useUpdateProjectMember(projectId: number) {
       mutation: {
         onSuccess: async () => {
           setConflictCurrent(null);
-          await queryClient.invalidateQueries({
-            queryKey:
-              getListProjectMembersProjectsProjectIdMembersGetQueryKey(
-                projectId
-              ),
-          });
-          toast.success("メンバー権限を更新しました。");
+          await invalidateProjectMemberList(queryClient, projectId);
+          toast.success(PROJECT_MESSAGES.member.updateSuccess);
         },
         onError: (error) => {
           const current = getConflictCurrent<ProjectMemberRead>(error);
 
           if (current) {
             setConflictCurrent(current);
-            toast.error("他の更新と競合しました。");
+            toast.error(PROJECT_MESSAGES.conflict);
             return;
           }
 
-          toast.error("メンバー権限の更新に失敗しました。");
+          toast.error(PROJECT_MESSAGES.member.updateError);
         },
       },
     });
@@ -74,13 +67,3 @@ export function useUpdateProjectMember(projectId: number) {
     error: updateProjectMemberMutation.error,
   };
 }
-
-const toProjectMemberUpdate = (
-  version: number,
-  roleKey: string
-): ProjectMemberUpdate => {
-  return {
-    version,
-    role_key: roleKey,
-  };
-};
