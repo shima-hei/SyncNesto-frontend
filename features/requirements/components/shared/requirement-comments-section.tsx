@@ -6,7 +6,7 @@ import { Trash2Icon } from "lucide-react";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTime } from "@/features/projects/components/tables/projects-table";
+import { formatDateTime } from "@/lib/format/date";
 import type { RequirementCommentRead } from "@/lib/api/generated/model";
 
 import { RequirementCommentForm } from "../forms/requirement-comment-form";

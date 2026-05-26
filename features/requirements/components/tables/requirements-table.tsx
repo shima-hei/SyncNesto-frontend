@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateTime } from "@/features/projects/components/tables/projects-table";
+import { formatDateTime } from "@/lib/format/date";
 import type { RequirementRead } from "@/lib/api/generated/model";
 
 import {

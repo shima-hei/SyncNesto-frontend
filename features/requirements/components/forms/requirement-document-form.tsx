@@ -3,10 +3,6 @@
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
-import {
-  type SelectableUser,
-  UserSelect,
-} from "@/components/shared/forms/user-select";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -25,17 +21,20 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { useProjectMemberUsers } from "@/features/projects/hooks/use-project-member-users";
 import { getConflictFields } from "@/lib/api/conflict";
-import type { UserSummary } from "@/lib/api/generated/model";
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
+import { REQUIREMENT_DOCUMENT_CONFLICT_FIELD_LABELS } from "../../constants/requirement-conflict-fields";
 import { REQUIREMENT_DOCUMENT_STATUS_OPTIONS } from "../../constants/requirement-options";
 import { requirementDocumentSchema } from "../../schemas/requirement-schema";
 import type {
   RequirementDocumentFormErrors,
   RequirementDocumentFormValues,
 } from "../../types/requirement-document-form";
+import {
+  RequirementDocumentUserField,
+  type RequirementDocumentUserValues,
+} from "./requirement-document-user-field";
 
 type RequirementDocumentFormProps = {
   projectId: number;
@@ -269,135 +268,3 @@ export function RequirementDocumentForm({
     </>
   );
 }
-
-type RequirementDocumentUserValues = {
-  author?: UserSummary | null;
-  reviewer?: UserSummary | null;
-  approver?: UserSummary | null;
-};
-
-type RequirementDocumentUserFieldProps = {
-  projectId: number;
-  label: string;
-  value: string;
-  initialUser?: UserSummary | null;
-  onChange: (value: string) => void;
-};
-
-function RequirementDocumentUserField({
-  projectId,
-  label,
-  value,
-  initialUser,
-  onChange,
-}: RequirementDocumentUserFieldProps) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<SelectableUser | null>(null);
-  const { users, isLoading } = useProjectMemberUsers(projectId, {
-    q: search.trim() || undefined,
-    limit: 20,
-  });
-  const selectedValue = getSelectedValue({
-    value,
-    users,
-    selectedUser,
-    initialUser,
-  });
-
-  const handleSelect = (user: SelectableUser) => {
-    setSelectedUser(user);
-    onChange(String(user.id));
-    setOpen(false);
-  };
-
-  const handleClear = () => {
-    setSelectedUser(null);
-    onChange("");
-  };
-
-  return (
-    <Field>
-      <FieldLabel>{label}</FieldLabel>
-      <div className="flex gap-2">
-        <div className="min-w-0 flex-1">
-          <UserSelect
-            users={users}
-            selectedUser={selectedValue}
-            open={open}
-            search={search}
-            isLoading={isLoading}
-            placeholder={`${label}を選択`}
-            onOpenChange={setOpen}
-            onSearchChange={setSearch}
-            onSelect={handleSelect}
-          />
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="shrink-0"
-          disabled={!value}
-          onClick={handleClear}
-        >
-          解除
-        </Button>
-      </div>
-    </Field>
-  );
-}
-
-const getFallbackSelectedUser = (value: string): SelectableUser | null => {
-  const userId = Number(value);
-
-  if (!Number.isInteger(userId) || userId <= 0) {
-    return null;
-  }
-
-  return {
-    id: userId,
-    name: `ユーザーID: ${userId}`,
-    email: "ユーザー情報未取得",
-    is_active: true,
-  };
-};
-
-const getSelectedValue = ({
-  value,
-  users,
-  selectedUser,
-  initialUser,
-}: {
-  value: string;
-  users: SelectableUser[];
-  selectedUser: SelectableUser | null;
-  initialUser?: UserSummary | null;
-}) => {
-  if (!value) {
-    return null;
-  }
-
-  if (selectedUser?.id === Number(value)) {
-    return selectedUser;
-  }
-
-  return (
-    users.find((user) => String(user.id) === value) ??
-    (initialUser && String(initialUser.id) === value ? initialUser : null) ??
-    getFallbackSelectedUser(value)
-  );
-};
-
-const REQUIREMENT_DOCUMENT_CONFLICT_FIELD_LABELS = {
-  title: "タイトル",
-  documentCode: "ドキュメントコード",
-  status: "ステータス",
-  purpose: "目的",
-  targetSystemName: "対象システム",
-  clientName: "クライアント",
-  vendorName: "ベンダー",
-  authorId: "作成者ID",
-  reviewerId: "レビュー担当ID",
-  approverId: "承認者ID",
-  approvedAt: "承認日時",
-} satisfies Partial<Record<keyof RequirementDocumentFormValues, string>>;

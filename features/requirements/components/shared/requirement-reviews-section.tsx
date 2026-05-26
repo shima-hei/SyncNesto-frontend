@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatDateTime } from "@/features/projects/components/tables/projects-table";
+import { formatDateTime } from "@/lib/format/date";
 import type { RequirementReviewRead } from "@/lib/api/generated/model";
 
 import { getRequirementReviewStatusLabel } from "../../constants/requirement-options";

@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { ProjectListItem } from "@/lib/api/generated/model";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 
 import { ProjectStatusBadge } from "../shared/project-status-badge";
 
@@ -80,24 +81,3 @@ export function ProjectsTable({
     </Table>
   );
 }
-
-export const formatDate = (date?: string | null) => {
-  if (!date) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat("ja-JP", {
-    dateStyle: "medium",
-  }).format(new Date(date));
-};
-
-export const formatDateTime = (dateTime?: string | null) => {
-  if (!dateTime) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat("ja-JP", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(dateTime));
-};

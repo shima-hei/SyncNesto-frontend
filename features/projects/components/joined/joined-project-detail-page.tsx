@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useProject } from "../../hooks/use-project";
-import { formatDate, formatDateTime } from "../tables/projects-table";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 
 type JoinedProjectDetailPageProps = {
   projectId: number;

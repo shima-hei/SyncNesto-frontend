@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTime } from "@/features/projects/components/tables/projects-table";
+import { formatDateTime } from "@/lib/format/date";
 import type { RequirementDetailRead } from "@/lib/api/generated/model";
 
 type RequirementDetailsSectionProps = {

@@ -13,7 +13,7 @@ import {
   canDeleteRequirement,
   canUpdateRequirement,
 } from "@/features/auth/utils/authorization";
-import { formatDateTime } from "@/features/projects/components/tables/projects-table";
+import { formatDateTime } from "@/lib/format/date";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 
 import { getRequirementDocumentStatusLabel } from "../../constants/requirement-options";
