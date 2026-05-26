@@ -23,6 +23,7 @@ export function RequirementDocumentCreatePage({
         </p>
       </div>
       <RequirementDocumentForm
+        projectId={projectId}
         mode="create"
         initialValues={initialRequirementDocumentValues}
         isPending={isPending}

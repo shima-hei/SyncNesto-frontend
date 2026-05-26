@@ -26,6 +26,7 @@ import type {
 import type {
   CurrentProjectRoleRead,
   HTTPValidationError,
+  ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams,
   ListProjectsProjectsGetParams,
   ProjectCreate,
   ProjectListResponse,
@@ -33,7 +34,8 @@ import type {
   ProjectMemberRead,
   ProjectMemberUpdate,
   ProjectRead,
-  ProjectUpdate
+  ProjectUpdate,
+  UserSummaryListResponse
 } from '../model';
 
 import { apiClient } from '../../client';
@@ -602,6 +604,131 @@ export function useReadCurrentProjectRoleProjectsProjectIdMeGet<TData = Awaited<
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getReadCurrentProjectRoleProjectsProjectIdMeGetQueryOptions(projectId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getListProjectMemberUsersProjectsProjectIdMemberUsersGetUrl = (projectId: number,
+    params?: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/projects/${projectId}/member-users?${stringifiedParams}` : `/projects/${projectId}/member-users`
+}
+
+/**
+ * プロジェクト所属ユーザー一覧を取得する。
+
+Args:
+    project_id: プロジェクトID。
+    q: 検索キーワード。
+    limit: 最大取得件数。
+    db: DBセッション。
+
+Returns:
+    プロジェクト所属ユーザー一覧。
+ * @summary List Project Member Users
+ */
+export const listProjectMemberUsersProjectsProjectIdMemberUsersGet = async (projectId: number,
+    params?: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams, options?: RequestInit): Promise<UserSummaryListResponse> => {
+
+  return apiClient<UserSummaryListResponse>(getListProjectMemberUsersProjectsProjectIdMemberUsersGetUrl(projectId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProjectMemberUsersProjectsProjectIdMemberUsersGetQueryKey = (projectId: number,
+    params?: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams,) => {
+    return [
+    `/projects/${projectId}/member-users`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListProjectMemberUsersProjectsProjectIdMemberUsersGetQueryOptions = <TData = Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    params?: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProjectMemberUsersProjectsProjectIdMemberUsersGetQueryKey(projectId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>> = ({ signal }) => listProjectMemberUsersProjectsProjectIdMemberUsersGet(projectId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProjectMemberUsersProjectsProjectIdMemberUsersGetQueryResult = NonNullable<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>>
+export type ListProjectMemberUsersProjectsProjectIdMemberUsersGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListProjectMemberUsersProjectsProjectIdMemberUsersGet<TData = Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: undefined |  ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>,
+          TError,
+          Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProjectMemberUsersProjectsProjectIdMemberUsersGet<TData = Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>,
+          TError,
+          Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProjectMemberUsersProjectsProjectIdMemberUsersGet<TData = Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Project Member Users
+ */
+
+export function useListProjectMemberUsersProjectsProjectIdMemberUsersGet<TData = Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProjectMemberUsersProjectsProjectIdMemberUsersGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProjectMemberUsersProjectsProjectIdMemberUsersGetQueryOptions(projectId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

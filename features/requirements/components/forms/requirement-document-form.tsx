@@ -3,6 +3,10 @@
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
+import {
+  type SelectableUser,
+  UserSelect,
+} from "@/components/shared/forms/user-select";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -21,7 +25,9 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { useProjectMemberUsers } from "@/features/projects/hooks/use-project-member-users";
 import { getConflictFields } from "@/lib/api/conflict";
+import type { UserSummary } from "@/lib/api/generated/model";
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { REQUIREMENT_DOCUMENT_STATUS_OPTIONS } from "../../constants/requirement-options";
@@ -32,8 +38,10 @@ import type {
 } from "../../types/requirement-document-form";
 
 type RequirementDocumentFormProps = {
+  projectId: number;
   mode: "create" | "update";
   initialValues: RequirementDocumentFormValues;
+  initialUsers?: RequirementDocumentUserValues;
   isPending: boolean;
   error?: Error | null;
   conflictValues?: RequirementDocumentFormValues | null;
@@ -43,8 +51,10 @@ type RequirementDocumentFormProps = {
 };
 
 export function RequirementDocumentForm({
+  projectId,
   mode,
   initialValues,
+  initialUsers = {},
   isPending,
   error,
   conflictValues,
@@ -58,9 +68,6 @@ export function RequirementDocumentForm({
   const targetSystemNameId = useId();
   const clientNameId = useId();
   const vendorNameId = useId();
-  const authorId = useId();
-  const reviewerId = useId();
-  const approverId = useId();
   const approvedAtId = useId();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RequirementDocumentFormErrors>({});
@@ -198,38 +205,28 @@ export function RequirementDocumentForm({
             </Field>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
-            <Field>
-              <FieldLabel htmlFor={authorId}>作成者ID</FieldLabel>
-              <Input
-                id={authorId}
-                inputMode="numeric"
-                value={values.authorId}
-                onChange={(event) => updateValue("authorId", event.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={reviewerId}>レビュー担当ID</FieldLabel>
-              <Input
-                id={reviewerId}
-                inputMode="numeric"
-                value={values.reviewerId}
-                onChange={(event) =>
-                  updateValue("reviewerId", event.target.value)
-                }
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={approverId}>承認者ID</FieldLabel>
-              <Input
-                id={approverId}
-                inputMode="numeric"
-                value={values.approverId}
-                onChange={(event) =>
-                  updateValue("approverId", event.target.value)
-                }
-              />
-            </Field>
+          <div className="grid gap-4 md:grid-cols-2">
+            <RequirementDocumentUserField
+              projectId={projectId}
+              label="作成者"
+              value={values.authorId}
+              initialUser={initialUsers.author ?? null}
+              onChange={(value) => updateValue("authorId", value)}
+            />
+            <RequirementDocumentUserField
+              projectId={projectId}
+              label="レビュー担当"
+              value={values.reviewerId}
+              initialUser={initialUsers.reviewer ?? null}
+              onChange={(value) => updateValue("reviewerId", value)}
+            />
+            <RequirementDocumentUserField
+              projectId={projectId}
+              label="承認者"
+              value={values.approverId}
+              initialUser={initialUsers.approver ?? null}
+              onChange={(value) => updateValue("approverId", value)}
+            />
             <Field>
               <FieldLabel htmlFor={approvedAtId}>承認日時</FieldLabel>
               <Input
@@ -272,6 +269,124 @@ export function RequirementDocumentForm({
     </>
   );
 }
+
+type RequirementDocumentUserValues = {
+  author?: UserSummary | null;
+  reviewer?: UserSummary | null;
+  approver?: UserSummary | null;
+};
+
+type RequirementDocumentUserFieldProps = {
+  projectId: number;
+  label: string;
+  value: string;
+  initialUser?: UserSummary | null;
+  onChange: (value: string) => void;
+};
+
+function RequirementDocumentUserField({
+  projectId,
+  label,
+  value,
+  initialUser,
+  onChange,
+}: RequirementDocumentUserFieldProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState<SelectableUser | null>(null);
+  const { users, isLoading } = useProjectMemberUsers(projectId, {
+    q: search.trim() || undefined,
+    limit: 20,
+  });
+  const selectedValue = getSelectedValue({
+    value,
+    users,
+    selectedUser,
+    initialUser,
+  });
+
+  const handleSelect = (user: SelectableUser) => {
+    setSelectedUser(user);
+    onChange(String(user.id));
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    setSelectedUser(null);
+    onChange("");
+  };
+
+  return (
+    <Field>
+      <FieldLabel>{label}</FieldLabel>
+      <div className="flex gap-2">
+        <div className="min-w-0 flex-1">
+          <UserSelect
+            users={users}
+            selectedUser={selectedValue}
+            open={open}
+            search={search}
+            isLoading={isLoading}
+            placeholder={`${label}を選択`}
+            onOpenChange={setOpen}
+            onSearchChange={setSearch}
+            onSelect={handleSelect}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="shrink-0"
+          disabled={!value}
+          onClick={handleClear}
+        >
+          解除
+        </Button>
+      </div>
+    </Field>
+  );
+}
+
+const getFallbackSelectedUser = (value: string): SelectableUser | null => {
+  const userId = Number(value);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return null;
+  }
+
+  return {
+    id: userId,
+    name: `ユーザーID: ${userId}`,
+    email: "ユーザー情報未取得",
+    is_active: true,
+  };
+};
+
+const getSelectedValue = ({
+  value,
+  users,
+  selectedUser,
+  initialUser,
+}: {
+  value: string;
+  users: SelectableUser[];
+  selectedUser: SelectableUser | null;
+  initialUser?: UserSummary | null;
+}) => {
+  if (!value) {
+    return null;
+  }
+
+  if (selectedUser?.id === Number(value)) {
+    return selectedUser;
+  }
+
+  return (
+    users.find((user) => String(user.id) === value) ??
+    (initialUser && String(initialUser.id) === value ? initialUser : null) ??
+    getFallbackSelectedUser(value)
+  );
+};
 
 const REQUIREMENT_DOCUMENT_CONFLICT_FIELD_LABELS = {
   title: "タイトル",

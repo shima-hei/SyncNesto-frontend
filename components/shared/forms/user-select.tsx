@@ -20,9 +20,14 @@ import {
 import type { UserListItem } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 
+export type SelectableUser = Pick<
+  UserListItem,
+  "id" | "name" | "email" | "avatar_url" | "is_active"
+>;
+
 type UserSelectProps = {
-  users: UserListItem[];
-  selectedUser: UserListItem | null;
+  users: SelectableUser[];
+  selectedUser: SelectableUser | null;
   open: boolean;
   search: string;
   isLoading: boolean;
@@ -33,7 +38,7 @@ type UserSelectProps = {
   loadingMessage?: string;
   onOpenChange: (open: boolean) => void;
   onSearchChange: (value: string) => void;
-  onSelect: (user: UserListItem) => void;
+  onSelect: (user: SelectableUser) => void;
 };
 
 export function UserSelect({

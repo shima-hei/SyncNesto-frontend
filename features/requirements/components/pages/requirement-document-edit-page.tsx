@@ -48,8 +48,14 @@ export function RequirementDocumentEditPage({
       </div>
       <RequirementDocumentForm
         key={document.version}
+        projectId={projectId}
         mode="update"
         initialValues={getRequirementDocumentFormValues(document)}
+        initialUsers={{
+          author: document.author ?? null,
+          reviewer: document.reviewer ?? null,
+          approver: document.approver ?? null,
+        }}
         isPending={isPending}
         error={updateError}
         conflictValues={
