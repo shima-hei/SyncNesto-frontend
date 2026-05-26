@@ -3,13 +3,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { RequirementCommentCreate } from "@/lib/api/generated/model";
 import {
-  getListRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGetQueryKey,
-  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey,
   useCreateRequirementCommentProjectsProjectIdRequirementsRequirementIdCommentsPost,
 } from "@/lib/api/generated/requirements/requirements";
 
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import { invalidateRequirementCommentsWithSummary } from "../lib/requirement-cache";
+import { toRequirementCommentCreate } from "../lib/requirement-mappers";
 import type { RequirementCommentFormValues } from "../types/requirement-comment-form";
 
 export function useCreateRequirementComment(
@@ -22,27 +22,15 @@ export function useCreateRequirementComment(
       {
         mutation: {
           onSuccess: async () => {
-            // 要件詳細summaryにもコメント件数が含まれるため、一覧とsummaryを一緒に更新する。
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey:
-                  getListRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-              queryClient.invalidateQueries({
-                queryKey:
-                  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-            ]);
-            toast.success("コメントを追加しました。");
+            await invalidateRequirementCommentsWithSummary(
+              queryClient,
+              projectId,
+              requirementId
+            );
+            toast.success(REQUIREMENT_MESSAGES.comment.createSuccess);
           },
           onError: () => {
-            toast.error("コメントの追加に失敗しました。");
+            toast.error(REQUIREMENT_MESSAGES.comment.createError);
           },
         },
       }
@@ -64,11 +52,3 @@ export function useCreateRequirementComment(
     error: createCommentMutation.error,
   };
 }
-
-const toRequirementCommentCreate = (
-  values: RequirementCommentFormValues
-): RequirementCommentCreate => {
-  return {
-    comment: values.comment,
-  };
-};

@@ -3,11 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  getListRequirementLinksProjectsProjectIdRequirementsRequirementIdLinksGetQueryKey,
-  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey,
-  useDeleteRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdDelete,
-} from "@/lib/api/generated/requirements/requirements";
+import { useDeleteRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdDelete } from "@/lib/api/generated/requirements/requirements";
+
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import { invalidateRequirementLinksWithSummary } from "../lib/requirement-cache";
 
 export function useDeleteRequirementLink(
   projectId: number,
@@ -19,27 +18,15 @@ export function useDeleteRequirementLink(
       {
         mutation: {
           onSuccess: async () => {
-            // 要件詳細summaryにもリンク件数が含まれるため、一覧とsummaryを一緒に更新する。
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey:
-                  getListRequirementLinksProjectsProjectIdRequirementsRequirementIdLinksGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-              queryClient.invalidateQueries({
-                queryKey:
-                  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-            ]);
-            toast.success("関連成果物を削除しました。");
+            await invalidateRequirementLinksWithSummary(
+              queryClient,
+              projectId,
+              requirementId
+            );
+            toast.success(REQUIREMENT_MESSAGES.link.deleteSuccess);
           },
           onError: () => {
-            toast.error("関連成果物の削除に失敗しました。");
+            toast.error(REQUIREMENT_MESSAGES.link.deleteError);
           },
         },
       }

@@ -3,13 +3,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { RequirementReviewUpdate } from "@/lib/api/generated/model";
 import {
-  getListRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGetQueryKey,
-  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey,
   useUpdateRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdPatch,
 } from "@/lib/api/generated/requirements/requirements";
 
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import { invalidateRequirementReviewsWithSummary } from "../lib/requirement-cache";
+import { toRequirementReviewUpdate } from "../lib/requirement-mappers";
 import type { RequirementReviewFormValues } from "../types/requirement-review-form";
 
 export function useUpdateRequirementReview(
@@ -22,27 +22,15 @@ export function useUpdateRequirementReview(
       {
         mutation: {
           onSuccess: async () => {
-            // 要件詳細summaryにもレビュー情報が含まれるため、一覧とsummaryを一緒に更新する。
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey:
-                  getListRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-              queryClient.invalidateQueries({
-                queryKey:
-                  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-            ]);
-            toast.success("レビューを更新しました。");
+            await invalidateRequirementReviewsWithSummary(
+              queryClient,
+              projectId,
+              requirementId
+            );
+            toast.success(REQUIREMENT_MESSAGES.review.updateSuccess);
           },
           onError: () => {
-            toast.error("レビューの更新に失敗しました。");
+            toast.error(REQUIREMENT_MESSAGES.review.updateError);
           },
         },
       }
@@ -66,14 +54,3 @@ export function useUpdateRequirementReview(
     error: updateReviewMutation.error,
   };
 }
-
-const toRequirementReviewUpdate = (
-  values: RequirementReviewFormValues
-): RequirementReviewUpdate => {
-  return {
-    reviewer_id: Number(values.reviewerId),
-    status: values.status,
-    comment: values.comment || null,
-    reviewed_at: values.reviewedAt || null,
-  };
-};

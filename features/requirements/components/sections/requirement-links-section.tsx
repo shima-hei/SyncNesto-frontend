@@ -14,7 +14,7 @@ import { useCreateRequirementLink } from "../../hooks/use-create-requirement-lin
 import { useDeleteRequirementLink } from "../../hooks/use-delete-requirement-link";
 import { useRequirementLinks } from "../../hooks/use-requirement-links";
 import { RequirementLinkForm } from "../forms/requirement-link-form";
-import { RequirementSectionSkeleton } from "./requirement-section-skeleton";
+import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
 type RequirementLinksSectionProps = {
   projectId: number;

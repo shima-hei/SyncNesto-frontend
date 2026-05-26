@@ -3,11 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  getListRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGetQueryKey,
-  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey,
-  useDeleteRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdDelete,
-} from "@/lib/api/generated/requirements/requirements";
+import { useDeleteRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdDelete } from "@/lib/api/generated/requirements/requirements";
+
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import { invalidateRequirementReviewsWithSummary } from "../lib/requirement-cache";
 
 export function useDeleteRequirementReview(
   projectId: number,
@@ -19,27 +18,15 @@ export function useDeleteRequirementReview(
       {
         mutation: {
           onSuccess: async () => {
-            // 要件詳細summaryにもレビュー件数が含まれるため、一覧とsummaryを一緒に更新する。
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey:
-                  getListRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-              queryClient.invalidateQueries({
-                queryKey:
-                  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-            ]);
-            toast.success("レビューを削除しました。");
+            await invalidateRequirementReviewsWithSummary(
+              queryClient,
+              projectId,
+              requirementId
+            );
+            toast.success(REQUIREMENT_MESSAGES.review.deleteSuccess);
           },
           onError: () => {
-            toast.error("レビューの削除に失敗しました。");
+            toast.error(REQUIREMENT_MESSAGES.review.deleteError);
           },
         },
       }

@@ -5,15 +5,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getConflictCurrent } from "@/lib/api/conflict";
-import type { RequirementRead, RequirementUpdate } from "@/lib/api/generated/model";
+import type { RequirementRead } from "@/lib/api/generated/model";
 import {
-  getListRequirementsProjectsProjectIdRequirementsGetQueryKey,
-  getReadRequirementProjectsProjectIdRequirementsRequirementIdGetQueryKey,
-  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey,
   useUpdateRequirementProjectsProjectIdRequirementsRequirementIdPatch,
 } from "@/lib/api/generated/requirements/requirements";
 
-import { toOptionalNumber } from "../constants/requirement-form";
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import {
+  invalidateRequirementList,
+  invalidateRequirementSummary,
+  setRequirementDetailCache,
+} from "../lib/requirement-cache";
+import { toRequirementUpdate } from "../lib/requirement-mappers";
 import type { RequirementFormValues } from "../types/requirement-form";
 
 export function useUpdateRequirement(projectId: number, requirementId: number) {
@@ -25,39 +28,28 @@ export function useUpdateRequirement(projectId: number, requirementId: number) {
       mutation: {
         onSuccess: async (requirement) => {
           setConflictCurrent(null);
-          queryClient.setQueryData(
-            getReadRequirementProjectsProjectIdRequirementsRequirementIdGetQueryKey(
-              projectId,
-              requirementId
-            ),
+          setRequirementDetailCache(
+            queryClient,
+            projectId,
+            requirementId,
             requirement
           );
           await Promise.all([
-            queryClient.invalidateQueries({
-              queryKey: getListRequirementsProjectsProjectIdRequirementsGetQueryKey(
-                projectId
-              ),
-            }),
-            queryClient.invalidateQueries({
-              queryKey:
-                getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey(
-                  projectId,
-                  requirementId
-                ),
-            }),
+            invalidateRequirementList(queryClient, projectId),
+            invalidateRequirementSummary(queryClient, projectId, requirementId),
           ]);
-          toast.success("要件を更新しました。");
+          toast.success(REQUIREMENT_MESSAGES.requirement.updateSuccess);
         },
         onError: (error) => {
           const current = getConflictCurrent<RequirementRead>(error);
 
           if (current) {
             setConflictCurrent(current);
-            toast.error("他の更新と競合しました。");
+            toast.error(REQUIREMENT_MESSAGES.conflict);
             return;
           }
 
-          toast.error("要件の更新に失敗しました。");
+          toast.error(REQUIREMENT_MESSAGES.requirement.updateError);
         },
       },
     });
@@ -86,27 +78,3 @@ export function useUpdateRequirement(projectId: number, requirementId: number) {
     error: updateRequirementMutation.error,
   };
 }
-
-const toRequirementUpdate = (
-  values: RequirementFormValues,
-  version: number
-): RequirementUpdate => {
-  return {
-    version,
-    requirement_code: values.requirementCode,
-    requirement_type: values.requirementType,
-    category: values.category || null,
-    title: values.title,
-    description: values.description || null,
-    rationale: values.rationale || null,
-    acceptance_criteria: values.acceptanceCriteria || null,
-    priority: values.priority,
-    status: values.status,
-    source: values.source || null,
-    owner_id: toOptionalNumber(values.ownerId),
-    approved_by: toOptionalNumber(values.approvedBy),
-    approved_at: values.approvedAt || null,
-    change_summary: values.changeSummary || null,
-    reason: values.reason || null,
-  };
-};

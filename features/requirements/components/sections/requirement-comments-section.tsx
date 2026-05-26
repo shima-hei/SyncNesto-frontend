@@ -13,7 +13,7 @@ import { RequirementCommentForm } from "../forms/requirement-comment-form";
 import { useCreateRequirementComment } from "../../hooks/use-create-requirement-comment";
 import { useDeleteRequirementComment } from "../../hooks/use-delete-requirement-comment";
 import { useRequirementComments } from "../../hooks/use-requirement-comments";
-import { RequirementSectionSkeleton } from "./requirement-section-skeleton";
+import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
 type RequirementCommentsSectionProps = {
   projectId: number;

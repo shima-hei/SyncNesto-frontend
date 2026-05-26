@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { useDeleteRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdDelete } from "@/lib/api/generated/requirements/requirements";
+
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
-  getListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetQueryKey,
-  getReadRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdGetQueryKey,
-  useDeleteRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdDelete,
-} from "@/lib/api/generated/requirements/requirements";
+  invalidateRequirementDocumentList,
+  removeRequirementDocumentDetailCache,
+} from "../lib/requirement-cache";
 
 export function useDeleteRequirementDocument(
   projectId: number,
@@ -21,24 +23,13 @@ export function useDeleteRequirementDocument(
       {
         mutation: {
           onSuccess: async () => {
-            queryClient.removeQueries({
-              queryKey:
-                getReadRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdGetQueryKey(
-                  projectId,
-                  documentId
-                ),
-            });
-            await queryClient.invalidateQueries({
-              queryKey:
-                getListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetQueryKey(
-                  projectId
-                ),
-            });
-            toast.success("要件定義書を削除しました。");
+            removeRequirementDocumentDetailCache(queryClient, projectId, documentId);
+            await invalidateRequirementDocumentList(queryClient, projectId);
+            toast.success(REQUIREMENT_MESSAGES.document.deleteSuccess);
             router.push(`/projects/joined/${projectId}/requirements`);
           },
           onError: () => {
-            toast.error("要件定義書の削除に失敗しました。");
+            toast.error(REQUIREMENT_MESSAGES.document.deleteError);
           },
         },
       }

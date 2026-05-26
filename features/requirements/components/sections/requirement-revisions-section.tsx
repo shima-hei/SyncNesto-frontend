@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/format/date";
 
 import { useRequirementRevisions } from "../../hooks/use-requirement-revisions";
-import { RequirementSectionSkeleton } from "./requirement-section-skeleton";
+import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
 type RequirementRevisionsSectionProps = {
   projectId: number;

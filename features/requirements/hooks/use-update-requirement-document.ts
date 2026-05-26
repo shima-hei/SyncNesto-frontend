@@ -7,15 +7,15 @@ import { toast } from "sonner";
 import { getConflictCurrent } from "@/lib/api/conflict";
 import type {
   RequirementDocumentRead,
-  RequirementDocumentUpdate,
 } from "@/lib/api/generated/model";
-import {
-  getListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetQueryKey,
-  getReadRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdGetQueryKey,
-  useUpdateRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdPatch,
-} from "@/lib/api/generated/requirements/requirements";
+import { useUpdateRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdPatch } from "@/lib/api/generated/requirements/requirements";
 
-import { toOptionalNumber } from "../constants/requirement-form";
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import {
+  invalidateRequirementDocumentList,
+  setRequirementDocumentDetailCache,
+} from "../lib/requirement-cache";
+import { toRequirementDocumentUpdate } from "../lib/requirement-mappers";
 import type { RequirementDocumentFormValues } from "../types/requirement-document-form";
 
 export function useUpdateRequirementDocument(
@@ -31,31 +31,25 @@ export function useUpdateRequirementDocument(
         mutation: {
           onSuccess: async (document) => {
             setConflictCurrent(null);
-            queryClient.setQueryData(
-              getReadRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdGetQueryKey(
-                projectId,
-                documentId
-              ),
+            setRequirementDocumentDetailCache(
+              queryClient,
+              projectId,
+              documentId,
               document
             );
-            await queryClient.invalidateQueries({
-              queryKey:
-                getListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetQueryKey(
-                  projectId
-                ),
-            });
-            toast.success("要件定義書を更新しました。");
+            await invalidateRequirementDocumentList(queryClient, projectId);
+            toast.success(REQUIREMENT_MESSAGES.document.updateSuccess);
           },
           onError: (error) => {
             const current = getConflictCurrent<RequirementDocumentRead>(error);
 
             if (current) {
               setConflictCurrent(current);
-              toast.error("他の更新と競合しました。");
+              toast.error(REQUIREMENT_MESSAGES.conflict);
               return;
             }
 
-            toast.error("要件定義書の更新に失敗しました。");
+            toast.error(REQUIREMENT_MESSAGES.document.updateError);
           },
         },
       }
@@ -85,23 +79,3 @@ export function useUpdateRequirementDocument(
     error: updateDocumentMutation.error,
   };
 }
-
-const toRequirementDocumentUpdate = (
-  values: RequirementDocumentFormValues,
-  version: number
-): RequirementDocumentUpdate => {
-  return {
-    version,
-    title: values.title,
-    document_code: values.documentCode,
-    status: values.status,
-    purpose: values.purpose || null,
-    target_system_name: values.targetSystemName || null,
-    client_name: values.clientName || null,
-    vendor_name: values.vendorName || null,
-    author_id: toOptionalNumber(values.authorId),
-    reviewer_id: toOptionalNumber(values.reviewerId),
-    approver_id: toOptionalNumber(values.approverId),
-    approved_at: values.approvedAt || null,
-  };
-};

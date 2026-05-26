@@ -25,11 +25,11 @@ import {
 } from "../../constants/requirement-options";
 import { useDeleteRequirement } from "../../hooks/use-delete-requirement";
 import { useRequirementSummary } from "../../hooks/use-requirement-summary";
-import { RequirementCommentsSection } from "../shared/requirement-comments-section";
-import { RequirementDetailsSection } from "../shared/requirement-details-section";
-import { RequirementLinksSection } from "../shared/requirement-links-section";
-import { RequirementReviewsSection } from "../shared/requirement-reviews-section";
-import { RequirementRevisionsSection } from "../shared/requirement-revisions-section";
+import { RequirementCommentsSection } from "../sections/requirement-comments-section";
+import { RequirementDetailsSection } from "../sections/requirement-details-section";
+import { RequirementLinksSection } from "../sections/requirement-links-section";
+import { RequirementReviewsSection } from "../sections/requirement-reviews-section";
+import { RequirementRevisionsSection } from "../sections/requirement-revisions-section";
 
 type RequirementDetailPageProps = {
   projectId: number;

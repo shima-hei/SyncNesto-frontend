@@ -25,7 +25,7 @@ import {
   getRequirementReviewFormValues,
   RequirementReviewForm,
 } from "../forms/requirement-review-form";
-import { RequirementSectionSkeleton } from "./requirement-section-skeleton";
+import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
 type RequirementReviewsSectionProps = {
   projectId: number;

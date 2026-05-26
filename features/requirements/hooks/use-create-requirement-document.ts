@@ -4,13 +4,11 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { RequirementDocumentCreate } from "@/lib/api/generated/model";
-import {
-  getListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetQueryKey,
-  useCreateRequirementDocumentProjectsProjectIdRequirementDocumentsPost,
-} from "@/lib/api/generated/requirements/requirements";
+import { useCreateRequirementDocumentProjectsProjectIdRequirementDocumentsPost } from "@/lib/api/generated/requirements/requirements";
 
-import { toOptionalNumber } from "../constants/requirement-form";
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import { invalidateRequirementDocumentList } from "../lib/requirement-cache";
+import { toRequirementDocumentCreate } from "../lib/requirement-mappers";
 import type { RequirementDocumentFormValues } from "../types/requirement-document-form";
 
 export function useCreateRequirementDocument(projectId: number) {
@@ -20,17 +18,12 @@ export function useCreateRequirementDocument(projectId: number) {
     useCreateRequirementDocumentProjectsProjectIdRequirementDocumentsPost({
       mutation: {
         onSuccess: async (document) => {
-          await queryClient.invalidateQueries({
-            queryKey:
-              getListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetQueryKey(
-                projectId
-              ),
-          });
-          toast.success("要件定義書を登録しました。");
+          await invalidateRequirementDocumentList(queryClient, projectId);
+          toast.success(REQUIREMENT_MESSAGES.document.createSuccess);
           router.push(`/projects/joined/${projectId}/requirements/${document.id}`);
         },
         onError: () => {
-          toast.error("要件定義書の登録に失敗しました。");
+          toast.error(REQUIREMENT_MESSAGES.document.createError);
         },
       },
     });
@@ -50,21 +43,3 @@ export function useCreateRequirementDocument(projectId: number) {
     error: createDocumentMutation.error,
   };
 }
-
-const toRequirementDocumentCreate = (
-  values: RequirementDocumentFormValues
-): RequirementDocumentCreate => {
-  return {
-    title: values.title,
-    document_code: values.documentCode,
-    status: values.status,
-    purpose: values.purpose || null,
-    target_system_name: values.targetSystemName || null,
-    client_name: values.clientName || null,
-    vendor_name: values.vendorName || null,
-    author_id: toOptionalNumber(values.authorId),
-    reviewer_id: toOptionalNumber(values.reviewerId),
-    approver_id: toOptionalNumber(values.approverId),
-    approved_at: values.approvedAt || null,
-  };
-};

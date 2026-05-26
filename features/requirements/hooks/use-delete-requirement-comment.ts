@@ -3,11 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  getListRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGetQueryKey,
-  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey,
-  useDeleteRequirementCommentProjectsProjectIdRequirementsRequirementIdCommentsCommentIdDelete,
-} from "@/lib/api/generated/requirements/requirements";
+import { useDeleteRequirementCommentProjectsProjectIdRequirementsRequirementIdCommentsCommentIdDelete } from "@/lib/api/generated/requirements/requirements";
+
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import { invalidateRequirementCommentsWithSummary } from "../lib/requirement-cache";
 
 export function useDeleteRequirementComment(
   projectId: number,
@@ -19,27 +18,15 @@ export function useDeleteRequirementComment(
       {
         mutation: {
           onSuccess: async () => {
-            // 要件詳細summaryにもコメント件数が含まれるため、一覧とsummaryを一緒に更新する。
-            await Promise.all([
-              queryClient.invalidateQueries({
-                queryKey:
-                  getListRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-              queryClient.invalidateQueries({
-                queryKey:
-                  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey(
-                    projectId,
-                    requirementId
-                  ),
-              }),
-            ]);
-            toast.success("コメントを削除しました。");
+            await invalidateRequirementCommentsWithSummary(
+              queryClient,
+              projectId,
+              requirementId
+            );
+            toast.success(REQUIREMENT_MESSAGES.comment.deleteSuccess);
           },
           onError: () => {
-            toast.error("コメントの削除に失敗しました。");
+            toast.error(REQUIREMENT_MESSAGES.comment.deleteError);
           },
         },
       }

@@ -4,12 +4,13 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { useDeleteRequirementProjectsProjectIdRequirementsRequirementIdDelete } from "@/lib/api/generated/requirements/requirements";
+
+import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
-  getListRequirementsProjectsProjectIdRequirementsGetQueryKey,
-  getReadRequirementProjectsProjectIdRequirementsRequirementIdGetQueryKey,
-  getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey,
-  useDeleteRequirementProjectsProjectIdRequirementsRequirementIdDelete,
-} from "@/lib/api/generated/requirements/requirements";
+  invalidateRequirementList,
+  removeRequirementDetailCache,
+} from "../lib/requirement-cache";
 
 export function useDeleteRequirement(
   projectId: number,
@@ -22,30 +23,13 @@ export function useDeleteRequirement(
     useDeleteRequirementProjectsProjectIdRequirementsRequirementIdDelete({
       mutation: {
         onSuccess: async () => {
-          queryClient.removeQueries({
-            queryKey:
-              getReadRequirementProjectsProjectIdRequirementsRequirementIdGetQueryKey(
-                projectId,
-                requirementId
-              ),
-          });
-          queryClient.removeQueries({
-            queryKey:
-              getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey(
-                projectId,
-                requirementId
-              ),
-          });
-          await queryClient.invalidateQueries({
-            queryKey: getListRequirementsProjectsProjectIdRequirementsGetQueryKey(
-              projectId
-            ),
-          });
-          toast.success("要件を削除しました。");
+          removeRequirementDetailCache(queryClient, projectId, requirementId);
+          await invalidateRequirementList(queryClient, projectId);
+          toast.success(REQUIREMENT_MESSAGES.requirement.deleteSuccess);
           router.push(`/projects/joined/${projectId}/requirements/${documentId}`);
         },
         onError: () => {
-          toast.error("要件の削除に失敗しました。");
+          toast.error(REQUIREMENT_MESSAGES.requirement.deleteError);
         },
       },
     });

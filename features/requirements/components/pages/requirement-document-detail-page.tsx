@@ -19,7 +19,7 @@ import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-pro
 import { getRequirementDocumentStatusLabel } from "../../constants/requirement-options";
 import { useDeleteRequirementDocument } from "../../hooks/use-delete-requirement-document";
 import { useRequirementDocument } from "../../hooks/use-requirement-document";
-import { RequirementsListSection } from "../shared/requirements-list-section";
+import { RequirementsListSection } from "../sections/requirements-list-section";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
