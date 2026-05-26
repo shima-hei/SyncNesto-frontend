@@ -4,15 +4,13 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { SYSTEM_ROLE_KEYS } from "@/features/auth/constants/roles";
 import { getConflictCurrent } from "@/lib/api/conflict";
-import type { UserRead, UserUpdate } from "@/lib/api/generated/model";
-import {
-  getListUsersUsersGetQueryKey,
-  getReadUserUsersUserIdGetQueryKey,
-  useUpdateUserUsersUserIdPatch,
-} from "@/lib/api/generated/users/users";
+import type { UserRead } from "@/lib/api/generated/model";
+import { useUpdateUserUsersUserIdPatch } from "@/lib/api/generated/users/users";
 
+import { USER_MESSAGES } from "../constants/user-messages";
+import { invalidateUserList, setUserDetailCache } from "../lib/user-cache";
+import { toUserUpdate } from "../lib/user-mappers";
 import type { UserFormValues } from "../types/user-form";
 
 export function useUpdateUser(userId: number) {
@@ -22,22 +20,20 @@ export function useUpdateUser(userId: number) {
     mutation: {
       onSuccess: async (user) => {
         setConflictCurrent(null);
-        queryClient.setQueryData(getReadUserUsersUserIdGetQueryKey(userId), user);
-        await queryClient.invalidateQueries({
-          queryKey: getListUsersUsersGetQueryKey(),
-        });
-        toast.success("ユーザー情報を更新しました。");
+        setUserDetailCache(queryClient, userId, user);
+        await invalidateUserList(queryClient);
+        toast.success(USER_MESSAGES.updateSuccess);
       },
       onError: (error) => {
         const current = getConflictCurrent<UserRead>(error);
 
         if (current) {
           setConflictCurrent(current);
-          toast.error("他の更新と競合しました。");
+          toast.error(USER_MESSAGES.conflict);
           return;
         }
 
-        toast.error("ユーザー情報の更新に失敗しました。");
+        toast.error(USER_MESSAGES.updateError);
       },
     },
   });
@@ -62,21 +58,3 @@ export function useUpdateUser(userId: number) {
     error: updateUserMutation.error,
   };
 }
-
-const toUserUpdate = (
-  values: UserFormValues,
-  version: number
-): UserUpdate => {
-  return {
-    version,
-    email: values.email,
-    name: values.name,
-    password: values.password || null,
-    department: values.department || null,
-    position: values.position || null,
-    is_active: values.isActive,
-    system_role_keys: values.isSystemAdmin
-      ? [SYSTEM_ROLE_KEYS.systemAdmin]
-      : [],
-  };
-};

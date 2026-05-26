@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useId, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
@@ -12,7 +12,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 import { loginInitialValues } from "../../constants/login-form";
@@ -117,12 +116,9 @@ export function LoginForm({
 
               {error ? <FieldError>{error}</FieldError> : null}
 
-              <Field>
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? <Spinner data-icon="inline-start" /> : null}
-                  {isPending ? "ログイン中..." : "ログイン"}
-                </Button>
-              </Field>
+              <FormSubmitButton isPending={isPending}>
+                {isPending ? "ログイン中..." : "ログイン"}
+              </FormSubmitButton>
             </FieldGroup>
           </form>
 

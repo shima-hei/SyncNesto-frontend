@@ -3,7 +3,8 @@
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
-import { Button } from "@/components/ui/button";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
   Field,
   FieldError,
@@ -11,13 +12,13 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { useUpdateCurrentUser } from "@/features/auth/hooks/use-update-current-user";
 import { getConflictFields } from "@/lib/api/conflict";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
-import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
+import { ACCOUNT_PROFILE_CONFLICT_FIELD_LABELS } from "../../constants/account-conflict-fields";
 import { getAccountProfileFormValues } from "../../constants/account-form";
+import { toUserProfileUpdate } from "../../lib/account-mappers";
 import { accountProfileSchema } from "../../schemas/account-schema";
 import type {
   AccountProfileFormErrors,
@@ -71,11 +72,9 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
     }
 
     setErrors({});
-    await updateCurrentUser({
-      version: user.version,
-      name: result.data.name,
-      password: result.data.password || null,
-    }).catch(() => undefined);
+    await updateCurrentUser(
+      toUserProfileUpdate(result.data, user.version)
+    ).catch(() => undefined);
   };
 
   const updateValue = <TKey extends keyof AccountProfileFormValues>(
@@ -113,14 +112,9 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
           {errors.password ? <FieldError>{errors.password}</FieldError> : null}
         </Field>
 
-        {error ? <FieldError>{getApiErrorMessage(error)}</FieldError> : null}
+        <FormApiError error={error} />
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? <Spinner data-icon="inline-start" /> : null}
-            更新
-          </Button>
-        </Field>
+        <FormSubmitButton isPending={isPending}>更新</FormSubmitButton>
       </FieldGroup>
 
       {conflictValues ? (
@@ -138,19 +132,12 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
             }
 
             setValues(resolvedValues);
-            await updateCurrentUser({
-              version: conflictCurrent.version,
-              name: resolvedValues.name,
-              password: resolvedValues.password || null,
-            });
+            await updateCurrentUser(
+              toUserProfileUpdate(resolvedValues, conflictCurrent.version)
+            );
           }}
         />
       ) : null}
     </form>
   );
 }
-
-const ACCOUNT_PROFILE_CONFLICT_FIELD_LABELS = {
-  name: "名前",
-  password: "パスワード",
-} satisfies Partial<Record<keyof AccountProfileFormValues, string>>;

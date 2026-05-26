@@ -4,11 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import {
-  getReadCurrentUserAuthMeGetQueryKey,
   useLoginUserAuthLoginPost,
 } from "@/lib/api/generated/auth/auth";
 import { getLoginApiErrorMessage } from "@/lib/messages/api-error-message";
 
+import { invalidateCurrentUser } from "../lib/current-user-cache";
 import type { LoginFormValues } from "../types/login";
 
 export function useLogin() {
@@ -18,9 +18,7 @@ export function useLogin() {
 
   const login = async (values: LoginFormValues) => {
     await loginMutation.mutateAsync({ data: values });
-    await queryClient.invalidateQueries({
-      queryKey: getReadCurrentUserAuthMeGetQueryKey(),
-    });
+    await invalidateCurrentUser(queryClient);
     router.push("/");
   };
 

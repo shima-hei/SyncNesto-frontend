@@ -5,31 +5,33 @@ import { toast } from "sonner";
 
 import {
   useDeleteCurrentUserAvatarAuthMeAvatarDelete,
-  getReadCurrentUserAuthMeGetQueryKey,
   useUpdateCurrentUserAvatarAuthMeAvatarPut,
 } from "@/lib/api/generated/auth/auth";
+
+import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
+import { setCurrentUserCache } from "../lib/current-user-cache";
 
 export function useUpdateCurrentUserAvatar() {
   const queryClient = useQueryClient();
   const updateAvatarMutation = useUpdateCurrentUserAvatarAuthMeAvatarPut({
     mutation: {
       onSuccess: (user) => {
-        queryClient.setQueryData(getReadCurrentUserAuthMeGetQueryKey(), user);
-        toast.success("アイコン画像を更新しました。");
+        setCurrentUserCache(queryClient, user);
+        toast.success(CURRENT_USER_MESSAGES.avatar.updateSuccess);
       },
       onError: () => {
-        toast.error("アイコン画像の更新に失敗しました。");
+        toast.error(CURRENT_USER_MESSAGES.avatar.updateError);
       },
     },
   });
   const deleteAvatarMutation = useDeleteCurrentUserAvatarAuthMeAvatarDelete({
     mutation: {
       onSuccess: (user) => {
-        queryClient.setQueryData(getReadCurrentUserAuthMeGetQueryKey(), user);
-        toast.success("アイコン画像を削除しました。");
+        setCurrentUserCache(queryClient, user);
+        toast.success(CURRENT_USER_MESSAGES.avatar.deleteSuccess);
       },
       onError: () => {
-        toast.error("アイコン画像の削除に失敗しました。");
+        toast.error(CURRENT_USER_MESSAGES.avatar.deleteError);
       },
     },
   });

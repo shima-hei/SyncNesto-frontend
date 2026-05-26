@@ -3,10 +3,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
+import { useLogoutUserAuthLogoutPost } from "@/lib/api/generated/auth/auth";
+
 import {
-  getReadCurrentUserAuthMeGetQueryKey,
-  useLogoutUserAuthLogoutPost,
-} from "@/lib/api/generated/auth/auth";
+  cancelCurrentUserQuery,
+  setCurrentUserCache,
+} from "../lib/current-user-cache";
 
 export function useLogout() {
   const router = useRouter();
@@ -15,10 +17,8 @@ export function useLogout() {
 
   const logout = async () => {
     await logoutMutation.mutateAsync();
-    await queryClient.cancelQueries({
-      queryKey: getReadCurrentUserAuthMeGetQueryKey(),
-    });
-    queryClient.setQueryData(getReadCurrentUserAuthMeGetQueryKey(), null);
+    await cancelCurrentUserQuery(queryClient);
+    setCurrentUserCache(queryClient, null);
     router.replace("/login");
     router.refresh();
   };

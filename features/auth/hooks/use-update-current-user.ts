@@ -4,15 +4,15 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  getReadCurrentUserAuthMeGetQueryKey,
-  useUpdateCurrentUserAuthMePatch,
-} from "@/lib/api/generated/auth/auth";
+import { useUpdateCurrentUserAuthMePatch } from "@/lib/api/generated/auth/auth";
 import type {
   CurrentUserRead,
   UserProfileUpdate,
 } from "@/lib/api/generated/model";
 import { getConflictCurrent } from "@/lib/api/conflict";
+
+import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
+import { setCurrentUserCache } from "../lib/current-user-cache";
 
 export function useUpdateCurrentUser() {
   const queryClient = useQueryClient();
@@ -22,19 +22,19 @@ export function useUpdateCurrentUser() {
     mutation: {
       onSuccess: (user) => {
         setConflictCurrent(null);
-        queryClient.setQueryData(getReadCurrentUserAuthMeGetQueryKey(), user);
-        toast.success("アカウント情報を更新しました。");
+        setCurrentUserCache(queryClient, user);
+        toast.success(CURRENT_USER_MESSAGES.profile.updateSuccess);
       },
       onError: (error) => {
         const current = getConflictCurrent<CurrentUserRead>(error);
 
         if (current) {
           setConflictCurrent(current);
-          toast.error("他の更新と競合しました。");
+          toast.error(CURRENT_USER_MESSAGES.conflict);
           return;
         }
 
-        toast.error("アカウント情報の更新に失敗しました。");
+        toast.error(CURRENT_USER_MESSAGES.profile.updateError);
       },
     },
   });
