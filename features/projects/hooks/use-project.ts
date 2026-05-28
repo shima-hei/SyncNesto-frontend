@@ -5,6 +5,7 @@ import { useReadProjectProjectsProjectIdGet } from "@/lib/api/generated/projects
 export function useProject(projectId: number) {
   const projectQuery = useReadProjectProjectsProjectIdGet(projectId, {
     query: {
+      enabled: projectId > 0,
       retry: false,
     },
   });
