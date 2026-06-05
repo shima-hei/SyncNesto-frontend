@@ -53,6 +53,10 @@ export const canViewProject = (roleKey: ProjectRoleKey | null | undefined) => {
   ]);
 };
 
+export const canViewProjectFeature = (role: MaybeCurrentProjectRole) => {
+  return role?.is_system_admin === true || canViewProject(toProjectRoleKey(role));
+};
+
 export const canViewRequirement = (role: MaybeCurrentProjectRole) => {
   return (
     role?.is_system_admin === true ||
