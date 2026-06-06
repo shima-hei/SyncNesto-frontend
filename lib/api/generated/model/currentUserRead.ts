@@ -21,5 +21,5 @@ export interface CurrentUserRead {
   last_login_at?: string | null;
   created_by?: number | null;
   updated_by?: number | null;
-  system_roles: RoleRead[];
+  system_roles?: RoleRead[];
 }

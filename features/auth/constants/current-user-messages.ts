@@ -1,5 +1,6 @@
 export const CURRENT_USER_MESSAGES = {
   conflict: "他の更新と競合しました。",
+  sessionExpired: "セッションの有効期限が切れました。",
   profile: {
     updateSuccess: "アカウント情報を更新しました。",
     updateError: "アカウント情報の更新に失敗しました。",

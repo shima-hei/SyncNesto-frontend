@@ -197,10 +197,34 @@ const getProxyResponseHeaders = (upstreamResponse: Response) => {
       return;
     }
 
+    if (lowerKey === "set-cookie") {
+      return;
+    }
+
     headers.append(key, value);
   });
 
+  getSetCookieHeaders(upstreamResponse).forEach((cookie) => {
+    headers.append("Set-Cookie", cookie);
+  });
+
   return headers;
+};
+
+const getSetCookieHeaders = (upstreamResponse: Response) => {
+  const headers = upstreamResponse.headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+
+  const setCookies = headers.getSetCookie?.();
+
+  if (setCookies?.length) {
+    return setCookies;
+  }
+
+  const setCookie = upstreamResponse.headers.get("set-cookie");
+
+  return setCookie ? [setCookie] : [];
 };
 
 const getResponseBody = async (upstreamResponse: Response) => {

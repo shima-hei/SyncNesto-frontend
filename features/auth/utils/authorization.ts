@@ -15,7 +15,7 @@ export const hasSystemRole = (
   user: MaybeCurrentUser,
   roleKey: SystemRoleKey
 ) => {
-  return user?.system_roles.some((role) => role.key === roleKey) ?? false;
+  return user?.system_roles?.some((role) => role.key === roleKey) ?? false;
 };
 
 export const hasAnySystemRole = (

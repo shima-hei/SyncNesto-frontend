@@ -131,6 +131,8 @@ export const useLoginUserAuthLoginPost = <TError = ErrorType<HTTPValidationError
 
 Args:
     response: HTTPレスポンス。
+    access_token: 認証Cookieに含まれるアクセストークン。
+    db: DBセッション。
  * @summary Logout User
  */
 export const logoutUserAuthLogoutPost = async ( options?: RequestInit): Promise<void> => {
@@ -147,7 +149,7 @@ export const logoutUserAuthLogoutPost = async ( options?: RequestInit): Promise<
 
 
 
-export const getLogoutUserAuthLogoutPostMutationOptions = <TError = ErrorType<unknown>,
+export const getLogoutUserAuthLogoutPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
 ): UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext> => {
 
@@ -176,12 +178,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LogoutUserAuthLogoutPostMutationResult = NonNullable<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>>
 
-    export type LogoutUserAuthLogoutPostMutationError = ErrorType<unknown>
+    export type LogoutUserAuthLogoutPostMutationError = ErrorType<HTTPValidationError>
 
     /**
  * @summary Logout User
  */
-export const useLogoutUserAuthLogoutPost = <TError = ErrorType<unknown>,
+export const useLogoutUserAuthLogoutPost = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,

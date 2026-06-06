@@ -1,5 +1,9 @@
 import { API_ERROR_FALLBACK_MESSAGES } from "@/lib/messages/api-error-message";
 import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
+import {
+  emitAuthSessionInvalid,
+  isAuthSessionInvalidCode,
+} from "@/lib/auth/session-events";
 
 import { ApiError } from "./error";
 import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
@@ -43,10 +47,16 @@ export async function apiClient<T>(
   const data = await parseResponse(response);
 
   if (!response.ok) {
+    const code = getErrorCode(data);
+
+    if (isAuthSessionInvalidCode(code)) {
+      emitAuthSessionInvalid({ code });
+    }
+
     throw new ApiError({
       status: response.status,
       message: getErrorMessage(data),
-      code: getErrorCode(data),
+      code,
       data,
     });
   }

@@ -9,6 +9,7 @@
  * ログイン成功時のレスポンスschema。
  */
 export interface UserLoginResponse {
+  message: string;
   access_token?: string | null;
-  token_type?: string;
+  token_type?: string | null;
 }
