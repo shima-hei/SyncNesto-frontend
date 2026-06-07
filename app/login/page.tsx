@@ -1,8 +1,17 @@
 import { LoginPage } from "@/features/auth/components/login/login-page";
 import { redirectIfAuthenticated } from "@/lib/auth/server";
 
-export default async function Page() {
+type PageProps = {
+  searchParams: Promise<{
+    reason?: string | string[];
+  }>;
+};
+
+export default async function Page({ searchParams }: PageProps) {
   await redirectIfAuthenticated();
 
-  return <LoginPage />;
+  const { reason } = await searchParams;
+  const showSessionExpiredToast = reason === "session-expired";
+
+  return <LoginPage showSessionExpiredToast={showSessionExpiredToast} />;
 }

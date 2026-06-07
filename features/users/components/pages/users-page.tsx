@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
@@ -26,12 +26,16 @@ export function UsersPage() {
   const [q, setQ] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const isActive = getIsActiveParam(activeFilter);
-  const { users, total, isLoading, isFetching } = useUsers({
-    page,
-    page_size: PAGE_SIZE,
-    q: q || undefined,
-    is_active: isActive,
-  });
+  const userListParams = useMemo(
+    () => ({
+      page,
+      page_size: PAGE_SIZE,
+      q: q || undefined,
+      is_active: isActive,
+    }),
+    [isActive, page, q]
+  );
+  const { users, total, isLoading, isFetching } = useUsers(userListParams);
 
   const handleSearch = () => {
     setPage(1);

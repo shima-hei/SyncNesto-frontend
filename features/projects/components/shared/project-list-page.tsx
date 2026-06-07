@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
@@ -39,12 +39,17 @@ export function ProjectListPage({
   const [searchInput, setSearchInput] = useState("");
   const [q, setQ] = useState("");
   const [status, setStatus] = useState(ALL_STATUSES);
-  const { projects, total, isLoading, isFetching } = useProjects({
-    page,
-    page_size: PAGE_SIZE,
-    q: q || undefined,
-    status: status === ALL_STATUSES ? undefined : status,
-  });
+  const projectListParams = useMemo(
+    () => ({
+      page,
+      page_size: PAGE_SIZE,
+      q: q || undefined,
+      status: status === ALL_STATUSES ? undefined : status,
+    }),
+    [page, q, status]
+  );
+  const { projects, total, isLoading, isFetching } =
+    useProjects(projectListParams);
 
   const handleSearch = () => {
     setPage(1);

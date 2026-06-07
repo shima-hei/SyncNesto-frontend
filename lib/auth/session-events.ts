@@ -15,8 +15,12 @@ const AUTH_SESSION_INVALID_EVENT = "syncnesto:auth-session-invalid";
 
 export const isAuthSessionInvalidCode = (
   code: string | undefined
-): code is typeof AUTH_ERROR_CODES.invalidToken | typeof AUTH_ERROR_CODES.tokenExpired => {
+): code is
+  | typeof AUTH_ERROR_CODES.authenticationRequired
+  | typeof AUTH_ERROR_CODES.invalidToken
+  | typeof AUTH_ERROR_CODES.tokenExpired => {
   return (
+    code === AUTH_ERROR_CODES.authenticationRequired ||
     code === AUTH_ERROR_CODES.invalidToken ||
     code === AUTH_ERROR_CODES.tokenExpired
   );

@@ -9,6 +9,8 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
     "セッションの有効期限が切れました。再度ログインしてください。",
   INVALID_TOKEN: "認証情報が正しくありません。再度ログインしてください。",
   FORBIDDEN: "この操作を行う権限がありません。",
+  CSRF_TOKEN_INVALID:
+    "認証情報の確認に失敗しました。画面を更新して再度お試しください。",
   NOT_FOUND: "対象のデータが見つかりません。",
   CONFLICT: "データの状態が競合しています。内容を確認してください。",
   DUPLICATE_RESOURCE: "同じ内容のデータが既に存在します。",

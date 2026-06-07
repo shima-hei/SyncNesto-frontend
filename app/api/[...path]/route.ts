@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
-  CSRF_COOKIE_NAME,
-  CSRF_HEADER_NAME,
-  isCsrfProtectedMethod,
   validateCsrfToken,
+  isCsrfProtectedMethod,
 } from "@/lib/security/csrf";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
@@ -63,9 +61,9 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
     );
   }
 
-  if (!validateCsrfToken(request)) {
+  if (!validateCsrfToken(request, upstreamPath)) {
     return NextResponse.json(
-      { message: "Invalid CSRF token", code: "INVALID_CSRF_TOKEN" },
+      { message: "Invalid CSRF token", code: "CSRF_TOKEN_INVALID" },
       { status: 403 }
     );
   }
@@ -135,18 +133,8 @@ const getUpstreamRequestHeaders = (request: NextRequest) => {
       return;
     }
 
-    if (lowerKey === CSRF_HEADER_NAME.toLowerCase()) {
-      return;
-    }
-
     if (lowerKey === "cookie") {
-      // CSRFはBFFで検証するため、バックエンドには認証Cookieだけを転送する。
-      const cookie = getUpstreamCookie(value);
-
-      if (cookie) {
-        headers.set(key, cookie);
-      }
-
+      headers.set(key, value);
       return;
     }
 
@@ -154,14 +142,6 @@ const getUpstreamRequestHeaders = (request: NextRequest) => {
   });
 
   return headers;
-};
-
-const getUpstreamCookie = (cookie: string) => {
-  return cookie
-    .split(";")
-    .map((item) => item.trim())
-    .filter((item) => item && !item.startsWith(`${CSRF_COOKIE_NAME}=`))
-    .join("; ");
 };
 
 const getRequestBody = async (request: NextRequest) => {

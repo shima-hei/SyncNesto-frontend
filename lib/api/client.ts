@@ -10,6 +10,7 @@ import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+const CSRF_COOKIE_NAME = "csrf_token";
 const CSRF_HEADER_NAME = "X-CSRF-Token";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | string;
@@ -20,14 +21,8 @@ type ApiClientOptions = Omit<RequestInit, "body" | "method"> & {
   body?: BodyInit | null;
 };
 
-type CsrfResponse = {
-  csrfToken: string;
-};
-
 export type ErrorType<Error> = ApiError & { data: Error };
 export type BodyType<BodyData> = BodyData;
-
-let csrfTokenCache: string | null = null;
 
 export async function apiClient<T>(
   url: string,
@@ -35,7 +30,7 @@ export async function apiClient<T>(
 ): Promise<T> {
   const { method, params, body, headers, signal } = options;
   const requestUrl = buildUrl(url, params);
-  const requestHeaders = await buildHeaders(headers, body, method);
+  const requestHeaders = buildHeaders(headers, body, method);
   const response = await fetch(requestUrl, {
     method,
     credentials: "include",
@@ -110,7 +105,7 @@ const normalizePath = (path: string) => {
   return path.startsWith("/") ? path : `/${path}`;
 };
 
-const buildHeaders = async (
+const buildHeaders = (
   headers: HeadersInit | undefined,
   body: unknown,
   method: string
@@ -123,40 +118,32 @@ const buildHeaders = async (
   }
 
   if (isCsrfProtectedMethod(method) && !requestHeaders.has(CSRF_HEADER_NAME)) {
-    requestHeaders.set(CSRF_HEADER_NAME, await getCsrfToken());
+    const csrfToken = getCookieValue(CSRF_COOKIE_NAME);
+
+    if (csrfToken) {
+      requestHeaders.set(CSRF_HEADER_NAME, csrfToken);
+    }
   }
 
   return requestHeaders;
 };
 
-const getCsrfToken = async () => {
-  if (csrfTokenCache) {
-    return csrfTokenCache;
-  }
-
-  const response = await fetch(buildUrl("/csrf"), {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new ApiError({
-      status: response.status,
-      message: API_ERROR_FALLBACK_MESSAGES.csrfToken,
-    });
-  }
-
-  const data = (await response.json()) as CsrfResponse;
-  csrfTokenCache = data.csrfToken;
-
-  return csrfTokenCache;
-};
-
 const isCsrfProtectedMethod = (method: string) => {
   return ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
+};
+
+const getCookieValue = (name: string) => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return (
+    document.cookie
+      .split(";")
+      .map((item) => item.trim())
+      .find((item) => item.startsWith(`${name}=`))
+      ?.slice(name.length + 1) ?? null
+  );
 };
 
 const getRequestBody = (body: unknown) => {
