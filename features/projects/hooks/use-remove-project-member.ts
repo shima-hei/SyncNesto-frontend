@@ -14,8 +14,8 @@ export function useRemoveProjectMember(projectId: number) {
     useRemoveProjectMemberProjectsProjectIdMembersUserIdDelete({
       mutation: {
         onSuccess: async () => {
-          await invalidateProjectMemberList(queryClient, projectId);
           toast.success(PROJECT_MESSAGES.member.removeSuccess);
+          await invalidateProjectMemberList(queryClient, projectId);
         },
         onError: () => {
           toast.error(PROJECT_MESSAGES.member.removeError);

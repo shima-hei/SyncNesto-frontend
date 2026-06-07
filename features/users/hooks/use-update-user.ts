@@ -21,8 +21,8 @@ export function useUpdateUser(userId: number) {
       onSuccess: async (user) => {
         setConflictCurrent(null);
         setUserDetailCache(queryClient, userId, user);
-        await invalidateUserList(queryClient);
         toast.success(USER_MESSAGES.updateSuccess);
+        await invalidateUserList(queryClient);
       },
       onError: (error) => {
         const current = getConflictCurrent<UserRead>(error);

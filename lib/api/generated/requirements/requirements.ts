@@ -67,6 +67,15 @@ export const getCreateRequirementDocumentProjectsProjectIdRequirementDocumentsPo
 
 /**
  * 要件定義書を作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    document_in: 要件定義書の作成入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件定義書。
  * @summary Create Requirement Document
  */
 export const createRequirementDocumentProjectsProjectIdRequirementDocumentsPost = async (projectId: number,
@@ -146,6 +155,18 @@ export const useCreateRequirementDocumentProjectsProjectIdRequirementDocumentsPo
 
 /**
  * 要件定義書一覧を取得する。
+
+Args:
+    project_id: 一覧取得対象のプロジェクトID。
+    page: 取得ページ番号。
+    page_size: 1ページあたりの取得件数。
+    q: 検索キーワード。
+    status: 絞り込み対象のステータス。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件定義書のページング済み一覧。
  * @summary List Requirement Documents
  */
 export const listRequirementDocumentsProjectsProjectIdRequirementDocumentsGet = async (projectId: number,
@@ -255,6 +276,15 @@ export const getReadRequirementDocumentProjectsProjectIdRequirementDocumentsDocu
 
 /**
  * 要件定義書を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    document_id: 取得対象の要件定義書ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    取得した要件定義書。
  * @summary Read Requirement Document
  */
 export const readRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdGet = async (projectId: number,
@@ -364,6 +394,16 @@ export const getUpdateRequirementDocumentProjectsProjectIdRequirementDocumentsDo
 
 /**
  * 要件定義書を更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    document_id: 更新対象の要件定義書ID。
+    document_in: 要件定義書の更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件定義書。
  * @summary Update Requirement Document
  */
 export const updateRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdPatch = async (projectId: number,
@@ -437,6 +477,12 @@ export const useUpdateRequirementDocumentProjectsProjectIdRequirementDocumentsDo
 
 /**
  * 要件定義書を論理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    document_id: 削除対象の要件定義書ID。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
  * @summary Delete Requirement Document
  */
 export const deleteRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdDelete = async (projectId: number,
@@ -508,6 +554,15 @@ export const useDeleteRequirementDocumentProjectsProjectIdRequirementDocumentsDo
 
 /**
  * 要件を作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    requirement_in: 要件の作成入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件。
  * @summary Create Requirement
  */
 export const createRequirementProjectsProjectIdRequirementsPost = async (projectId: number,
@@ -587,6 +642,20 @@ export const useCreateRequirementProjectsProjectIdRequirementsPost = <TError = E
 
 /**
  * 要件一覧を取得する。
+
+Args:
+    project_id: 一覧取得対象のプロジェクトID。
+    page: 取得ページ番号。
+    page_size: 1ページあたりの取得件数。
+    document_id: 絞り込み対象の要件定義書ID。
+    q: 検索キーワード。
+    status: 絞り込み対象のステータス。
+    requirement_type: 絞り込み対象の要件種別。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件のページング済み一覧。
  * @summary List Requirements
  */
 export const listRequirementsProjectsProjectIdRequirementsGet = async (projectId: number,
@@ -696,6 +765,15 @@ export const getReadRequirementProjectsProjectIdRequirementsRequirementIdGetUrl 
 
 /**
  * 要件を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 取得対象の要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    取得した要件。
  * @summary Read Requirement
  */
 export const readRequirementProjectsProjectIdRequirementsRequirementIdGet = async (projectId: number,
@@ -805,6 +883,16 @@ export const getUpdateRequirementProjectsProjectIdRequirementsRequirementIdPatch
 
 /**
  * 要件を更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    requirement_id: 更新対象の要件ID。
+    requirement_in: 要件の更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件。
  * @summary Update Requirement
  */
 export const updateRequirementProjectsProjectIdRequirementsRequirementIdPatch = async (projectId: number,
@@ -878,6 +966,12 @@ export const useUpdateRequirementProjectsProjectIdRequirementsRequirementIdPatch
 
 /**
  * 要件を論理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    requirement_id: 削除対象の要件ID。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
  * @summary Delete Requirement
  */
 export const deleteRequirementProjectsProjectIdRequirementsRequirementIdDelete = async (projectId: number,
@@ -950,6 +1044,15 @@ export const useDeleteRequirementProjectsProjectIdRequirementsRequirementIdDelet
 
 /**
  * 要件詳細画面用の集約情報を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 取得対象の要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件詳細画面用の集約情報。
  * @summary Read Requirement Summary
  */
 export const readRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGet = async (projectId: number,
@@ -1059,6 +1162,15 @@ export const getListRequirementRevisionsProjectsProjectIdRequirementsRequirement
 
 /**
  * 要件の改訂履歴一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 改訂履歴を取得する要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件の改訂履歴一覧。
  * @summary List Requirement Revisions
  */
 export const listRequirementRevisionsProjectsProjectIdRequirementsRequirementIdRevisionsGet = async (projectId: number,
@@ -1168,6 +1280,16 @@ export const getCreateRequirementDetailProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件詳細を作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    requirement_id: 作成対象の要件ID。
+    detail_in: 要件詳細の作成入力値。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件詳細。
  * @summary Create Requirement Detail
  */
 export const createRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsPost = async (projectId: number,
@@ -1241,6 +1363,15 @@ export const useCreateRequirementDetailProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件詳細一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 取得対象の要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件詳細一覧。
  * @summary List Requirement Details
  */
 export const listRequirementDetailsProjectsProjectIdRequirementsRequirementIdDetailsGet = async (projectId: number,
@@ -1351,6 +1482,17 @@ export const getUpdateRequirementDetailProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件詳細を更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    requirement_id: 更新対象の要件ID。
+    detail_id: 更新対象の要件詳細ID。
+    detail_in: 要件詳細の更新入力値。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件詳細。
  * @summary Update Requirement Detail
  */
 export const updateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdPatch = async (projectId: number,
@@ -1426,6 +1568,13 @@ export const useUpdateRequirementDetailProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件詳細を物理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    requirement_id: 削除対象の要件ID。
+    detail_id: 削除対象の要件詳細ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
  * @summary Delete Requirement Detail
  */
 export const deleteRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdDelete = async (projectId: number,
@@ -1499,6 +1648,16 @@ export const useDeleteRequirementDetailProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件リンクを作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    requirement_id: 作成対象の要件ID。
+    link_in: 要件リンクの作成入力値。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件リンク。
  * @summary Create Requirement Link
  */
 export const createRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksPost = async (projectId: number,
@@ -1572,6 +1731,15 @@ export const useCreateRequirementLinkProjectsProjectIdRequirementsRequirementIdL
 
 /**
  * 要件リンク一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 取得対象の要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件リンク一覧。
  * @summary List Requirement Links
  */
 export const listRequirementLinksProjectsProjectIdRequirementsRequirementIdLinksGet = async (projectId: number,
@@ -1682,6 +1850,13 @@ export const getDeleteRequirementLinkProjectsProjectIdRequirementsRequirementIdL
 
 /**
  * 要件リンクを物理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    requirement_id: 削除対象の要件ID。
+    link_id: 削除対象の要件リンクID。
+    _: 認可済みユーザー。
+    db: DBセッション。
  * @summary Delete Requirement Link
  */
 export const deleteRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdDelete = async (projectId: number,
@@ -1755,6 +1930,16 @@ export const useDeleteRequirementLinkProjectsProjectIdRequirementsRequirementIdL
 
 /**
  * 要件コメントを作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    requirement_id: 作成対象の要件ID。
+    comment_in: 要件コメントの作成入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件コメント。
  * @summary Create Requirement Comment
  */
 export const createRequirementCommentProjectsProjectIdRequirementsRequirementIdCommentsPost = async (projectId: number,
@@ -1828,6 +2013,15 @@ export const useCreateRequirementCommentProjectsProjectIdRequirementsRequirement
 
 /**
  * 要件コメント一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 取得対象の要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件コメント一覧。
  * @summary List Requirement Comments
  */
 export const listRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGet = async (projectId: number,
@@ -1938,6 +2132,13 @@ export const getDeleteRequirementCommentProjectsProjectIdRequirementsRequirement
 
 /**
  * 要件コメントを物理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    requirement_id: 削除対象の要件ID。
+    comment_id: 削除対象の要件コメントID。
+    _: 認可済みユーザー。
+    db: DBセッション。
  * @summary Delete Requirement Comment
  */
 export const deleteRequirementCommentProjectsProjectIdRequirementsRequirementIdCommentsCommentIdDelete = async (projectId: number,
@@ -2011,6 +2212,16 @@ export const useDeleteRequirementCommentProjectsProjectIdRequirementsRequirement
 
 /**
  * 要件レビューを作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    requirement_id: 作成対象の要件ID。
+    review_in: 要件レビューの作成入力値。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件レビュー。
  * @summary Create Requirement Review
  */
 export const createRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsPost = async (projectId: number,
@@ -2084,6 +2295,15 @@ export const useCreateRequirementReviewProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件レビュー一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 取得対象の要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件レビュー一覧。
  * @summary List Requirement Reviews
  */
 export const listRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGet = async (projectId: number,
@@ -2194,6 +2414,17 @@ export const getUpdateRequirementReviewProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件レビューを更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    requirement_id: 更新対象の要件ID。
+    review_id: 更新対象の要件レビューID。
+    review_in: 要件レビューの更新入力値。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件レビュー。
  * @summary Update Requirement Review
  */
 export const updateRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdPatch = async (projectId: number,
@@ -2269,6 +2500,13 @@ export const useUpdateRequirementReviewProjectsProjectIdRequirementsRequirementI
 
 /**
  * 要件レビューを物理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    requirement_id: 削除対象の要件ID。
+    review_id: 削除対象の要件レビューID。
+    _: 認可済みユーザー。
+    db: DBセッション。
  * @summary Delete Requirement Review
  */
 export const deleteRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdDelete = async (projectId: number,

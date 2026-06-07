@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { isSystemAdmin } from "@/features/auth/utils/authorization";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 import { AUTH_ERROR_CODES } from "@/lib/auth/session-events";
+import { CSRF_COOKIE_NAME } from "@/lib/security/csrf";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "access_token";
@@ -38,7 +39,9 @@ const getCurrentUserResultOnServer = async (): Promise<CurrentUserResult> => {
   if (!cookieStore.has(AUTH_COOKIE_NAME)) {
     return {
       user: null,
-      failureReason: "unauthenticated",
+      failureReason: cookieStore.has(CSRF_COOKIE_NAME)
+        ? "session-expired"
+        : "unauthenticated",
     };
   }
 

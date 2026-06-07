@@ -21,8 +21,8 @@ export function useUpdateProjectMember(projectId: number) {
       mutation: {
         onSuccess: async () => {
           setConflictCurrent(null);
-          await invalidateProjectMemberList(queryClient, projectId);
           toast.success(PROJECT_MESSAGES.member.updateSuccess);
+          await invalidateProjectMemberList(queryClient, projectId);
         },
         onError: (error) => {
           const current = getConflictCurrent<ProjectMemberRead>(error);

@@ -16,8 +16,8 @@ export function useAddProjectMember(projectId: number) {
     useAddProjectMemberProjectsProjectIdMembersPost({
       mutation: {
         onSuccess: async () => {
-          await invalidateProjectMemberList(queryClient, projectId);
           toast.success(PROJECT_MESSAGES.member.addSuccess);
+          await invalidateProjectMemberList(queryClient, projectId);
         },
         onError: () => {
           toast.error(PROJECT_MESSAGES.member.addError);
