@@ -9,6 +9,7 @@
  * 要件読み取り時に返すschema。
  */
 export interface RequirementRead {
+  section_id?: number | null;
   requirement_code: string;
   requirement_type: string;
   category?: string | null;

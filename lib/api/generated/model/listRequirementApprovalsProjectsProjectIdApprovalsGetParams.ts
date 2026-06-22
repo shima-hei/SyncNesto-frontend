@@ -5,7 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListRequirementsProjectsProjectIdRequirementsGetParams = {
+export type ListRequirementApprovalsProjectsProjectIdApprovalsGetParams = {
 /**
  * @minimum 1
  */
@@ -15,11 +15,8 @@ page?: number;
  * @maximum 100
  */
 page_size?: number;
-document_id?: number | null;
-section_id?: number | null;
-q?: string | null;
+target_type?: string | null;
+target_id?: number | null;
 status?: string | null;
-requirement_type?: string | null;
-priority?: string | null;
-owner_id?: number | null;
+approver_id?: number | null;
 };

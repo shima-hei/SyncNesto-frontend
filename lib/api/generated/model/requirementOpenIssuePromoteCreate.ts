@@ -6,14 +6,15 @@
  */
 
 /**
- * 要件作成リクエストで受け取るschema。
+ * 未決事項を要件へ昇格するリクエストで受け取るschema。
  */
-export interface RequirementCreate {
-  section_id?: number | null;
+export interface RequirementOpenIssuePromoteCreate {
+  version: number;
   requirement_code: string;
-  requirement_type: string;
+  requirement_type?: string;
+  section_id?: number | null;
   category?: string | null;
-  title: string;
+  title?: string | null;
   description?: string | null;
   rationale?: string | null;
   acceptance_criteria?: string | null;
@@ -21,7 +22,6 @@ export interface RequirementCreate {
   status?: string;
   source?: string | null;
   owner_id?: number | null;
-  approved_by?: number | null;
-  approved_at?: string | null;
-  document_id: number;
+  resolution?: string | null;
+  reason?: string | null;
 }

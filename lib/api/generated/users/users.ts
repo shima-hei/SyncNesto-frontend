@@ -437,6 +437,7 @@ export const useUpdateUserUsersUserIdPatch = <TError = ErrorType<HTTPValidationE
 
 Args:
     user_id: 削除対象ユーザーID。
+    current_user: 認可済みユーザー。
     db: DBセッション。
  * @summary Delete User
  */

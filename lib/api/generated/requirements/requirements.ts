@@ -25,8 +25,17 @@ import type {
 
 import type {
   HTTPValidationError,
+  ListOpenIssuesProjectsProjectIdOpenIssuesGetParams,
+  ListRequirementApprovalsProjectsProjectIdApprovalsGetParams,
+  ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams,
   ListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetParams,
   ListRequirementsProjectsProjectIdRequirementsGetParams,
+  ListTargetCommentsProjectsProjectIdCommentsGetParams,
+  RequirementApprovalDecisionCreate,
+  RequirementApprovalListResponse,
+  RequirementApprovalRead,
+  RequirementApprovalRequestCreate,
+  RequirementChangeLogListResponse,
   RequirementCommentCreate,
   RequirementCommentRead,
   RequirementCreate,
@@ -34,18 +43,35 @@ import type {
   RequirementDetailRead,
   RequirementDetailUpdate,
   RequirementDocumentCreate,
+  RequirementDocumentExportCreate,
+  RequirementDocumentExportRead,
   RequirementDocumentListResponse,
   RequirementDocumentRead,
   RequirementDocumentUpdate,
   RequirementLinkCreate,
   RequirementLinkRead,
   RequirementListResponse,
+  RequirementOpenIssueCreate,
+  RequirementOpenIssueListResponse,
+  RequirementOpenIssuePromoteCreate,
+  RequirementOpenIssueRead,
+  RequirementOpenIssueUpdate,
   RequirementRead,
+  RequirementRelationCreate,
+  RequirementRelationRead,
   RequirementReviewCreate,
   RequirementReviewRead,
   RequirementReviewUpdate,
   RequirementRevisionRead,
+  RequirementSectionCreate,
+  RequirementSectionRead,
+  RequirementSectionSortUpdate,
+  RequirementSectionUpdate,
   RequirementSummaryRead,
+  RequirementTargetCommentCreate,
+  RequirementTargetCommentRead,
+  RequirementTargetCommentStateUpdate,
+  RequirementTargetCommentUpdate,
   RequirementUpdate
 } from '../model';
 
@@ -57,7 +83,383 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export const getCreateRequirementDocumentProjectsProjectIdRequirementDocumentsPostUrl = (projectId: number,) => {
+export const getListRequirementApprovalsProjectsProjectIdApprovalsGetUrl = (projectId: number,
+    params?: ListRequirementApprovalsProjectsProjectIdApprovalsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/projects/${projectId}/approvals?${stringifiedParams}` : `/projects/${projectId}/approvals`
+}
+
+/**
+ * 要件定義承認一覧を取得する。
+
+Args:
+    project_id: 一覧取得対象のプロジェクトID。
+    page: 取得ページ番号。
+    page_size: 1ページあたりの取得件数。
+    target_type: 絞り込み対象の対象種別。
+    target_id: 絞り込み対象の対象ID。
+    status: 絞り込み対象のステータス。
+    approver_id: 絞り込み対象の承認者ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件定義承認のページング済み一覧。
+ * @summary List Requirement Approvals
+ */
+export const listRequirementApprovalsProjectsProjectIdApprovalsGet = async (projectId: number,
+    params?: ListRequirementApprovalsProjectsProjectIdApprovalsGetParams, options?: RequestInit): Promise<RequirementApprovalListResponse> => {
+
+  return apiClient<RequirementApprovalListResponse>(getListRequirementApprovalsProjectsProjectIdApprovalsGetUrl(projectId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRequirementApprovalsProjectsProjectIdApprovalsGetQueryKey = (projectId: number,
+    params?: ListRequirementApprovalsProjectsProjectIdApprovalsGetParams,) => {
+    return [
+    `/projects/${projectId}/approvals`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListRequirementApprovalsProjectsProjectIdApprovalsGetQueryOptions = <TData = Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    params?: ListRequirementApprovalsProjectsProjectIdApprovalsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRequirementApprovalsProjectsProjectIdApprovalsGetQueryKey(projectId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>> = ({ signal }) => listRequirementApprovalsProjectsProjectIdApprovalsGet(projectId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListRequirementApprovalsProjectsProjectIdApprovalsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>>
+export type ListRequirementApprovalsProjectsProjectIdApprovalsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListRequirementApprovalsProjectsProjectIdApprovalsGet<TData = Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: undefined |  ListRequirementApprovalsProjectsProjectIdApprovalsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementApprovalsProjectsProjectIdApprovalsGet<TData = Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListRequirementApprovalsProjectsProjectIdApprovalsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementApprovalsProjectsProjectIdApprovalsGet<TData = Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListRequirementApprovalsProjectsProjectIdApprovalsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Requirement Approvals
+ */
+
+export function useListRequirementApprovalsProjectsProjectIdApprovalsGet<TData = Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListRequirementApprovalsProjectsProjectIdApprovalsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementApprovalsProjectsProjectIdApprovalsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListRequirementApprovalsProjectsProjectIdApprovalsGetQueryOptions(projectId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getRequestRequirementApprovalProjectsProjectIdApprovalsRequestPostUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/approvals/request`
+}
+
+/**
+ * 要件定義対象の承認を申請する。
+
+Args:
+    project_id: 申請対象のプロジェクトID。
+    approval_in: 承認申請入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された承認申請。
+ * @summary Request Requirement Approval
+ */
+export const requestRequirementApprovalProjectsProjectIdApprovalsRequestPost = async (projectId: number,
+    requirementApprovalRequestCreate: RequirementApprovalRequestCreate, options?: RequestInit): Promise<RequirementApprovalRead> => {
+
+  return apiClient<RequirementApprovalRead>(getRequestRequirementApprovalProjectsProjectIdApprovalsRequestPostUrl(projectId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementApprovalRequestCreate)
+  }
+);}
+
+
+
+
+export const getRequestRequirementApprovalProjectsProjectIdApprovalsRequestPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestRequirementApprovalProjectsProjectIdApprovalsRequestPost>>, TError,{projectId: number;data: BodyType<RequirementApprovalRequestCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestRequirementApprovalProjectsProjectIdApprovalsRequestPost>>, TError,{projectId: number;data: BodyType<RequirementApprovalRequestCreate>}, TContext> => {
+
+const mutationKey = ['requestRequirementApprovalProjectsProjectIdApprovalsRequestPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestRequirementApprovalProjectsProjectIdApprovalsRequestPost>>, {projectId: number;data: BodyType<RequirementApprovalRequestCreate>}> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  requestRequirementApprovalProjectsProjectIdApprovalsRequestPost(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestRequirementApprovalProjectsProjectIdApprovalsRequestPostMutationResult = NonNullable<Awaited<ReturnType<typeof requestRequirementApprovalProjectsProjectIdApprovalsRequestPost>>>
+    export type RequestRequirementApprovalProjectsProjectIdApprovalsRequestPostMutationBody = BodyType<RequirementApprovalRequestCreate>
+    export type RequestRequirementApprovalProjectsProjectIdApprovalsRequestPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Request Requirement Approval
+ */
+export const useRequestRequirementApprovalProjectsProjectIdApprovalsRequestPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestRequirementApprovalProjectsProjectIdApprovalsRequestPost>>, TError,{projectId: number;data: BodyType<RequirementApprovalRequestCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestRequirementApprovalProjectsProjectIdApprovalsRequestPost>>,
+        TError,
+        {projectId: number;data: BodyType<RequirementApprovalRequestCreate>},
+        TContext
+      > => {
+      return useMutation(getRequestRequirementApprovalProjectsProjectIdApprovalsRequestPostMutationOptions(options), queryClient);
+    }
+    export const getApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePostUrl = (projectId: number,
+    approvalId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/approvals/${approvalId}/approve`
+}
+
+/**
+ * 要件定義承認申請を承認する。
+
+Args:
+    project_id: 承認対象のプロジェクトID。
+    approval_id: 承認申請ID。
+    decision_in: 承認判断入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    承認済みの承認申請。
+ * @summary Approve Requirement Approval
+ */
+export const approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost = async (projectId: number,
+    approvalId: number,
+    requirementApprovalDecisionCreate: RequirementApprovalDecisionCreate, options?: RequestInit): Promise<RequirementApprovalRead> => {
+
+  return apiClient<RequirementApprovalRead>(getApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePostUrl(projectId,approvalId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementApprovalDecisionCreate)
+  }
+);}
+
+
+
+
+export const getApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost>>, TError,{projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost>>, TError,{projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}, TContext> => {
+
+const mutationKey = ['approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost>>, {projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}> = (props) => {
+          const {projectId,approvalId,data} = props ?? {};
+
+          return  approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost(projectId,approvalId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePostMutationResult = NonNullable<Awaited<ReturnType<typeof approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost>>>
+    export type ApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePostMutationBody = BodyType<RequirementApprovalDecisionCreate>
+    export type ApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Approve Requirement Approval
+ */
+export const useApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost>>, TError,{projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof approveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePost>>,
+        TError,
+        {projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>},
+        TContext
+      > => {
+      return useMutation(getApproveRequirementApprovalProjectsProjectIdApprovalsApprovalIdApprovePostMutationOptions(options), queryClient);
+    }
+    export const getRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostUrl = (projectId: number,
+    approvalId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/approvals/${approvalId}/reject`
+}
+
+/**
+ * 要件定義承認申請を差し戻す。
+
+Args:
+    project_id: 差し戻し対象のプロジェクトID。
+    approval_id: 承認申請ID。
+    decision_in: 承認判断入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    差し戻し済みの承認申請。
+ * @summary Reject Requirement Approval
+ */
+export const rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost = async (projectId: number,
+    approvalId: number,
+    requirementApprovalDecisionCreate: RequirementApprovalDecisionCreate, options?: RequestInit): Promise<RequirementApprovalRead> => {
+
+  return apiClient<RequirementApprovalRead>(getRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostUrl(projectId,approvalId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementApprovalDecisionCreate)
+  }
+);}
+
+
+
+
+export const getRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost>>, TError,{projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost>>, TError,{projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}, TContext> => {
+
+const mutationKey = ['rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost>>, {projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}> = (props) => {
+          const {projectId,approvalId,data} = props ?? {};
+
+          return  rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost(projectId,approvalId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostMutationResult = NonNullable<Awaited<ReturnType<typeof rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost>>>
+    export type RejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostMutationBody = BodyType<RequirementApprovalDecisionCreate>
+    export type RejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Reject Requirement Approval
+ */
+export const useRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost>>, TError,{projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof rejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost>>,
+        TError,
+        {projectId: number;approvalId: number;data: BodyType<RequirementApprovalDecisionCreate>},
+        TContext
+      > => {
+      return useMutation(getRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostMutationOptions(options), queryClient);
+    }
+    export const getCreateRequirementDocumentProjectsProjectIdRequirementDocumentsPostUrl = (projectId: number,) => {
 
 
 
@@ -544,6 +946,652 @@ export const useDeleteRequirementDocumentProjectsProjectIdRequirementDocumentsDo
       > => {
       return useMutation(getDeleteRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdDeleteMutationOptions(options), queryClient);
     }
+    export const getExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPostUrl = (projectId: number,
+    documentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirement-documents/${documentId}/exports`
+}
+
+/**
+ * 要件定義書を出力する。
+
+Args:
+    project_id: 出力対象のプロジェクトID。
+    document_id: 出力対象の要件定義書ID。
+    export_in: 出力リクエスト。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件定義書の出力結果。
+ * @summary Export Requirement Document
+ */
+export const exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost = async (projectId: number,
+    documentId: number,
+    requirementDocumentExportCreate: RequirementDocumentExportCreate, options?: RequestInit): Promise<RequirementDocumentExportRead> => {
+
+  return apiClient<RequirementDocumentExportRead>(getExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPostUrl(projectId,documentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementDocumentExportCreate)
+  }
+);}
+
+
+
+
+export const getExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementDocumentExportCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementDocumentExportCreate>}, TContext> => {
+
+const mutationKey = ['exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost>>, {projectId: number;documentId: number;data: BodyType<RequirementDocumentExportCreate>}> = (props) => {
+          const {projectId,documentId,data} = props ?? {};
+
+          return  exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost(projectId,documentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPostMutationResult = NonNullable<Awaited<ReturnType<typeof exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost>>>
+    export type ExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPostMutationBody = BodyType<RequirementDocumentExportCreate>
+    export type ExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Export Requirement Document
+ */
+export const useExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementDocumentExportCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof exportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost>>,
+        TError,
+        {projectId: number;documentId: number;data: BodyType<RequirementDocumentExportCreate>},
+        TContext
+      > => {
+      return useMutation(getExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPostMutationOptions(options), queryClient);
+    }
+    export const getCreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPostUrl = (projectId: number,
+    documentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirement-documents/${documentId}/sections`
+}
+
+/**
+ * 要件定義セクションを作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    document_id: 作成対象の要件定義書ID。
+    section_in: セクション作成入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件定義セクション。
+ * @summary Create Requirement Section
+ */
+export const createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost = async (projectId: number,
+    documentId: number,
+    requirementSectionCreate: RequirementSectionCreate, options?: RequestInit): Promise<RequirementSectionRead> => {
+
+  return apiClient<RequirementSectionRead>(getCreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPostUrl(projectId,documentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementSectionCreate)
+  }
+);}
+
+
+
+
+export const getCreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementSectionCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementSectionCreate>}, TContext> => {
+
+const mutationKey = ['createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost>>, {projectId: number;documentId: number;data: BodyType<RequirementSectionCreate>}> = (props) => {
+          const {projectId,documentId,data} = props ?? {};
+
+          return  createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost(projectId,documentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost>>>
+    export type CreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPostMutationBody = BodyType<RequirementSectionCreate>
+    export type CreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Requirement Section
+ */
+export const useCreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementSectionCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost>>,
+        TError,
+        {projectId: number;documentId: number;data: BodyType<RequirementSectionCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPostMutationOptions(options), queryClient);
+    }
+    export const getListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetUrl = (projectId: number,
+    documentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirement-documents/${documentId}/sections`
+}
+
+/**
+ * 要件定義セクション一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    document_id: 取得対象の要件定義書ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件定義セクション一覧。
+ * @summary List Requirement Sections
+ */
+export const listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet = async (projectId: number,
+    documentId: number, options?: RequestInit): Promise<RequirementSectionRead[]> => {
+
+  return apiClient<RequirementSectionRead[]>(getListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetUrl(projectId,documentId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetQueryKey = (projectId: number,
+    documentId: number,) => {
+    return [
+    `/projects/${projectId}/requirement-documents/${documentId}/sections`
+    ] as const;
+    }
+
+
+export const getListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetQueryOptions = <TData = Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetQueryKey(projectId,documentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>> = ({ signal }) => listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet(projectId,documentId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined && documentId !== null && documentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>>
+export type ListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet<TData = Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    documentId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet<TData = Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet<TData = Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Requirement Sections
+ */
+
+export function useListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet<TData = Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetQueryOptions(projectId,documentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetUrl = (projectId: number,
+    sectionId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirement-sections/${sectionId}`
+}
+
+/**
+ * 要件定義セクションを取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    section_id: 取得対象の要件定義セクションID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    取得した要件定義セクション。
+ * @summary Read Requirement Section
+ */
+export const readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet = async (projectId: number,
+    sectionId: number, options?: RequestInit): Promise<RequirementSectionRead> => {
+
+  return apiClient<RequirementSectionRead>(getReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetUrl(projectId,sectionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetQueryKey = (projectId: number,
+    sectionId: number,) => {
+    return [
+    `/projects/${projectId}/requirement-sections/${sectionId}`
+    ] as const;
+    }
+
+
+export const getReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetQueryOptions = <TData = Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    sectionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetQueryKey(projectId,sectionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>> = ({ signal }) => readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet(projectId,sectionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined && sectionId !== null && sectionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>>
+export type ReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet<TData = Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    sectionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet<TData = Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    sectionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet<TData = Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    sectionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read Requirement Section
+ */
+
+export function useReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet<TData = Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    sectionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReadRequirementSectionProjectsProjectIdRequirementSectionsSectionIdGetQueryOptions(projectId,sectionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getUpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatchUrl = (projectId: number,
+    sectionId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirement-sections/${sectionId}`
+}
+
+/**
+ * 要件定義セクションを更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    section_id: 更新対象の要件定義セクションID。
+    section_in: セクション更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件定義セクション。
+ * @summary Update Requirement Section
+ */
+export const updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch = async (projectId: number,
+    sectionId: number,
+    requirementSectionUpdate: RequirementSectionUpdate, options?: RequestInit): Promise<RequirementSectionRead> => {
+
+  return apiClient<RequirementSectionRead>(getUpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatchUrl(projectId,sectionId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementSectionUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch>>, TError,{projectId: number;sectionId: number;data: BodyType<RequirementSectionUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch>>, TError,{projectId: number;sectionId: number;data: BodyType<RequirementSectionUpdate>}, TContext> => {
+
+const mutationKey = ['updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch>>, {projectId: number;sectionId: number;data: BodyType<RequirementSectionUpdate>}> = (props) => {
+          const {projectId,sectionId,data} = props ?? {};
+
+          return  updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch(projectId,sectionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch>>>
+    export type UpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatchMutationBody = BodyType<RequirementSectionUpdate>
+    export type UpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Requirement Section
+ */
+export const useUpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch>>, TError,{projectId: number;sectionId: number;data: BodyType<RequirementSectionUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch>>,
+        TError,
+        {projectId: number;sectionId: number;data: BodyType<RequirementSectionUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatchMutationOptions(options), queryClient);
+    }
+    export const getDeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDeleteUrl = (projectId: number,
+    sectionId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirement-sections/${sectionId}`
+}
+
+/**
+ * 要件定義セクションを論理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    section_id: 削除対象の要件定義セクションID。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+ * @summary Delete Requirement Section
+ */
+export const deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete = async (projectId: number,
+    sectionId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDeleteUrl(projectId,sectionId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete>>, TError,{projectId: number;sectionId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete>>, TError,{projectId: number;sectionId: number}, TContext> => {
+
+const mutationKey = ['deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete>>, {projectId: number;sectionId: number}> = (props) => {
+          const {projectId,sectionId} = props ?? {};
+
+          return  deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete(projectId,sectionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete>>>
+
+    export type DeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Requirement Section
+ */
+export const useDeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete>>, TError,{projectId: number;sectionId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDelete>>,
+        TError,
+        {projectId: number;sectionId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getUpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatchUrl = (projectId: number,
+    documentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirement-documents/${documentId}/sections/sort-order`
+}
+
+/**
+ * 要件定義セクションの表示順を更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    document_id: 更新対象の要件定義書ID。
+    sort_in: 表示順更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新後の要件定義セクション一覧。
+ * @summary Update Requirement Section Sort Order
+ */
+export const updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch = async (projectId: number,
+    documentId: number,
+    requirementSectionSortUpdate: RequirementSectionSortUpdate, options?: RequestInit): Promise<RequirementSectionRead[]> => {
+
+  return apiClient<RequirementSectionRead[]>(getUpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatchUrl(projectId,documentId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementSectionSortUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementSectionSortUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementSectionSortUpdate>}, TContext> => {
+
+const mutationKey = ['updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch>>, {projectId: number;documentId: number;data: BodyType<RequirementSectionSortUpdate>}> = (props) => {
+          const {projectId,documentId,data} = props ?? {};
+
+          return  updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch(projectId,documentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch>>>
+    export type UpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatchMutationBody = BodyType<RequirementSectionSortUpdate>
+    export type UpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Requirement Section Sort Order
+ */
+export const useUpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch>>, TError,{projectId: number;documentId: number;data: BodyType<RequirementSectionSortUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatch>>,
+        TError,
+        {projectId: number;documentId: number;data: BodyType<RequirementSectionSortUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateRequirementSectionSortOrderProjectsProjectIdRequirementDocumentsDocumentIdSectionsSortOrderPatchMutationOptions(options), queryClient);
+    }
     export const getCreateRequirementProjectsProjectIdRequirementsPostUrl = (projectId: number,) => {
 
 
@@ -648,9 +1696,12 @@ Args:
     page: 取得ページ番号。
     page_size: 1ページあたりの取得件数。
     document_id: 絞り込み対象の要件定義書ID。
+    section_id: 絞り込み対象の要件定義セクションID。
     q: 検索キーワード。
     status: 絞り込み対象のステータス。
     requirement_type: 絞り込み対象の要件種別。
+    priority: 絞り込み対象の優先度。
+    owner_id: 絞り込み対象のオーナーID。
     _: 認可済みユーザー。
     db: DBセッション。
 
@@ -1269,7 +2320,1115 @@ export function useListRequirementRevisionsProjectsProjectIdRequirementsRequirem
 
 
 
-export const getCreateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsPostUrl = (projectId: number,
+export const getCreateOpenIssueProjectsProjectIdOpenIssuesPostUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/open-issues`
+}
+
+/**
+ * 未決事項を作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    issue_in: 未決事項作成入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された未決事項。
+ * @summary Create Open Issue
+ */
+export const createOpenIssueProjectsProjectIdOpenIssuesPost = async (projectId: number,
+    requirementOpenIssueCreate: RequirementOpenIssueCreate, options?: RequestInit): Promise<RequirementOpenIssueRead> => {
+
+  return apiClient<RequirementOpenIssueRead>(getCreateOpenIssueProjectsProjectIdOpenIssuesPostUrl(projectId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementOpenIssueCreate)
+  }
+);}
+
+
+
+
+export const getCreateOpenIssueProjectsProjectIdOpenIssuesPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOpenIssueProjectsProjectIdOpenIssuesPost>>, TError,{projectId: number;data: BodyType<RequirementOpenIssueCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createOpenIssueProjectsProjectIdOpenIssuesPost>>, TError,{projectId: number;data: BodyType<RequirementOpenIssueCreate>}, TContext> => {
+
+const mutationKey = ['createOpenIssueProjectsProjectIdOpenIssuesPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOpenIssueProjectsProjectIdOpenIssuesPost>>, {projectId: number;data: BodyType<RequirementOpenIssueCreate>}> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  createOpenIssueProjectsProjectIdOpenIssuesPost(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateOpenIssueProjectsProjectIdOpenIssuesPostMutationResult = NonNullable<Awaited<ReturnType<typeof createOpenIssueProjectsProjectIdOpenIssuesPost>>>
+    export type CreateOpenIssueProjectsProjectIdOpenIssuesPostMutationBody = BodyType<RequirementOpenIssueCreate>
+    export type CreateOpenIssueProjectsProjectIdOpenIssuesPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Open Issue
+ */
+export const useCreateOpenIssueProjectsProjectIdOpenIssuesPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOpenIssueProjectsProjectIdOpenIssuesPost>>, TError,{projectId: number;data: BodyType<RequirementOpenIssueCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createOpenIssueProjectsProjectIdOpenIssuesPost>>,
+        TError,
+        {projectId: number;data: BodyType<RequirementOpenIssueCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateOpenIssueProjectsProjectIdOpenIssuesPostMutationOptions(options), queryClient);
+    }
+    export const getListOpenIssuesProjectsProjectIdOpenIssuesGetUrl = (projectId: number,
+    params?: ListOpenIssuesProjectsProjectIdOpenIssuesGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/projects/${projectId}/open-issues?${stringifiedParams}` : `/projects/${projectId}/open-issues`
+}
+
+/**
+ * 未決事項一覧を取得する。
+
+Args:
+    project_id: 一覧取得対象のプロジェクトID。
+    page: 取得ページ番号。
+    page_size: 1ページあたりの取得件数。
+    document_id: 絞り込み対象の要件定義書ID。
+    q: 検索キーワード。
+    status: 絞り込み対象のステータス。
+    assignee_id: 絞り込み対象の担当者ID。
+    due_date_from: 期限の開始日。
+    due_date_to: 期限の終了日。
+    related_requirement_id: 絞り込み対象の関連要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    未決事項のページング済み一覧。
+ * @summary List Open Issues
+ */
+export const listOpenIssuesProjectsProjectIdOpenIssuesGet = async (projectId: number,
+    params?: ListOpenIssuesProjectsProjectIdOpenIssuesGetParams, options?: RequestInit): Promise<RequirementOpenIssueListResponse> => {
+
+  return apiClient<RequirementOpenIssueListResponse>(getListOpenIssuesProjectsProjectIdOpenIssuesGetUrl(projectId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListOpenIssuesProjectsProjectIdOpenIssuesGetQueryKey = (projectId: number,
+    params?: ListOpenIssuesProjectsProjectIdOpenIssuesGetParams,) => {
+    return [
+    `/projects/${projectId}/open-issues`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOpenIssuesProjectsProjectIdOpenIssuesGetQueryOptions = <TData = Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    params?: ListOpenIssuesProjectsProjectIdOpenIssuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOpenIssuesProjectsProjectIdOpenIssuesGetQueryKey(projectId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>> = ({ signal }) => listOpenIssuesProjectsProjectIdOpenIssuesGet(projectId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOpenIssuesProjectsProjectIdOpenIssuesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>>
+export type ListOpenIssuesProjectsProjectIdOpenIssuesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListOpenIssuesProjectsProjectIdOpenIssuesGet<TData = Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: undefined |  ListOpenIssuesProjectsProjectIdOpenIssuesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOpenIssuesProjectsProjectIdOpenIssuesGet<TData = Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListOpenIssuesProjectsProjectIdOpenIssuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOpenIssuesProjectsProjectIdOpenIssuesGet<TData = Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListOpenIssuesProjectsProjectIdOpenIssuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Open Issues
+ */
+
+export function useListOpenIssuesProjectsProjectIdOpenIssuesGet<TData = Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListOpenIssuesProjectsProjectIdOpenIssuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenIssuesProjectsProjectIdOpenIssuesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOpenIssuesProjectsProjectIdOpenIssuesGetQueryOptions(projectId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetUrl = (projectId: number,
+    issueId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/open-issues/${issueId}`
+}
+
+/**
+ * 未決事項を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    issue_id: 取得対象の未決事項ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    取得した未決事項。
+ * @summary Read Open Issue
+ */
+export const readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet = async (projectId: number,
+    issueId: number, options?: RequestInit): Promise<RequirementOpenIssueRead> => {
+
+  return apiClient<RequirementOpenIssueRead>(getReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetUrl(projectId,issueId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetQueryKey = (projectId: number,
+    issueId: number,) => {
+    return [
+    `/projects/${projectId}/open-issues/${issueId}`
+    ] as const;
+    }
+
+
+export const getReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetQueryOptions = <TData = Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    issueId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetQueryKey(projectId,issueId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>> = ({ signal }) => readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet(projectId,issueId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined && issueId !== null && issueId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>>
+export type ReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGet<TData = Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    issueId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGet<TData = Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    issueId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGet<TData = Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    issueId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read Open Issue
+ */
+
+export function useReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGet<TData = Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    issueId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readOpenIssueProjectsProjectIdOpenIssuesIssueIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReadOpenIssueProjectsProjectIdOpenIssuesIssueIdGetQueryOptions(projectId,issueId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getUpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatchUrl = (projectId: number,
+    issueId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/open-issues/${issueId}`
+}
+
+/**
+ * 未決事項を更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    issue_id: 更新対象の未決事項ID。
+    issue_in: 未決事項更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された未決事項。
+ * @summary Update Open Issue
+ */
+export const updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch = async (projectId: number,
+    issueId: number,
+    requirementOpenIssueUpdate: RequirementOpenIssueUpdate, options?: RequestInit): Promise<RequirementOpenIssueRead> => {
+
+  return apiClient<RequirementOpenIssueRead>(getUpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatchUrl(projectId,issueId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementOpenIssueUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch>>, TError,{projectId: number;issueId: number;data: BodyType<RequirementOpenIssueUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch>>, TError,{projectId: number;issueId: number;data: BodyType<RequirementOpenIssueUpdate>}, TContext> => {
+
+const mutationKey = ['updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch>>, {projectId: number;issueId: number;data: BodyType<RequirementOpenIssueUpdate>}> = (props) => {
+          const {projectId,issueId,data} = props ?? {};
+
+          return  updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch(projectId,issueId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch>>>
+    export type UpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatchMutationBody = BodyType<RequirementOpenIssueUpdate>
+    export type UpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Open Issue
+ */
+export const useUpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch>>, TError,{projectId: number;issueId: number;data: BodyType<RequirementOpenIssueUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatch>>,
+        TError,
+        {projectId: number;issueId: number;data: BodyType<RequirementOpenIssueUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateOpenIssueProjectsProjectIdOpenIssuesIssueIdPatchMutationOptions(options), queryClient);
+    }
+    export const getDeleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDeleteUrl = (projectId: number,
+    issueId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/open-issues/${issueId}`
+}
+
+/**
+ * 未決事項を論理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    issue_id: 削除対象の未決事項ID。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+ * @summary Delete Open Issue
+ */
+export const deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete = async (projectId: number,
+    issueId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDeleteUrl(projectId,issueId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete>>, TError,{projectId: number;issueId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete>>, TError,{projectId: number;issueId: number}, TContext> => {
+
+const mutationKey = ['deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete>>, {projectId: number;issueId: number}> = (props) => {
+          const {projectId,issueId} = props ?? {};
+
+          return  deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete(projectId,issueId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete>>>
+
+    export type DeleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Open Issue
+ */
+export const useDeleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete>>, TError,{projectId: number;issueId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDelete>>,
+        TError,
+        {projectId: number;issueId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteOpenIssueProjectsProjectIdOpenIssuesIssueIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getPromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPostUrl = (projectId: number,
+    issueId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/open-issues/${issueId}/promote-to-requirement`
+}
+
+/**
+ * 未決事項を要件へ昇格する。
+
+Args:
+    project_id: 対象プロジェクトID。
+    issue_id: 昇格対象の未決事項ID。
+    promote_in: 昇格入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件。
+ * @summary Promote Open Issue To Requirement
+ */
+export const promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost = async (projectId: number,
+    issueId: number,
+    requirementOpenIssuePromoteCreate: RequirementOpenIssuePromoteCreate, options?: RequestInit): Promise<RequirementRead> => {
+
+  return apiClient<RequirementRead>(getPromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPostUrl(projectId,issueId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementOpenIssuePromoteCreate)
+  }
+);}
+
+
+
+
+export const getPromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost>>, TError,{projectId: number;issueId: number;data: BodyType<RequirementOpenIssuePromoteCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost>>, TError,{projectId: number;issueId: number;data: BodyType<RequirementOpenIssuePromoteCreate>}, TContext> => {
+
+const mutationKey = ['promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost>>, {projectId: number;issueId: number;data: BodyType<RequirementOpenIssuePromoteCreate>}> = (props) => {
+          const {projectId,issueId,data} = props ?? {};
+
+          return  promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost(projectId,issueId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPostMutationResult = NonNullable<Awaited<ReturnType<typeof promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost>>>
+    export type PromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPostMutationBody = BodyType<RequirementOpenIssuePromoteCreate>
+    export type PromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Promote Open Issue To Requirement
+ */
+export const usePromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost>>, TError,{projectId: number;issueId: number;data: BodyType<RequirementOpenIssuePromoteCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof promoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPost>>,
+        TError,
+        {projectId: number;issueId: number;data: BodyType<RequirementOpenIssuePromoteCreate>},
+        TContext
+      > => {
+      return useMutation(getPromoteOpenIssueToRequirementProjectsProjectIdOpenIssuesIssueIdPromoteToRequirementPostMutationOptions(options), queryClient);
+    }
+    export const getCreateTargetCommentProjectsProjectIdCommentsPostUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/comments`
+}
+
+/**
+ * 要件定義対象コメントを作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    comment_in: コメント作成入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件定義対象コメント。
+ * @summary Create Target Comment
+ */
+export const createTargetCommentProjectsProjectIdCommentsPost = async (projectId: number,
+    requirementTargetCommentCreate: RequirementTargetCommentCreate, options?: RequestInit): Promise<RequirementTargetCommentRead> => {
+
+  return apiClient<RequirementTargetCommentRead>(getCreateTargetCommentProjectsProjectIdCommentsPostUrl(projectId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementTargetCommentCreate)
+  }
+);}
+
+
+
+
+export const getCreateTargetCommentProjectsProjectIdCommentsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTargetCommentProjectsProjectIdCommentsPost>>, TError,{projectId: number;data: BodyType<RequirementTargetCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTargetCommentProjectsProjectIdCommentsPost>>, TError,{projectId: number;data: BodyType<RequirementTargetCommentCreate>}, TContext> => {
+
+const mutationKey = ['createTargetCommentProjectsProjectIdCommentsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTargetCommentProjectsProjectIdCommentsPost>>, {projectId: number;data: BodyType<RequirementTargetCommentCreate>}> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  createTargetCommentProjectsProjectIdCommentsPost(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTargetCommentProjectsProjectIdCommentsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTargetCommentProjectsProjectIdCommentsPost>>>
+    export type CreateTargetCommentProjectsProjectIdCommentsPostMutationBody = BodyType<RequirementTargetCommentCreate>
+    export type CreateTargetCommentProjectsProjectIdCommentsPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Target Comment
+ */
+export const useCreateTargetCommentProjectsProjectIdCommentsPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTargetCommentProjectsProjectIdCommentsPost>>, TError,{projectId: number;data: BodyType<RequirementTargetCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTargetCommentProjectsProjectIdCommentsPost>>,
+        TError,
+        {projectId: number;data: BodyType<RequirementTargetCommentCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateTargetCommentProjectsProjectIdCommentsPostMutationOptions(options), queryClient);
+    }
+    export const getListTargetCommentsProjectsProjectIdCommentsGetUrl = (projectId: number,
+    params: ListTargetCommentsProjectsProjectIdCommentsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/projects/${projectId}/comments?${stringifiedParams}` : `/projects/${projectId}/comments`
+}
+
+/**
+ * 要件定義対象コメント一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    target_type: コメント対象種別。
+    target_id: コメント対象ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件定義対象コメント一覧。
+ * @summary List Target Comments
+ */
+export const listTargetCommentsProjectsProjectIdCommentsGet = async (projectId: number,
+    params: ListTargetCommentsProjectsProjectIdCommentsGetParams, options?: RequestInit): Promise<RequirementTargetCommentRead[]> => {
+
+  return apiClient<RequirementTargetCommentRead[]>(getListTargetCommentsProjectsProjectIdCommentsGetUrl(projectId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTargetCommentsProjectsProjectIdCommentsGetQueryKey = (projectId: number,
+    params?: ListTargetCommentsProjectsProjectIdCommentsGetParams,) => {
+    return [
+    `/projects/${projectId}/comments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTargetCommentsProjectsProjectIdCommentsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    params: ListTargetCommentsProjectsProjectIdCommentsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTargetCommentsProjectsProjectIdCommentsGetQueryKey(projectId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>> = ({ signal }) => listTargetCommentsProjectsProjectIdCommentsGet(projectId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTargetCommentsProjectsProjectIdCommentsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>>
+export type ListTargetCommentsProjectsProjectIdCommentsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTargetCommentsProjectsProjectIdCommentsGet<TData = Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: ListTargetCommentsProjectsProjectIdCommentsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTargetCommentsProjectsProjectIdCommentsGet<TData = Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: ListTargetCommentsProjectsProjectIdCommentsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTargetCommentsProjectsProjectIdCommentsGet<TData = Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: ListTargetCommentsProjectsProjectIdCommentsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Target Comments
+ */
+
+export function useListTargetCommentsProjectsProjectIdCommentsGet<TData = Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: ListTargetCommentsProjectsProjectIdCommentsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTargetCommentsProjectsProjectIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTargetCommentsProjectsProjectIdCommentsGetQueryOptions(projectId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getUpdateTargetCommentProjectsProjectIdCommentsCommentIdPatchUrl = (projectId: number,
+    commentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/comments/${commentId}`
+}
+
+/**
+ * 要件定義対象コメントを更新する。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    comment_id: 更新対象のコメントID。
+    comment_in: コメント更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件定義対象コメント。
+ * @summary Update Target Comment
+ */
+export const updateTargetCommentProjectsProjectIdCommentsCommentIdPatch = async (projectId: number,
+    commentId: number,
+    requirementTargetCommentUpdate: RequirementTargetCommentUpdate, options?: RequestInit): Promise<RequirementTargetCommentRead> => {
+
+  return apiClient<RequirementTargetCommentRead>(getUpdateTargetCommentProjectsProjectIdCommentsCommentIdPatchUrl(projectId,commentId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementTargetCommentUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateTargetCommentProjectsProjectIdCommentsCommentIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTargetCommentProjectsProjectIdCommentsCommentIdPatch>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTargetCommentProjectsProjectIdCommentsCommentIdPatch>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentUpdate>}, TContext> => {
+
+const mutationKey = ['updateTargetCommentProjectsProjectIdCommentsCommentIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTargetCommentProjectsProjectIdCommentsCommentIdPatch>>, {projectId: number;commentId: number;data: BodyType<RequirementTargetCommentUpdate>}> = (props) => {
+          const {projectId,commentId,data} = props ?? {};
+
+          return  updateTargetCommentProjectsProjectIdCommentsCommentIdPatch(projectId,commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTargetCommentProjectsProjectIdCommentsCommentIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTargetCommentProjectsProjectIdCommentsCommentIdPatch>>>
+    export type UpdateTargetCommentProjectsProjectIdCommentsCommentIdPatchMutationBody = BodyType<RequirementTargetCommentUpdate>
+    export type UpdateTargetCommentProjectsProjectIdCommentsCommentIdPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Target Comment
+ */
+export const useUpdateTargetCommentProjectsProjectIdCommentsCommentIdPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTargetCommentProjectsProjectIdCommentsCommentIdPatch>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateTargetCommentProjectsProjectIdCommentsCommentIdPatch>>,
+        TError,
+        {projectId: number;commentId: number;data: BodyType<RequirementTargetCommentUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTargetCommentProjectsProjectIdCommentsCommentIdPatchMutationOptions(options), queryClient);
+    }
+    export const getDeleteTargetCommentProjectsProjectIdCommentsCommentIdDeleteUrl = (projectId: number,
+    commentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/comments/${commentId}`
+}
+
+/**
+ * 要件定義対象コメントを論理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    comment_id: 削除対象のコメントID。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+ * @summary Delete Target Comment
+ */
+export const deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete = async (projectId: number,
+    commentId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteTargetCommentProjectsProjectIdCommentsCommentIdDeleteUrl(projectId,commentId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteTargetCommentProjectsProjectIdCommentsCommentIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete>>, TError,{projectId: number;commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete>>, TError,{projectId: number;commentId: number}, TContext> => {
+
+const mutationKey = ['deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete>>, {projectId: number;commentId: number}> = (props) => {
+          const {projectId,commentId} = props ?? {};
+
+          return  deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete(projectId,commentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTargetCommentProjectsProjectIdCommentsCommentIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete>>>
+
+    export type DeleteTargetCommentProjectsProjectIdCommentsCommentIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Target Comment
+ */
+export const useDeleteTargetCommentProjectsProjectIdCommentsCommentIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete>>, TError,{projectId: number;commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTargetCommentProjectsProjectIdCommentsCommentIdDelete>>,
+        TError,
+        {projectId: number;commentId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteTargetCommentProjectsProjectIdCommentsCommentIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePostUrl = (projectId: number,
+    commentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/comments/${commentId}/resolve`
+}
+
+/**
+ * 要件定義対象コメントを解決済みにする。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    comment_id: 更新対象のコメントID。
+    state_in: 状態更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件定義対象コメント。
+ * @summary Resolve Target Comment
+ */
+export const resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost = async (projectId: number,
+    commentId: number,
+    requirementTargetCommentStateUpdate: RequirementTargetCommentStateUpdate, options?: RequestInit): Promise<RequirementTargetCommentRead> => {
+
+  return apiClient<RequirementTargetCommentRead>(getResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePostUrl(projectId,commentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementTargetCommentStateUpdate)
+  }
+);}
+
+
+
+
+export const getResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}, TContext> => {
+
+const mutationKey = ['resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost>>, {projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}> = (props) => {
+          const {projectId,commentId,data} = props ?? {};
+
+          return  resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost(projectId,commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePostMutationResult = NonNullable<Awaited<ReturnType<typeof resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost>>>
+    export type ResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePostMutationBody = BodyType<RequirementTargetCommentStateUpdate>
+    export type ResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Resolve Target Comment
+ */
+export const useResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost>>,
+        TError,
+        {projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>},
+        TContext
+      > => {
+      return useMutation(getResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePostMutationOptions(options), queryClient);
+    }
+    export const getReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPostUrl = (projectId: number,
+    commentId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/comments/${commentId}/reopen`
+}
+
+/**
+ * 要件定義対象コメントを未解決に戻す。
+
+Args:
+    project_id: 更新対象のプロジェクトID。
+    comment_id: 更新対象のコメントID。
+    state_in: 状態更新入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    更新された要件定義対象コメント。
+ * @summary Reopen Target Comment
+ */
+export const reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost = async (projectId: number,
+    commentId: number,
+    requirementTargetCommentStateUpdate: RequirementTargetCommentStateUpdate, options?: RequestInit): Promise<RequirementTargetCommentRead> => {
+
+  return apiClient<RequirementTargetCommentRead>(getReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPostUrl(projectId,commentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementTargetCommentStateUpdate)
+  }
+);}
+
+
+
+
+export const getReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}, TContext> => {
+
+const mutationKey = ['reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost>>, {projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}> = (props) => {
+          const {projectId,commentId,data} = props ?? {};
+
+          return  reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost(projectId,commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPostMutationResult = NonNullable<Awaited<ReturnType<typeof reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost>>>
+    export type ReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPostMutationBody = BodyType<RequirementTargetCommentStateUpdate>
+    export type ReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Reopen Target Comment
+ */
+export const useReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost>>, TError,{projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost>>,
+        TError,
+        {projectId: number;commentId: number;data: BodyType<RequirementTargetCommentStateUpdate>},
+        TContext
+      > => {
+      return useMutation(getReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPostMutationOptions(options), queryClient);
+    }
+    export const getCreateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsPostUrl = (projectId: number,
     requirementId: number,) => {
 
 
@@ -1285,7 +3444,7 @@ Args:
     project_id: 作成対象のプロジェクトID。
     requirement_id: 作成対象の要件ID。
     detail_in: 要件詳細の作成入力値。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -1488,7 +3647,7 @@ Args:
     requirement_id: 更新対象の要件ID。
     detail_id: 更新対象の要件詳細ID。
     detail_in: 要件詳細の更新入力値。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -1573,7 +3732,7 @@ Args:
     project_id: 削除対象のプロジェクトID。
     requirement_id: 削除対象の要件ID。
     detail_id: 削除対象の要件詳細ID。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
  * @summary Delete Requirement Detail
  */
@@ -1653,7 +3812,7 @@ Args:
     project_id: 作成対象のプロジェクトID。
     requirement_id: 作成対象の要件ID。
     link_in: 要件リンクの作成入力値。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -1855,7 +4014,7 @@ Args:
     project_id: 削除対象のプロジェクトID。
     requirement_id: 削除対象の要件ID。
     link_id: 削除対象の要件リンクID。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
  * @summary Delete Requirement Link
  */
@@ -1918,6 +4077,288 @@ export const useDeleteRequirementLinkProjectsProjectIdRequirementsRequirementIdL
         TContext
       > => {
       return useMutation(getDeleteRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getCreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPostUrl = (projectId: number,
+    requirementId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirements/${requirementId}/relations`
+}
+
+/**
+ * 要件関連を作成する。
+
+Args:
+    project_id: 作成対象のプロジェクトID。
+    requirement_id: 関連元の要件ID。
+    relation_in: 要件関連の作成入力値。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+
+Returns:
+    作成された要件関連。
+ * @summary Create Requirement Relation
+ */
+export const createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost = async (projectId: number,
+    requirementId: number,
+    requirementRelationCreate: RequirementRelationCreate, options?: RequestInit): Promise<RequirementRelationRead> => {
+
+  return apiClient<RequirementRelationRead>(getCreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPostUrl(projectId,requirementId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementRelationCreate)
+  }
+);}
+
+
+
+
+export const getCreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost>>, TError,{projectId: number;requirementId: number;data: BodyType<RequirementRelationCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost>>, TError,{projectId: number;requirementId: number;data: BodyType<RequirementRelationCreate>}, TContext> => {
+
+const mutationKey = ['createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost>>, {projectId: number;requirementId: number;data: BodyType<RequirementRelationCreate>}> = (props) => {
+          const {projectId,requirementId,data} = props ?? {};
+
+          return  createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost(projectId,requirementId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost>>>
+    export type CreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPostMutationBody = BodyType<RequirementRelationCreate>
+    export type CreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Requirement Relation
+ */
+export const useCreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost>>, TError,{projectId: number;requirementId: number;data: BodyType<RequirementRelationCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPost>>,
+        TError,
+        {projectId: number;requirementId: number;data: BodyType<RequirementRelationCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsPostMutationOptions(options), queryClient);
+    }
+    export const getListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetUrl = (projectId: number,
+    requirementId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirements/${requirementId}/relations`
+}
+
+/**
+ * 要件関連一覧を取得する。
+
+Args:
+    project_id: 取得対象のプロジェクトID。
+    requirement_id: 取得対象の要件ID。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件関連一覧。
+ * @summary List Requirement Relations
+ */
+export const listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet = async (projectId: number,
+    requirementId: number, options?: RequestInit): Promise<RequirementRelationRead[]> => {
+
+  return apiClient<RequirementRelationRead[]>(getListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetUrl(projectId,requirementId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetQueryKey = (projectId: number,
+    requirementId: number,) => {
+    return [
+    `/projects/${projectId}/requirements/${requirementId}/relations`
+    ] as const;
+    }
+
+
+export const getListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetQueryOptions = <TData = Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetQueryKey(projectId,requirementId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>> = ({ signal }) => listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet(projectId,requirementId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined && requirementId !== null && requirementId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>>
+export type ListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet<TData = Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    requirementId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet<TData = Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet<TData = Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Requirement Relations
+ */
+
+export function useListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet<TData = Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetQueryOptions(projectId,requirementId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getDeleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDeleteUrl = (projectId: number,
+    requirementId: number,
+    relationId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/requirements/${requirementId}/relations/${relationId}`
+}
+
+/**
+ * 要件関連を物理削除する。
+
+Args:
+    project_id: 削除対象のプロジェクトID。
+    requirement_id: 関連元の要件ID。
+    relation_id: 削除対象の要件関連ID。
+    current_user: 認証済みユーザー。
+    db: DBセッション。
+ * @summary Delete Requirement Relation
+ */
+export const deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete = async (projectId: number,
+    requirementId: number,
+    relationId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDeleteUrl(projectId,requirementId,relationId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete>>, TError,{projectId: number;requirementId: number;relationId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete>>, TError,{projectId: number;requirementId: number;relationId: number}, TContext> => {
+
+const mutationKey = ['deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete>>, {projectId: number;requirementId: number;relationId: number}> = (props) => {
+          const {projectId,requirementId,relationId} = props ?? {};
+
+          return  deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete(projectId,requirementId,relationId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete>>>
+
+    export type DeleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Requirement Relation
+ */
+export const useDeleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete>>, TError,{projectId: number;requirementId: number;relationId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDelete>>,
+        TError,
+        {projectId: number;requirementId: number;relationId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteRequirementRelationProjectsProjectIdRequirementsRequirementIdRelationsRelationIdDeleteMutationOptions(options), queryClient);
     }
     export const getCreateRequirementCommentProjectsProjectIdRequirementsRequirementIdCommentsPostUrl = (projectId: number,
     requirementId: number,) => {
@@ -2217,7 +4658,7 @@ Args:
     project_id: 作成対象のプロジェクトID。
     requirement_id: 作成対象の要件ID。
     review_in: 要件レビューの作成入力値。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -2420,7 +4861,7 @@ Args:
     requirement_id: 更新対象の要件ID。
     review_id: 更新対象の要件レビューID。
     review_in: 要件レビューの更新入力値。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -2505,7 +4946,7 @@ Args:
     project_id: 削除対象のプロジェクトID。
     requirement_id: 削除対象の要件ID。
     review_id: 削除対象の要件レビューID。
-    _: 認可済みユーザー。
+    current_user: 認証済みユーザー。
     db: DBセッション。
  * @summary Delete Requirement Review
  */
@@ -2569,3 +5010,136 @@ export const useDeleteRequirementReviewProjectsProjectIdRequirementsRequirementI
       > => {
       return useMutation(getDeleteRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdDeleteMutationOptions(options), queryClient);
     }
+    export const getListRequirementChangeLogsProjectsProjectIdChangeLogsGetUrl = (projectId: number,
+    params?: ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/projects/${projectId}/change-logs?${stringifiedParams}` : `/projects/${projectId}/change-logs`
+}
+
+/**
+ * 要件定義変更履歴一覧を取得する。
+
+Args:
+    project_id: 一覧取得対象のプロジェクトID。
+    page: 取得ページ番号。
+    page_size: 1ページあたりの取得件数。
+    document_id: 絞り込み対象の要件定義書ID。
+    target_type: 絞り込み対象の変更対象種別。
+    target_id: 絞り込み対象の変更対象ID。
+    action: 絞り込み対象の操作種別。
+    changed_by: 絞り込み対象の変更ユーザーID。
+    changed_at_from: 変更日時の開始日時。
+    changed_at_to: 変更日時の終了日時。
+    _: 認可済みユーザー。
+    db: DBセッション。
+
+Returns:
+    要件定義変更履歴のページング済み一覧。
+ * @summary List Requirement Change Logs
+ */
+export const listRequirementChangeLogsProjectsProjectIdChangeLogsGet = async (projectId: number,
+    params?: ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams, options?: RequestInit): Promise<RequirementChangeLogListResponse> => {
+
+  return apiClient<RequirementChangeLogListResponse>(getListRequirementChangeLogsProjectsProjectIdChangeLogsGetUrl(projectId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRequirementChangeLogsProjectsProjectIdChangeLogsGetQueryKey = (projectId: number,
+    params?: ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams,) => {
+    return [
+    `/projects/${projectId}/change-logs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListRequirementChangeLogsProjectsProjectIdChangeLogsGetQueryOptions = <TData = Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    params?: ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRequirementChangeLogsProjectsProjectIdChangeLogsGetQueryKey(projectId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>> = ({ signal }) => listRequirementChangeLogsProjectsProjectIdChangeLogsGet(projectId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListRequirementChangeLogsProjectsProjectIdChangeLogsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>>
+export type ListRequirementChangeLogsProjectsProjectIdChangeLogsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListRequirementChangeLogsProjectsProjectIdChangeLogsGet<TData = Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: undefined |  ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementChangeLogsProjectsProjectIdChangeLogsGet<TData = Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementChangeLogsProjectsProjectIdChangeLogsGet<TData = Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Requirement Change Logs
+ */
+
+export function useListRequirementChangeLogsProjectsProjectIdChangeLogsGet<TData = Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementChangeLogsProjectsProjectIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListRequirementChangeLogsProjectsProjectIdChangeLogsGetQueryOptions(projectId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+

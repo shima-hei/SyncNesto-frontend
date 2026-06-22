@@ -5,7 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListRequirementsProjectsProjectIdRequirementsGetParams = {
+export type ListOpenIssuesProjectsProjectIdOpenIssuesGetParams = {
 /**
  * @minimum 1
  */
@@ -16,10 +16,10 @@ page?: number;
  */
 page_size?: number;
 document_id?: number | null;
-section_id?: number | null;
 q?: string | null;
 status?: string | null;
-requirement_type?: string | null;
-priority?: string | null;
-owner_id?: number | null;
+assignee_id?: number | null;
+due_date_from?: string | null;
+due_date_to?: string | null;
+related_requirement_id?: number | null;
 };

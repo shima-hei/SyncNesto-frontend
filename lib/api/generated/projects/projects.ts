@@ -754,6 +754,7 @@ export const getAddProjectMemberProjectsProjectIdMembersPostUrl = (projectId: nu
 Args:
     project_id: プロジェクトID。
     member_in: メンバー追加リクエストの入力値。
+    current_user: 認可済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -943,6 +944,7 @@ Args:
     project_id: プロジェクトID。
     user_id: 更新対象ユーザーID。
     member_in: メンバー更新リクエストの入力値。
+    current_user: 認可済みユーザー。
     db: DBセッション。
 
 Returns:
@@ -1024,6 +1026,7 @@ export const useUpdateProjectMemberProjectsProjectIdMembersUserIdPatch = <TError
 Args:
     project_id: プロジェクトID。
     user_id: 削除対象ユーザーID。
+    current_user: 認可済みユーザー。
     db: DBセッション。
  * @summary Remove Project Member
  */
