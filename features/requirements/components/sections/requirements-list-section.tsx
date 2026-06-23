@@ -134,11 +134,12 @@ export function RequirementsListSection({
       <SearchFilterBar
         searchValue={searchInput}
         searchPlaceholder="要件コード、タイトル、説明で検索"
+        variant="compact"
         onSearchValueChange={setSearchInput}
         onSearch={handleSearch}
       >
         <Select value={requirementType} onValueChange={handleTypeChange}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="種別" />
           </SelectTrigger>
           <SelectContent>
@@ -153,7 +154,7 @@ export function RequirementsListSection({
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="ステータス" />
           </SelectTrigger>
           <SelectContent>
@@ -168,7 +169,7 @@ export function RequirementsListSection({
           </SelectContent>
         </Select>
         <Select value={priority} onValueChange={handlePriorityChange}>
-          <SelectTrigger className="w-full sm:w-36">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="優先度" />
           </SelectTrigger>
           <SelectContent>
@@ -188,7 +189,7 @@ export function RequirementsListSection({
           onChange={handleOwnerChange}
         />
         <Select value={sort} onValueChange={(value) => setSort(value as typeof sort)}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="並び替え" />
           </SelectTrigger>
           <SelectContent>

@@ -14,10 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-import { loginInitialValues } from "../../constants/login-form";
 import { useLogin } from "../../hooks/use-login";
 import { loginSchema } from "../../schemas/login-schema";
-import type { LoginFormErrors, LoginFormValues } from "../../types/login";
+import type { LoginFormErrors } from "../../types/login";
 
 export function LoginForm({
   className,
@@ -26,7 +25,6 @@ export function LoginForm({
   const emailId = useId();
   const passwordId = useId();
   const { login, isPending, error } = useLogin();
-  const [values, setValues] = useState<LoginFormValues>(loginInitialValues);
   const [errors, setErrors] = useState<LoginFormErrors>({});
 
   const handleSubmit = async (
@@ -34,7 +32,11 @@ export function LoginForm({
   ) => {
     event.preventDefault();
 
-    const result = loginSchema.safeParse(values);
+    const formData = new FormData(event.currentTarget);
+    const result = loginSchema.safeParse({
+      email: formData.get("email"),
+      password: formData.get("password"),
+    });
 
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
@@ -50,9 +52,13 @@ export function LoginForm({
     await login(result.data).catch(() => undefined);
   };
 
-  const updateValue = (field: keyof LoginFormValues, value: string) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => ({ ...current, [field]: undefined }));
+  const handleEnterSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
   };
 
   return (
@@ -77,8 +83,10 @@ export function LoginForm({
                   type="email"
                   autoComplete="username"
                   placeholder="name@example.com"
-                  value={values.email}
-                  onChange={(event) => updateValue("email", event.target.value)}
+                  onChange={() =>
+                    setErrors((current) => ({ ...current, email: undefined }))
+                  }
+                  onKeyDown={handleEnterSubmit}
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={
                     errors.email ? `${emailId}-error` : undefined
@@ -98,10 +106,13 @@ export function LoginForm({
                   name="password"
                   type="password"
                   autoComplete="current-password"
-                  value={values.password}
-                  onChange={(event) =>
-                    updateValue("password", event.target.value)
+                  onChange={() =>
+                    setErrors((current) => ({
+                      ...current,
+                      password: undefined,
+                    }))
                   }
+                  onKeyDown={handleEnterSubmit}
                   aria-invalid={Boolean(errors.password)}
                   aria-describedby={
                     errors.password ? `${passwordId}-error` : undefined
