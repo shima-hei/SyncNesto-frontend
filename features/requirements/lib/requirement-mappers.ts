@@ -1,20 +1,47 @@
 import type {
   RequirementCommentCreate,
   RequirementCreate,
+  RequirementApprovalRequestCreate,
+  RequirementDetailCreate,
+  RequirementDetailUpdate,
   RequirementDocumentCreate,
   RequirementDocumentUpdate,
   RequirementLinkCreate,
+  RequirementOpenIssueCreate,
+  RequirementOpenIssuePromoteCreate,
+  RequirementOpenIssueUpdate,
+  RequirementRelationCreate,
   RequirementReviewCreate,
   RequirementReviewUpdate,
+  RequirementSectionCreate,
+  RequirementSectionUpdate,
+  RequirementTargetCommentCreate,
+  RequirementTargetCommentUpdate,
   RequirementUpdate,
 } from "@/lib/api/generated/model";
 
 import { toOptionalNumber } from "../constants/requirement-form";
+import type { RequirementApprovalRequestFormValues } from "../types/requirement-approval-form";
 import type { RequirementCommentFormValues } from "../types/requirement-comment-form";
+import type { RequirementDetailFormValues } from "../types/requirement-detail-form";
 import type { RequirementDocumentFormValues } from "../types/requirement-document-form";
 import type { RequirementFormValues } from "../types/requirement-form";
 import type { RequirementLinkFormValues } from "../types/requirement-link-form";
+import type { RequirementOpenIssueFormValues } from "../types/requirement-open-issue-form";
+import type { RequirementRelationFormValues } from "../types/requirement-relation-form";
 import type { RequirementReviewFormValues } from "../types/requirement-review-form";
+import type { RequirementSectionFormValues } from "../types/requirement-section-form";
+import type { RequirementTargetCommentFormValues } from "../types/requirement-target-comment-form";
+
+export const parseRequirementDetailJson = (value: string) => {
+  const parsedValue: unknown = JSON.parse(value);
+
+  if (!parsedValue || typeof parsedValue !== "object" || Array.isArray(parsedValue)) {
+    throw new Error("JSONはオブジェクト形式で入力してください。");
+  }
+
+  return parsedValue as Record<string, unknown>;
+};
 
 export const toRequirementCreate = (
   values: RequirementFormValues,
@@ -80,6 +107,24 @@ export const toRequirementDocumentCreate = (
   };
 };
 
+export const toRequirementDetailCreate = (
+  values: RequirementDetailFormValues
+): RequirementDetailCreate => {
+  return {
+    detail_type: values.detailType,
+    detail_json: parseRequirementDetailJson(values.detailJson),
+  };
+};
+
+export const toRequirementDetailUpdate = (
+  values: RequirementDetailFormValues
+): RequirementDetailUpdate => {
+  return {
+    detail_type: values.detailType,
+    detail_json: parseRequirementDetailJson(values.detailJson),
+  };
+};
+
 export const toRequirementDocumentUpdate = (
   values: RequirementDocumentFormValues,
   version: number
@@ -107,6 +152,42 @@ export const toRequirementLinkCreate = (
   };
 };
 
+export const toRequirementRelationCreate = (
+  values: RequirementRelationFormValues
+): RequirementRelationCreate => {
+  return {
+    target_type: values.targetType,
+    target_id: values.targetId,
+    relation_type: values.relationType,
+    description: values.description || null,
+  };
+};
+
+export const toRequirementTargetCommentCreate = (
+  values: RequirementTargetCommentFormValues,
+  targetType: string,
+  targetId: number,
+  parentCommentId?: number | null
+): RequirementTargetCommentCreate => {
+  return {
+    target_type: targetType,
+    target_id: targetId,
+    parent_comment_id: parentCommentId ?? null,
+    body: values.body,
+  };
+};
+
+export const toRequirementTargetCommentUpdate = (
+  values: RequirementTargetCommentFormValues,
+  version: number
+): RequirementTargetCommentUpdate => {
+  return {
+    version,
+    body: values.body,
+    reason: values.reason || null,
+  };
+};
+
 export const toRequirementReviewCreate = (
   values: RequirementReviewFormValues
 ): RequirementReviewCreate => {
@@ -122,4 +203,96 @@ export const toRequirementReviewUpdate = (
   values: RequirementReviewFormValues
 ): RequirementReviewUpdate => {
   return toRequirementReviewCreate(values);
+};
+
+export const toRequirementSectionCreate = (
+  values: RequirementSectionFormValues
+): RequirementSectionCreate => {
+  return {
+    title: values.title,
+    section_type: values.sectionType,
+    content: values.content || null,
+    sort_order: Number(values.sortOrder),
+    status: values.status,
+  };
+};
+
+export const toRequirementSectionUpdate = (
+  values: RequirementSectionFormValues,
+  version: number
+): RequirementSectionUpdate => {
+  return {
+    version,
+    title: values.title,
+    section_type: values.sectionType,
+    content: values.content || null,
+    sort_order: Number(values.sortOrder),
+    status: values.status,
+  };
+};
+
+export const toRequirementOpenIssueCreate = (
+  values: RequirementOpenIssueFormValues,
+  documentId: number
+): RequirementOpenIssueCreate => {
+  return {
+    document_id: documentId,
+    issue_code: values.issueCode,
+    title: values.title,
+    description: values.description || null,
+    impact_scope: values.impactScope || null,
+    related_requirement_id: toOptionalNumber(values.relatedRequirementId),
+    assignee_id: toOptionalNumber(values.assigneeId),
+    due_date: values.dueDate || null,
+    status: values.status,
+    resolution: values.resolution || null,
+  };
+};
+
+export const toRequirementOpenIssueUpdate = (
+  values: RequirementOpenIssueFormValues,
+  version: number
+): RequirementOpenIssueUpdate => {
+  return {
+    version,
+    issue_code: values.issueCode,
+    title: values.title,
+    description: values.description || null,
+    impact_scope: values.impactScope || null,
+    related_requirement_id: toOptionalNumber(values.relatedRequirementId),
+    assignee_id: toOptionalNumber(values.assigneeId),
+    due_date: values.dueDate || null,
+    status: values.status,
+    resolution: values.resolution || null,
+    reason: values.reason || null,
+  };
+};
+
+export const toRequirementOpenIssuePromoteCreate = (
+  issue: RequirementOpenIssueFormValues,
+  version: number
+): RequirementOpenIssuePromoteCreate => {
+  return {
+    version,
+    requirement_code: issue.issueCode.replace(/^ISSUE/i, "REQ"),
+    title: issue.title,
+    description: issue.description || null,
+    priority: "must",
+    status: "draft",
+    resolution: issue.resolution || null,
+    reason: "未決事項から昇格",
+  };
+};
+
+export const toRequirementApprovalRequestCreate = (
+  values: RequirementApprovalRequestFormValues,
+  targetType: string,
+  targetId: number
+): RequirementApprovalRequestCreate => {
+  return {
+    target_type: targetType,
+    target_id: targetId,
+    approver_id: Number(values.approverId),
+    comment: values.comment || null,
+  };
 };

@@ -78,6 +78,21 @@ export const getRequirementFormValues = (
   };
 };
 
+export const getDuplicatedRequirementFormValues = (
+  requirement: RequirementRead
+): RequirementFormValues => {
+  return {
+    ...getRequirementFormValues(requirement),
+    requirementCode: `${requirement.requirement_code}-COPY`,
+    title: `${requirement.title} のコピー`,
+    status: "draft",
+    approvedBy: "",
+    approvedAt: "",
+    changeSummary: "",
+    reason: "",
+  };
+};
+
 export const toOptionalNumber = (value: string) => {
   const trimmedValue = value.trim();
 

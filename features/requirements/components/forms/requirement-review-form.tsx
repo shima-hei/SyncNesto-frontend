@@ -23,8 +23,10 @@ import type {
   RequirementReviewFormErrors,
   RequirementReviewFormValues,
 } from "../../types/requirement-review-form";
+import { RequirementUserSelectField } from "./requirement-user-select-field";
 
 type RequirementReviewFormProps = {
+  projectId: number;
   mode: "create" | "update";
   initialValues?: RequirementReviewFormValues;
   isPending: boolean;
@@ -33,6 +35,7 @@ type RequirementReviewFormProps = {
 };
 
 export function RequirementReviewForm({
+  projectId,
   mode,
   initialValues = initialReviewValues,
   isPending,
@@ -80,19 +83,14 @@ export function RequirementReviewForm({
   return (
     <form onSubmit={handleSubmit}>
       <FieldGroup>
-        <div className="grid gap-3 md:grid-cols-[160px_180px_1fr]">
-          <Field data-invalid={errors.reviewerId ? true : undefined}>
-            <FieldLabel>レビュー担当ID</FieldLabel>
-            <Input
-              inputMode="numeric"
-              value={values.reviewerId}
-              onChange={(event) => updateValue("reviewerId", event.target.value)}
-              aria-invalid={Boolean(errors.reviewerId)}
-            />
-            {errors.reviewerId ? (
-              <FieldError>{errors.reviewerId}</FieldError>
-            ) : null}
-          </Field>
+        <div className="grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px_1fr]">
+          <RequirementUserSelectField
+            projectId={projectId}
+            label="レビュー担当"
+            value={values.reviewerId}
+            error={errors.reviewerId}
+            onChange={(value) => updateValue("reviewerId", value)}
+          />
           <Field data-invalid={errors.status ? true : undefined}>
             <FieldLabel>ステータス</FieldLabel>
             <Select

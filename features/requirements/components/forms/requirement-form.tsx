@@ -34,8 +34,10 @@ import type {
   RequirementFormErrors,
   RequirementFormValues,
 } from "../../types/requirement-form";
+import { RequirementUserSelectField } from "./requirement-user-select-field";
 
 type RequirementFormProps = {
+  projectId: number;
   mode: "create" | "update";
   initialValues: RequirementFormValues;
   isPending: boolean;
@@ -47,6 +49,7 @@ type RequirementFormProps = {
 };
 
 export function RequirementForm({
+  projectId,
   mode,
   initialValues,
   isPending,
@@ -63,8 +66,6 @@ export function RequirementForm({
   const rationaleId = useId();
   const acceptanceCriteriaId = useId();
   const sourceId = useId();
-  const ownerId = useId();
-  const approvedById = useId();
   const approvedAtId = useId();
   const changeSummaryId = useId();
   const reasonId = useId();
@@ -114,7 +115,7 @@ export function RequirementForm({
     <>
       <form className="max-w-4xl" onSubmit={handleSubmit}>
         <FieldGroup>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Field data-invalid={errors.requirementCode ? true : undefined}>
               <FieldLabel htmlFor={requirementCodeId}>要件コード</FieldLabel>
               <Input
@@ -264,26 +265,18 @@ export function RequirementForm({
                 onChange={(event) => updateValue("source", event.target.value)}
               />
             </Field>
-            <Field>
-              <FieldLabel htmlFor={ownerId}>担当者ID</FieldLabel>
-              <Input
-                id={ownerId}
-                inputMode="numeric"
-                value={values.ownerId}
-                onChange={(event) => updateValue("ownerId", event.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={approvedById}>承認者ID</FieldLabel>
-              <Input
-                id={approvedById}
-                inputMode="numeric"
-                value={values.approvedBy}
-                onChange={(event) =>
-                  updateValue("approvedBy", event.target.value)
-                }
-              />
-            </Field>
+            <RequirementUserSelectField
+              projectId={projectId}
+              label="担当者"
+              value={values.ownerId}
+              onChange={(value) => updateValue("ownerId", value)}
+            />
+            <RequirementUserSelectField
+              projectId={projectId}
+              label="承認者"
+              value={values.approvedBy}
+              onChange={(value) => updateValue("approvedBy", value)}
+            />
             <Field>
               <FieldLabel htmlFor={approvedAtId}>承認日時</FieldLabel>
               <Input

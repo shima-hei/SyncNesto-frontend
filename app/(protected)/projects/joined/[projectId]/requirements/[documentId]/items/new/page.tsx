@@ -7,14 +7,26 @@ type PageProps = {
     projectId: string;
     documentId: string;
   }>;
+  searchParams: Promise<{
+    duplicateFrom?: string;
+  }>;
 };
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { projectId, documentId } = await params;
+  const { duplicateFrom } = await searchParams;
   const parsedProjectId = Number(projectId);
   const parsedDocumentId = Number(documentId);
+  const duplicateFromRequirementId = duplicateFrom
+    ? Number(duplicateFrom)
+    : null;
 
-  if (!Number.isInteger(parsedProjectId) || !Number.isInteger(parsedDocumentId)) {
+  if (
+    !Number.isInteger(parsedProjectId) ||
+    !Number.isInteger(parsedDocumentId) ||
+    (duplicateFromRequirementId !== null &&
+      !Number.isInteger(duplicateFromRequirementId))
+  ) {
     notFound();
   }
 
@@ -22,6 +34,7 @@ export default async function Page({ params }: PageProps) {
     <RequirementCreatePage
       projectId={parsedProjectId}
       documentId={parsedDocumentId}
+      duplicateFromRequirementId={duplicateFromRequirementId}
     />
   );
 }

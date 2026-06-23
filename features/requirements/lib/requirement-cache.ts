@@ -5,11 +5,17 @@ import type {
   RequirementRead,
 } from "@/lib/api/generated/model";
 import {
+  getListOpenIssuesProjectsProjectIdOpenIssuesGetQueryKey as getOpenIssueListKey,
+  getListRequirementApprovalsProjectsProjectIdApprovalsGetQueryKey as getApprovalListKey,
+  getListRequirementChangeLogsProjectsProjectIdChangeLogsGetQueryKey as getChangeLogListKey,
   getListRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGetQueryKey as getRequirementCommentListKey,
   getListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetQueryKey as getRequirementDocumentListKey,
   getListRequirementLinksProjectsProjectIdRequirementsRequirementIdLinksGetQueryKey as getRequirementLinkListKey,
+  getListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGetQueryKey as getRequirementRelationListKey,
   getListRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGetQueryKey as getRequirementReviewListKey,
+  getListRequirementSectionsProjectsProjectIdRequirementDocumentsDocumentIdSectionsGetQueryKey as getRequirementSectionListKey,
   getListRequirementsProjectsProjectIdRequirementsGetQueryKey as getRequirementListKey,
+  getListTargetCommentsProjectsProjectIdCommentsGetQueryKey as getTargetCommentListKey,
   getReadRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdGetQueryKey as getRequirementDocumentDetailKey,
   getReadRequirementProjectsProjectIdRequirementsRequirementIdGetQueryKey as getRequirementDetailKey,
   getReadRequirementSummaryProjectsProjectIdRequirementsRequirementIdSummaryGetQueryKey as getRequirementSummaryKey,
@@ -30,6 +36,43 @@ export const invalidateRequirementDocumentList = (
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementDocumentListKey(projectId),
+  });
+};
+
+export const invalidateRequirementSections = (
+  queryClient: QueryClient,
+  projectId: number,
+  documentId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getRequirementSectionListKey(projectId, documentId),
+  });
+};
+
+export const invalidateRequirementOpenIssues = (
+  queryClient: QueryClient,
+  projectId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getOpenIssueListKey(projectId),
+  });
+};
+
+export const invalidateRequirementApprovals = (
+  queryClient: QueryClient,
+  projectId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getApprovalListKey(projectId),
+  });
+};
+
+export const invalidateRequirementChangeLogs = (
+  queryClient: QueryClient,
+  projectId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getChangeLogListKey(projectId),
   });
 };
 
@@ -69,6 +112,30 @@ export const invalidateRequirementLinksWithSummary = (
     }),
     invalidateRequirementSummary(queryClient, projectId, requirementId),
   ]);
+};
+
+export const invalidateRequirementRelations = (
+  queryClient: QueryClient,
+  projectId: number,
+  requirementId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getRequirementRelationListKey(projectId, requirementId),
+  });
+};
+
+export const invalidateRequirementTargetComments = (
+  queryClient: QueryClient,
+  projectId: number,
+  targetType: string,
+  targetId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getTargetCommentListKey(projectId, {
+      target_type: targetType,
+      target_id: targetId,
+    }),
+  });
 };
 
 export const invalidateRequirementReviewsWithSummary = (

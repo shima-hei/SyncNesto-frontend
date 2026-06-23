@@ -48,6 +48,7 @@ export function RequirementEditPage({
       </div>
       <RequirementForm
         key={requirement.version}
+        projectId={projectId}
         mode="update"
         initialValues={getRequirementFormValues(requirement)}
         isPending={isPending}

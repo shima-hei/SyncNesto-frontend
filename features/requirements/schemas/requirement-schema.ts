@@ -45,6 +45,18 @@ export const requirementLinkSchema = z.object({
   linkedId: z.string().min(1, VALIDATION_MESSAGES.required("リンク先ID")),
 });
 
+export const requirementRelationSchema = z.object({
+  targetType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("対象種別")),
+  targetId: z.string().min(1, VALIDATION_MESSAGES.required("対象ID")),
+  relationType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("関連種別")),
+  description: z.string(),
+});
+
+export const requirementTargetCommentSchema = z.object({
+  body: z.string().min(1, VALIDATION_MESSAGES.required("コメント")),
+  reason: z.string(),
+});
+
 export const requirementReviewSchema = z.object({
   reviewerId: z
     .string()
@@ -55,4 +67,45 @@ export const requirementReviewSchema = z.object({
   status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("ステータス")),
   comment: z.string(),
   reviewedAt: z.string(),
+});
+
+export const requirementSectionSchema = z.object({
+  title: z.string().min(1, VALIDATION_MESSAGES.required("セクション名")),
+  sectionType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("種別")),
+  content: z.string(),
+  sortOrder: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.required("表示順"))
+    .refine((value) => Number.isInteger(Number(value)), {
+      message: VALIDATION_MESSAGES.number("表示順"),
+    }),
+  status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("ステータス")),
+});
+
+export const requirementOpenIssueSchema = z.object({
+  issueCode: z.string().min(1, VALIDATION_MESSAGES.required("未決事項ID")),
+  title: z.string().min(1, VALIDATION_MESSAGES.required("論点")),
+  description: z.string(),
+  impactScope: z.string(),
+  relatedRequirementId: z
+    .string()
+    .refine(
+      (value) => !value || Number.isInteger(Number(value)),
+      VALIDATION_MESSAGES.number("関連要件ID")
+    ),
+  assigneeId: z.string(),
+  dueDate: z.string(),
+  status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("ステータス")),
+  resolution: z.string(),
+  reason: z.string(),
+});
+
+export const requirementApprovalRequestSchema = z.object({
+  approverId: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.required("承認者ID"))
+    .refine((value) => Number.isInteger(Number(value)), {
+      message: VALIDATION_MESSAGES.number("承認者ID"),
+    }),
+  comment: z.string(),
 });

@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { EditIcon, Trash2Icon } from "lucide-react";
+import { CopyIcon, EditIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  canCreateRequirement,
   canDeleteRequirement,
   canCommentRequirement,
   canLinkRequirement,
@@ -28,8 +29,10 @@ import { useRequirementSummary } from "../../hooks/use-requirement-summary";
 import { RequirementCommentsSection } from "../sections/requirement-comments-section";
 import { RequirementDetailsSection } from "../sections/requirement-details-section";
 import { RequirementLinksSection } from "../sections/requirement-links-section";
+import { RequirementRelationsSection } from "../sections/requirement-relations-section";
 import { RequirementReviewsSection } from "../sections/requirement-reviews-section";
 import { RequirementRevisionsSection } from "../sections/requirement-revisions-section";
+import { RequirementTargetCommentsSection } from "../sections/requirement-target-comments-section";
 
 type RequirementDetailPageProps = {
   projectId: number;
@@ -75,6 +78,16 @@ export function RequirementDetailPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canCreateRequirement(currentProjectRole) ? (
+            <Button asChild variant="outline">
+              <Link
+                href={`/projects/joined/${projectId}/requirements/${documentId}/items/new?duplicateFrom=${requirementId}`}
+              >
+                <CopyIcon data-icon="inline-start" />
+                複製
+              </Link>
+            </Button>
+          ) : null}
           {canUpdateRequirement(currentProjectRole) ? (
             <Button asChild variant="outline">
               <Link
@@ -137,7 +150,12 @@ export function RequirementDetailPage({
       </Card>
 
       {/* 詳細JSONは要件種別ごとの差分項目を保持するため、まずは読み取り専用で表示する。 */}
-      <RequirementDetailsSection details={summary.details} />
+      <RequirementDetailsSection
+        projectId={projectId}
+        requirementId={requirementId}
+        details={summary.details}
+        canUpdate={canUpdateRequirement(currentProjectRole)}
+      />
 
       {/* コメント、リンク、レビュー、改訂履歴は要件のトレーサビリティ確認に使う。 */}
       <div className="grid gap-4 xl:grid-cols-2">
@@ -146,9 +164,20 @@ export function RequirementDetailPage({
           requirementId={requirementId}
           canLink={canLinkRequirement(currentProjectRole)}
         />
+        <RequirementRelationsSection
+          projectId={projectId}
+          requirementId={requirementId}
+          canLink={canLinkRequirement(currentProjectRole)}
+        />
         <RequirementCommentsSection
           projectId={projectId}
           requirementId={requirementId}
+          canComment={canCommentRequirement(currentProjectRole)}
+        />
+        <RequirementTargetCommentsSection
+          projectId={projectId}
+          targetType="requirement_item"
+          targetId={requirementId}
           canComment={canCommentRequirement(currentProjectRole)}
         />
         <RequirementReviewsSection

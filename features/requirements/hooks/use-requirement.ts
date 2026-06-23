@@ -2,13 +2,22 @@
 
 import { useReadRequirementProjectsProjectIdRequirementsRequirementIdGet } from "@/lib/api/generated/requirements/requirements";
 
-export function useRequirement(projectId: number, requirementId: number) {
+type UseRequirementOptions = {
+  enabled?: boolean;
+};
+
+export function useRequirement(
+  projectId: number,
+  requirementId: number,
+  options: UseRequirementOptions = {}
+) {
   const requirementQuery =
     useReadRequirementProjectsProjectIdRequirementsRequirementIdGet(
       projectId,
       requirementId,
       {
         query: {
+          enabled: options.enabled ?? true,
           retry: false,
         },
       }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { EditIcon, Trash2Icon } from "lucide-react";
+import { DownloadIcon, EditIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
@@ -10,16 +10,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   canCreateRequirement,
+  canCommentRequirement,
   canDeleteRequirement,
+  canReviewRequirement,
   canUpdateRequirement,
 } from "@/features/auth/utils/authorization";
-import { formatDateTime } from "@/lib/format/date";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
+import type { RequirementDocumentExportRead } from "@/lib/api/generated/model";
+import { formatDateTime } from "@/lib/format/date";
 
 import { getRequirementDocumentStatusLabel } from "../../constants/requirement-options";
 import { useDeleteRequirementDocument } from "../../hooks/use-delete-requirement-document";
+import { useExportRequirementDocument } from "../../hooks/use-export-requirement-document";
 import { useRequirementDocument } from "../../hooks/use-requirement-document";
+import { RequirementDocumentExportDialog } from "../forms/requirement-document-export-dialog";
+import { RequirementApprovalsSection } from "../sections/requirement-approvals-section";
+import { RequirementChangeLogsSection } from "../sections/requirement-change-logs-section";
+import { RequirementOpenIssuesSection } from "../sections/requirement-open-issues-section";
+import { RequirementSectionsSection } from "../sections/requirement-sections-section";
+import { RequirementTargetCommentsSection } from "../sections/requirement-target-comments-section";
 import { RequirementsListSection } from "../sections/requirements-list-section";
+import { SelectedRequirementSectionContent } from "../sections/selected-requirement-section-content";
+import { SelectedRequirementSummarySection } from "../sections/selected-requirement-summary-section";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
@@ -31,6 +43,13 @@ export function RequirementDocumentDetailPage({
   documentId,
 }: RequirementDocumentDetailPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportPreview, setExportPreview] =
+    useState<RequirementDocumentExportRead | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
+  const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(
+    null
+  );
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const { document, isLoading, error } = useRequirementDocument(
     projectId,
@@ -38,6 +57,8 @@ export function RequirementDocumentDetailPage({
   );
   const { deleteRequirementDocument, isPending: isDeletePending } =
     useDeleteRequirementDocument(projectId, documentId);
+  const { exportRequirementDocument, isPending: isExportPending } =
+    useExportRequirementDocument(projectId, documentId);
 
   if (isLoading) {
     return <RequirementDocumentDetailSkeleton />;
@@ -61,6 +82,15 @@ export function RequirementDocumentDetailPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isExportPending}
+            onClick={() => setExportDialogOpen(true)}
+          >
+            <DownloadIcon data-icon="inline-start" />
+            出力
+          </Button>
           {canCreateRequirement(currentProjectRole) ? (
             <Button asChild>
               <Link
@@ -113,7 +143,126 @@ export function RequirementDocumentDetailPage({
         </CardContent>
       </Card>
 
-      <RequirementsListSection projectId={projectId} documentId={documentId} />
+      <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)_360px] xl:items-start">
+        <div className="min-w-0 xl:sticky xl:top-20">
+          <RequirementSectionsSection
+            projectId={projectId}
+            documentId={documentId}
+            canUpdate={canUpdateRequirement(currentProjectRole)}
+            selectedSectionId={selectedSectionId}
+            onSelectSection={(sectionId) => {
+              setSelectedSectionId(sectionId);
+              setSelectedRequirementId(null);
+            }}
+          />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-4">
+          <SelectedRequirementSectionContent
+            projectId={projectId}
+            documentId={documentId}
+            sectionId={selectedSectionId}
+          />
+          <RequirementsListSection
+            projectId={projectId}
+            documentId={documentId}
+            sectionId={selectedSectionId}
+            canUpdate={canUpdateRequirement(currentProjectRole)}
+            selectedRequirementId={selectedRequirementId}
+            onSelectRequirement={setSelectedRequirementId}
+          />
+          <RequirementOpenIssuesSection
+            projectId={projectId}
+            documentId={documentId}
+            canCreate={canCreateRequirement(currentProjectRole)}
+            canUpdate={canUpdateRequirement(currentProjectRole)}
+            canDelete={canDeleteRequirement(currentProjectRole)}
+          />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20">
+          <SelectedRequirementSummarySection
+            projectId={projectId}
+            documentId={documentId}
+            requirementId={selectedRequirementId}
+          />
+          {selectedRequirementId ? (
+            <>
+              <RequirementTargetCommentsSection
+                projectId={projectId}
+                targetType="requirement_item"
+                targetId={selectedRequirementId}
+                title="要件コメント"
+                canComment={canCommentRequirement(currentProjectRole)}
+              />
+              <RequirementApprovalsSection
+                projectId={projectId}
+                targetType="requirement_item"
+                targetId={selectedRequirementId}
+                title="要件の承認"
+                canReview={canReviewRequirement(currentProjectRole)}
+              />
+              <RequirementChangeLogsSection
+                projectId={projectId}
+                documentId={documentId}
+                title="要件の変更履歴"
+                targetType="requirement_item"
+                targetId={selectedRequirementId}
+              />
+            </>
+          ) : null}
+          {selectedSectionId && !selectedRequirementId ? (
+            <RequirementTargetCommentsSection
+              projectId={projectId}
+              targetType="section"
+              targetId={selectedSectionId}
+              title="セクションコメント"
+              canComment={canCommentRequirement(currentProjectRole)}
+            />
+          ) : null}
+          {!selectedSectionId && !selectedRequirementId ? (
+            <RequirementTargetCommentsSection
+              projectId={projectId}
+              targetType="document"
+              targetId={documentId}
+              title="要件定義書コメント"
+              canComment={canCommentRequirement(currentProjectRole)}
+            />
+          ) : null}
+          <RequirementApprovalsSection
+            projectId={projectId}
+            targetType="document"
+            targetId={documentId}
+            title="要件定義書の承認"
+            canReview={canReviewRequirement(currentProjectRole)}
+          />
+          {selectedSectionId && !selectedRequirementId ? (
+            <RequirementApprovalsSection
+              projectId={projectId}
+              targetType="section"
+              targetId={selectedSectionId}
+              title="セクションの承認"
+              canReview={canReviewRequirement(currentProjectRole)}
+            />
+          ) : null}
+          {selectedSectionId && !selectedRequirementId ? (
+            <RequirementChangeLogsSection
+              projectId={projectId}
+              documentId={documentId}
+              title="セクションの変更履歴"
+              targetType="section"
+              targetId={selectedSectionId}
+            />
+          ) : null}
+          <RequirementChangeLogsSection
+            projectId={projectId}
+            documentId={documentId}
+            title="要件定義書の変更履歴"
+            targetType="document"
+            targetId={documentId}
+          />
+        </div>
+      </div>
 
       <ResourceDeleteDialog
         open={deleteDialogOpen}
@@ -122,6 +271,19 @@ export function RequirementDocumentDetailPage({
         description="削除すると配下の要件も利用できなくなります。内容を確認してから実行してください。"
         isPending={isDeletePending}
         onConfirm={deleteRequirementDocument}
+      />
+      <RequirementDocumentExportDialog
+        open={exportDialogOpen}
+        isPending={isExportPending}
+        preview={exportPreview}
+        onOpenChange={(open) => {
+          setExportDialogOpen(open);
+          if (!open) {
+            setExportPreview(null);
+          }
+        }}
+        onExport={exportRequirementDocument}
+        onPreviewChange={setExportPreview}
       />
     </div>
   );

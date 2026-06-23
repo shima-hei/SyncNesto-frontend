@@ -66,6 +66,7 @@ export function RequirementReviewsSection({
       <CardContent className="flex flex-col gap-4">
         {canReview ? (
           <RequirementReviewForm
+            projectId={projectId}
             mode="create"
             isPending={isCreatePending}
             error={createError}
@@ -135,6 +136,7 @@ export function RequirementReviewsSection({
             {editTarget ? (
               <RequirementReviewForm
                 key={editTarget.id}
+                projectId={projectId}
                 mode="update"
                 initialValues={getRequirementReviewFormValues(editTarget)}
                 isPending={isUpdatePending}
