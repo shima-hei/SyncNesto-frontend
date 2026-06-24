@@ -7,6 +7,7 @@ import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -122,14 +123,26 @@ export function TaskForm({
         <FieldGroup>
           <div className="grid gap-4 md:grid-cols-2">
             <Field data-invalid={errors.taskCode ? true : undefined}>
-              <FieldLabel htmlFor={taskCodeId}>タスクID</FieldLabel>
+              <FieldLabel htmlFor={taskCodeId}>
+                {mode === "create" ? "タスクID（任意）" : "タスクID"}
+              </FieldLabel>
               <Input
                 id={taskCodeId}
                 value={values.taskCode}
                 placeholder="TASK-001"
-                onChange={(event) => updateValue("taskCode", event.target.value)}
+                readOnly={mode === "update"}
+                onChange={(event) => {
+                  if (mode === "create") {
+                    updateValue("taskCode", event.target.value);
+                  }
+                }}
                 aria-invalid={Boolean(errors.taskCode)}
               />
+              {mode === "create" ? (
+                <FieldDescription>
+                  未入力の場合は自動採番されます。
+                </FieldDescription>
+              ) : null}
               {errors.taskCode ? <FieldError>{errors.taskCode}</FieldError> : null}
             </Field>
             <Field data-invalid={errors.title ? true : undefined}>

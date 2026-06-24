@@ -129,10 +129,12 @@ export function RequirementSectionsSection({
                   data-state={isSelected ? "selected" : undefined}
                   className="rounded-lg border p-3 data-[state=selected]:border-primary"
                 >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="flex flex-col gap-3">
                     <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{section.title}</span>
+                        <span className="min-w-0 break-words font-medium">
+                          {section.title}
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           {getRequirementSectionTypeLabel(section.section_type)}
                         </span>
@@ -140,7 +142,7 @@ export function RequirementSectionsSection({
                           {getRequirementDocumentStatusLabel(section.status)}
                         </span>
                       </div>
-                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                      <p className="line-clamp-4 break-words text-sm text-muted-foreground">
                         {section.content || "本文はありません。"}
                       </p>
                       <span className="text-xs text-muted-foreground">
@@ -148,7 +150,7 @@ export function RequirementSectionsSection({
                         {formatDateTime(section.updated_at)}
                       </span>
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {onSelectSection ? (
                         <Button
                           type="button"
@@ -159,7 +161,7 @@ export function RequirementSectionsSection({
                           {isSelected ? (
                             <CheckIcon data-icon="inline-start" />
                           ) : null}
-                          選択
+                          {isSelected ? "選択中" : "選択"}
                         </Button>
                       ) : null}
                       {canUpdate ? (

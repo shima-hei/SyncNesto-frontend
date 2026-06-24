@@ -12,6 +12,7 @@ import {
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
+  invalidateRequirementChangeLogs,
   invalidateRequirementList,
   invalidateRequirementSummary,
   setRequirementDetailCache,
@@ -37,6 +38,7 @@ export function useUpdateRequirement(projectId: number, requirementId: number) {
           await Promise.all([
             invalidateRequirementList(queryClient, projectId),
             invalidateRequirementSummary(queryClient, projectId, requirementId),
+            invalidateRequirementChangeLogs(queryClient, projectId),
           ]);
           toast.success(REQUIREMENT_MESSAGES.requirement.updateSuccess);
         },

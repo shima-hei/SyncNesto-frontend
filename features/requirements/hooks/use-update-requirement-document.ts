@@ -12,6 +12,7 @@ import { useUpdateRequirementDocumentProjectsProjectIdRequirementDocumentsDocume
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
+  invalidateRequirementChangeLogs,
   invalidateRequirementDocumentList,
   setRequirementDocumentDetailCache,
 } from "../lib/requirement-cache";
@@ -37,7 +38,10 @@ export function useUpdateRequirementDocument(
               documentId,
               document
             );
-            await invalidateRequirementDocumentList(queryClient, projectId);
+            await Promise.all([
+              invalidateRequirementDocumentList(queryClient, projectId),
+              invalidateRequirementChangeLogs(queryClient, projectId),
+            ]);
             toast.success(REQUIREMENT_MESSAGES.document.updateSuccess);
           },
           onError: (error) => {

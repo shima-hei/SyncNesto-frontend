@@ -216,9 +216,9 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
                   return Promise.resolve();
                 }
 
-                return updateTask(values, conflictCurrent.version);
+                return updateTask(values, conflictCurrent.version, conflictCurrent);
               }}
-              onSubmit={(values) => updateTask(values, task.version)}
+              onSubmit={(values) => updateTask(values, task.version, task)}
             />
           </CardContent>
         </Card>

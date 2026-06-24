@@ -6,7 +6,10 @@ import { toast } from "sonner";
 import { useUpdateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdPatch } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
-import { invalidateRequirementSummary } from "../lib/requirement-cache";
+import {
+  invalidateRequirementChangeLogs,
+  invalidateRequirementSummary,
+} from "../lib/requirement-cache";
 import { toRequirementDetailUpdate } from "../lib/requirement-mappers";
 import type { RequirementDetailFormValues } from "../types/requirement-detail-form";
 
@@ -19,7 +22,10 @@ export function useUpdateRequirementDetail(
     useUpdateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdPatch({
       mutation: {
         onSuccess: async () => {
-          await invalidateRequirementSummary(queryClient, projectId, requirementId);
+          await Promise.all([
+            invalidateRequirementSummary(queryClient, projectId, requirementId),
+            invalidateRequirementChangeLogs(queryClient, projectId),
+          ]);
           toast.success(REQUIREMENT_MESSAGES.detail.updateSuccess);
         },
         onError: () => {

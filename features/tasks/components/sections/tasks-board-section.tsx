@@ -2,10 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PencilIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -62,6 +70,11 @@ export function TasksBoardSection({
   const { getTaskUserLabel } = useTaskUserMap(projectId);
   const { defaultBoard } = useProjectBoards(projectId);
   const tasksById = new Map(tasks.map((task) => [String(task.id), task]));
+  const visibleStatuses = TASK_STATUS_OPTIONS.filter(
+    (status) =>
+      !isCompletedCollapsed ||
+      (status.value !== "done" && status.value !== "cancelled")
+  );
   const swimlanes = useMemo(() => {
     return getSwimlanes(tasks, swimlane, getTaskUserLabel);
   }, [getTaskUserLabel, swimlane, tasks]);
@@ -128,69 +141,67 @@ export function TasksBoardSection({
                 </span>
               </div>
             ) : null}
-            <div className="grid gap-3 xl:grid-cols-4 2xl:grid-cols-7">
-              {TASK_STATUS_OPTIONS.map((status) => {
-                const columnTasks = lane.tasks.filter(
-                  (task) => task.status === status.value
-                );
-                const shouldCollapse =
-                  isCompletedCollapsed &&
-                  (status.value === "done" || status.value === "cancelled");
+            <div className="overflow-x-auto pb-2">
+              <div className="grid auto-cols-[minmax(280px,320px)] grid-flow-col gap-3">
+                {visibleStatuses.map((status) => {
+                  const columnTasks = lane.tasks.filter(
+                    (task) => task.status === status.value
+                  );
 
-                return (
-                  <div
-                    key={`${lane.key}-${status.value}`}
-                    className="flex min-w-0 flex-col rounded-lg border"
-                  >
-                    <div className="flex items-center justify-between border-b px-3 py-2">
-                      <h4 className="text-sm font-medium">{status.label}</h4>
-                      <span className="text-xs text-muted-foreground">
-                        {columnTasks.length}
-                      </span>
-                    </div>
+                  return (
                     <div
-                      className="flex min-h-40 flex-col gap-2 p-2"
-                      onDragOver={(event) => {
-                        if (canUpdate) {
-                          event.preventDefault();
-                        }
-                      }}
-                      onDrop={(event) => handleDrop(event, status.value)}
+                      key={`${lane.key}-${status.value}`}
+                      className="flex min-w-0 flex-col rounded-lg border"
                     >
-                      {shouldCollapse ? (
-                        <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-                          完了・中止タスクを折りたたんでいます。
-                        </div>
-                      ) : columnTasks.length ? (
-                        columnTasks.map((task) => (
-                          <TaskBoardCard
-                            key={`${task.id}-${task.version}-${task.assignee_id ?? "none"}-${task.due_date ?? "none"}`}
-                            projectId={projectId}
-                            task={task}
-                            canUpdate={canUpdate}
-                            isPending={isPending}
-                            isQuickUpdatePending={isQuickUpdatePending}
-                            assigneeLabel={getTaskUserLabel(task.assignee_id)}
-                            onMove={(targetStatus) =>
-                              updateTaskStatus(task, targetStatus, {
-                                boardId: defaultBoard?.id,
-                                sortOrder: getNextSortOrder(tasks, targetStatus),
-                              })
-                            }
-                            onQuickUpdate={(values) =>
-                              updateTaskQuick(task, values)
-                            }
-                          />
-                        ))
-                      ) : (
-                        <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-                          タスクはありません。
-                        </div>
-                      )}
+                      <div className="flex items-center justify-between border-b px-3 py-2">
+                        <h4 className="text-sm font-medium">{status.label}</h4>
+                        <span className="text-xs text-muted-foreground">
+                          {columnTasks.length}
+                        </span>
+                      </div>
+                      <div
+                        className="flex min-h-40 flex-col gap-2 p-2"
+                        onDragOver={(event) => {
+                          if (canUpdate) {
+                            event.preventDefault();
+                          }
+                        }}
+                        onDrop={(event) => handleDrop(event, status.value)}
+                      >
+                        {columnTasks.length ? (
+                          columnTasks.map((task) => (
+                            <TaskBoardCard
+                              key={`${task.id}-${task.version}-${task.assignee_id ?? "none"}-${task.due_date ?? "none"}`}
+                              projectId={projectId}
+                              task={task}
+                              canUpdate={canUpdate}
+                              isPending={isPending}
+                              isQuickUpdatePending={isQuickUpdatePending}
+                              assigneeLabel={getTaskUserLabel(task.assignee_id)}
+                              onMove={(targetStatus) =>
+                                updateTaskStatus(task, targetStatus, {
+                                  boardId: defaultBoard?.id,
+                                  sortOrder: getNextSortOrder(
+                                    tasks,
+                                    targetStatus
+                                  ),
+                                })
+                              }
+                              onQuickUpdate={(values) =>
+                                updateTaskQuick(task, values)
+                              }
+                            />
+                          ))
+                        ) : (
+                          <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+                            タスクはありません。
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </section>
         ))}
@@ -228,6 +239,7 @@ function TaskBoardCard({
   );
   const [dueDate, setDueDate] = useState(task.due_date ?? "");
   const [tags, setTags] = useState((task.tags ?? []).join(", "));
+  const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
   const statusIndex = TASK_STATUS_OPTIONS.findIndex(
     (option) => option.value === task.status
   );
@@ -266,7 +278,9 @@ function TaskBoardCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{task.title}</p>
-          <p className="text-xs text-muted-foreground">{task.task_code}</p>
+          <p className="text-xs text-muted-foreground">
+            {task.task_code ?? "未採番"}
+          </p>
         </div>
         <TaskPriorityBadge priority={task.priority} />
       </div>
@@ -295,55 +309,67 @@ function TaskBoardCard({
         </div>
       </dl>
       {canUpdate ? (
-        <div className="grid gap-2">
-          <div className="grid gap-2 sm:grid-cols-2">
-            <TaskUserSelectField
-              projectId={projectId}
-              label="担当者"
-              value={assigneeId}
-              placeholder="未設定"
-              disabled={isQuickUpdatePending}
-              onChange={setAssigneeId}
-            />
-            <div className="flex flex-col gap-1">
-              <Label htmlFor={`task-${task.id}-due-date`} className="text-xs">
-                期限
-              </Label>
-              <Input
-                id={`task-${task.id}-due-date`}
-                type="date"
-                value={dueDate}
+        <Popover open={isQuickEditOpen} onOpenChange={setIsQuickEditOpen}>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="outline" size="sm">
+              <PencilIcon data-icon="inline-start" />
+              クイック編集
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-80">
+            <PopoverHeader>
+              <PopoverTitle>クイック編集</PopoverTitle>
+            </PopoverHeader>
+            <div className="flex flex-col gap-3">
+              <TaskUserSelectField
+                projectId={projectId}
+                label="担当者"
+                value={assigneeId}
+                placeholder="未設定"
                 disabled={isQuickUpdatePending}
-                onChange={(event) => setDueDate(event.target.value)}
-                onDragStart={(event) => event.preventDefault()}
+                onChange={setAssigneeId}
               />
+              <div className="flex flex-col gap-1">
+                <Label htmlFor={`task-${task.id}-due-date`} className="text-xs">
+                  期限
+                </Label>
+                <Input
+                  id={`task-${task.id}-due-date`}
+                  type="date"
+                  value={dueDate}
+                  disabled={isQuickUpdatePending}
+                  onChange={(event) => setDueDate(event.target.value)}
+                  onDragStart={(event) => event.preventDefault()}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor={`task-${task.id}-tags`} className="text-xs">
+                  タグ
+                </Label>
+                <Input
+                  id={`task-${task.id}-tags`}
+                  value={tags}
+                  placeholder="frontend, auth"
+                  disabled={isQuickUpdatePending}
+                  onChange={(event) => setTags(event.target.value)}
+                  onDragStart={(event) => event.preventDefault()}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                disabled={!isQuickDirty || isQuickUpdatePending}
+                onClick={() => {
+                  onQuickUpdate({ assigneeId, dueDate, tags })
+                    .then(() => setIsQuickEditOpen(false))
+                    .catch(() => undefined);
+                }}
+              >
+                保存
+              </Button>
             </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label htmlFor={`task-${task.id}-tags`} className="text-xs">
-              タグ
-            </Label>
-            <Input
-              id={`task-${task.id}-tags`}
-              value={tags}
-              placeholder="frontend, auth"
-              disabled={isQuickUpdatePending}
-              onChange={(event) => setTags(event.target.value)}
-              onDragStart={(event) => event.preventDefault()}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!isQuickDirty || isQuickUpdatePending}
-            onClick={() => {
-              onQuickUpdate({ assigneeId, dueDate, tags }).catch(() => undefined);
-            }}
-          >
-            クイック保存
-          </Button>
-        </div>
+          </PopoverContent>
+        </Popover>
       ) : null}
       <div className="flex flex-wrap gap-2">
         <TaskDetailLink projectId={projectId} task={task} />

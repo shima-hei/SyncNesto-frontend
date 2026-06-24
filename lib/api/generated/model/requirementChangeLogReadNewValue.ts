@@ -4,5 +4,10 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChangeLogCodeLabelValue } from './changeLogCodeLabelValue';
+import type { ChangeLogIdLabelValue } from './changeLogIdLabelValue';
+import type { ChangeLogKeyLabelValue } from './changeLogKeyLabelValue';
+import type { ChangeLogSnapshotValue } from './changeLogSnapshotValue';
+import type { ChangeLogUpdatedFieldsValue } from './changeLogUpdatedFieldsValue';
 
-export type RequirementChangeLogReadNewValue = { [key: string]: unknown } | null;
+export type RequirementChangeLogReadNewValue = ChangeLogCodeLabelValue | ChangeLogKeyLabelValue | ChangeLogIdLabelValue | ChangeLogSnapshotValue | ChangeLogUpdatedFieldsValue | { [key: string]: unknown } | { [key: string]: unknown }[] | unknown[] | string | number | boolean | null;

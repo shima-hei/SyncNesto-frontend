@@ -4,8 +4,11 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChangeLogUserRead } from './changeLogUserRead';
+import type { RequirementChangeLogReadAction } from './requirementChangeLogReadAction';
 import type { RequirementChangeLogReadNewValue } from './requirementChangeLogReadNewValue';
 import type { RequirementChangeLogReadOldValue } from './requirementChangeLogReadOldValue';
+import type { RequirementChangeLogReadTargetType } from './requirementChangeLogReadTargetType';
 
 /**
  * 要件定義変更履歴読み取り時に返すschema。
@@ -13,13 +16,14 @@ import type { RequirementChangeLogReadOldValue } from './requirementChangeLogRea
 export interface RequirementChangeLogRead {
   id: number;
   document_id?: number | null;
-  target_type: string;
+  target_type: RequirementChangeLogReadTargetType;
   target_id: number;
-  action: string;
-  field_name?: string | null;
+  action: RequirementChangeLogReadAction;
+  field_name?: 'title' | 'document_code' | 'status' | 'purpose' | 'author_id' | 'reviewer_id' | 'approver_id' | 'sort_order' | 'requirement_code' | 'requirement_type' | 'category' | 'description' | 'rationale' | 'acceptance_criteria' | 'priority' | 'source' | 'owner_id' | 'issue_code' | 'assignee_id' | 'due_date' | 'body' | 'is_resolved' | null;
   old_value?: RequirementChangeLogReadOldValue;
   new_value?: RequirementChangeLogReadNewValue;
   reason?: string | null;
   changed_by?: number | null;
+  changed_by_user?: ChangeLogUserRead | null;
   changed_at: string;
 }

@@ -69,13 +69,13 @@ export function RequirementsListSection({
       page,
       page_size: PAGE_SIZE,
       document_id: documentId,
-      section_id: sectionId,
+      section_id: sectionId ?? undefined,
       q: q || undefined,
       status: status === ALL_STATUSES ? undefined : status,
       requirement_type:
         requirementType === ALL_TYPES ? undefined : requirementType,
       priority: priority === ALL_PRIORITIES ? undefined : priority,
-      owner_id: ownerId,
+      owner_id: ownerId ?? undefined,
     }
   );
   const sortedRequirements = useMemo(() => {

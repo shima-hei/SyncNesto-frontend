@@ -60,7 +60,9 @@ export const getTaskFormValues = (task: TaskRead): TaskFormValues => {
 export const toTaskCreate = (values: TaskFormValues): TaskCreate => {
   return {
     parent_task_id: toOptionalNumber(values.parentTaskId),
-    task_code: values.taskCode.trim(),
+    ...(toOptionalString(values.taskCode)
+      ? { task_code: toOptionalString(values.taskCode) }
+      : {}),
     title: values.title.trim(),
     description: toOptionalString(values.description),
     task_type: values.taskType,
@@ -91,7 +93,6 @@ export const toRequirementTaskCreate = (
 export const toTaskDuplicateCreate = (task: TaskRead): TaskCreate => {
   return {
     parent_task_id: task.parent_task_id ?? null,
-    task_code: `${task.task_code}-COPY-${Date.now() % 100000}`,
     title: `${task.title} のコピー`,
     description: task.description ?? null,
     task_type: task.task_type ?? "frontend",
@@ -115,9 +116,10 @@ export const toTaskDuplicateCreate = (task: TaskRead): TaskCreate => {
 
 export const toTaskUpdate = (
   values: TaskFormValues,
-  version: number
+  version: number,
+  currentTask?: TaskRead
 ): TaskUpdate => {
-  return {
+  const nextValues: TaskUpdate = {
     version,
     parent_task_id: toOptionalNumber(values.parentTaskId),
     task_code: values.taskCode.trim(),
@@ -139,6 +141,57 @@ export const toTaskUpdate = (
     tags: toTagArray(values.tags),
     change_reason: toOptionalString(values.changeReason),
   };
+
+  if (!currentTask) {
+    return nextValues;
+  }
+
+  const currentValues = toTaskUpdate(getTaskFormValues(currentTask), version);
+  const diffValues: TaskUpdate = { version };
+
+  TASK_UPDATE_FIELDS.forEach((field) => {
+    if (!areTaskUpdateValuesEqual(nextValues[field], currentValues[field])) {
+      diffValues[field] = nextValues[field] as never;
+    }
+  });
+
+  if (nextValues.change_reason) {
+    diffValues.change_reason = nextValues.change_reason;
+  }
+
+  return diffValues;
+};
+
+const TASK_UPDATE_FIELDS = [
+  "parent_task_id",
+  "task_code",
+  "title",
+  "description",
+  "task_type",
+  "status",
+  "priority",
+  "assignee_id",
+  "reporter_id",
+  "start_date",
+  "due_date",
+  "actual_start_date",
+  "actual_end_date",
+  "progress_percent",
+  "estimated_minutes",
+  "actual_minutes",
+  "sort_order",
+  "tags",
+] as const satisfies readonly (keyof TaskUpdate)[];
+
+const areTaskUpdateValuesEqual = (
+  left: TaskUpdate[(typeof TASK_UPDATE_FIELDS)[number]],
+  right: TaskUpdate[(typeof TASK_UPDATE_FIELDS)[number]]
+) => {
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return JSON.stringify(left ?? []) === JSON.stringify(right ?? []);
+  }
+
+  return (left ?? null) === (right ?? null);
 };
 
 const toFormNumber = (value: number | null | undefined) => {

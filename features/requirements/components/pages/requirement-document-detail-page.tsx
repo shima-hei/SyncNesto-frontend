@@ -206,7 +206,7 @@ export function RequirementDocumentDetailPage({
                 projectId={projectId}
                 documentId={documentId}
                 title="要件の変更履歴"
-                targetType="requirement_item"
+                targetType="requirement"
                 targetId={selectedRequirementId}
               />
             </>
@@ -250,7 +250,7 @@ export function RequirementDocumentDetailPage({
               projectId={projectId}
               documentId={documentId}
               title="セクションの変更履歴"
-              targetType="section"
+              targetType="requirement_section"
               targetId={selectedSectionId}
             />
           ) : null}
@@ -258,7 +258,7 @@ export function RequirementDocumentDetailPage({
             projectId={projectId}
             documentId={documentId}
             title="要件定義書の変更履歴"
-            targetType="document"
+            targetType="requirement_document"
             targetId={documentId}
           />
         </div>

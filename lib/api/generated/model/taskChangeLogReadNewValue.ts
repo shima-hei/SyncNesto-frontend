@@ -10,4 +10,4 @@ import type { ChangeLogKeyLabelValue } from './changeLogKeyLabelValue';
 import type { ChangeLogSnapshotValue } from './changeLogSnapshotValue';
 import type { ChangeLogUpdatedFieldsValue } from './changeLogUpdatedFieldsValue';
 
-export type RequirementChangeLogReadOldValue = ChangeLogCodeLabelValue | ChangeLogKeyLabelValue | ChangeLogIdLabelValue | ChangeLogSnapshotValue | ChangeLogUpdatedFieldsValue | { [key: string]: unknown } | { [key: string]: unknown }[] | unknown[] | string | number | boolean | null;
+export type TaskChangeLogReadNewValue = ChangeLogCodeLabelValue | ChangeLogKeyLabelValue | ChangeLogIdLabelValue | ChangeLogSnapshotValue | ChangeLogUpdatedFieldsValue | { [key: string]: unknown } | { [key: string]: unknown }[] | unknown[] | string | number | boolean | null;

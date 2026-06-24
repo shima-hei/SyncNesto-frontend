@@ -19,7 +19,7 @@ const optionalNonNegativeNumber = (label: string) =>
     });
 
 export const taskSchema = z.object({
-  taskCode: z.string().trim().min(1, VALIDATION_MESSAGES.required("タスクID")),
+  taskCode: z.string().trim(),
   title: z.string().trim().min(1, VALIDATION_MESSAGES.required("タイトル")),
   description: z.string(),
   taskType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("種別")),

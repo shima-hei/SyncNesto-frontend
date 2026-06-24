@@ -10,7 +10,7 @@
  */
 export interface RequirementTaskCreate {
   parent_task_id?: number | null;
-  task_code: string;
+  task_code?: string | null;
   title: string;
   description?: string | null;
   task_type?: string;

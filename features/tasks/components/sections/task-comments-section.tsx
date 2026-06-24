@@ -58,7 +58,7 @@ export function TaskCommentsSection({
       <CardHeader>
         <CardTitle>コメント</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex max-h-[640px] flex-col gap-4 overflow-y-auto">
         {canComment ? (
           <TaskCommentForm
             isPending={isCreatePending}

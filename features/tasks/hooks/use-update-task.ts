@@ -11,6 +11,7 @@ import { useUpdateTaskTasksTaskIdPatch } from "@/lib/api/generated/tasks/tasks";
 import { TASK_MESSAGES } from "../constants/task-messages";
 import {
   invalidateGantt,
+  invalidateTaskChangeLogs,
   invalidateTaskList,
   setTaskDetailCache,
 } from "../lib/task-cache";
@@ -28,6 +29,7 @@ export function useUpdateTask(projectId: number, taskId: number) {
         await Promise.all([
           invalidateTaskList(queryClient, projectId),
           invalidateGantt(queryClient, projectId),
+          invalidateTaskChangeLogs(queryClient, taskId),
         ]);
         toast.success(TASK_MESSAGES.task.updateSuccess);
       },
@@ -45,10 +47,14 @@ export function useUpdateTask(projectId: number, taskId: number) {
     },
   });
 
-  const updateTask = async (values: TaskFormValues, version: number) => {
+  const updateTask = async (
+    values: TaskFormValues,
+    version: number,
+    currentTask?: TaskRead
+  ) => {
     return updateTaskMutation.mutateAsync({
       taskId,
-      data: toTaskUpdate(values, version),
+      data: toTaskUpdate(values, version, currentTask),
     });
   };
 
