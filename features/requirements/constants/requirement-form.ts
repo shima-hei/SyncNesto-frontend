@@ -85,7 +85,7 @@ export const getDuplicatedRequirementFormValues = (
 ): RequirementFormValues => {
   return {
     ...getRequirementFormValues(requirement),
-    requirementCode: `${requirement.requirement_code}-COPY`,
+    requirementCode: "",
     title: `${requirement.title} のコピー`,
     status: "draft",
     approvedBy: "",

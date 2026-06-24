@@ -10,7 +10,6 @@
  */
 export interface RequirementOpenIssuePromoteCreate {
   version: number;
-  requirement_code: string;
   requirement_type?: string;
   section_id?: number | null;
   category?: string | null;

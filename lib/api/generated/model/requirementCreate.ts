@@ -10,7 +10,7 @@
  */
 export interface RequirementCreate {
   section_id?: number | null;
-  requirement_code: string;
+  requirement_code?: string | null;
   requirement_type: string;
   category?: string | null;
   title: string;

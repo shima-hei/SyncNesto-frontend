@@ -81,7 +81,8 @@ export function SearchFilterBar({
           className={cn(
             "grid min-w-0 gap-2 [&>*]:min-w-0",
             variant === "default" && "sm:grid-cols-2 lg:grid-cols-3",
-            variant === "compact" && "grid-cols-1"
+            variant === "compact" &&
+              "[grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))]"
           )}
         >
           {children}

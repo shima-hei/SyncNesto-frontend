@@ -10,7 +10,7 @@
  */
 export interface RequirementOpenIssueCreate {
   related_requirement_id?: number | null;
-  issue_code: string;
+  issue_code?: string | null;
   title: string;
   description?: string | null;
   impact_scope?: string | null;

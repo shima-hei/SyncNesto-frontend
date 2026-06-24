@@ -66,7 +66,6 @@ export function RequirementForm({
     projectId,
     documentId
   );
-  const requirementCodeId = useId();
   const categoryId = useId();
   const titleId = useId();
   const descriptionId = useId();
@@ -97,7 +96,6 @@ export function RequirementForm({
       const fieldErrors = result.error.flatten().fieldErrors;
 
       setErrors({
-        requirementCode: fieldErrors.requirementCode?.[0],
         requirementType: fieldErrors.requirementType?.[0],
         title: fieldErrors.title?.[0],
         priority: fieldErrors.priority?.[0],
@@ -154,20 +152,12 @@ export function RequirementForm({
 
           <FormSection title="基本情報">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Field data-invalid={errors.requirementCode ? true : undefined}>
-                <FieldLabel htmlFor={requirementCodeId}>要件コード</FieldLabel>
-                <Input
-                  id={requirementCodeId}
-                  value={values.requirementCode}
-                  onChange={(event) =>
-                    updateValue("requirementCode", event.target.value)
-                  }
-                  aria-invalid={Boolean(errors.requirementCode)}
-                />
-                {errors.requirementCode ? (
-                  <FieldError>{errors.requirementCode}</FieldError>
-                ) : null}
-              </Field>
+              {mode === "update" ? (
+                <Field>
+                  <FieldLabel>要件コード</FieldLabel>
+                  <Input value={values.requirementCode} readOnly disabled />
+                </Field>
+              ) : null}
 
               <Field data-invalid={errors.requirementType ? true : undefined}>
                 <FieldLabel>種別</FieldLabel>

@@ -50,7 +50,6 @@ export const toRequirementCreate = (
   return {
     document_id: documentId,
     section_id: toOptionalNumber(values.sectionId),
-    requirement_code: values.requirementCode,
     requirement_type: values.requirementType,
     category: values.category || null,
     title: values.title,
@@ -73,7 +72,6 @@ export const toRequirementUpdate = (
   return {
     version,
     section_id: toOptionalNumber(values.sectionId),
-    requirement_code: values.requirementCode,
     requirement_type: values.requirementType,
     category: values.category || null,
     title: values.title,
@@ -239,7 +237,6 @@ export const toRequirementOpenIssueCreate = (
 ): RequirementOpenIssueCreate => {
   return {
     document_id: documentId,
-    issue_code: values.issueCode,
     title: values.title,
     description: values.description || null,
     impact_scope: values.impactScope || null,
@@ -257,7 +254,6 @@ export const toRequirementOpenIssueUpdate = (
 ): RequirementOpenIssueUpdate => {
   return {
     version,
-    issue_code: values.issueCode,
     title: values.title,
     description: values.description || null,
     impact_scope: values.impactScope || null,
@@ -276,7 +272,6 @@ export const toRequirementOpenIssuePromoteCreate = (
 ): RequirementOpenIssuePromoteCreate => {
   return {
     version,
-    requirement_code: issue.issueCode.replace(/^ISSUE/i, "REQ"),
     title: issue.title,
     description: issue.description || null,
     priority: "must",

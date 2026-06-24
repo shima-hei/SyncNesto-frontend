@@ -11,7 +11,6 @@
 export interface RequirementUpdate {
   version: number;
   section_id?: number | null;
-  requirement_code?: string | null;
   requirement_type?: string | null;
   category?: string | null;
   title?: string | null;

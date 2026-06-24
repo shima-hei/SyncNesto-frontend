@@ -11,7 +11,6 @@
 export interface RequirementOpenIssueUpdate {
   version: number;
   related_requirement_id?: number | null;
-  issue_code?: string | null;
   title?: string | null;
   description?: string | null;
   impact_scope?: string | null;

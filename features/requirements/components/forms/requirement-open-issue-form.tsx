@@ -68,6 +68,7 @@ export function RequirementOpenIssueForm({
   onSubmit,
   onSuccess,
 }: RequirementOpenIssueFormProps) {
+  const isUpdate = Boolean(initialValues);
   const [values, setValues] = useState(
     initialValues ?? defaultOpenIssueValues
   );
@@ -84,7 +85,6 @@ export function RequirementOpenIssueForm({
       const fieldErrors = result.error.flatten().fieldErrors;
 
       setErrors({
-        issueCode: fieldErrors.issueCode?.[0],
         title: fieldErrors.title?.[0],
         description: fieldErrors.description?.[0],
         impactScope: fieldErrors.impactScope?.[0],
@@ -113,24 +113,12 @@ export function RequirementOpenIssueForm({
     <form onSubmit={handleSubmit}>
       <FieldGroup>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field data-invalid={errors.issueCode ? true : undefined}>
-            <FieldLabel>未決事項ID</FieldLabel>
-            <Input
-              value={values.issueCode}
-              placeholder="ISSUE-001"
-              onChange={(event) => {
-                setValues((current) => ({
-                  ...current,
-                  issueCode: event.target.value,
-                }));
-                setErrors((current) => ({ ...current, issueCode: undefined }));
-              }}
-              aria-invalid={Boolean(errors.issueCode)}
-            />
-            {errors.issueCode ? (
-              <FieldError>{errors.issueCode}</FieldError>
-            ) : null}
-          </Field>
+          {isUpdate ? (
+            <Field>
+              <FieldLabel>未決事項ID</FieldLabel>
+              <Input value={values.issueCode} readOnly disabled />
+            </Field>
+          ) : null}
 
           <Field data-invalid={errors.status ? true : undefined}>
             <FieldLabel>ステータス</FieldLabel>

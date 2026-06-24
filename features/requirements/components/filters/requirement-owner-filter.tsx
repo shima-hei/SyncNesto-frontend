@@ -68,6 +68,7 @@ export function RequirementOwnerFilter({
         <Button
           type="button"
           variant="outline"
+          className="shrink-0 whitespace-nowrap"
           disabled={!value}
           onClick={handleClear}
         >

@@ -40,7 +40,6 @@ export function usePromoteOpenIssue(projectId: number) {
       issueId: issue.id,
       data: {
         version: issue.version,
-        requirement_code: issue.issue_code.replace(/^ISSUE/i, "REQ"),
         title: issue.title,
         description: issue.description,
         priority: "must",
