@@ -5,29 +5,29 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   CheckIcon,
-  EditIcon,
-  Trash2Icon,
-  XIcon,
+  PlusIcon,
 } from "lucide-react";
 
-import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { RequirementSectionRead } from "@/lib/api/generated/model";
-import { formatDateTime } from "@/lib/format/date";
 
 import {
   getRequirementDocumentStatusLabel,
   getRequirementSectionTypeLabel,
 } from "../../constants/requirement-options";
 import { useCreateRequirementSection } from "../../hooks/use-create-requirement-section";
-import { useDeleteRequirementSection } from "../../hooks/use-delete-requirement-section";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
-import { useUpdateRequirementSection } from "../../hooks/use-update-requirement-section";
 import { useUpdateRequirementSectionSortOrder } from "../../hooks/use-update-requirement-section-sort-order";
 import { RequirementSectionForm } from "../forms/requirement-section-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
-import type { RequirementSectionFormValues } from "../../types/requirement-section-form";
 
 type RequirementSectionsSectionProps = {
   projectId: number;
@@ -44,23 +44,13 @@ export function RequirementSectionsSection({
   selectedSectionId,
   onSelectSection,
 }: RequirementSectionsSectionProps) {
-  const [deleteTarget, setDeleteTarget] =
-    useState<RequirementSectionRead | null>(null);
-  const [editingTarget, setEditingTarget] =
-    useState<RequirementSectionRead | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { sections, isLoading } = useRequirementSections(projectId, documentId);
   const {
     createRequirementSection,
     isPending: isCreatePending,
     error: createError,
   } = useCreateRequirementSection(projectId, documentId);
-  const { deleteRequirementSection, isPending: isDeletePending } =
-    useDeleteRequirementSection(projectId, documentId);
-  const {
-    updateRequirementSection,
-    isPending: isUpdatePending,
-    error: updateError,
-  } = useUpdateRequirementSection(projectId, documentId);
   const {
     updateRequirementSectionSortOrder,
     isPending: isSortPending,
@@ -94,7 +84,20 @@ export function RequirementSectionsSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>セクション</CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>セクション</CardTitle>
+          {canUpdate ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <PlusIcon data-icon="inline-start" />
+              追加
+            </Button>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {onSelectSection ? (
@@ -105,15 +108,6 @@ export function RequirementSectionsSection({
           >
             全セクション
           </Button>
-        ) : null}
-
-        {canUpdate ? (
-          <RequirementSectionForm
-            nextSortOrder={nextSortOrder}
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={createRequirementSection}
-          />
         ) : null}
 
         {isLoading ? (
@@ -131,24 +125,23 @@ export function RequirementSectionsSection({
                 >
                   <div className="flex flex-col gap-3">
                     <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-col gap-1 text-left"
+                        onClick={() => onSelectSection?.(section.id)}
+                      >
                         <span className="min-w-0 break-words font-medium">
                           {section.title}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {getRequirementSectionTypeLabel(section.section_type)}
+                        <span className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          <span>
+                            {getRequirementSectionTypeLabel(section.section_type)}
+                          </span>
+                          <span>
+                            {getRequirementDocumentStatusLabel(section.status)}
+                          </span>
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {getRequirementDocumentStatusLabel(section.status)}
-                        </span>
-                      </div>
-                      <p className="line-clamp-4 break-words text-sm text-muted-foreground">
-                        {section.content || "本文はありません。"}
-                      </p>
-                      <span className="text-xs text-muted-foreground">
-                        表示順: {section.sort_order ?? "-"} / 更新:{" "}
-                        {formatDateTime(section.updated_at)}
-                      </span>
+                      </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {onSelectSection ? (
@@ -169,77 +162,30 @@ export function RequirementSectionsSection({
                           <Button
                             type="button"
                             variant="outline"
-                            size="sm"
+                            size="icon-sm"
                             disabled={index === 0 || isSortPending}
                             onClick={() => moveSection(section, "up")}
                           >
-                            <ArrowUpIcon data-icon="inline-start" />
-                            上へ
+                            <ArrowUpIcon />
+                            <span className="sr-only">上へ</span>
                           </Button>
                           <Button
                             type="button"
                             variant="outline"
-                            size="sm"
+                            size="icon-sm"
                             disabled={
                               index === sortedSections.length - 1 ||
                               isSortPending
                             }
                             onClick={() => moveSection(section, "down")}
                           >
-                            <ArrowDownIcon data-icon="inline-start" />
-                            下へ
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingTarget(section)}
-                          >
-                            <EditIcon data-icon="inline-start" />
-                            編集
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDeleteTarget(section)}
-                          >
-                            <Trash2Icon data-icon="inline-start" />
-                            削除
+                            <ArrowDownIcon />
+                            <span className="sr-only">下へ</span>
                           </Button>
                         </>
                       ) : null}
                     </div>
                   </div>
-                  {editingTarget?.id === section.id ? (
-                    <div className="mt-4 rounded-lg bg-muted p-3">
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <span className="text-sm font-medium">
-                          セクション編集
-                        </span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingTarget(null)}
-                        >
-                          <XIcon data-icon="inline-start" />
-                          閉じる
-                        </Button>
-                      </div>
-                      <RequirementSectionForm
-                        initialValues={toSectionFormValues(section)}
-                        submitLabel="セクション更新"
-                        resetOnSuccess={false}
-                        isPending={isUpdatePending}
-                        error={updateError}
-                        onSubmit={(values) =>
-                          updateRequirementSection(section.id, section.version, values)
-                        }
-                        onSuccess={() => setEditingTarget(null)}
-                      />
-                    </div>
-                  ) : null}
                 </div>
               );
             })}
@@ -250,34 +196,26 @@ export function RequirementSectionsSection({
           </p>
         )}
 
-        <ResourceDeleteDialog
-          open={Boolean(deleteTarget)}
-          onOpenChange={(open) => !open && setDeleteTarget(null)}
-          resourceName="セクション"
-          description="セクションを削除します。削除すると元に戻せません。"
-          isPending={isDeletePending}
-          onConfirm={async () => {
-            if (!deleteTarget) {
-              return;
-            }
-
-            await deleteRequirementSection(deleteTarget.id);
-            setDeleteTarget(null);
-          }}
-        />
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>セクション追加</DialogTitle>
+              <DialogDescription>
+                要件を分類するためのセクションを追加します。
+              </DialogDescription>
+            </DialogHeader>
+            <div>
+              <RequirementSectionForm
+                nextSortOrder={nextSortOrder}
+                isPending={isCreatePending}
+                error={createError}
+                onSubmit={createRequirementSection}
+                onSuccess={() => setCreateDialogOpen(false)}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
-}
-
-function toSectionFormValues(
-  section: RequirementSectionRead
-): RequirementSectionFormValues {
-  return {
-    title: section.title,
-    sectionType: section.section_type,
-    content: section.content ?? "",
-    sortOrder: String(section.sort_order ?? 10),
-    status: section.status ?? "draft",
-  };
 }

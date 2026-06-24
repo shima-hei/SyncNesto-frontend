@@ -8,17 +8,20 @@ import {
   UserSelect,
 } from "@/components/shared/forms/user-select";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { useProjectMemberUsers } from "@/features/projects";
 
 type RequirementOwnerFilterProps = {
   projectId: number;
   value: number | null;
+  label?: string;
   onChange: (value: number | null) => void;
 };
 
 export function RequirementOwnerFilter({
   projectId,
   value,
+  label,
   onChange,
 }: RequirementOwnerFilterProps) {
   const [open, setOpen] = useState(false);
@@ -46,29 +49,32 @@ export function RequirementOwnerFilter({
   };
 
   return (
-    <div className="flex min-w-0 gap-2 sm:w-64">
-      <div className="min-w-0 flex-1">
-        <UserSelect
-          users={users}
-          selectedUser={selectedValue}
-          open={open}
-          search={search}
-          isLoading={isLoading}
-          placeholder="担当者"
-          onOpenChange={setOpen}
-          onSearchChange={setSearch}
-          onSelect={handleSelect}
-        />
+    <Field>
+      {label ? <FieldLabel>{label}</FieldLabel> : null}
+      <div className="flex min-w-0 gap-2">
+        <div className="min-w-0 flex-1">
+          <UserSelect
+            users={users}
+            selectedUser={selectedValue}
+            open={open}
+            search={search}
+            isLoading={isLoading}
+            placeholder="担当者を選択"
+            onOpenChange={setOpen}
+            onSearchChange={setSearch}
+            onSelect={handleSelect}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!value}
+          onClick={handleClear}
+        >
+          <XIcon data-icon="inline-start" />
+          解除
+        </Button>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={!value}
-        onClick={handleClear}
-      >
-        <XIcon data-icon="inline-start" />
-        解除
-      </Button>
-    </div>
+    </Field>
   );
 }

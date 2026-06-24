@@ -166,7 +166,7 @@ export function RequirementSectionForm({
           {errors.title ? <FieldError>{errors.title}</FieldError> : null}
         </Field>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <Field data-invalid={errors.sectionType ? true : undefined}>
             <FieldLabel>種別</FieldLabel>
             <Select
@@ -219,24 +219,6 @@ export function RequirementSectionForm({
             {errors.status ? <FieldError>{errors.status}</FieldError> : null}
           </Field>
 
-          <Field data-invalid={errors.sortOrder ? true : undefined}>
-            <FieldLabel>表示順</FieldLabel>
-            <Input
-              value={values.sortOrder}
-              inputMode="numeric"
-              onChange={(event) => {
-                setValues((current) => ({
-                  ...current,
-                  sortOrder: event.target.value,
-                }));
-                setErrors((current) => ({ ...current, sortOrder: undefined }));
-              }}
-              aria-invalid={Boolean(errors.sortOrder)}
-            />
-            {errors.sortOrder ? (
-              <FieldError>{errors.sortOrder}</FieldError>
-            ) : null}
-          </Field>
         </div>
 
         <Field>

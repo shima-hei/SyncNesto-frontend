@@ -49,6 +49,7 @@ export const toRequirementCreate = (
 ): RequirementCreate => {
   return {
     document_id: documentId,
+    section_id: toOptionalNumber(values.sectionId),
     requirement_code: values.requirementCode,
     requirement_type: values.requirementType,
     category: values.category || null,
@@ -71,6 +72,7 @@ export const toRequirementUpdate = (
 ): RequirementUpdate => {
   return {
     version,
+    section_id: toOptionalNumber(values.sectionId),
     requirement_code: values.requirementCode,
     requirement_type: values.requirementType,
     category: values.category || null,

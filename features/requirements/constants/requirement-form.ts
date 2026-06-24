@@ -21,6 +21,7 @@ export const initialRequirementDocumentValues: RequirementDocumentFormValues = {
 };
 
 export const initialRequirementValues: RequirementFormValues = {
+  sectionId: "",
   requirementCode: "",
   requirementType: "functional",
   category: "",
@@ -60,6 +61,7 @@ export const getRequirementFormValues = (
   requirement: RequirementRead
 ): RequirementFormValues => {
   return {
+    sectionId: toOptionalId(requirement.section_id),
     requirementCode: requirement.requirement_code,
     requirementType: requirement.requirement_type,
     category: requirement.category ?? "",

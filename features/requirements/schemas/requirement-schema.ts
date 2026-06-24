@@ -19,6 +19,7 @@ export const requirementDocumentSchema = z.object({
 });
 
 export const requirementSchema = z.object({
+  sectionId: z.string(),
   requirementCode: z.string().min(1, VALIDATION_MESSAGES.required("要件コード")),
   requirementType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("種別")),
   category: z.string(),

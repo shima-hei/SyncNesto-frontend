@@ -1,11 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PlusIcon } from "lucide-react";
 
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -72,6 +81,7 @@ type TasksPageProps = {
 };
 
 export function TasksPage({ projectId }: TasksPageProps) {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [q, setQ] = useState("");
@@ -175,21 +185,26 @@ export function TasksPage({ projectId }: TasksPageProps) {
 
   return (
     <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">タスク</h2>
-        <p className="text-sm text-muted-foreground">
-          プロジェクトのタスク、カンバン、ガントチャートを管理します。
-        </p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold">タスク</h2>
+          <p className="text-sm text-muted-foreground">
+            プロジェクトのタスク、カンバン、ガントチャートを管理します。
+          </p>
+        </div>
+        {canCreate ? (
+          <Button type="button" onClick={() => setCreateDialogOpen(true)}>
+            <PlusIcon data-icon="inline-start" />
+            タスク新規作成
+          </Button>
+        ) : null}
       </div>
 
       <Tabs defaultValue="list">
-        <TabsList className="w-full justify-start overflow-x-auto" variant="line">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start">
           <TabsTrigger value="list">一覧</TabsTrigger>
           <TabsTrigger value="board">ボード</TabsTrigger>
           <TabsTrigger value="gantt">ガント</TabsTrigger>
-          {canCreate ? (
-            <TabsTrigger value="create">新規作成</TabsTrigger>
-          ) : null}
         </TabsList>
 
         <TabsContent value="list" className="flex flex-col gap-4">
@@ -371,26 +386,27 @@ export function TasksPage({ projectId }: TasksPageProps) {
           />
         </TabsContent>
 
-        {canCreate ? (
-          <TabsContent value="create">
-            <Card>
-              <CardHeader>
-                <CardTitle>タスク登録</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TaskForm
-                  mode="create"
-                  projectId={projectId}
-                  initialValues={defaultTaskFormValues}
-                  isPending={isCreatePending}
-                  error={createError}
-                  onSubmit={createTask}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ) : null}
       </Tabs>
+
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-h-[90vh] w-[min(92vw,1200px)] overflow-y-auto sm:max-w-none">
+          <DialogHeader>
+            <DialogTitle>タスク登録</DialogTitle>
+            <DialogDescription>
+              プロジェクトに新しいタスクを追加します。
+            </DialogDescription>
+          </DialogHeader>
+          <TaskForm
+            mode="create"
+            projectId={projectId}
+            initialValues={defaultTaskFormValues}
+            isPending={isCreatePending}
+            error={createError}
+            onSubmit={createTask}
+            onSuccess={() => setCreateDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -788,106 +804,127 @@ function TaskFilters({
   return (
     <SearchFilterBar
       searchValue={searchInput}
+      searchLabel="キーワード"
       searchPlaceholder="タスクID、タイトル、説明で検索"
       onSearchValueChange={onSearchInputChange}
       onSearch={onSearch}
     >
-      <Select value={status} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-full sm:w-40">
-          <SelectValue placeholder="ステータス" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value={ALL_STATUSES}>すべて</SelectItem>
-            {TASK_STATUS_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-      <Select value={priority} onValueChange={onPriorityChange}>
-        <SelectTrigger className="w-full sm:w-32">
-          <SelectValue placeholder="優先度" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value={ALL_PRIORITIES}>すべて</SelectItem>
-            {TASK_PRIORITY_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-      <Select value={taskType} onValueChange={onTaskTypeChange}>
-        <SelectTrigger className="w-full sm:w-40">
-          <SelectValue placeholder="種別" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value={ALL_TYPES}>すべて</SelectItem>
-            {TASK_TYPE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-      <Select value={overdue} onValueChange={onOverdueChange}>
-        <SelectTrigger className="w-full sm:w-36">
-          <SelectValue placeholder="期限" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value={ALL_OVERDUE}>すべて</SelectItem>
-            <SelectItem value="overdue">期限超過</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      <TaskFilterSelect
+        label="ステータス"
+        value={status}
+        placeholder="ステータスを選択"
+        allValue={ALL_STATUSES}
+        allLabel="すべてのステータス"
+        options={TASK_STATUS_OPTIONS}
+        onValueChange={onStatusChange}
+      />
+      <TaskFilterSelect
+        label="優先度"
+        value={priority}
+        placeholder="優先度を選択"
+        allValue={ALL_PRIORITIES}
+        allLabel="すべての優先度"
+        options={TASK_PRIORITY_OPTIONS}
+        onValueChange={onPriorityChange}
+      />
+      <TaskFilterSelect
+        label="種別"
+        value={taskType}
+        placeholder="種別を選択"
+        allValue={ALL_TYPES}
+        allLabel="すべての種別"
+        options={TASK_TYPE_OPTIONS}
+        onValueChange={onTaskTypeChange}
+      />
+      <TaskFilterSelect
+        label="期限"
+        value={overdue}
+        placeholder="期限を選択"
+        allValue={ALL_OVERDUE}
+        allLabel="すべての期限"
+        options={[{ value: "overdue", label: "期限超過" }]}
+        onValueChange={onOverdueChange}
+      />
       <TaskUserSelectField
         projectId={projectId}
         label="担当者"
         value={assigneeId}
-        placeholder="担当者"
-        showLabel={false}
+        placeholder="担当者を選択"
         onChange={onAssigneeIdChange}
       />
       <TaskRequirementSelectField
         projectId={projectId}
         value={requirementId}
-        placeholder="関連要件"
-        showLabel={false}
+        placeholder="関連要件を選択"
         onChange={onRequirementIdChange}
       />
-      <Input
-        value={tag}
-        placeholder="タグ"
-        aria-label="タグで絞り込み"
-        onChange={(event) => onTagChange(event.target.value)}
+      <Field>
+        <FieldLabel>タグ</FieldLabel>
+        <Input
+          value={tag}
+          placeholder="タグで絞り込み"
+          onChange={(event) => onTagChange(event.target.value)}
+        />
+      </Field>
+      <Field>
+        <FieldLabel>開始日</FieldLabel>
+        <Input
+          type="date"
+          value={startDateFrom}
+          onChange={(event) => onStartDateFromChange(event.target.value)}
+        />
+      </Field>
+      <Field>
+        <FieldLabel>終了予定日</FieldLabel>
+        <Input
+          type="date"
+          value={dueDateTo}
+          onChange={(event) => onDueDateToChange(event.target.value)}
+        />
+      </Field>
+      <TaskFilterSelect
+        label="並び順"
+        value={sort}
+        placeholder="並び順を選択"
+        options={SORT_OPTIONS}
+        onValueChange={onSortChange}
       />
-      <Input
-        type="date"
-        value={startDateFrom}
-        aria-label="開始日以降で絞り込み"
-        onChange={(event) => onStartDateFromChange(event.target.value)}
-      />
-      <Input
-        type="date"
-        value={dueDateTo}
-        aria-label="終了予定日までで絞り込み"
-        onChange={(event) => onDueDateToChange(event.target.value)}
-      />
-      <Select value={sort} onValueChange={onSortChange}>
-        <SelectTrigger className="w-full sm:w-44">
-          <SelectValue placeholder="並び替え" />
+    </SearchFilterBar>
+  );
+}
+
+type TaskFilterSelectProps = {
+  label: string;
+  value: string;
+  placeholder: string;
+  options: readonly { value: string; label: string }[];
+  allValue?: string;
+  allLabel?: string;
+  onValueChange: (value: string) => void;
+};
+
+function TaskFilterSelect({
+  label,
+  value,
+  placeholder,
+  options,
+  allValue,
+  allLabel,
+  onValueChange,
+}: TaskFilterSelectProps) {
+  return (
+    <Field>
+      <FieldLabel>{label}</FieldLabel>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            {SORT_OPTIONS.map((option) => (
+            {allValue && allLabel ? (
+              <SelectItem value={allValue}>{allLabel}</SelectItem>
+            ) : null}
+            {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -895,7 +932,7 @@ function TaskFilters({
           </SelectGroup>
         </SelectContent>
       </Select>
-    </SearchFilterBar>
+    </Field>
   );
 }
 

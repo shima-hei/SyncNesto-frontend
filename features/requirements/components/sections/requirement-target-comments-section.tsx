@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RequirementTargetCommentRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
 
 import { useCreateTargetComment } from "../../hooks/use-create-target-comment";
 import { useDeleteTargetComment } from "../../hooks/use-delete-target-comment";
@@ -30,6 +31,8 @@ type RequirementTargetCommentsSectionProps = {
   targetId: number;
   title?: string;
   canComment: boolean;
+  className?: string;
+  contentClassName?: string;
 };
 
 export function RequirementTargetCommentsSection({
@@ -38,6 +41,8 @@ export function RequirementTargetCommentsSection({
   targetId,
   title = "スレッドコメント",
   canComment,
+  className,
+  contentClassName,
 }: RequirementTargetCommentsSectionProps) {
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementTargetCommentRead | null>(null);
@@ -70,11 +75,11 @@ export function RequirementTargetCommentsSection({
   const rootComments = comments.filter((comment) => !comment.parent_comment_id);
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className={cn("flex flex-col gap-4", contentClassName)}>
         {canComment ? (
           <RequirementTargetCommentForm
             isPending={isCreatePending}

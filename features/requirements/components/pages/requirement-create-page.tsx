@@ -14,12 +14,14 @@ type RequirementCreatePageProps = {
   projectId: number;
   documentId: number;
   duplicateFromRequirementId?: number | null;
+  initialSectionId?: number | null;
 };
 
 export function RequirementCreatePage({
   projectId,
   documentId,
   duplicateFromRequirementId,
+  initialSectionId,
 }: RequirementCreatePageProps) {
   const { createRequirement, isPending, error } = useCreateRequirement(
     projectId,
@@ -32,9 +34,13 @@ export function RequirementCreatePage({
   } = useRequirement(projectId, duplicateFromRequirementId ?? 0, {
     enabled: Boolean(duplicateFromRequirementId),
   });
-  const initialValues = duplicateSource
+  const baseInitialValues = duplicateSource
     ? getDuplicatedRequirementFormValues(duplicateSource)
     : initialRequirementValues;
+  const initialValues = {
+    ...baseInitialValues,
+    sectionId: initialSectionId ? String(initialSectionId) : baseInitialValues.sectionId,
+  };
 
   if (isDuplicateSourceLoading) {
     return <RequirementCreateSkeleton />;
@@ -63,6 +69,7 @@ export function RequirementCreatePage({
       <RequirementForm
         key={duplicateSource?.id ?? "new"}
         projectId={projectId}
+        documentId={documentId}
         mode="create"
         initialValues={initialValues}
         isPending={isPending}

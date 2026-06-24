@@ -2,6 +2,7 @@ import type { RequirementDocumentFormValues } from "../types/requirement-documen
 import type { RequirementFormValues } from "../types/requirement-form";
 
 export const REQUIREMENT_CONFLICT_FIELD_LABELS = {
+  sectionId: "セクション",
   requirementCode: "要件コード",
   requirementType: "種別",
   category: "カテゴリ",

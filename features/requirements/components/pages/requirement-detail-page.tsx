@@ -8,6 +8,12 @@ import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delet
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { RequirementRelatedTasksSection } from "@/features/tasks/components/sections/requirement-related-tasks-section";
 import {
   canCreateTask,
@@ -28,6 +34,8 @@ import {
 } from "../../constants/requirement-options";
 import { useDeleteRequirement } from "../../hooks/use-delete-requirement";
 import { useRequirementSummary } from "../../hooks/use-requirement-summary";
+import { RequirementApprovalsSection } from "../sections/requirement-approvals-section";
+import { RequirementChangeLogsSection } from "../sections/requirement-change-logs-section";
 import { RequirementCommentsSection } from "../sections/requirement-comments-section";
 import { RequirementDetailsSection } from "../sections/requirement-details-section";
 import { RequirementLinksSection } from "../sections/requirement-links-section";
@@ -113,90 +121,143 @@ export function RequirementDetailPage({
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>概要</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <RequirementInfo
-            label="種別"
-            value={getRequirementTypeLabel(requirement.requirement_type)}
-          />
-          <RequirementInfo label="カテゴリ" value={requirement.category ?? "-"} />
-          <RequirementInfo
-            label="優先度"
-            value={getRequirementPriorityLabel(requirement.priority)}
-          />
-          <RequirementInfo
-            label="ステータス"
-            value={getRequirementStatusLabel(requirement.status)}
-          />
-          <RequirementInfo label="担当者ID" value={formatOptionalId(requirement.owner_id)} />
-          <RequirementInfo label="更新日時" value={formatDateTime(requirement.updated_at)} />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="overview" className="gap-4">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start">
+          <TabsTrigger value="overview">概要</TabsTrigger>
+          <TabsTrigger value="details">詳細</TabsTrigger>
+          <TabsTrigger value="relations">関連</TabsTrigger>
+          <TabsTrigger value="comments">コメント</TabsTrigger>
+          <TabsTrigger value="reviews">レビュー</TabsTrigger>
+          <TabsTrigger value="approvals">承認</TabsTrigger>
+          <TabsTrigger value="history">履歴</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>本文</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <RequirementInfo label="説明" value={requirement.description ?? "-"} />
-          <RequirementInfo label="理由" value={requirement.rationale ?? "-"} />
-          <RequirementInfo
-            label="受け入れ条件"
-            value={requirement.acceptance_criteria ?? "-"}
+        <TabsContent value="overview" className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>概要</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <RequirementInfo
+                label="種別"
+                value={getRequirementTypeLabel(requirement.requirement_type)}
+              />
+              <RequirementInfo label="カテゴリ" value={requirement.category ?? "-"} />
+              <RequirementInfo
+                label="優先度"
+                value={getRequirementPriorityLabel(requirement.priority)}
+              />
+              <RequirementInfo
+                label="ステータス"
+                value={getRequirementStatusLabel(requirement.status)}
+              />
+              <RequirementInfo
+                label="担当者ID"
+                value={formatOptionalId(requirement.owner_id)}
+              />
+              <RequirementInfo
+                label="更新日時"
+                value={formatDateTime(requirement.updated_at)}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>本文</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <RequirementInfo label="説明" value={requirement.description ?? "-"} />
+              <RequirementInfo label="理由" value={requirement.rationale ?? "-"} />
+              <RequirementInfo
+                label="受け入れ条件"
+                value={requirement.acceptance_criteria ?? "-"}
+              />
+              <RequirementInfo label="情報源" value={requirement.source ?? "-"} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="details">
+          <RequirementDetailsSection
+            projectId={projectId}
+            requirementId={requirementId}
+            details={summary.details}
+            canUpdate={canUpdateRequirement(currentProjectRole)}
           />
-          <RequirementInfo label="情報源" value={requirement.source ?? "-"} />
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* 詳細JSONは要件種別ごとの差分項目を保持するため、まずは読み取り専用で表示する。 */}
-      <RequirementDetailsSection
-        projectId={projectId}
-        requirementId={requirementId}
-        details={summary.details}
-        canUpdate={canUpdateRequirement(currentProjectRole)}
-      />
+        <TabsContent value="relations">
+          <div className="grid gap-4 xl:grid-cols-2">
+            <RequirementLinksSection
+              projectId={projectId}
+              requirementId={requirementId}
+              canLink={canLinkRequirement(currentProjectRole)}
+            />
+            <RequirementRelationsSection
+              projectId={projectId}
+              requirementId={requirementId}
+              canLink={canLinkRequirement(currentProjectRole)}
+            />
+            <RequirementRelatedTasksSection
+              projectId={projectId}
+              requirementId={requirementId}
+              canCreate={canCreateTask(currentProjectRole)}
+            />
+          </div>
+        </TabsContent>
 
-      {/* コメント、リンク、レビュー、改訂履歴は要件のトレーサビリティ確認に使う。 */}
-      <div className="grid gap-4 xl:grid-cols-2">
-        <RequirementLinksSection
-          projectId={projectId}
-          requirementId={requirementId}
-          canLink={canLinkRequirement(currentProjectRole)}
-        />
-        <RequirementRelationsSection
-          projectId={projectId}
-          requirementId={requirementId}
-          canLink={canLinkRequirement(currentProjectRole)}
-        />
-        <RequirementRelatedTasksSection
-          projectId={projectId}
-          requirementId={requirementId}
-          canCreate={canCreateTask(currentProjectRole)}
-        />
-        <RequirementCommentsSection
-          projectId={projectId}
-          requirementId={requirementId}
-          canComment={canCommentRequirement(currentProjectRole)}
-        />
-        <RequirementTargetCommentsSection
-          projectId={projectId}
-          targetType="requirement_item"
-          targetId={requirementId}
-          canComment={canCommentRequirement(currentProjectRole)}
-        />
-        <RequirementReviewsSection
-          projectId={projectId}
-          requirementId={requirementId}
-          canReview={canReviewRequirement(currentProjectRole)}
-        />
-        <RequirementRevisionsSection
-          projectId={projectId}
-          requirementId={requirementId}
-        />
-      </div>
+        <TabsContent value="comments">
+          <div className="grid gap-4 xl:grid-cols-2">
+            <RequirementCommentsSection
+              projectId={projectId}
+              requirementId={requirementId}
+              canComment={canCommentRequirement(currentProjectRole)}
+            />
+            <RequirementTargetCommentsSection
+              projectId={projectId}
+              targetType="requirement_item"
+              targetId={requirementId}
+              title="要件スレッドコメント"
+              canComment={canCommentRequirement(currentProjectRole)}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reviews">
+          <div className="grid gap-4 xl:grid-cols-2">
+            <RequirementReviewsSection
+              projectId={projectId}
+              requirementId={requirementId}
+              canReview={canReviewRequirement(currentProjectRole)}
+            />
+            <RequirementRevisionsSection
+              projectId={projectId}
+              requirementId={requirementId}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="approvals">
+          <RequirementApprovalsSection
+            projectId={projectId}
+            targetType="requirement_item"
+            targetId={requirementId}
+            title="要件の承認"
+            canReview={canReviewRequirement(currentProjectRole)}
+          />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <RequirementChangeLogsSection
+            projectId={projectId}
+            documentId={documentId}
+            title="要件の変更履歴"
+            targetType="requirement"
+            targetId={requirementId}
+          />
+        </TabsContent>
+      </Tabs>
 
       <ResourceDeleteDialog
         open={deleteDialogOpen}

@@ -9,11 +9,13 @@ import { RequirementForm } from "../forms/requirement-form";
 
 type RequirementEditPageProps = {
   projectId: number;
+  documentId: number;
   requirementId: number;
 };
 
 export function RequirementEditPage({
   projectId,
+  documentId,
   requirementId,
 }: RequirementEditPageProps) {
   const { requirement, isLoading, error } = useRequirement(
@@ -49,6 +51,7 @@ export function RequirementEditPage({
       <RequirementForm
         key={requirement.version}
         projectId={projectId}
+        documentId={documentId}
         mode="update"
         initialValues={getRequirementFormValues(requirement)}
         isPending={isPending}

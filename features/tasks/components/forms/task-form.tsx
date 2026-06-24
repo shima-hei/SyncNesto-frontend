@@ -48,6 +48,7 @@ type TaskFormProps = {
   onCloseConflict?: () => void;
   onResolveConflict?: (values: TaskFormValues) => Promise<unknown>;
   onSubmit: (values: TaskFormValues) => Promise<unknown>;
+  onSuccess?: () => void;
 };
 
 export function TaskForm({
@@ -61,6 +62,7 @@ export function TaskForm({
   onCloseConflict,
   onResolveConflict,
   onSubmit,
+  onSuccess,
 }: TaskFormProps) {
   const taskCodeId = useId();
   const titleId = useId();
@@ -99,7 +101,9 @@ export function TaskForm({
     }
 
     setErrors({});
-    await onSubmit(result.data).catch(() => undefined);
+    await onSubmit(result.data)
+      .then(() => onSuccess?.())
+      .catch(() => undefined);
   };
 
   const updateValue = <TKey extends keyof TaskFormValues>(

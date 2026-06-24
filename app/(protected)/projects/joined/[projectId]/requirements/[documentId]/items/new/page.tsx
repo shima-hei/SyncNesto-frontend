@@ -9,23 +9,26 @@ type PageProps = {
   }>;
   searchParams: Promise<{
     duplicateFrom?: string;
+    sectionId?: string;
   }>;
 };
 
 export default async function Page({ params, searchParams }: PageProps) {
   const { projectId, documentId } = await params;
-  const { duplicateFrom } = await searchParams;
+  const { duplicateFrom, sectionId } = await searchParams;
   const parsedProjectId = Number(projectId);
   const parsedDocumentId = Number(documentId);
   const duplicateFromRequirementId = duplicateFrom
     ? Number(duplicateFrom)
     : null;
+  const parsedSectionId = sectionId ? Number(sectionId) : null;
 
   if (
     !Number.isInteger(parsedProjectId) ||
     !Number.isInteger(parsedDocumentId) ||
     (duplicateFromRequirementId !== null &&
-      !Number.isInteger(duplicateFromRequirementId))
+      !Number.isInteger(duplicateFromRequirementId)) ||
+    (parsedSectionId !== null && !Number.isInteger(parsedSectionId))
   ) {
     notFound();
   }
@@ -35,6 +38,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       projectId={parsedProjectId}
       documentId={parsedDocumentId}
       duplicateFromRequirementId={duplicateFromRequirementId}
+      initialSectionId={parsedSectionId}
     />
   );
 }

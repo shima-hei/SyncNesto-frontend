@@ -1,4 +1,5 @@
 export type RequirementFormValues = {
+  sectionId: string;
   requirementCode: string;
   requirementType: string;
   category: string;

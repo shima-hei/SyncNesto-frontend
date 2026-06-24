@@ -1,14 +1,16 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type SearchFilterBarProps = {
   searchValue: string;
+  searchLabel?: string;
   searchPlaceholder: string;
   children?: ReactNode;
   variant?: "default" | "compact";
@@ -18,12 +20,14 @@ type SearchFilterBarProps = {
 
 export function SearchFilterBar({
   searchValue,
+  searchLabel,
   searchPlaceholder,
   children,
   variant = "default",
   onSearchValueChange,
   onSearch,
 }: SearchFilterBarProps) {
+  const searchInputId = useId();
   const handleSubmit = (
     event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
   ) => {
@@ -47,16 +51,26 @@ export function SearchFilterBar({
         )}
         onSubmit={handleSubmit}
       >
-        <Input
-          className="w-full min-w-0 flex-1"
-          value={searchValue}
-          onChange={(event) => onSearchValueChange(event.target.value)}
-          placeholder={searchPlaceholder}
-        />
+        <Field>
+          {searchLabel ? (
+            <FieldLabel htmlFor={searchInputId}>{searchLabel}</FieldLabel>
+          ) : null}
+          <Input
+            id={searchInputId}
+            className="w-full min-w-0 flex-1"
+            value={searchValue}
+            onChange={(event) => onSearchValueChange(event.target.value)}
+            placeholder={searchPlaceholder}
+          />
+        </Field>
         <Button
           type="submit"
           variant="outline"
-          className={cn("shrink-0", variant === "compact" && "w-full sm:w-auto")}
+          className={cn(
+            "shrink-0",
+            searchLabel && "sm:self-end",
+            variant === "compact" && "w-full sm:w-auto"
+          )}
         >
           <SearchIcon data-icon="inline-start" />
           検索
