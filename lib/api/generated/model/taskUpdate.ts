@@ -27,5 +27,6 @@ export interface TaskUpdate {
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
   sort_order?: number | null;
+  tags?: string[] | null;
   change_reason?: string | null;
 }

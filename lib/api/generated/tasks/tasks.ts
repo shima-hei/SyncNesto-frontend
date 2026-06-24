@@ -32,6 +32,7 @@ import type {
   BoardUpdate,
   GanttResponse,
   HTTPValidationError,
+  ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,
   ListTasksProjectsProjectIdTasksGetParams,
   MilestoneCreate,
   MilestoneRead,
@@ -41,6 +42,11 @@ import type {
   RequirementTaskProgressRead,
   RequirementTaskRelationCreate,
   RequirementTaskRelationRead,
+  TaskChangeLogListResponse,
+  TaskCommentCreate,
+  TaskCommentRead,
+  TaskCommentStateUpdate,
+  TaskCommentUpdate,
   TaskCreate,
   TaskDependencyCreate,
   TaskDependencyRead,
@@ -488,7 +494,578 @@ export const useDeleteTaskTasksTaskIdDelete = <TError = ErrorType<HTTPValidation
       > => {
       return useMutation(getDeleteTaskTasksTaskIdDeleteMutationOptions(options), queryClient);
     }
-    export const getListRequirementTasksRequirementsRequirementIdTasksGetUrl = (requirementId: number,) => {
+    export const getListTaskCommentsTasksTaskIdCommentsGetUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}/comments`
+}
+
+/**
+ * タスクコメント一覧を取得する。
+ * @summary List Task Comments
+ */
+export const listTaskCommentsTasksTaskIdCommentsGet = async (taskId: number, options?: RequestInit): Promise<TaskCommentRead[]> => {
+
+  return apiClient<TaskCommentRead[]>(getListTaskCommentsTasksTaskIdCommentsGetUrl(taskId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskCommentsTasksTaskIdCommentsGetQueryKey = (taskId: number,) => {
+    return [
+    `/tasks/${taskId}/comments`
+    ] as const;
+    }
+
+
+export const getListTaskCommentsTasksTaskIdCommentsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskCommentsTasksTaskIdCommentsGetQueryKey(taskId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>> = ({ signal }) => listTaskCommentsTasksTaskIdCommentsGet(taskId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTaskCommentsTasksTaskIdCommentsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>>
+export type ListTaskCommentsTasksTaskIdCommentsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Task Comments
+ */
+
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTaskCommentsTasksTaskIdCommentsGetQueryOptions(taskId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getCreateTaskCommentTasksTaskIdCommentsPostUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}/comments`
+}
+
+/**
+ * タスクコメントを作成する。
+ * @summary Create Task Comment
+ */
+export const createTaskCommentTasksTaskIdCommentsPost = async (taskId: number,
+    taskCommentCreate: TaskCommentCreate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getCreateTaskCommentTasksTaskIdCommentsPostUrl(taskId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentCreate)
+  }
+);}
+
+
+
+
+export const getCreateTaskCommentTasksTaskIdCommentsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext> => {
+
+const mutationKey = ['createTaskCommentTasksTaskIdCommentsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, {taskId: number;data: BodyType<TaskCommentCreate>}> = (props) => {
+          const {taskId,data} = props ?? {};
+
+          return  createTaskCommentTasksTaskIdCommentsPost(taskId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTaskCommentTasksTaskIdCommentsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>>
+    export type CreateTaskCommentTasksTaskIdCommentsPostMutationBody = BodyType<TaskCommentCreate>
+    export type CreateTaskCommentTasksTaskIdCommentsPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Task Comment
+ */
+export const useCreateTaskCommentTasksTaskIdCommentsPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>,
+        TError,
+        {taskId: number;data: BodyType<TaskCommentCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateTaskCommentTasksTaskIdCommentsPostMutationOptions(options), queryClient);
+    }
+    export const getUpdateTaskCommentTaskCommentsCommentIdPatchUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}`
+}
+
+/**
+ * タスクコメントを更新する。
+ * @summary Update Task Comment
+ */
+export const updateTaskCommentTaskCommentsCommentIdPatch = async (commentId: number,
+    taskCommentUpdate: TaskCommentUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getUpdateTaskCommentTaskCommentsCommentIdPatchUrl(commentId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateTaskCommentTaskCommentsCommentIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext> => {
+
+const mutationKey = ['updateTaskCommentTaskCommentsCommentIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, {commentId: number;data: BodyType<TaskCommentUpdate>}> = (props) => {
+          const {commentId,data} = props ?? {};
+
+          return  updateTaskCommentTaskCommentsCommentIdPatch(commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>>
+    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationBody = BodyType<TaskCommentUpdate>
+    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Task Comment
+ */
+export const useUpdateTaskCommentTaskCommentsCommentIdPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>,
+        TError,
+        {commentId: number;data: BodyType<TaskCommentUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTaskCommentTaskCommentsCommentIdPatchMutationOptions(options), queryClient);
+    }
+    export const getDeleteTaskCommentTaskCommentsCommentIdDeleteUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}`
+}
+
+/**
+ * タスクコメントを論理削除する。
+ * @summary Delete Task Comment
+ */
+export const deleteTaskCommentTaskCommentsCommentIdDelete = async (commentId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteTaskCommentTaskCommentsCommentIdDeleteUrl(commentId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteTaskCommentTaskCommentsCommentIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext> => {
+
+const mutationKey = ['deleteTaskCommentTaskCommentsCommentIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, {commentId: number}> = (props) => {
+          const {commentId} = props ?? {};
+
+          return  deleteTaskCommentTaskCommentsCommentIdDelete(commentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTaskCommentTaskCommentsCommentIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>>
+
+    export type DeleteTaskCommentTaskCommentsCommentIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Task Comment
+ */
+export const useDeleteTaskCommentTaskCommentsCommentIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>,
+        TError,
+        {commentId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteTaskCommentTaskCommentsCommentIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getResolveTaskCommentTaskCommentsCommentIdResolvePostUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}/resolve`
+}
+
+/**
+ * タスクコメントを解決済みにする。
+ * @summary Resolve Task Comment
+ */
+export const resolveTaskCommentTaskCommentsCommentIdResolvePost = async (commentId: number,
+    taskCommentStateUpdate: TaskCommentStateUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getResolveTaskCommentTaskCommentsCommentIdResolvePostUrl(commentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentStateUpdate)
+  }
+);}
+
+
+
+
+export const getResolveTaskCommentTaskCommentsCommentIdResolvePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext> => {
+
+const mutationKey = ['resolveTaskCommentTaskCommentsCommentIdResolvePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, {commentId: number;data: BodyType<TaskCommentStateUpdate>}> = (props) => {
+          const {commentId,data} = props ?? {};
+
+          return  resolveTaskCommentTaskCommentsCommentIdResolvePost(commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationResult = NonNullable<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>>
+    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationBody = BodyType<TaskCommentStateUpdate>
+    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Resolve Task Comment
+ */
+export const useResolveTaskCommentTaskCommentsCommentIdResolvePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>,
+        TError,
+        {commentId: number;data: BodyType<TaskCommentStateUpdate>},
+        TContext
+      > => {
+      return useMutation(getResolveTaskCommentTaskCommentsCommentIdResolvePostMutationOptions(options), queryClient);
+    }
+    export const getReopenTaskCommentTaskCommentsCommentIdReopenPostUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}/reopen`
+}
+
+/**
+ * タスクコメントを未解決に戻す。
+ * @summary Reopen Task Comment
+ */
+export const reopenTaskCommentTaskCommentsCommentIdReopenPost = async (commentId: number,
+    taskCommentStateUpdate: TaskCommentStateUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getReopenTaskCommentTaskCommentsCommentIdReopenPostUrl(commentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentStateUpdate)
+  }
+);}
+
+
+
+
+export const getReopenTaskCommentTaskCommentsCommentIdReopenPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext> => {
+
+const mutationKey = ['reopenTaskCommentTaskCommentsCommentIdReopenPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, {commentId: number;data: BodyType<TaskCommentStateUpdate>}> = (props) => {
+          const {commentId,data} = props ?? {};
+
+          return  reopenTaskCommentTaskCommentsCommentIdReopenPost(commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationResult = NonNullable<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>>
+    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationBody = BodyType<TaskCommentStateUpdate>
+    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Reopen Task Comment
+ */
+export const useReopenTaskCommentTaskCommentsCommentIdReopenPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>,
+        TError,
+        {commentId: number;data: BodyType<TaskCommentStateUpdate>},
+        TContext
+      > => {
+      return useMutation(getReopenTaskCommentTaskCommentsCommentIdReopenPostMutationOptions(options), queryClient);
+    }
+    export const getListTaskChangeLogsTasksTaskIdChangeLogsGetUrl = (taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/tasks/${taskId}/change-logs?${stringifiedParams}` : `/tasks/${taskId}/change-logs`
+}
+
+/**
+ * タスク変更履歴一覧を取得する。
+ * @summary List Task Change Logs
+ */
+export const listTaskChangeLogsTasksTaskIdChangeLogsGet = async (taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: RequestInit): Promise<TaskChangeLogListResponse> => {
+
+  return apiClient<TaskChangeLogListResponse>(getListTaskChangeLogsTasksTaskIdChangeLogsGetUrl(taskId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryKey = (taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,) => {
+    return [
+    `/tasks/${taskId}/change-logs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryKey(taskId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>> = ({ signal }) => listTaskChangeLogsTasksTaskIdChangeLogsGet(taskId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTaskChangeLogsTasksTaskIdChangeLogsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>>
+export type ListTaskChangeLogsTasksTaskIdChangeLogsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params: undefined |  ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Task Change Logs
+ */
+
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryOptions(taskId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getListRequirementTasksRequirementsRequirementIdTasksGetUrl = (requirementId: number,) => {
 
 
 

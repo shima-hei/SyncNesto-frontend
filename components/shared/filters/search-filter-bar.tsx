@@ -40,24 +40,36 @@ export function SearchFilterBar({
     >
       <form
         className={cn(
-          "flex w-full min-w-0 flex-col gap-2 sm:flex-row",
-          variant === "default" && "md:max-w-xl"
+          "grid w-full min-w-0 gap-2",
+          variant === "default" &&
+            "sm:grid-cols-[minmax(0,1fr)_auto] md:max-w-xl",
+          variant === "compact" && "sm:grid-cols-[minmax(0,1fr)_auto]"
         )}
         onSubmit={handleSubmit}
       >
         <Input
-          className="min-w-0 flex-1"
+          className="w-full min-w-0 flex-1"
           value={searchValue}
           onChange={(event) => onSearchValueChange(event.target.value)}
           placeholder={searchPlaceholder}
         />
-        <Button type="submit" variant="outline" className="shrink-0">
+        <Button
+          type="submit"
+          variant="outline"
+          className={cn("shrink-0", variant === "compact" && "w-full sm:w-auto")}
+        >
           <SearchIcon data-icon="inline-start" />
           検索
         </Button>
       </form>
       {children ? (
-        <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={cn(
+            "grid min-w-0 gap-2 [&>*]:min-w-0",
+            variant === "default" && "sm:grid-cols-2 lg:grid-cols-3",
+            variant === "compact" && "grid-cols-1"
+          )}
+        >
           {children}
         </div>
       ) : null}

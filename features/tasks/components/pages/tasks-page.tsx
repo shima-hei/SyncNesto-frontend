@@ -1,0 +1,1124 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
+import { DataPagination } from "@/components/shared/navigation/data-pagination";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  canCreateTask,
+  canUpdateTask,
+} from "@/features/auth/utils/authorization";
+import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
+import type { GanttResponse } from "@/lib/api/generated/model";
+
+import {
+  TASK_PRIORITY_OPTIONS,
+  TASK_STATUS_OPTIONS,
+  TASK_TYPE_OPTIONS,
+} from "../../constants/task-options";
+import { useBulkUpdateTasks } from "../../hooks/use-bulk-update-tasks";
+import { useCreateTask } from "../../hooks/use-create-task";
+import { useGantt } from "../../hooks/use-gantt";
+import { useTasks } from "../../hooks/use-tasks";
+import { defaultTaskFormValues } from "../../lib/task-mappers";
+import { TaskForm } from "../forms/task-form";
+import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
+import { TaskUserSelectField } from "../forms/task-user-select-field";
+import { MilestonesSection } from "../sections/milestones-section";
+import { TasksBoardSection } from "../sections/tasks-board-section";
+import { TasksGanttSection } from "../sections/tasks-gantt-section";
+import { TasksTable } from "../tables/tasks-table";
+
+const PAGE_SIZE = 20;
+const ALL_STATUSES = "all";
+const ALL_PRIORITIES = "all";
+const ALL_OVERDUE = "all";
+const ALL_TYPES = "all";
+const NO_BULK_STATUS_CHANGE = "no_change";
+const ALL_GANTT_FILTERS = "";
+
+const SORT_OPTIONS = [
+  { value: "updated_desc", label: "更新日時 新しい順" },
+  { value: "updated_asc", label: "更新日時 古い順" },
+  { value: "code_asc", label: "タスクID 昇順" },
+  { value: "code_desc", label: "タスクID 降順" },
+  { value: "due_date_asc", label: "終了予定日 昇順" },
+  { value: "due_date_desc", label: "終了予定日 降順" },
+  { value: "progress_desc", label: "進捗率 高い順" },
+] as const;
+
+const GANTT_DISPLAY_OPTIONS = [
+  { value: "day", label: "日" },
+  { value: "week", label: "週" },
+  { value: "month", label: "月" },
+  { value: "quarter", label: "四半期" },
+] as const;
+
+type TasksPageProps = {
+  projectId: number;
+};
+
+export function TasksPage({ projectId }: TasksPageProps) {
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState(ALL_STATUSES);
+  const [priority, setPriority] = useState(ALL_PRIORITIES);
+  const [taskType, setTaskType] = useState(ALL_TYPES);
+  const [overdue, setOverdue] = useState(ALL_OVERDUE);
+  const [assigneeId, setAssigneeId] = useState("");
+  const [requirementId, setRequirementId] = useState("");
+  const [tag, setTag] = useState("");
+  const [startDateFrom, setStartDateFrom] = useState("");
+  const [dueDateTo, setDueDateTo] = useState("");
+  const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]["value"]>(
+    "updated_desc"
+  );
+  const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
+  const [bulkStatus, setBulkStatus] = useState(NO_BULK_STATUS_CHANGE);
+  const [bulkAssigneeId, setBulkAssigneeId] = useState("");
+  const [bulkDueDate, setBulkDueDate] = useState("");
+  const [ganttStartDate, setGanttStartDate] = useState("");
+  const [ganttEndDate, setGanttEndDate] = useState("");
+  const [ganttAssigneeId, setGanttAssigneeId] = useState("");
+  const [ganttRequirementId, setGanttRequirementId] = useState("");
+  const [ganttDisplayUnit, setGanttDisplayUnit] =
+    useState<(typeof GANTT_DISPLAY_OPTIONS)[number]["value"]>("day");
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
+  const canCreate = canCreateTask(currentProjectRole);
+  const canUpdate = canUpdateTask(currentProjectRole);
+  const { tasks, total, isLoading, isFetching } = useTasks(projectId, {
+    page,
+    page_size: PAGE_SIZE,
+    q: q || undefined,
+    status: status === ALL_STATUSES ? undefined : status,
+    task_type: taskType === ALL_TYPES ? undefined : taskType,
+    priority: priority === ALL_PRIORITIES ? undefined : priority,
+    assignee_id: assigneeId ? Number(assigneeId) : undefined,
+    requirement_id: requirementId ? Number(requirementId) : undefined,
+    tag: tag.trim() || undefined,
+    start_date_from: startDateFrom || undefined,
+    due_date_to: dueDateTo || undefined,
+    overdue: overdue === ALL_OVERDUE ? undefined : overdue === "overdue",
+    sort,
+  });
+  const { gantt, isLoading: isGanttLoading } = useGantt(projectId, {
+    start_date: ganttStartDate || undefined,
+    end_date: ganttEndDate || undefined,
+    assignee_id: ganttAssigneeId ? Number(ganttAssigneeId) : undefined,
+    requirement_id: ganttRequirementId ? Number(ganttRequirementId) : undefined,
+  });
+  const { createTask, isPending: isCreatePending, error: createError } =
+    useCreateTask(projectId);
+  const { bulkUpdateTasks, isPending: isBulkUpdatePending } =
+    useBulkUpdateTasks(projectId);
+  const selectedTasks = useMemo(() => {
+    return tasks.filter((task) => selectedTaskIds.includes(task.id));
+  }, [selectedTaskIds, tasks]);
+  const hasBulkChange =
+    bulkStatus !== NO_BULK_STATUS_CHANGE || Boolean(bulkAssigneeId || bulkDueDate);
+
+  const handleSearch = () => {
+    setPage(1);
+    setQ(searchInput.trim());
+  };
+
+  const handleToggleTask = (taskId: number, checked: boolean) => {
+    setSelectedTaskIds((current) => {
+      if (checked) {
+        return current.includes(taskId) ? current : [...current, taskId];
+      }
+
+      return current.filter((currentTaskId) => currentTaskId !== taskId);
+    });
+  };
+
+  const handleToggleAllTasks = (checked: boolean) => {
+    if (!checked) {
+      setSelectedTaskIds((current) =>
+        current.filter(
+          (taskId) => !tasks.some((task) => task.id === taskId)
+        )
+      );
+      return;
+    }
+
+    setSelectedTaskIds((current) =>
+      Array.from(new Set([...current, ...tasks.map((task) => task.id)]))
+    );
+  };
+
+  const handleBulkUpdate = async () => {
+    await bulkUpdateTasks(selectedTasks, {
+      status: bulkStatus === NO_BULK_STATUS_CHANGE ? undefined : bulkStatus,
+      assigneeId: bulkAssigneeId || undefined,
+      dueDate: bulkDueDate || undefined,
+    });
+    setSelectedTaskIds([]);
+    setBulkStatus(NO_BULK_STATUS_CHANGE);
+    setBulkAssigneeId("");
+    setBulkDueDate("");
+  };
+
+  return (
+    <div className="flex flex-col gap-4 p-4 lg:p-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-semibold">タスク</h2>
+        <p className="text-sm text-muted-foreground">
+          プロジェクトのタスク、カンバン、ガントチャートを管理します。
+        </p>
+      </div>
+
+      <Tabs defaultValue="list">
+        <TabsList className="w-full justify-start overflow-x-auto" variant="line">
+          <TabsTrigger value="list">一覧</TabsTrigger>
+          <TabsTrigger value="board">ボード</TabsTrigger>
+          <TabsTrigger value="gantt">ガント</TabsTrigger>
+          {canCreate ? (
+            <TabsTrigger value="create">新規作成</TabsTrigger>
+          ) : null}
+        </TabsList>
+
+        <TabsContent value="list" className="flex flex-col gap-4">
+          <TaskFilters
+            projectId={projectId}
+            searchInput={searchInput}
+            status={status}
+            priority={priority}
+            taskType={taskType}
+            overdue={overdue}
+            assigneeId={assigneeId}
+            requirementId={requirementId}
+            tag={tag}
+            startDateFrom={startDateFrom}
+            dueDateTo={dueDateTo}
+            sort={sort}
+            onSearchInputChange={setSearchInput}
+            onSearch={handleSearch}
+            onStatusChange={(value) => {
+              setPage(1);
+              setStatus(value);
+            }}
+            onPriorityChange={(value) => {
+              setPage(1);
+              setPriority(value);
+            }}
+            onTaskTypeChange={(value) => {
+              setPage(1);
+              setTaskType(value);
+            }}
+            onAssigneeIdChange={(value) => {
+              setPage(1);
+              setAssigneeId(value);
+            }}
+            onRequirementIdChange={(value) => {
+              setPage(1);
+              setRequirementId(value);
+            }}
+            onTagChange={(value) => {
+              setPage(1);
+              setTag(value);
+            }}
+            onStartDateFromChange={(value) => {
+              setPage(1);
+              setStartDateFrom(value);
+            }}
+            onDueDateToChange={(value) => {
+              setPage(1);
+              setDueDateTo(value);
+            }}
+            onOverdueChange={(value) => {
+              setPage(1);
+              setOverdue(value);
+            }}
+            onSortChange={(value) => setSort(value as typeof sort)}
+          />
+          {canUpdate ? (
+            <TaskBulkActions
+              projectId={projectId}
+              selectedCount={selectedTasks.length}
+              status={bulkStatus}
+              assigneeId={bulkAssigneeId}
+              dueDate={bulkDueDate}
+              isPending={isBulkUpdatePending}
+              disabled={!selectedTasks.length || !hasBulkChange}
+              onStatusChange={setBulkStatus}
+              onAssigneeIdChange={setBulkAssigneeId}
+              onDueDateChange={setBulkDueDate}
+              onApply={handleBulkUpdate}
+              onClearSelection={() => setSelectedTaskIds([])}
+            />
+          ) : null}
+          <TasksTable
+            projectId={projectId}
+            tasks={tasks}
+            isLoading={isLoading}
+            canCreate={canCreate}
+            canUpdate={canUpdate}
+            selectedTaskIds={selectedTaskIds}
+            onToggleTask={handleToggleTask}
+            onToggleAllTasks={handleToggleAllTasks}
+          />
+          <DataPagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            currentCount={tasks.length}
+            isFetching={isFetching}
+            isLoading={isLoading}
+            onPageChange={setPage}
+          />
+        </TabsContent>
+
+        <TabsContent value="board" className="flex flex-col gap-4">
+          <TaskFilters
+            projectId={projectId}
+            searchInput={searchInput}
+            status={status}
+            priority={priority}
+            taskType={taskType}
+            overdue={overdue}
+            assigneeId={assigneeId}
+            requirementId={requirementId}
+            tag={tag}
+            startDateFrom={startDateFrom}
+            dueDateTo={dueDateTo}
+            sort={sort}
+            onSearchInputChange={setSearchInput}
+            onSearch={handleSearch}
+            onStatusChange={(value) => {
+              setPage(1);
+              setStatus(value);
+            }}
+            onPriorityChange={(value) => {
+              setPage(1);
+              setPriority(value);
+            }}
+            onTaskTypeChange={(value) => {
+              setPage(1);
+              setTaskType(value);
+            }}
+            onAssigneeIdChange={(value) => {
+              setPage(1);
+              setAssigneeId(value);
+            }}
+            onRequirementIdChange={(value) => {
+              setPage(1);
+              setRequirementId(value);
+            }}
+            onTagChange={(value) => {
+              setPage(1);
+              setTag(value);
+            }}
+            onStartDateFromChange={(value) => {
+              setPage(1);
+              setStartDateFrom(value);
+            }}
+            onDueDateToChange={(value) => {
+              setPage(1);
+              setDueDateTo(value);
+            }}
+            onOverdueChange={(value) => {
+              setPage(1);
+              setOverdue(value);
+            }}
+            onSortChange={(value) => setSort(value as typeof sort)}
+          />
+          <TasksBoardSection
+            projectId={projectId}
+            tasks={tasks}
+            canUpdate={canUpdate}
+          />
+        </TabsContent>
+
+        <TabsContent value="gantt" className="flex flex-col gap-4">
+          <GanttControls
+            projectId={projectId}
+            startDate={ganttStartDate}
+            endDate={ganttEndDate}
+            assigneeId={ganttAssigneeId}
+            requirementId={ganttRequirementId}
+            displayUnit={ganttDisplayUnit}
+            gantt={gantt}
+            onStartDateChange={setGanttStartDate}
+            onEndDateChange={setGanttEndDate}
+            onAssigneeIdChange={setGanttAssigneeId}
+            onRequirementIdChange={setGanttRequirementId}
+            onDisplayUnitChange={(value) =>
+              setGanttDisplayUnit(value as typeof ganttDisplayUnit)
+            }
+          />
+          <MilestonesSection projectId={projectId} canUpdate={canUpdate} />
+          <TasksGanttSection
+            projectId={projectId}
+            gantt={gantt}
+            isLoading={isGanttLoading}
+            displayUnit={ganttDisplayUnit}
+            canUpdate={canUpdate}
+          />
+        </TabsContent>
+
+        {canCreate ? (
+          <TabsContent value="create">
+            <Card>
+              <CardHeader>
+                <CardTitle>タスク登録</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TaskForm
+                  mode="create"
+                  projectId={projectId}
+                  initialValues={defaultTaskFormValues}
+                  isPending={isCreatePending}
+                  error={createError}
+                  onSubmit={createTask}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ) : null}
+      </Tabs>
+    </div>
+  );
+}
+
+function GanttControls({
+  projectId,
+  startDate,
+  endDate,
+  assigneeId,
+  requirementId,
+  displayUnit,
+  gantt,
+  onStartDateChange,
+  onEndDateChange,
+  onAssigneeIdChange,
+  onRequirementIdChange,
+  onDisplayUnitChange,
+}: {
+  projectId: number;
+  startDate: string;
+  endDate: string;
+  assigneeId: string;
+  requirementId: string;
+  displayUnit: string;
+  gantt: GanttResponse | null;
+  onStartDateChange: (value: string) => void;
+  onEndDateChange: (value: string) => void;
+  onAssigneeIdChange: (value: string) => void;
+  onRequirementIdChange: (value: string) => void;
+  onDisplayUnitChange: (value: string) => void;
+}) {
+  const handleMoveRange = (direction: -1 | 1) => {
+    const currentRange = getCurrentGanttRange(startDate, endDate, displayUnit);
+    const movedRange = moveGanttRange(currentRange, displayUnit, direction);
+
+    onStartDateChange(movedRange.startDate);
+    onEndDateChange(movedRange.endDate);
+  };
+  const handleMoveToToday = () => {
+    const todayRange = getTodayGanttRange(displayUnit);
+
+    onStartDateChange(todayRange.startDate);
+    onEndDateChange(todayRange.endDate);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">ガント表示条件</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end">
+        <div className="flex min-w-0 flex-col gap-2">
+          <Label htmlFor="gantt-start-date">開始日</Label>
+          <Input
+            id="gantt-start-date"
+            type="date"
+            value={startDate}
+            onChange={(event) => onStartDateChange(event.target.value)}
+          />
+        </div>
+        <div className="flex min-w-0 flex-col gap-2">
+          <Label htmlFor="gantt-end-date">終了日</Label>
+          <Input
+            id="gantt-end-date"
+            type="date"
+            value={endDate}
+            onChange={(event) => onEndDateChange(event.target.value)}
+          />
+        </div>
+        <TaskUserSelectField
+          projectId={projectId}
+          label="担当者"
+          value={assigneeId}
+          placeholder="すべて"
+          onChange={onAssigneeIdChange}
+        />
+        <TaskRequirementSelectField
+          projectId={projectId}
+          value={requirementId}
+          placeholder="すべて"
+          onChange={onRequirementIdChange}
+        />
+        <div className="flex min-w-0 flex-col gap-2">
+          <Label>表示単位</Label>
+          <Select value={displayUnit} onValueChange={onDisplayUnitChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {GANTT_DISPLAY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleMoveRange(-1)}
+          >
+            前へ
+          </Button>
+          <Button type="button" variant="outline" onClick={handleMoveToToday}>
+            今日
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleMoveRange(1)}
+          >
+            次へ
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!gantt}
+            onClick={() => {
+              if (gantt) {
+                exportGanttCsv(gantt);
+              }
+            }}
+          >
+            CSV出力
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!gantt}
+            onClick={() => {
+              if (gantt) {
+                exportGanttPdf(gantt, displayUnit);
+              }
+            }}
+          >
+            PDF出力
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              onStartDateChange(ALL_GANTT_FILTERS);
+              onEndDateChange(ALL_GANTT_FILTERS);
+              onAssigneeIdChange(ALL_GANTT_FILTERS);
+              onRequirementIdChange(ALL_GANTT_FILTERS);
+            }}
+          >
+            条件クリア
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const getCurrentGanttRange = (
+  startDate: string,
+  endDate: string,
+  displayUnit: string
+) => {
+  if (startDate && endDate) {
+    return { start: new Date(startDate), end: new Date(endDate) };
+  }
+
+  const todayRange = getTodayGanttRange(displayUnit);
+
+  return {
+    start: new Date(todayRange.startDate),
+    end: new Date(todayRange.endDate),
+  };
+};
+
+const getTodayGanttRange = (displayUnit: string) => {
+  const today = new Date();
+  const days = getGanttWindowDays(displayUnit);
+  const start = addDays(today, -Math.floor(days / 3));
+  const end = addDays(start, days);
+
+  return {
+    startDate: toDateInputValue(start),
+    endDate: toDateInputValue(end),
+  };
+};
+
+const moveGanttRange = (
+  range: { start: Date; end: Date },
+  displayUnit: string,
+  direction: -1 | 1
+) => {
+  if (displayUnit === "month") {
+    return {
+      startDate: toDateInputValue(addMonths(range.start, direction)),
+      endDate: toDateInputValue(addMonths(range.end, direction)),
+    };
+  }
+
+  if (displayUnit === "quarter") {
+    return {
+      startDate: toDateInputValue(addMonths(range.start, direction * 3)),
+      endDate: toDateInputValue(addMonths(range.end, direction * 3)),
+    };
+  }
+
+  const days = getGanttWindowDays(displayUnit) * direction;
+
+  return {
+    startDate: toDateInputValue(addDays(range.start, days)),
+    endDate: toDateInputValue(addDays(range.end, days)),
+  };
+};
+
+const getGanttWindowDays = (displayUnit: string) => {
+  switch (displayUnit) {
+    case "week":
+      return 28;
+    case "month":
+      return 120;
+    case "quarter":
+      return 365;
+    case "day":
+    default:
+      return 21;
+  }
+};
+
+const addDays = (date: Date, days: number) => {
+  const next = new Date(date);
+
+  next.setDate(next.getDate() + days);
+
+  return next;
+};
+
+const addMonths = (date: Date, months: number) => {
+  const next = new Date(date);
+
+  next.setMonth(next.getMonth() + months);
+
+  return next;
+};
+
+const toDateInputValue = (date: Date) => {
+  return date.toISOString().slice(0, 10);
+};
+
+function TaskBulkActions({
+  projectId,
+  selectedCount,
+  status,
+  assigneeId,
+  dueDate,
+  isPending,
+  disabled,
+  onStatusChange,
+  onAssigneeIdChange,
+  onDueDateChange,
+  onApply,
+  onClearSelection,
+}: {
+  projectId: number;
+  selectedCount: number;
+  status: string;
+  assigneeId: string;
+  dueDate: string;
+  isPending: boolean;
+  disabled: boolean;
+  onStatusChange: (value: string) => void;
+  onAssigneeIdChange: (value: string) => void;
+  onDueDateChange: (value: string) => void;
+  onApply: () => Promise<void>;
+  onClearSelection: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">一括更新</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        <p className="text-sm text-muted-foreground lg:w-28">
+          選択中: {selectedCount}件
+        </p>
+        <div className="grid min-w-0 flex-1 gap-3 md:grid-cols-3">
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label>ステータス</Label>
+            <Select value={status} onValueChange={onStatusChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="変更しない" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value={NO_BULK_STATUS_CHANGE}>変更しない</SelectItem>
+                  {TASK_STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <TaskUserSelectField
+            projectId={projectId}
+            label="担当者"
+            value={assigneeId}
+            placeholder="変更しない"
+            onChange={onAssigneeIdChange}
+          />
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label htmlFor="bulk-due-date">終了予定日</Label>
+            <Input
+              id="bulk-due-date"
+              type="date"
+              value={dueDate}
+              onChange={(event) => onDueDateChange(event.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            disabled={disabled || isPending}
+            onClick={() => void onApply()}
+          >
+            一括更新
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!selectedCount || isPending}
+            onClick={onClearSelection}
+          >
+            選択解除
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TaskFilters({
+  projectId,
+  searchInput,
+  status,
+  priority,
+  taskType,
+  overdue,
+  assigneeId,
+  requirementId,
+  tag,
+  startDateFrom,
+  dueDateTo,
+  sort,
+  onSearchInputChange,
+  onSearch,
+  onStatusChange,
+  onPriorityChange,
+  onTaskTypeChange,
+  onAssigneeIdChange,
+  onRequirementIdChange,
+  onTagChange,
+  onStartDateFromChange,
+  onDueDateToChange,
+  onOverdueChange,
+  onSortChange,
+}: {
+  projectId: number;
+  searchInput: string;
+  status: string;
+  priority: string;
+  taskType: string;
+  overdue: string;
+  assigneeId: string;
+  requirementId: string;
+  tag: string;
+  startDateFrom: string;
+  dueDateTo: string;
+  sort: string;
+  onSearchInputChange: (value: string) => void;
+  onSearch: () => void;
+  onStatusChange: (value: string) => void;
+  onPriorityChange: (value: string) => void;
+  onTaskTypeChange: (value: string) => void;
+  onAssigneeIdChange: (value: string) => void;
+  onRequirementIdChange: (value: string) => void;
+  onTagChange: (value: string) => void;
+  onStartDateFromChange: (value: string) => void;
+  onDueDateToChange: (value: string) => void;
+  onOverdueChange: (value: string) => void;
+  onSortChange: (value: string) => void;
+}) {
+  return (
+    <SearchFilterBar
+      searchValue={searchInput}
+      searchPlaceholder="タスクID、タイトル、説明で検索"
+      onSearchValueChange={onSearchInputChange}
+      onSearch={onSearch}
+    >
+      <Select value={status} onValueChange={onStatusChange}>
+        <SelectTrigger className="w-full sm:w-40">
+          <SelectValue placeholder="ステータス" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={ALL_STATUSES}>すべて</SelectItem>
+            {TASK_STATUS_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <Select value={priority} onValueChange={onPriorityChange}>
+        <SelectTrigger className="w-full sm:w-32">
+          <SelectValue placeholder="優先度" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={ALL_PRIORITIES}>すべて</SelectItem>
+            {TASK_PRIORITY_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <Select value={taskType} onValueChange={onTaskTypeChange}>
+        <SelectTrigger className="w-full sm:w-40">
+          <SelectValue placeholder="種別" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={ALL_TYPES}>すべて</SelectItem>
+            {TASK_TYPE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <Select value={overdue} onValueChange={onOverdueChange}>
+        <SelectTrigger className="w-full sm:w-36">
+          <SelectValue placeholder="期限" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={ALL_OVERDUE}>すべて</SelectItem>
+            <SelectItem value="overdue">期限超過</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <TaskUserSelectField
+        projectId={projectId}
+        label="担当者"
+        value={assigneeId}
+        placeholder="担当者"
+        showLabel={false}
+        onChange={onAssigneeIdChange}
+      />
+      <TaskRequirementSelectField
+        projectId={projectId}
+        value={requirementId}
+        placeholder="関連要件"
+        showLabel={false}
+        onChange={onRequirementIdChange}
+      />
+      <Input
+        value={tag}
+        placeholder="タグ"
+        aria-label="タグで絞り込み"
+        onChange={(event) => onTagChange(event.target.value)}
+      />
+      <Input
+        type="date"
+        value={startDateFrom}
+        aria-label="開始日以降で絞り込み"
+        onChange={(event) => onStartDateFromChange(event.target.value)}
+      />
+      <Input
+        type="date"
+        value={dueDateTo}
+        aria-label="終了予定日までで絞り込み"
+        onChange={(event) => onDueDateToChange(event.target.value)}
+      />
+      <Select value={sort} onValueChange={onSortChange}>
+        <SelectTrigger className="w-full sm:w-44">
+          <SelectValue placeholder="並び替え" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {SORT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </SearchFilterBar>
+  );
+}
+
+const exportGanttCsv = (gantt: GanttResponse) => {
+  const rows = [
+    [
+      "type",
+      "id",
+      "code",
+      "title",
+      "status",
+      "assignee_id",
+      "start_date",
+      "due_date",
+      "progress_percent",
+      "target_date",
+    ],
+    ...gantt.tasks.map((task) => [
+      "task",
+      String(task.id),
+      task.task_code,
+      task.title,
+      task.status ?? "",
+      task.assignee_id ? String(task.assignee_id) : "",
+      task.start_date ?? "",
+      task.due_date ?? "",
+      String(task.progress_percent ?? 0),
+      "",
+    ]),
+    ...gantt.milestones.map((milestone) => [
+      "milestone",
+      String(milestone.id),
+      "",
+      milestone.title,
+      milestone.status ?? "",
+      "",
+      "",
+      "",
+      "",
+      milestone.target_date,
+    ]),
+  ];
+  const csv = rows.map((row) => row.map(escapeCsvValue).join(",")).join("\n");
+  const blob = new Blob([`\uFEFF${csv}`], {
+    type: "text/csv;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "gantt.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportGanttPdf = (gantt: GanttResponse, displayUnit: string) => {
+  const printWindow = window.open("", "_blank", "noopener,noreferrer");
+
+  if (!printWindow) {
+    return;
+  }
+
+  printWindow.document.write(getGanttPrintHtml(gantt, displayUnit));
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+};
+
+const getGanttPrintHtml = (gantt: GanttResponse, displayUnit: string) => {
+  const tasks = gantt.tasks
+    .map(
+      (task) => `
+        <tr>
+          <td>${escapeHtml(task.task_code)}</td>
+          <td>${escapeHtml(task.title)}</td>
+          <td>${escapeHtml(task.status ?? "")}</td>
+          <td>${task.assignee_id ?? ""}</td>
+          <td>${escapeHtml(task.start_date ?? "")}</td>
+          <td>${escapeHtml(task.due_date ?? "")}</td>
+          <td>${task.progress_percent ?? 0}%</td>
+        </tr>
+      `
+    )
+    .join("");
+  const milestones = gantt.milestones
+    .map(
+      (milestone) => `
+        <tr>
+          <td>${escapeHtml(milestone.title)}</td>
+          <td>${escapeHtml(milestone.target_date)}</td>
+          <td>${escapeHtml(milestone.status ?? "")}</td>
+        </tr>
+      `
+    )
+    .join("");
+  const dependencies = gantt.dependencies
+    .map(
+      (dependency) => `
+        <tr>
+          <td>${dependency.predecessor_task_id}</td>
+          <td>${dependency.successor_task_id}</td>
+          <td>${escapeHtml(dependency.dependency_type ?? "")}</td>
+          <td>${dependency.lag_days ?? 0}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  return `
+    <!doctype html>
+    <html lang="ja">
+      <head>
+        <meta charset="utf-8" />
+        <title>ガントチャート</title>
+        <style>
+          body {
+            color: #111;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 24px;
+          }
+          h1 {
+            font-size: 20px;
+            margin: 0 0 8px;
+          }
+          h2 {
+            font-size: 15px;
+            margin: 24px 0 8px;
+          }
+          p {
+            color: #555;
+            font-size: 12px;
+            margin: 0 0 16px;
+          }
+          table {
+            border-collapse: collapse;
+            font-size: 11px;
+            width: 100%;
+          }
+          th,
+          td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+          }
+          th {
+            background: #f3f4f6;
+            font-weight: 600;
+          }
+          @page {
+            margin: 14mm;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>ガントチャート</h1>
+        <p>表示単位: ${escapeHtml(getGanttDisplayUnitLabel(displayUnit))}</p>
+        <h2>タスク</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>タスクID</th>
+              <th>タイトル</th>
+              <th>状態</th>
+              <th>担当者ID</th>
+              <th>開始日</th>
+              <th>終了予定日</th>
+              <th>進捗</th>
+            </tr>
+          </thead>
+          <tbody>${tasks || getPrintEmptyRow(7)}</tbody>
+        </table>
+        <h2>マイルストーン</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>タイトル</th>
+              <th>対象日</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody>${milestones || getPrintEmptyRow(3)}</tbody>
+        </table>
+        <h2>依存関係</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>先行タスクID</th>
+              <th>後続タスクID</th>
+              <th>種別</th>
+              <th>ラグ日数</th>
+            </tr>
+          </thead>
+          <tbody>${dependencies || getPrintEmptyRow(4)}</tbody>
+        </table>
+      </body>
+    </html>
+  `;
+};
+
+const getPrintEmptyRow = (colSpan: number) => {
+  return `<tr><td colspan="${colSpan}">データはありません。</td></tr>`;
+};
+
+const getGanttDisplayUnitLabel = (displayUnit: string) => {
+  const option = GANTT_DISPLAY_OPTIONS.find((item) => item.value === displayUnit);
+
+  return option?.label ?? displayUnit;
+};
+
+const escapeCsvValue = (value: string) => {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replaceAll('"', '""')}"`;
+  }
+
+  return value;
+};
+
+const escapeHtml = (value: string) => {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+};

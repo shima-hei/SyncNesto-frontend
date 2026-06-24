@@ -8,7 +8,9 @@ import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delet
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RequirementRelatedTasksSection } from "@/features/tasks/components/sections/requirement-related-tasks-section";
 import {
+  canCreateTask,
   canCreateRequirement,
   canDeleteRequirement,
   canCommentRequirement,
@@ -168,6 +170,11 @@ export function RequirementDetailPage({
           projectId={projectId}
           requirementId={requirementId}
           canLink={canLinkRequirement(currentProjectRole)}
+        />
+        <RequirementRelatedTasksSection
+          projectId={projectId}
+          requirementId={requirementId}
+          canCreate={canCreateTask(currentProjectRole)}
         />
         <RequirementCommentsSection
           projectId={projectId}

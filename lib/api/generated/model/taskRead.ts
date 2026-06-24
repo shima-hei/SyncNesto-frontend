@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { TaskRequirementSummary } from './taskRequirementSummary';
 
 /**
  * タスク読み取り時に返すschema。
@@ -30,6 +31,7 @@ export interface TaskRead {
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
   sort_order?: number;
+  tags?: string[];
   id: number;
   project_id: number;
   version: number;
@@ -39,4 +41,5 @@ export interface TaskRead {
   updated_at: string;
   is_overdue?: boolean;
   is_blocked?: boolean;
+  requirements?: TaskRequirementSummary[];
 }

@@ -143,8 +143,8 @@ export function RequirementDocumentDetailPage({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)_360px] xl:items-start">
-        <div className="min-w-0 xl:sticky xl:top-20">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(240px,320px)_minmax(0,1fr)_minmax(280px,360px)] 2xl:items-start">
+        <div className="min-w-0 2xl:sticky 2xl:top-20">
           <RequirementSectionsSection
             projectId={projectId}
             documentId={documentId}
@@ -180,7 +180,7 @@ export function RequirementDocumentDetailPage({
           />
         </div>
 
-        <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20">
+        <div className="flex min-w-0 flex-col gap-4 2xl:sticky 2xl:top-20">
           <SelectedRequirementSummarySection
             projectId={projectId}
             documentId={documentId}

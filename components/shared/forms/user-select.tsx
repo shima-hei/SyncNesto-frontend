@@ -36,6 +36,7 @@ type UserSelectProps = {
   searchPlaceholder?: string;
   emptyMessage?: string;
   loadingMessage?: string;
+  disabled?: boolean;
   onOpenChange: (open: boolean) => void;
   onSearchChange: (value: string) => void;
   onSelect: (user: SelectableUser) => void;
@@ -52,6 +53,7 @@ export function UserSelect({
   searchPlaceholder = "名前またはメールで検索",
   emptyMessage = "候補ユーザーがありません。",
   loadingMessage = "検索中です。",
+  disabled = false,
   onOpenChange,
   onSearchChange,
   onSelect,
@@ -67,6 +69,7 @@ export function UserSelect({
           type="button"
           variant="outline"
           aria-expanded={open}
+          disabled={disabled}
           className={cn(
             "w-full justify-between",
             !selectedUser && "text-muted-foreground"

@@ -8,7 +8,18 @@ import {
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 
 // BFFでは、フロントエンドから呼び出す想定のAPIグループだけを公開する。
-const ALLOWED_PREFIXES = ["/auth", "/users", "/projects"];
+const ALLOWED_PREFIXES = [
+  "/auth",
+  "/users",
+  "/projects",
+  "/tasks",
+  "/task-comments",
+  "/requirements",
+  "/task-dependencies",
+  "/boards",
+  "/board-columns",
+  "/milestones",
+];
 const BODY_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",

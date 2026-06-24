@@ -30,6 +30,7 @@ export interface TaskCreate {
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
   sort_order?: number;
+  tags?: string[];
   requirement_id?: number | null;
   relation_type?: string;
 }

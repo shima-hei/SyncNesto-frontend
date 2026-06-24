@@ -13,9 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectTaskSummarySection } from "@/features/tasks/components/sections/project-task-summary-section";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 
 import { useProject } from "../../hooks/use-project";
-import { formatDate, formatDateTime } from "@/lib/format/date";
 
 type JoinedProjectDetailPageProps = {
   projectId: number;
@@ -58,6 +59,8 @@ export function JoinedProjectDetailPage({
           />
         </CardContent>
       </Card>
+
+      <ProjectTaskSummarySection projectId={project.id} />
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <Button asChild variant="outline">
