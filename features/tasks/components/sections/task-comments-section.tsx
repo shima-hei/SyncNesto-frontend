@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TaskCommentRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
 
 import { useCreateTaskComment } from "../../hooks/use-create-task-comment";
 import { useDeleteTaskComment } from "../../hooks/use-delete-task-comment";
@@ -27,11 +28,15 @@ import { TaskCommentForm } from "../forms/task-comment-form";
 type TaskCommentsSectionProps = {
   taskId: number;
   canComment: boolean;
+  className?: string;
+  contentClassName?: string;
 };
 
 export function TaskCommentsSection({
   taskId,
   canComment,
+  className,
+  contentClassName,
 }: TaskCommentsSectionProps) {
   const [deleteTarget, setDeleteTarget] = useState<TaskCommentRead | null>(null);
   const [editingTarget, setEditingTarget] = useState<TaskCommentRead | null>(null);
@@ -54,11 +59,16 @@ export function TaskCommentsSection({
   const rootComments = comments.filter((comment) => !comment.parent_comment_id);
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>コメント</CardTitle>
       </CardHeader>
-      <CardContent className="flex max-h-[640px] flex-col gap-4 overflow-y-auto">
+      <CardContent
+        className={cn(
+          "flex max-h-[640px] flex-col gap-4 overflow-y-auto",
+          contentClassName
+        )}
+      >
         {canComment ? (
           <TaskCommentForm
             isPending={isCreatePending}

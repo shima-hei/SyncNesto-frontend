@@ -18,6 +18,8 @@ page_size?: number;
 status?: string | null;
 assignee_id?: number | null;
 requirement_id?: number | null;
+parent_task_id?: number | null;
+root_only?: boolean | null;
 start_date_from?: string | null;
 due_date_to?: string | null;
 overdue?: boolean | null;

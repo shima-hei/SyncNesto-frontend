@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { TaskDependencyRead } from "@/lib/api/generated/model";
 
@@ -26,6 +33,7 @@ export function TaskDependenciesSection({
   taskId,
   canUpdate,
 }: TaskDependenciesSectionProps) {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { dependencies, isLoading } = useTaskDependencies(taskId);
   const {
     createTaskDependency,
@@ -39,19 +47,20 @@ export function TaskDependenciesSection({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <CardTitle>依存関係</CardTitle>
+        {canUpdate ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            <PlusIcon data-icon="inline-start" />
+            依存関係追加
+          </Button>
+        ) : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {canUpdate ? (
-          <TaskDependencyForm
-            projectId={projectId}
-            currentTaskId={taskId}
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={createTaskDependency}
-          />
-        ) : null}
         {isLoading ? (
           <p className="text-sm text-muted-foreground">
             依存関係を読み込んでいます。
@@ -76,6 +85,24 @@ export function TaskDependenciesSection({
           </p>
         )}
       </CardContent>
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-h-[90vh] w-[min(92vw,900px)] overflow-y-auto sm:max-w-none">
+          <DialogHeader>
+            <DialogTitle>依存関係追加</DialogTitle>
+            <DialogDescription>
+              作業順序に関わる依存元・依存先タスクを設定します。
+            </DialogDescription>
+          </DialogHeader>
+          <TaskDependencyForm
+            projectId={projectId}
+            currentTaskId={taskId}
+            isPending={isCreatePending}
+            error={createError}
+            onSubmit={createTaskDependency}
+            onSuccess={() => setCreateDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

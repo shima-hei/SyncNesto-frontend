@@ -21,6 +21,7 @@ export function useCreateTask(projectId: number) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const taskFormRequirementIdRef = useRef<number | null>(null);
+  const shouldNavigateAfterCreateRef = useRef(true);
   const createTaskMutation = useCreateTaskProjectsProjectIdTasksPost({
     mutation: {
       onSuccess: async (task) => {
@@ -39,7 +40,9 @@ export function useCreateTask(projectId: number) {
 
         await Promise.all(invalidations);
         toast.success(TASK_MESSAGES.task.createSuccess);
-        router.push(`/projects/joined/${projectId}/tasks/${task.id}`);
+        if (shouldNavigateAfterCreateRef.current) {
+          router.push(`/projects/joined/${projectId}/tasks/${task.id}`);
+        }
       },
       onError: () => {
         toast.error(TASK_MESSAGES.task.createError);
@@ -47,10 +50,14 @@ export function useCreateTask(projectId: number) {
     },
   });
 
-  const createTask = async (values: TaskFormValues) => {
+  const createTask = async (
+    values: TaskFormValues,
+    options?: { navigateAfterCreate?: boolean }
+  ) => {
     taskFormRequirementIdRef.current = values.requirementId
       ? Number(values.requirementId)
       : null;
+    shouldNavigateAfterCreateRef.current = options?.navigateAfterCreate ?? true;
 
     return createTaskMutation.mutateAsync({
       projectId,

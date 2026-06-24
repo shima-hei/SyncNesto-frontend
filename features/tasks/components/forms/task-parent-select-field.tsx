@@ -53,7 +53,7 @@ export function TaskParentSelectField({
   const selectableTasks = tasks.filter((task) => task.id !== excludedTaskId);
   const selectedValue = getSelectedValue({
     value,
-    tasks: selectableTasks,
+    tasks,
     selectedTask,
   });
 

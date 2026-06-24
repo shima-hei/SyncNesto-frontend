@@ -25,6 +25,7 @@ type TaskDependencyFormProps = {
   isPending: boolean;
   error?: Error | null;
   onSubmit: (values: TaskDependencyFormValues) => Promise<unknown>;
+  onSuccess?: () => void;
 };
 
 export function TaskDependencyForm({
@@ -33,6 +34,7 @@ export function TaskDependencyForm({
   isPending,
   error,
   onSubmit,
+  onSuccess,
 }: TaskDependencyFormProps) {
   const [values, setValues] = useState<TaskDependencyFormValues>({
     predecessorTaskId: "",
@@ -61,13 +63,14 @@ export function TaskDependencyForm({
 
     setErrors({});
     await onSubmit(result.data)
-      .then(() =>
+      .then(() => {
         setValues({
           predecessorTaskId: "",
           successorTaskId: String(currentTaskId),
           lagDays: "0",
-        })
-      )
+        });
+        onSuccess?.();
+      })
       .catch(() => undefined);
   };
 
