@@ -8,8 +8,7 @@ import { useDeleteTaskTasksTaskIdDelete } from "@/lib/api/generated/tasks/tasks"
 
 import { TASK_MESSAGES } from "../constants/task-messages";
 import {
-  invalidateGantt,
-  invalidateTaskList,
+  invalidateTaskProjectSurfaces,
   removeTaskDetailCache,
 } from "../lib/task-cache";
 
@@ -20,10 +19,7 @@ export function useDeleteTask(projectId: number, taskId: number) {
     mutation: {
       onSuccess: async () => {
         removeTaskDetailCache(queryClient, taskId);
-        await Promise.all([
-          invalidateTaskList(queryClient, projectId),
-          invalidateGantt(queryClient, projectId),
-        ]);
+        await invalidateTaskProjectSurfaces(queryClient, projectId);
         toast.success(TASK_MESSAGES.task.deleteSuccess);
         router.push(`/projects/joined/${projectId}/tasks`);
       },

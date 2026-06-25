@@ -21,6 +21,7 @@ import { useTask } from "../../hooks/use-task";
 import { useTaskDependencies } from "../../hooks/use-task-dependencies";
 import { useUpdateTaskDependency } from "../../hooks/use-update-task-dependency";
 import { TaskDependencyForm } from "../forms/task-dependency-form";
+import { TaskIdentity } from "../shared/task-identity";
 
 type TaskDependenciesSectionProps = {
   projectId: number;
@@ -135,16 +136,18 @@ function TaskDependencyItem({
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-3">
       <div className="text-sm">
-        <TaskDependencyLabel
-          taskId={dependency.predecessor_task_id}
-          taskCode={predecessorTask?.task_code}
-          title={predecessorTask?.title}
+        <TaskIdentity
+          task={predecessorTask}
+          fallbackTaskId={dependency.predecessor_task_id}
+          className="font-medium"
+          titleClassName="ml-1 text-muted-foreground"
         />
         <span className="mx-2 text-muted-foreground">完了後に</span>
-        <TaskDependencyLabel
-          taskId={dependency.successor_task_id}
-          taskCode={successorTask?.task_code}
-          title={successorTask?.title}
+        <TaskIdentity
+          task={successorTask}
+          fallbackTaskId={dependency.successor_task_id}
+          className="font-medium"
+          titleClassName="ml-1 text-muted-foreground"
         />
         <span className="ml-2 text-muted-foreground">
           を開始 / ラグ {dependency.lag_days}日
@@ -189,22 +192,5 @@ function TaskDependencyItem({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function TaskDependencyLabel({
-  taskId,
-  taskCode,
-  title,
-}: {
-  taskId: number;
-  taskCode?: string;
-  title?: string;
-}) {
-  return (
-    <span className="font-medium">
-      {taskCode ?? `TASK-${taskId}`}
-      {title ? <span className="ml-1 text-muted-foreground">{title}</span> : null}
-    </span>
   );
 }

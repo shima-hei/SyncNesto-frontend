@@ -7,7 +7,7 @@ import type { TaskRead } from "@/lib/api/generated/model";
 import { useUpdateTaskTasksTaskIdPatch } from "@/lib/api/generated/tasks/tasks";
 
 import { TASK_MESSAGES } from "../constants/task-messages";
-import { invalidateGantt, invalidateTaskList } from "../lib/task-cache";
+import { invalidateTaskProjectSurfaces } from "../lib/task-cache";
 
 export type TaskBulkUpdateValues = {
   status?: string;
@@ -20,10 +20,7 @@ export function useBulkUpdateTasks(projectId: number) {
   const updateMutation = useUpdateTaskTasksTaskIdPatch({
     mutation: {
       onSuccess: async () => {
-        await Promise.all([
-          invalidateTaskList(queryClient, projectId),
-          invalidateGantt(queryClient, projectId),
-        ]);
+        await invalidateTaskProjectSurfaces(queryClient, projectId);
       },
     },
   });

@@ -10,9 +10,8 @@ import { useUpdateTaskTasksTaskIdPatch } from "@/lib/api/generated/tasks/tasks";
 
 import { TASK_MESSAGES } from "../constants/task-messages";
 import {
-  invalidateGantt,
+  invalidateTaskProjectSurfaces,
   invalidateTaskChangeLogs,
-  invalidateTaskList,
   setTaskDetailCache,
 } from "../lib/task-cache";
 import { toTaskUpdate } from "../lib/task-mappers";
@@ -27,8 +26,7 @@ export function useUpdateTask(projectId: number, taskId: number) {
         setConflictCurrent(null);
         setTaskDetailCache(queryClient, taskId, task);
         await Promise.all([
-          invalidateTaskList(queryClient, projectId),
-          invalidateGantt(queryClient, projectId),
+          invalidateTaskProjectSurfaces(queryClient, projectId),
           invalidateTaskChangeLogs(queryClient, taskId),
         ]);
         toast.success(TASK_MESSAGES.task.updateSuccess);

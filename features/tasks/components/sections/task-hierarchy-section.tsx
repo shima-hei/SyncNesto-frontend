@@ -13,6 +13,7 @@ import {
   TaskTags,
   TaskTypeBadge,
 } from "../shared/task-badges";
+import { TaskIdentity } from "../shared/task-identity";
 import { TaskDetailLink } from "../tables/tasks-table";
 
 const HIERARCHY_LIST_SIZE = 50;
@@ -201,11 +202,10 @@ function TaskTreeNode({
         <span className="absolute -left-3 top-5 h-px w-3 bg-border" />
       ) : null}
       <div className="flex min-w-0 items-center justify-between gap-3">
-        <div className="min-w-0 truncate text-sm font-medium">
-          <span className="text-muted-foreground">{task.task_code}</span>
-          <span className="text-muted-foreground">：</span>
-          <span>{task.title}</span>
-        </div>
+        <TaskIdentity
+          task={task}
+          className="min-w-0 truncate text-sm font-medium"
+        />
         <div className="flex shrink-0 items-center gap-2">
           {isCurrent ? (
             <span className="rounded-md bg-foreground px-2 py-1 text-xs text-background">

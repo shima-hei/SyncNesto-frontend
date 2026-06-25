@@ -1,17 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CheckIcon,
-  MessageSquareReplyIcon,
-  PencilIcon,
-  RotateCcwIcon,
-  Trash2Icon,
-  XIcon,
-} from "lucide-react";
 
+import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
+import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TaskCommentRead, TaskRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
@@ -235,7 +228,7 @@ function TaskCommentItem({
 
       {isEditing ? (
         <div className="mt-3 rounded-lg bg-muted p-3">
-          <TaskCommentInlineHeader label="コメント編集" onClose={onCloseEdit} />
+          <CommentInlineHeader label="コメント編集" onClose={onCloseEdit} />
           <TaskCommentForm
             initialValues={{
               body: comment.body,
@@ -253,7 +246,7 @@ function TaskCommentItem({
 
       {isReplying ? (
         <div className="mt-3 rounded-lg bg-muted p-3">
-          <TaskCommentInlineHeader label="返信" onClose={onCloseReply} />
+          <CommentInlineHeader label="返信" onClose={onCloseReply} />
           <TaskCommentForm
             submitLabel="返信追加"
             isPending={isCreatePending}
@@ -320,67 +313,17 @@ function TaskCommentBody({
       </div>
       <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
       {canComment ? (
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => onReply(comment)}>
-            <MessageSquareReplyIcon data-icon="inline-start" />
-            返信
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => onEdit(comment)}>
-            <PencilIcon data-icon="inline-start" />
-            編集
-          </Button>
-          {comment.is_resolved ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isStatePending}
-              onClick={() => onReopen(comment.id, comment.version)}
-            >
-              <RotateCcwIcon data-icon="inline-start" />
-              再オープン
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isStatePending}
-              onClick={() => onResolve(comment.id, comment.version)}
-            >
-              <CheckIcon data-icon="inline-start" />
-              解決
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete(comment)}
-          >
-            <Trash2Icon data-icon="inline-start" />
-            削除
-          </Button>
-        </div>
+        <CommentThreadActions
+          comment={comment}
+          isResolved={comment.is_resolved}
+          isStatePending={isStatePending}
+          onReply={onReply}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onResolve={() => onResolve(comment.id, comment.version)}
+          onReopen={() => onReopen(comment.id, comment.version)}
+        />
       ) : null}
-    </div>
-  );
-}
-
-function TaskCommentInlineHeader({
-  label,
-  onClose,
-}: {
-  label: string;
-  onClose: () => void;
-}) {
-  return (
-    <div className="mb-3 flex items-center justify-between gap-3">
-      <span className="text-sm font-medium">{label}</span>
-      <Button type="button" variant="outline" size="sm" onClick={onClose}>
-        <XIcon data-icon="inline-start" />
-        閉じる
-      </Button>
     </div>
   );
 }

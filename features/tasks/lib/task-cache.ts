@@ -104,6 +104,23 @@ export const invalidateTaskDetail = (
   });
 };
 
+export const invalidateTaskProjectSurfaces = (
+  queryClient: QueryClient,
+  projectId: number,
+  options: { includeBoard?: boolean } = {}
+) => {
+  const invalidations = [
+    invalidateTaskList(queryClient, projectId),
+    invalidateGantt(queryClient, projectId),
+  ];
+
+  if (options.includeBoard) {
+    invalidations.push(invalidateBoardList(queryClient, projectId));
+  }
+
+  return Promise.all(invalidations);
+};
+
 export const setTaskDetailCache = (
   queryClient: QueryClient,
   taskId: number,

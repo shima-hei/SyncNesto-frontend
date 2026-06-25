@@ -8,8 +8,7 @@ import { useUpdateTaskTasksTaskIdPatch } from "@/lib/api/generated/tasks/tasks";
 
 import { TASK_MESSAGES } from "../constants/task-messages";
 import {
-  invalidateGantt,
-  invalidateTaskList,
+  invalidateTaskProjectSurfaces,
   setTaskDetailCache,
 } from "../lib/task-cache";
 
@@ -53,10 +52,7 @@ export function useUpdateTaskQuick(projectId: number) {
     mutation: {
       onSuccess: async (task) => {
         setTaskDetailCache(queryClient, task.id, task);
-        await Promise.all([
-          invalidateTaskList(queryClient, projectId),
-          invalidateGantt(queryClient, projectId),
-        ]);
+        await invalidateTaskProjectSurfaces(queryClient, projectId);
         toast.success(TASK_MESSAGES.task.updateSuccess);
       },
       onError: () => {

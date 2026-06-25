@@ -1,17 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CheckIcon,
-  MessageSquareReplyIcon,
-  PencilIcon,
-  RotateCcwIcon,
-  Trash2Icon,
-  XIcon,
-} from "lucide-react";
 
+import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
+import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RequirementTargetCommentRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
@@ -213,13 +206,7 @@ function CommentItem({
 
       {isEditing ? (
         <div className="mt-3 rounded-lg bg-muted p-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="text-sm font-medium">コメント編集</span>
-            <Button type="button" variant="outline" size="sm" onClick={onCloseEdit}>
-              <XIcon data-icon="inline-start" />
-              閉じる
-            </Button>
-          </div>
+          <CommentInlineHeader label="コメント編集" onClose={onCloseEdit} />
           <RequirementTargetCommentForm
             initialValues={{ body: comment.body, reason: "" }}
             submitLabel="コメント更新"
@@ -235,13 +222,7 @@ function CommentItem({
 
       {isReplying ? (
         <div className="mt-3 rounded-lg bg-muted p-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="text-sm font-medium">返信</span>
-            <Button type="button" variant="outline" size="sm" onClick={onCloseReply}>
-              <XIcon data-icon="inline-start" />
-              閉じる
-            </Button>
-          </div>
+          <CommentInlineHeader label="返信" onClose={onCloseReply} />
           <RequirementTargetCommentForm
             submitLabel="返信追加"
             isPending={isCreatePending}
@@ -306,51 +287,18 @@ function CommentBody({
       </div>
       {canComment ? (
         <div className="flex shrink-0 flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isStatePending}
-            onClick={() =>
-              comment.is_resolved
-                ? onReopen(comment.id, comment.version)
-                : onResolve(comment.id, comment.version)
-            }
-          >
-            {comment.is_resolved ? (
-              <RotateCcwIcon data-icon="inline-start" />
-            ) : (
-              <CheckIcon data-icon="inline-start" />
-            )}
-            {comment.is_resolved ? "再開" : "解決"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onReply(comment)}
-          >
-            <MessageSquareReplyIcon data-icon="inline-start" />
-            返信
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(comment)}
-          >
-            <PencilIcon data-icon="inline-start" />
-            編集
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete(comment)}
-          >
-            <Trash2Icon data-icon="inline-start" />
-            削除
-          </Button>
+          <CommentThreadActions
+            comment={comment}
+            isResolved={comment.is_resolved}
+            isStatePending={isStatePending}
+            resolvePlacement="first"
+            reopenLabel="再開"
+            onReply={onReply}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onResolve={() => onResolve(comment.id, comment.version)}
+            onReopen={() => onReopen(comment.id, comment.version)}
+          />
         </div>
       ) : null}
     </div>

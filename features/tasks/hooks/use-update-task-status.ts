@@ -11,9 +11,7 @@ import {
 
 import { TASK_MESSAGES } from "../constants/task-messages";
 import {
-  invalidateBoardList,
-  invalidateGantt,
-  invalidateTaskList,
+  invalidateTaskProjectSurfaces,
   setTaskDetailCache,
 } from "../lib/task-cache";
 
@@ -26,11 +24,9 @@ export function useUpdateTaskStatus(projectId: number) {
   const queryClient = useQueryClient();
   const handleSuccess = async (task: TaskRead) => {
     setTaskDetailCache(queryClient, task.id, task);
-    await Promise.all([
-      invalidateTaskList(queryClient, projectId),
-      invalidateGantt(queryClient, projectId),
-      invalidateBoardList(queryClient, projectId),
-    ]);
+    await invalidateTaskProjectSurfaces(queryClient, projectId, {
+      includeBoard: true,
+    });
     toast.success(TASK_MESSAGES.task.statusUpdateSuccess);
   };
   const handleError = () => {

@@ -9,10 +9,9 @@ import { useCreateTaskProjectsProjectIdTasksPost } from "@/lib/api/generated/tas
 
 import { TASK_MESSAGES } from "../constants/task-messages";
 import {
-  invalidateGantt,
+  invalidateTaskProjectSurfaces,
   invalidateRequirementTaskList,
   invalidateRequirementTaskProgress,
-  invalidateTaskList,
 } from "../lib/task-cache";
 import { toTaskCreate } from "../lib/task-mappers";
 import type { TaskFormValues } from "../types/task-form";
@@ -25,9 +24,8 @@ export function useCreateTask(projectId: number) {
   const createTaskMutation = useCreateTaskProjectsProjectIdTasksPost({
     mutation: {
       onSuccess: async (task) => {
-        const invalidations = [
-          invalidateTaskList(queryClient, projectId),
-          invalidateGantt(queryClient, projectId),
+        const invalidations: Array<Promise<unknown>> = [
+          invalidateTaskProjectSurfaces(queryClient, projectId),
         ];
         const requirementId = taskFormRequirementIdRef.current;
 
