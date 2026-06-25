@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChangeLogUserRead } from './changeLogUserRead';
 
 /**
  * 要件定義対象コメント読み取り時に返すschema。
@@ -16,6 +17,7 @@ export interface RequirementTargetCommentRead {
   parent_comment_id?: number | null;
   body: string;
   author_id: number;
+  author?: ChangeLogUserRead | null;
   is_resolved: boolean;
   version: number;
   created_at: string;

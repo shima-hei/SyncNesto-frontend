@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { ListIcon, PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
@@ -31,7 +31,7 @@ import {
   canUpdateTask,
 } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
-import type { GanttResponse } from "@/lib/api/generated/model";
+import type { GanttResponse, MilestoneRead } from "@/lib/api/generated/model";
 
 import {
   TASK_PRIORITY_OPTIONS,
@@ -41,13 +41,17 @@ import {
 import { useBulkUpdateTasks } from "../../hooks/use-bulk-update-tasks";
 import { useCreateTask } from "../../hooks/use-create-task";
 import { useGantt } from "../../hooks/use-gantt";
+import { useMilestones } from "../../hooks/use-milestones";
 import { useTasks } from "../../hooks/use-tasks";
 import { defaultTaskFormValues } from "../../lib/task-mappers";
 import { TaskForm } from "../forms/task-form";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
-import { MilestonesSection } from "../sections/milestones-section";
-import { TasksBoardSection } from "../sections/tasks-board-section";
+import { MilestoneDialogs } from "../sections/milestone-dialogs";
+import {
+  type BoardSwimlane,
+  TasksBoardSection,
+} from "../sections/tasks-board-section";
 import { TasksGanttSection } from "../sections/tasks-gantt-section";
 import { TasksTable } from "../tables/tasks-table";
 
@@ -74,6 +78,15 @@ const GANTT_DISPLAY_OPTIONS = [
   { value: "week", label: "週" },
   { value: "month", label: "月" },
   { value: "quarter", label: "四半期" },
+] as const;
+
+const BOARD_SWIMLANE_OPTIONS = [
+  { value: "none", label: "スイムレーンなし" },
+  { value: "assignee", label: "担当者別" },
+  { value: "requirement", label: "要件別" },
+  { value: "parent_task", label: "親タスク別" },
+  { value: "priority", label: "優先度別" },
+  { value: "task_type", label: "種別別" },
 ] as const;
 
 type TasksPageProps = {
@@ -107,6 +120,16 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [ganttRequirementId, setGanttRequirementId] = useState("");
   const [ganttDisplayUnit, setGanttDisplayUnit] =
     useState<(typeof GANTT_DISPLAY_OPTIONS)[number]["value"]>("day");
+  const [boardSwimlane, setBoardSwimlane] = useState<BoardSwimlane>("none");
+  const [isBoardCompletedCollapsed, setIsBoardCompletedCollapsed] =
+    useState(true);
+  const [milestoneCreateDialogOpen, setMilestoneCreateDialogOpen] =
+    useState(false);
+  const [milestoneListDialogOpen, setMilestoneListDialogOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] =
+    useState<MilestoneRead | null>(null);
+  const [deleteMilestoneTarget, setDeleteMilestoneTarget] =
+    useState<MilestoneRead | null>(null);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
@@ -131,6 +154,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
     assignee_id: ganttAssigneeId ? Number(ganttAssigneeId) : undefined,
     requirement_id: ganttRequirementId ? Number(ganttRequirementId) : undefined,
   });
+  const { milestones } = useMilestones(projectId);
   const { createTask, isPending: isCreatePending, error: createError } =
     useCreateTask(projectId);
   const { bulkUpdateTasks, isPending: isBulkUpdatePending } =
@@ -299,7 +323,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </TabsContent>
 
         <TabsContent value="board" className="flex flex-col gap-4">
-          <TaskFilters
+          <TaskBoardToolbar
             projectId={projectId}
             searchInput={searchInput}
             status={status}
@@ -351,23 +375,31 @@ export function TasksPage({ projectId }: TasksPageProps) {
               setOverdue(value);
             }}
             onSortChange={(value) => setSort(value as typeof sort)}
+            swimlane={boardSwimlane}
+            isCompletedCollapsed={isBoardCompletedCollapsed}
+            onSwimlaneChange={(value) => setBoardSwimlane(value)}
+            onCompletedCollapsedChange={setIsBoardCompletedCollapsed}
           />
           <TasksBoardSection
             projectId={projectId}
             tasks={tasks}
             canUpdate={canUpdate}
+            swimlane={boardSwimlane}
+            isCompletedCollapsed={isBoardCompletedCollapsed}
           />
         </TabsContent>
 
         <TabsContent value="gantt" className="flex flex-col gap-4">
           <GanttControls
             projectId={projectId}
+            canUpdate={canUpdate}
             startDate={ganttStartDate}
             endDate={ganttEndDate}
             assigneeId={ganttAssigneeId}
             requirementId={ganttRequirementId}
             displayUnit={ganttDisplayUnit}
             gantt={gantt}
+            milestones={milestones}
             onStartDateChange={setGanttStartDate}
             onEndDateChange={setGanttEndDate}
             onAssigneeIdChange={setGanttAssigneeId}
@@ -375,14 +407,16 @@ export function TasksPage({ projectId }: TasksPageProps) {
             onDisplayUnitChange={(value) =>
               setGanttDisplayUnit(value as typeof ganttDisplayUnit)
             }
+            onOpenMilestoneList={() => setMilestoneListDialogOpen(true)}
+            onOpenMilestoneCreate={() => setMilestoneCreateDialogOpen(true)}
           />
-          <MilestonesSection projectId={projectId} canUpdate={canUpdate} />
           <TasksGanttSection
             projectId={projectId}
             gantt={gantt}
             isLoading={isGanttLoading}
             displayUnit={ganttDisplayUnit}
             canUpdate={canUpdate}
+            onMilestoneSelect={setEditingMilestone}
           />
         </TabsContent>
 
@@ -407,37 +441,59 @@ export function TasksPage({ projectId }: TasksPageProps) {
           />
         </DialogContent>
       </Dialog>
+      <MilestoneDialogs
+        projectId={projectId}
+        canUpdate={canUpdate}
+        milestones={milestones}
+        createOpen={milestoneCreateDialogOpen}
+        listOpen={milestoneListDialogOpen}
+        editingMilestone={editingMilestone}
+        deleteTarget={deleteMilestoneTarget}
+        onCreateOpenChange={setMilestoneCreateDialogOpen}
+        onListOpenChange={setMilestoneListDialogOpen}
+        onEditingMilestoneChange={setEditingMilestone}
+        onDeleteTargetChange={setDeleteMilestoneTarget}
+      />
     </div>
   );
 }
 
 function GanttControls({
   projectId,
+  canUpdate,
   startDate,
   endDate,
   assigneeId,
   requirementId,
   displayUnit,
   gantt,
+  milestones,
   onStartDateChange,
   onEndDateChange,
   onAssigneeIdChange,
   onRequirementIdChange,
   onDisplayUnitChange,
+  onOpenMilestoneList,
+  onOpenMilestoneCreate,
 }: {
   projectId: number;
+  canUpdate: boolean;
   startDate: string;
   endDate: string;
   assigneeId: string;
   requirementId: string;
   displayUnit: string;
   gantt: GanttResponse | null;
+  milestones: MilestoneRead[];
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
   onAssigneeIdChange: (value: string) => void;
   onRequirementIdChange: (value: string) => void;
   onDisplayUnitChange: (value: string) => void;
+  onOpenMilestoneList: () => void;
+  onOpenMilestoneCreate: () => void;
 }) {
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const handleMoveRange = (direction: -1 | 1) => {
     const currentRange = getCurrentGanttRange(startDate, endDate, displayUnit);
     const movedRange = moveGanttRange(currentRange, displayUnit, direction);
@@ -457,110 +513,145 @@ function GanttControls({
       <CardHeader>
         <CardTitle className="text-base">ガント表示条件</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end">
-        <div className="flex min-w-0 flex-col gap-2">
-          <Label htmlFor="gantt-start-date">開始日</Label>
-          <Input
-            id="gantt-start-date"
-            type="date"
-            value={startDate}
-            onChange={(event) => onStartDateChange(event.target.value)}
-          />
+      <CardContent className="flex flex-col gap-3">
+        <div className="grid gap-3 xl:grid-cols-[minmax(10rem,12rem)_auto] xl:items-end">
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label>表示単位</Label>
+            <Select value={displayUnit} onValueChange={onDisplayUnitChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {GANTT_DISPLAY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleMoveRange(-1)}
+            >
+              前へ
+            </Button>
+            <Button type="button" variant="outline" onClick={handleMoveToToday}>
+              今日
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleMoveRange(1)}
+            >
+              次へ
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!milestones.length}
+              onClick={onOpenMilestoneList}
+            >
+              <ListIcon data-icon="inline-start" />
+              マイルストーン一覧
+            </Button>
+            {canUpdate ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onOpenMilestoneCreate}
+              >
+                <PlusIcon data-icon="inline-start" />
+                マイルストーン追加
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAdvancedOpen((current) => !current)}
+            >
+              <SlidersHorizontalIcon data-icon="inline-start" />
+              詳細条件
+            </Button>
+          </div>
         </div>
-        <div className="flex min-w-0 flex-col gap-2">
-          <Label htmlFor="gantt-end-date">終了日</Label>
-          <Input
-            id="gantt-end-date"
-            type="date"
-            value={endDate}
-            onChange={(event) => onEndDateChange(event.target.value)}
-          />
-        </div>
-        <TaskUserSelectField
-          projectId={projectId}
-          label="担当者"
-          value={assigneeId}
-          placeholder="すべて"
-          onChange={onAssigneeIdChange}
-        />
-        <TaskRequirementSelectField
-          projectId={projectId}
-          value={requirementId}
-          placeholder="すべて"
-          onChange={onRequirementIdChange}
-        />
-        <div className="flex min-w-0 flex-col gap-2">
-          <Label>表示単位</Label>
-          <Select value={displayUnit} onValueChange={onDisplayUnitChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {GANTT_DISPLAY_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleMoveRange(-1)}
-          >
-            前へ
-          </Button>
-          <Button type="button" variant="outline" onClick={handleMoveToToday}>
-            今日
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleMoveRange(1)}
-          >
-            次へ
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!gantt}
-            onClick={() => {
-              if (gantt) {
-                exportGanttCsv(gantt);
-              }
-            }}
-          >
-            CSV出力
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!gantt}
-            onClick={() => {
-              if (gantt) {
-                exportGanttPdf(gantt, displayUnit);
-              }
-            }}
-          >
-            PDF出力
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              onStartDateChange(ALL_GANTT_FILTERS);
-              onEndDateChange(ALL_GANTT_FILTERS);
-              onAssigneeIdChange(ALL_GANTT_FILTERS);
-              onRequirementIdChange(ALL_GANTT_FILTERS);
-            }}
-          >
-            条件クリア
-          </Button>
-        </div>
+        {isAdvancedOpen ? (
+          <div className="grid gap-3 border-t pt-3 md:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto] xl:items-end">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="gantt-start-date">開始日</Label>
+              <Input
+                id="gantt-start-date"
+                type="date"
+                value={startDate}
+                onChange={(event) => onStartDateChange(event.target.value)}
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="gantt-end-date">終了日</Label>
+              <Input
+                id="gantt-end-date"
+                type="date"
+                value={endDate}
+                onChange={(event) => onEndDateChange(event.target.value)}
+              />
+            </div>
+            <TaskUserSelectField
+              projectId={projectId}
+              label="担当者"
+              value={assigneeId}
+              placeholder="すべて"
+              onChange={onAssigneeIdChange}
+            />
+            <TaskRequirementSelectField
+              projectId={projectId}
+              value={requirementId}
+              placeholder="すべて"
+              onChange={onRequirementIdChange}
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!gantt}
+                onClick={() => {
+                  if (gantt) {
+                    exportGanttCsv(gantt);
+                  }
+                }}
+              >
+                CSV出力
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!gantt}
+                onClick={() => {
+                  if (gantt) {
+                    exportGanttPdf(gantt, displayUnit);
+                  }
+                }}
+              >
+                PDF出力
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  onStartDateChange(ALL_GANTT_FILTERS);
+                  onEndDateChange(ALL_GANTT_FILTERS);
+                  onAssigneeIdChange(ALL_GANTT_FILTERS);
+                  onRequirementIdChange(ALL_GANTT_FILTERS);
+                }}
+              >
+                条件クリア
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -891,6 +982,206 @@ function TaskFilters({
         onValueChange={onSortChange}
       />
     </SearchFilterBar>
+  );
+}
+
+function TaskBoardToolbar({
+  projectId,
+  searchInput,
+  status,
+  priority,
+  taskType,
+  overdue,
+  assigneeId,
+  requirementId,
+  tag,
+  startDateFrom,
+  dueDateTo,
+  sort,
+  swimlane,
+  isCompletedCollapsed,
+  onSearchInputChange,
+  onSearch,
+  onStatusChange,
+  onPriorityChange,
+  onTaskTypeChange,
+  onAssigneeIdChange,
+  onRequirementIdChange,
+  onTagChange,
+  onStartDateFromChange,
+  onDueDateToChange,
+  onOverdueChange,
+  onSortChange,
+  onSwimlaneChange,
+  onCompletedCollapsedChange,
+}: {
+  projectId: number;
+  searchInput: string;
+  status: string;
+  priority: string;
+  taskType: string;
+  overdue: string;
+  assigneeId: string;
+  requirementId: string;
+  tag: string;
+  startDateFrom: string;
+  dueDateTo: string;
+  sort: string;
+  swimlane: BoardSwimlane;
+  isCompletedCollapsed: boolean;
+  onSearchInputChange: (value: string) => void;
+  onSearch: () => void;
+  onStatusChange: (value: string) => void;
+  onPriorityChange: (value: string) => void;
+  onTaskTypeChange: (value: string) => void;
+  onAssigneeIdChange: (value: string) => void;
+  onRequirementIdChange: (value: string) => void;
+  onTagChange: (value: string) => void;
+  onStartDateFromChange: (value: string) => void;
+  onDueDateToChange: (value: string) => void;
+  onOverdueChange: (value: string) => void;
+  onSortChange: (value: string) => void;
+  onSwimlaneChange: (value: BoardSwimlane) => void;
+  onCompletedCollapsedChange: (value: boolean) => void;
+}) {
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+      <form
+        className="grid gap-3 xl:grid-cols-[minmax(16rem,1.3fr)_minmax(10rem,0.8fr)_minmax(12rem,1fr)_minmax(10rem,0.8fr)_minmax(12rem,1fr)_auto] xl:items-end"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSearch();
+        }}
+      >
+        <Field>
+          <FieldLabel htmlFor="task-board-keyword">キーワード</FieldLabel>
+          <Input
+            id="task-board-keyword"
+            value={searchInput}
+            placeholder="タスクID、タイトル、説明"
+            onChange={(event) => onSearchInputChange(event.target.value)}
+          />
+        </Field>
+        <TaskFilterSelect
+          label="ステータス"
+          value={status}
+          placeholder="ステータス"
+          allValue={ALL_STATUSES}
+          allLabel="すべて"
+          options={TASK_STATUS_OPTIONS}
+          onValueChange={onStatusChange}
+        />
+        <TaskUserSelectField
+          projectId={projectId}
+          label="担当者"
+          value={assigneeId}
+          placeholder="すべて"
+          onChange={onAssigneeIdChange}
+        />
+        <Field>
+          <FieldLabel htmlFor="task-board-tag">タグ</FieldLabel>
+          <Input
+            id="task-board-tag"
+            value={tag}
+            placeholder="タグ"
+            onChange={(event) => onTagChange(event.target.value)}
+          />
+        </Field>
+        <TaskFilterSelect
+          label="スイムレーン"
+          value={swimlane}
+          placeholder="スイムレーン"
+          options={BOARD_SWIMLANE_OPTIONS}
+          onValueChange={(value) => onSwimlaneChange(value as BoardSwimlane)}
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" size="sm">
+            検索
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAdvancedOpen((current) => !current)}
+          >
+            <SlidersHorizontalIcon data-icon="inline-start" />
+            詳細条件
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onCompletedCollapsedChange(!isCompletedCollapsed)}
+          >
+            {isCompletedCollapsed ? "完了を表示" : "完了を隠す"}
+          </Button>
+        </div>
+      </form>
+      {isAdvancedOpen ? (
+        <div className="grid gap-3 border-t pt-3 md:grid-cols-2 xl:grid-cols-6">
+          <TaskFilterSelect
+            label="優先度"
+            value={priority}
+            placeholder="優先度"
+            allValue={ALL_PRIORITIES}
+            allLabel="すべて"
+            options={TASK_PRIORITY_OPTIONS}
+            onValueChange={onPriorityChange}
+          />
+          <TaskFilterSelect
+            label="種別"
+            value={taskType}
+            placeholder="種別"
+            allValue={ALL_TYPES}
+            allLabel="すべて"
+            options={TASK_TYPE_OPTIONS}
+            onValueChange={onTaskTypeChange}
+          />
+          <TaskFilterSelect
+            label="期限"
+            value={overdue}
+            placeholder="期限"
+            allValue={ALL_OVERDUE}
+            allLabel="すべて"
+            options={[{ value: "overdue", label: "期限超過" }]}
+            onValueChange={onOverdueChange}
+          />
+          <TaskRequirementSelectField
+            projectId={projectId}
+            value={requirementId}
+            placeholder="関連要件"
+            onChange={onRequirementIdChange}
+          />
+          <Field>
+            <FieldLabel htmlFor="task-board-start-date">開始日</FieldLabel>
+            <Input
+              id="task-board-start-date"
+              type="date"
+              value={startDateFrom}
+              onChange={(event) => onStartDateFromChange(event.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="task-board-due-date">終了予定日</FieldLabel>
+            <Input
+              id="task-board-due-date"
+              type="date"
+              value={dueDateTo}
+              onChange={(event) => onDueDateToChange(event.target.value)}
+            />
+          </Field>
+          <TaskFilterSelect
+            label="並び順"
+            value={sort}
+            placeholder="並び順"
+            options={SORT_OPTIONS}
+            onValueChange={onSortChange}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 

@@ -1,29 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { PencilIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { TaskRead } from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
 
 import {
   getTaskPriorityLabel,
@@ -32,7 +14,6 @@ import {
 } from "../../constants/task-options";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useProjectBoards } from "../../hooks/use-project-boards";
-import { useUpdateTaskQuick } from "../../hooks/use-update-task-quick";
 import { useUpdateTaskStatus } from "../../hooks/use-update-task-status";
 import {
   TaskFlagBadges,
@@ -41,13 +22,14 @@ import {
   TaskTags,
   TaskTypeBadge,
 } from "../shared/task-badges";
-import { TaskUserSelectField } from "../forms/task-user-select-field";
+import { TaskDetailSheet } from "./task-detail-sheet";
 import { TaskDetailLink } from "../tables/tasks-table";
 
-type BoardSwimlane =
+export type BoardSwimlane =
   | "none"
   | "assignee"
   | "requirement"
+  | "parent_task"
   | "priority"
   | "task_type";
 
@@ -55,29 +37,33 @@ type TasksBoardSectionProps = {
   projectId: number;
   tasks: TaskRead[];
   canUpdate: boolean;
+  swimlane: BoardSwimlane;
+  isCompletedCollapsed: boolean;
 };
 
 export function TasksBoardSection({
   projectId,
   tasks,
   canUpdate,
+  swimlane,
+  isCompletedCollapsed,
 }: TasksBoardSectionProps) {
-  const [isCompletedCollapsed, setIsCompletedCollapsed] = useState(true);
-  const [swimlane, setSwimlane] = useState<BoardSwimlane>("none");
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const { updateTaskStatus, isPending } = useUpdateTaskStatus(projectId);
-  const { updateTaskQuick, isPending: isQuickUpdatePending } =
-    useUpdateTaskQuick(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
   const { defaultBoard } = useProjectBoards(projectId);
-  const tasksById = new Map(tasks.map((task) => [String(task.id), task]));
+  const tasksById = useMemo(
+    () => new Map(tasks.map((task) => [task.id, task])),
+    [tasks]
+  );
   const visibleStatuses = TASK_STATUS_OPTIONS.filter(
     (status) =>
       !isCompletedCollapsed ||
       (status.value !== "done" && status.value !== "cancelled")
   );
   const swimlanes = useMemo(() => {
-    return getSwimlanes(tasks, swimlane, getTaskUserLabel);
-  }, [getTaskUserLabel, swimlane, tasks]);
+    return getSwimlanes(tasks, swimlane, getTaskUserLabel, tasksById);
+  }, [getTaskUserLabel, swimlane, tasks, tasksById]);
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, status: string) => {
     event.preventDefault();
@@ -86,7 +72,7 @@ export function TasksBoardSection({
       return;
     }
 
-    const task = tasksById.get(event.dataTransfer.getData("text/plain"));
+    const task = tasksById.get(Number(event.dataTransfer.getData("text/plain")));
 
     if (!task || task.status === status) {
       return;
@@ -100,36 +86,6 @@ export function TasksBoardSection({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div className="flex max-w-xs flex-col gap-2">
-          <Label htmlFor="task-board-swimlane">スイムレーン</Label>
-          <Select
-            value={swimlane}
-            onValueChange={(value) => setSwimlane(value as BoardSwimlane)}
-          >
-            <SelectTrigger id="task-board-swimlane" className="w-full">
-              <SelectValue placeholder="スイムレーン" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="none">なし</SelectItem>
-                <SelectItem value="assignee">担当者別</SelectItem>
-                <SelectItem value="requirement">要件別</SelectItem>
-                <SelectItem value="priority">優先度別</SelectItem>
-                <SelectItem value="task_type">種別別</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setIsCompletedCollapsed((current) => !current)}
-        >
-          {isCompletedCollapsed ? "完了タスクを表示" : "完了タスクを折りたたむ"}
-        </Button>
-      </div>
       <div className="flex flex-col gap-5">
         {swimlanes.map((lane) => (
           <section key={lane.key} className="flex flex-col gap-2">
@@ -151,16 +107,19 @@ export function TasksBoardSection({
                   return (
                     <div
                       key={`${lane.key}-${status.value}`}
-                      className="flex min-w-0 flex-col rounded-lg border"
+                      className={cn(
+                        "flex h-[clamp(30rem,calc(100vh-14rem),52rem)] min-w-0 flex-col overflow-hidden rounded-lg border",
+                        getBoardStatusClassName(status.value)
+                      )}
                     >
-                      <div className="flex items-center justify-between border-b px-3 py-2">
-                        <h4 className="text-sm font-medium">{status.label}</h4>
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex items-center justify-between border-b border-current/20 px-3 py-2">
+                        <h4 className="text-sm font-semibold">{status.label}</h4>
+                        <span className="rounded-full border border-current/20 bg-background/70 px-2 py-0.5 text-xs font-medium">
                           {columnTasks.length}
                         </span>
                       </div>
                       <div
-                        className="flex min-h-40 flex-col gap-2 p-2"
+                        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
                         onDragOver={(event) => {
                           if (canUpdate) {
                             event.preventDefault();
@@ -176,7 +135,6 @@ export function TasksBoardSection({
                               task={task}
                               canUpdate={canUpdate}
                               isPending={isPending}
-                              isQuickUpdatePending={isQuickUpdatePending}
                               assigneeLabel={getTaskUserLabel(task.assignee_id)}
                               onMove={(targetStatus) =>
                                 updateTaskStatus(task, targetStatus, {
@@ -187,13 +145,11 @@ export function TasksBoardSection({
                                   ),
                                 })
                               }
-                              onQuickUpdate={(values) =>
-                                updateTaskQuick(task, values)
-                              }
+                              onOpenDetail={setSelectedTaskId}
                             />
                           ))
                         ) : (
-                          <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+                          <div className="rounded-lg border border-dashed border-current/25 bg-background/60 p-3 text-xs text-muted-foreground">
                             タスクはありません。
                           </div>
                         )}
@@ -206,6 +162,16 @@ export function TasksBoardSection({
           </section>
         ))}
       </div>
+      <TaskDetailSheet
+        projectId={projectId}
+        taskId={selectedTaskId}
+        open={Boolean(selectedTaskId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedTaskId(null);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -215,59 +181,44 @@ function TaskBoardCard({
   task,
   canUpdate,
   isPending,
-  isQuickUpdatePending,
   assigneeLabel,
   onMove,
-  onQuickUpdate,
+  onOpenDetail,
 }: {
   projectId: number;
   task: TaskRead;
   canUpdate: boolean;
   isPending: boolean;
-  isQuickUpdatePending: boolean;
   assigneeLabel: string;
   onMove: (status: string) => Promise<unknown>;
-  onQuickUpdate: (values: {
-    assigneeId?: string;
-    dueDate?: string;
-    tags?: string;
-  }) => Promise<unknown>;
+  onOpenDetail: (taskId: number) => void;
 }) {
-  const router = useRouter();
-  const [assigneeId, setAssigneeId] = useState(
-    task.assignee_id ? String(task.assignee_id) : ""
-  );
-  const [dueDate, setDueDate] = useState(task.due_date ?? "");
-  const [tags, setTags] = useState((task.tags ?? []).join(", "));
-  const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
   const statusIndex = TASK_STATUS_OPTIONS.findIndex(
     (option) => option.value === task.status
   );
   const nextStatus = TASK_STATUS_OPTIONS[statusIndex + 1];
-  const isQuickDirty =
-    assigneeId !== (task.assignee_id ? String(task.assignee_id) : "") ||
-    dueDate !== (task.due_date ?? "") ||
-    tags !== (task.tags ?? []).join(", ");
-  const detailPath = `/projects/joined/${projectId}/tasks/${task.id}`;
   const handleOpenDetail = (event: React.MouseEvent<HTMLElement>) => {
     if (isInteractiveTarget(event.target)) {
       return;
     }
 
-    router.push(detailPath);
+    onOpenDetail(task.id);
   };
 
   return (
     <article
       draggable={canUpdate}
       data-draggable={canUpdate ? "true" : undefined}
-      className="flex flex-col gap-2 rounded-lg border bg-background p-3 data-[draggable=true]:cursor-grab"
+      className={cn(
+        "flex flex-col gap-2 rounded-lg border border-l-4 bg-card p-3 text-card-foreground shadow-sm data-[draggable=true]:cursor-grab",
+        getBoardCardClassName(task.status)
+      )}
       role="button"
       tabIndex={0}
       onClick={handleOpenDetail}
       onKeyDown={(event) => {
         if (event.key === "Enter" && !isInteractiveTarget(event.target)) {
-          router.push(detailPath);
+          onOpenDetail(task.id);
         }
       }}
       onDragStart={(event) => {
@@ -308,69 +259,6 @@ function TaskBoardCard({
           <dd className="text-foreground">{formatDate(task.start_date)}</dd>
         </div>
       </dl>
-      {canUpdate ? (
-        <Popover open={isQuickEditOpen} onOpenChange={setIsQuickEditOpen}>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="sm">
-              <PencilIcon data-icon="inline-start" />
-              クイック編集
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-80">
-            <PopoverHeader>
-              <PopoverTitle>クイック編集</PopoverTitle>
-            </PopoverHeader>
-            <div className="flex flex-col gap-3">
-              <TaskUserSelectField
-                projectId={projectId}
-                label="担当者"
-                value={assigneeId}
-                placeholder="未設定"
-                disabled={isQuickUpdatePending}
-                onChange={setAssigneeId}
-              />
-              <div className="flex flex-col gap-1">
-                <Label htmlFor={`task-${task.id}-due-date`} className="text-xs">
-                  期限
-                </Label>
-                <Input
-                  id={`task-${task.id}-due-date`}
-                  type="date"
-                  value={dueDate}
-                  disabled={isQuickUpdatePending}
-                  onChange={(event) => setDueDate(event.target.value)}
-                  onDragStart={(event) => event.preventDefault()}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label htmlFor={`task-${task.id}-tags`} className="text-xs">
-                  タグ
-                </Label>
-                <Input
-                  id={`task-${task.id}-tags`}
-                  value={tags}
-                  placeholder="frontend, auth"
-                  disabled={isQuickUpdatePending}
-                  onChange={(event) => setTags(event.target.value)}
-                  onDragStart={(event) => event.preventDefault()}
-                />
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                disabled={!isQuickDirty || isQuickUpdatePending}
-                onClick={() => {
-                  onQuickUpdate({ assigneeId, dueDate, tags })
-                    .then(() => setIsQuickEditOpen(false))
-                    .catch(() => undefined);
-                }}
-              >
-                保存
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-      ) : null}
       <div className="flex flex-wrap gap-2">
         <TaskDetailLink projectId={projectId} task={task} />
         {canUpdate && nextStatus ? (
@@ -394,7 +282,8 @@ function TaskBoardCard({
 const getSwimlanes = (
   tasks: TaskRead[],
   swimlane: BoardSwimlane,
-  getTaskUserLabel: (userId?: number | null) => string
+  getTaskUserLabel: (userId?: number | null) => string,
+  tasksById: Map<number, TaskRead>
 ) => {
   if (swimlane === "none") {
     return [{ key: "all", label: "すべて", tasks }];
@@ -409,7 +298,7 @@ const getSwimlanes = (
     const key = getSwimlaneKey(task, swimlane);
     const lane = lanes.get(key) ?? {
       key,
-      label: getSwimlaneLabel(task, swimlane, getTaskUserLabel),
+      label: getSwimlaneLabel(task, swimlane, getTaskUserLabel, tasksById),
       tasks: [],
     };
 
@@ -431,6 +320,10 @@ const getSwimlaneKey = (task: TaskRead, swimlane: BoardSwimlane) => {
 
       return requirement ? `requirement-${requirement.id}` : "requirement-none";
     }
+    case "parent_task":
+      return task.parent_task_id
+        ? `parent-task-${task.parent_task_id}`
+        : "parent-task-none";
     case "priority":
       return task.priority ? `priority-${task.priority}` : "priority-none";
     case "task_type":
@@ -444,7 +337,8 @@ const getSwimlaneKey = (task: TaskRead, swimlane: BoardSwimlane) => {
 const getSwimlaneLabel = (
   task: TaskRead,
   swimlane: BoardSwimlane,
-  getTaskUserLabel: (userId?: number | null) => string
+  getTaskUserLabel: (userId?: number | null) => string,
+  tasksById: Map<number, TaskRead>
 ) => {
   switch (swimlane) {
     case "assignee":
@@ -455,6 +349,17 @@ const getSwimlaneLabel = (
       return requirement
         ? `${requirement.requirement_code} ${requirement.title}`
         : "関連要件なし";
+    }
+    case "parent_task": {
+      if (!task.parent_task_id) {
+        return "親タスクなし";
+      }
+
+      const parentTask = tasksById.get(task.parent_task_id);
+
+      return parentTask
+        ? `${parentTask.task_code} ${parentTask.title}`
+        : `親: ${task.parent_task_id}`;
     }
     case "priority":
       return getTaskPriorityLabel(task.priority);
@@ -478,4 +383,31 @@ const getNextSortOrder = (tasks: TaskRead[], status: string) => {
     .reduce((currentMax, task) => Math.max(currentMax, task.sort_order ?? 0), 0);
 
   return maxSortOrder + 1;
+};
+
+const getBoardStatusClassName = (status?: string | null) => {
+  return cn(
+    "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--status-neutral-fg)]",
+    status === "todo" &&
+      "border-[var(--status-info-border)] bg-[var(--status-info-bg)] text-[var(--status-info-fg)]",
+    status === "in_progress" &&
+      "border-[var(--status-progress-border)] bg-[var(--status-progress-bg)] text-[var(--status-progress-fg)]",
+    status === "in_review" &&
+      "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]",
+    status === "done" &&
+      "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
+    status === "blocked" &&
+      "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]"
+  );
+};
+
+const getBoardCardClassName = (status?: string | null) => {
+  return cn(
+    "border-l-[var(--status-neutral-border)]",
+    status === "todo" && "border-l-[var(--status-info-border)]",
+    status === "in_progress" && "border-l-[var(--status-progress-border)]",
+    status === "in_review" && "border-l-[var(--status-warning-border)]",
+    status === "done" && "border-l-[var(--status-success-border)]",
+    status === "blocked" && "border-l-[var(--status-danger-border)]"
+  );
 };

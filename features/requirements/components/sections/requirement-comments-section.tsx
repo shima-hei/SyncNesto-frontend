@@ -63,7 +63,7 @@ export function RequirementCommentsSection({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs text-muted-foreground">
-                      ユーザーID: {comment.user_id} /{" "}
+                      {comment.user?.name ?? `ユーザーID: ${comment.user_id}`} /{" "}
                       {formatDateTime(comment.created_at)}
                     </span>
                     <p className="whitespace-pre-wrap text-sm">

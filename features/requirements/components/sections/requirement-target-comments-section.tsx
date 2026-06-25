@@ -298,7 +298,8 @@ function CommentBody({
     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
       <div className="flex min-w-0 flex-col gap-1">
         <span className="text-xs text-muted-foreground">
-          投稿者ID: {comment.author_id} / {formatDateTime(comment.created_at)} /{" "}
+          {comment.author?.name ?? `投稿者ID: ${comment.author_id}`} /{" "}
+          {formatDateTime(comment.created_at)} /{" "}
           {comment.is_resolved ? "解決済み" : "未解決"}
         </span>
         <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
