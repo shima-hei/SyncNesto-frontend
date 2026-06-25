@@ -311,7 +311,8 @@ function TaskCommentBody({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">
-          {getUserLabel(comment.created_by)} / {formatDateTime(comment.created_at)}
+          {comment.created_by_user?.name ?? getUserLabel(comment.created_by)} /{" "}
+          {formatDateTime(comment.created_at)}
         </span>
         {comment.is_resolved ? (
           <span className="text-xs text-muted-foreground">解決済み</span>

@@ -123,7 +123,7 @@ export function TaskForm({
 
   return (
     <>
-      <form className="max-w-4xl" onSubmit={handleSubmit}>
+      <form className="mx-auto w-full max-w-4xl" onSubmit={handleSubmit}>
         <FieldGroup>
           <div className="grid gap-4 md:grid-cols-2">
             <Field data-invalid={errors.taskCode ? true : undefined}>

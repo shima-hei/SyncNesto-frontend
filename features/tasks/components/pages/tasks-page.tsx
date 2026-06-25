@@ -389,7 +389,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
       </Tabs>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-h-[90vh] w-[min(92vw,1200px)] overflow-y-auto sm:max-w-none">
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
           <DialogHeader>
             <DialogTitle>タスク登録</DialogTitle>
             <DialogDescription>

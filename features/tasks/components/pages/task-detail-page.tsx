@@ -263,7 +263,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
       </div>
 
       <Dialog open={childTaskDialogOpen} onOpenChange={setChildTaskDialogOpen}>
-        <DialogContent className="max-h-[90vh] w-[min(92vw,1200px)] overflow-y-auto sm:max-w-none">
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
           <DialogHeader>
             <DialogTitle>子タスク作成</DialogTitle>
             <DialogDescription>
@@ -286,7 +286,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
       </Dialog>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-h-[90vh] w-[min(92vw,1200px)] overflow-y-auto sm:max-w-none">
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
           <DialogHeader>
             <DialogTitle>タスク編集</DialogTitle>
             <DialogDescription>

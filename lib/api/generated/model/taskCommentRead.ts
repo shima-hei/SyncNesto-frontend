@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChangeLogUserRead } from './changeLogUserRead';
 
 /**
  * タスクコメント読み取り時に返すschema。
@@ -16,6 +17,7 @@ export interface TaskCommentRead {
   is_resolved: boolean;
   version: number;
   created_by?: number | null;
+  created_by_user?: ChangeLogUserRead | null;
   updated_by?: number | null;
   created_at: string;
   updated_at: string;
