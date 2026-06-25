@@ -48,7 +48,7 @@ import { useRequirementDocument } from "../../hooks/use-requirement-document";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { useRequirements } from "../../hooks/use-requirements";
 import { RequirementDocumentExportDialog } from "../forms/requirement-document-export-dialog";
-import { MarkdownPreview } from "../forms/markdown-textarea";
+import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { RequirementApprovalsSection } from "../sections/requirement-approvals-section";
 import { RequirementChangeLogsSection } from "../sections/requirement-change-logs-section";
 import { RequirementOpenIssuesSection } from "../sections/requirement-open-issues-section";

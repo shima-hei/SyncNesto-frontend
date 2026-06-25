@@ -18,7 +18,7 @@ import type { RequirementSectionRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 
 import { useDeleteRequirementSection } from "../../hooks/use-delete-requirement-section";
-import { MarkdownPreview } from "../forms/markdown-textarea";
+import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { RequirementSectionForm } from "../forms/requirement-section-form";
 import {
   getRequirementDocumentStatusLabel,

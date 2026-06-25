@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
+import { MarkdownTextarea } from "@/components/shared/forms/markdown-textarea";
 import {
   Field,
   FieldDescription,
@@ -66,7 +67,6 @@ export function TaskForm({
 }: TaskFormProps) {
   const taskCodeId = useId();
   const titleId = useId();
-  const descriptionId = useId();
   const tagsId = useId();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<TaskFormErrors>({});
@@ -162,11 +162,11 @@ export function TaskForm({
           </div>
 
           <Field>
-            <FieldLabel htmlFor={descriptionId}>説明</FieldLabel>
-            <Textarea
-              id={descriptionId}
+            <FieldLabel>説明</FieldLabel>
+            <MarkdownTextarea
               value={values.description}
-              onChange={(event) => updateValue("description", event.target.value)}
+              placeholder="Markdown形式で説明を入力"
+              onChange={(value) => updateValue("description", value)}
             />
           </Field>
 

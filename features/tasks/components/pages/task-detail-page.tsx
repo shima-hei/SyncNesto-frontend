@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CopyIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
+import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -158,9 +159,11 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
               <CardTitle>説明</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                {task.description || "説明はありません。"}
-              </p>
+              <MarkdownPreview
+                value={task.description ?? ""}
+                emptyMessage="説明はありません。"
+                className="min-h-24"
+              />
             </CardContent>
           </Card>
 
@@ -248,8 +251,11 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
 
         <aside className="min-w-0 xl:sticky xl:top-20">
           <TaskCommentsSection
+            projectId={projectId}
+            task={task}
             taskId={taskId}
             canComment={canCommentTask(currentProjectRole)}
+            canUpdateStatus={canUpdate}
             className="xl:max-h-[calc(100vh-6rem)] xl:overflow-hidden"
             contentClassName="xl:max-h-none xl:min-h-0 xl:overflow-y-auto"
           />

@@ -6,7 +6,7 @@ import { ChangeLogCard } from "@/components/shared/change-log/change-log-card";
 import { ChangeLogListCard } from "@/components/shared/change-log/change-log-list-card";
 import {
   getChangeLogHeaderFieldLabel,
-  getVisibleTaskLikeChangeLogs,
+  getVisibleChangeLogs,
 } from "@/lib/change-log/display";
 import type { TaskChangeLogRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
@@ -35,7 +35,7 @@ export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
     isLoading,
     isFetching,
   } = useTaskChangeLogs(taskId, page);
-  const visibleChangeLogs = getVisibleTaskLikeChangeLogs(changeLogs);
+  const visibleChangeLogs = getVisibleChangeLogs(changeLogs);
 
   return (
     <ChangeLogListCard

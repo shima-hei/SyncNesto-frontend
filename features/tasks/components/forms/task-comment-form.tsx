@@ -10,8 +10,17 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
 import { taskCommentSchema } from "../../schemas/task-schema";
 import type {
   TaskCommentFormErrors,
@@ -22,20 +31,25 @@ type TaskCommentFormProps = {
   initialValues?: TaskCommentFormValues;
   submitLabel?: string;
   resetOnSuccess?: boolean;
+  enableStatusChange?: boolean;
   isPending: boolean;
   error?: Error | null;
   onSubmit: (values: TaskCommentFormValues) => Promise<unknown>;
   onSuccess?: () => void;
 };
 
+export const TASK_COMMENT_STATUS_UNCHANGED = "__unchanged";
+
 const defaultValues: TaskCommentFormValues = {
   body: "",
+  status: TASK_COMMENT_STATUS_UNCHANGED,
 };
 
 export function TaskCommentForm({
   initialValues,
   submitLabel = "コメント追加",
   resetOnSuccess = true,
+  enableStatusChange = false,
   isPending,
   error,
   onSubmit,
@@ -79,13 +93,44 @@ export function TaskCommentForm({
           <Textarea
             value={values.body}
             onChange={(event) => {
-              setValues({ body: event.target.value });
+              setValues((current) => ({
+                ...current,
+                body: event.target.value,
+              }));
               setErrors((current) => ({ ...current, body: undefined }));
             }}
             aria-invalid={Boolean(errors.body)}
           />
           {errors.body ? <FieldError>{errors.body}</FieldError> : null}
         </Field>
+
+        {enableStatusChange ? (
+          <Field>
+            <FieldLabel>ステータスも変更</FieldLabel>
+            <Select
+              value={values.status}
+              onValueChange={(status) =>
+                setValues((current) => ({ ...current, status }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value={TASK_COMMENT_STATUS_UNCHANGED}>
+                    変更しない
+                  </SelectItem>
+                  {TASK_STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+        ) : null}
 
         <FormApiError error={error} />
         <FormSubmitButton isPending={isPending}>{submitLabel}</FormSubmitButton>

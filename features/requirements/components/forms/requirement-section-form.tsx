@@ -30,7 +30,7 @@ import type {
   RequirementSectionFormErrors,
   RequirementSectionFormValues,
 } from "../../types/requirement-section-form";
-import { MarkdownTextarea } from "./markdown-textarea";
+import { MarkdownTextarea } from "@/components/shared/forms/markdown-textarea";
 
 type RequirementSectionFormProps = {
   initialValues?: RequirementSectionFormValues;

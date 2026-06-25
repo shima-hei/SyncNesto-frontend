@@ -28,24 +28,3 @@ export const getVisibleChangeLogs = <TChangeLog extends ChangeLogBase>(
     return !areChangeLogValuesEqual(changeLog.old_value, changeLog.new_value);
   });
 };
-
-export const getVisibleTaskLikeChangeLogs = <TChangeLog extends ChangeLogBase>(
-  changeLogs: TChangeLog[]
-) => {
-  const changedLogs = getVisibleChangeLogs(changeLogs);
-
-  return changedLogs.filter((changeLog) => {
-    if (changeLog.action !== "updated" || !changeLog.field_name) {
-      return true;
-    }
-
-    return !changedLogs.some(
-      (otherLog) =>
-        otherLog.id !== changeLog.id &&
-        otherLog.action !== "updated" &&
-        otherLog.field_name === changeLog.field_name &&
-        areChangeLogValuesEqual(otherLog.old_value, changeLog.old_value) &&
-        areChangeLogValuesEqual(otherLog.new_value, changeLog.new_value)
-    );
-  });
-};

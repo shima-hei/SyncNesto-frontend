@@ -58,4 +58,5 @@ export const taskSchema = z.object({
 
 export const taskCommentSchema = z.object({
   body: z.string().trim().min(1, VALIDATION_MESSAGES.required("コメント")),
+  status: z.string(),
 });

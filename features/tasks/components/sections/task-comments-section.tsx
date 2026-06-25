@@ -13,28 +13,39 @@ import {
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { TaskCommentRead } from "@/lib/api/generated/model";
+import type { TaskCommentRead, TaskRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { useCreateTaskComment } from "../../hooks/use-create-task-comment";
 import { useDeleteTaskComment } from "../../hooks/use-delete-task-comment";
 import { useTaskComments } from "../../hooks/use-task-comments";
+import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useToggleTaskCommentState } from "../../hooks/use-toggle-task-comment-state";
+import { useUpdateTaskStatus } from "../../hooks/use-update-task-status";
 import { useUpdateTaskComment } from "../../hooks/use-update-task-comment";
 import type { TaskCommentFormValues } from "../../types/task-comment-form";
-import { TaskCommentForm } from "../forms/task-comment-form";
+import {
+  TASK_COMMENT_STATUS_UNCHANGED,
+  TaskCommentForm,
+} from "../forms/task-comment-form";
 
 type TaskCommentsSectionProps = {
+  projectId: number;
+  task: TaskRead;
   taskId: number;
   canComment: boolean;
+  canUpdateStatus: boolean;
   className?: string;
   contentClassName?: string;
 };
 
 export function TaskCommentsSection({
+  projectId,
+  task,
   taskId,
   canComment,
+  canUpdateStatus,
   className,
   contentClassName,
 }: TaskCommentsSectionProps) {
@@ -56,7 +67,21 @@ export function TaskCommentsSection({
     useDeleteTaskComment(taskId);
   const { resolveTaskComment, reopenTaskComment, isPending: isStatePending } =
     useToggleTaskCommentState(taskId);
+  const { updateTaskStatus, isPending: isStatusPending } =
+    useUpdateTaskStatus(projectId);
+  const { getTaskUserLabel } = useTaskUserMap(projectId);
   const rootComments = comments.filter((comment) => !comment.parent_comment_id);
+  const handleCreateCommentWithStatus = async (values: TaskCommentFormValues) => {
+    await createTaskComment(values);
+
+    if (
+      canUpdateStatus &&
+      values.status !== TASK_COMMENT_STATUS_UNCHANGED &&
+      values.status !== task.status
+    ) {
+      await updateTaskStatus(task, values.status);
+    }
+  };
 
   return (
     <Card className={className}>
@@ -71,9 +96,15 @@ export function TaskCommentsSection({
       >
         {canComment ? (
           <TaskCommentForm
-            isPending={isCreatePending}
+            key={task.status ?? TASK_COMMENT_STATUS_UNCHANGED}
+            initialValues={{
+              body: "",
+              status: TASK_COMMENT_STATUS_UNCHANGED,
+            }}
+            enableStatusChange={canUpdateStatus}
+            isPending={isCreatePending || isStatusPending}
             error={createError}
-            onSubmit={(values) => createTaskComment(values)}
+            onSubmit={handleCreateCommentWithStatus}
           />
         ) : null}
 
@@ -96,6 +127,7 @@ export function TaskCommentsSection({
                 isStatePending={isStatePending}
                 createError={createError}
                 updateError={updateError}
+                getUserLabel={getTaskUserLabel}
                 onEdit={setEditingTarget}
                 onReply={setReplyTarget}
                 onDelete={setDeleteTarget}
@@ -143,6 +175,7 @@ type TaskCommentItemProps = {
   isStatePending: boolean;
   createError?: Error | null;
   updateError?: Error | null;
+  getUserLabel: (userId?: number | null) => string;
   onEdit: (comment: TaskCommentRead | null) => void;
   onReply: (comment: TaskCommentRead | null) => void;
   onDelete: (comment: TaskCommentRead) => void;
@@ -172,6 +205,7 @@ function TaskCommentItem({
   isStatePending,
   createError,
   updateError,
+  getUserLabel,
   onEdit,
   onReply,
   onDelete,
@@ -191,6 +225,7 @@ function TaskCommentItem({
         comment={comment}
         canComment={canComment}
         isStatePending={isStatePending}
+        getUserLabel={getUserLabel}
         onEdit={onEdit}
         onReply={onReply}
         onDelete={onDelete}
@@ -202,7 +237,10 @@ function TaskCommentItem({
         <div className="mt-3 rounded-lg bg-muted p-3">
           <TaskCommentInlineHeader label="コメント編集" onClose={onCloseEdit} />
           <TaskCommentForm
-            initialValues={{ body: comment.body }}
+            initialValues={{
+              body: comment.body,
+              status: TASK_COMMENT_STATUS_UNCHANGED,
+            }}
             submitLabel="コメント更新"
             resetOnSuccess={false}
             isPending={isUpdatePending}
@@ -234,6 +272,7 @@ function TaskCommentItem({
               comment={reply}
               canComment={canComment}
               isStatePending={isStatePending}
+              getUserLabel={getUserLabel}
               onEdit={onEdit}
               onReply={onReply}
               onDelete={onDelete}
@@ -251,6 +290,7 @@ function TaskCommentBody({
   comment,
   canComment,
   isStatePending,
+  getUserLabel,
   onEdit,
   onReply,
   onDelete,
@@ -260,6 +300,7 @@ function TaskCommentBody({
   comment: TaskCommentRead;
   canComment: boolean;
   isStatePending: boolean;
+  getUserLabel: (userId?: number | null) => string;
   onEdit: (comment: TaskCommentRead | null) => void;
   onReply: (comment: TaskCommentRead | null) => void;
   onDelete: (comment: TaskCommentRead) => void;
@@ -270,7 +311,7 @@ function TaskCommentBody({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">
-          作成者ID: {comment.created_by ?? "-"} / {formatDateTime(comment.created_at)}
+          {getUserLabel(comment.created_by)} / {formatDateTime(comment.created_at)}
         </span>
         {comment.is_resolved ? (
           <span className="text-xs text-muted-foreground">解決済み</span>

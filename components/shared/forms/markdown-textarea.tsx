@@ -12,6 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 type MarkdownTextareaProps = {
   value: string;
@@ -142,7 +143,10 @@ export function MarkdownPreview({
   if (!value.trim()) {
     return (
       <div
-        className={`min-h-48 rounded-md border bg-muted p-3 text-sm text-muted-foreground ${className ?? ""}`}
+        className={cn(
+          "min-h-48 rounded-md border bg-muted p-3 text-sm text-muted-foreground",
+          className
+        )}
       >
         {emptyMessage}
       </div>
@@ -151,7 +155,10 @@ export function MarkdownPreview({
 
   return (
     <div
-      className={`flex min-h-48 flex-col gap-3 rounded-md border bg-background p-3 ${className ?? ""}`}
+      className={cn(
+        "flex min-h-48 flex-col gap-3 rounded-md border bg-background p-3",
+        className
+      )}
     >
       {blocks.map((block, index) => {
         if (block.type === "heading") {

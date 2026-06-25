@@ -71,6 +71,7 @@ export function useUpdateTaskStatus(projectId: number) {
       data: {
         version: task.version,
         status,
+        ...(status === "done" ? { progress_percent: 100 } : {}),
       },
     });
   };
