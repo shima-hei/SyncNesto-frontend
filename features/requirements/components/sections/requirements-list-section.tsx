@@ -4,42 +4,21 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
-import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import {
-  REQUIREMENT_PRIORITY_OPTIONS,
-  REQUIREMENT_STATUS_OPTIONS,
-  REQUIREMENT_TYPE_OPTIONS,
-} from "../../constants/requirement-options";
+  ALL_REQUIREMENT_PRIORITIES,
+  ALL_REQUIREMENT_STATUSES,
+  ALL_REQUIREMENT_TYPES,
+  REQUIREMENT_SORT_OPTIONS,
+} from "../../constants/requirement-view-options";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { useRequirements } from "../../hooks/use-requirements";
-import { RequirementOwnerFilter } from "../filters/requirement-owner-filter";
+import { RequirementsListFilters } from "../filters/requirements-list-filters";
 import { RequirementsTable } from "../tables/requirements-table";
 
 const PAGE_SIZE = 20;
-const ALL_STATUSES = "all";
-const ALL_TYPES = "all";
-const ALL_PRIORITIES = "all";
-
-const SORT_OPTIONS = [
-  { value: "updated_desc", label: "更新日時 新しい順" },
-  { value: "updated_asc", label: "更新日時 古い順" },
-  { value: "code_asc", label: "要件コード 昇順" },
-  { value: "code_desc", label: "要件コード 降順" },
-  { value: "title_asc", label: "タイトル 昇順" },
-  { value: "title_desc", label: "タイトル 降順" },
-] as const;
 
 type RequirementsListSectionProps = {
   projectId: number;
@@ -64,13 +43,12 @@ export function RequirementsListSection({
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState(ALL_STATUSES);
-  const [requirementType, setRequirementType] = useState(ALL_TYPES);
-  const [priority, setPriority] = useState(ALL_PRIORITIES);
+  const [status, setStatus] = useState(ALL_REQUIREMENT_STATUSES);
+  const [requirementType, setRequirementType] = useState(ALL_REQUIREMENT_TYPES);
+  const [priority, setPriority] = useState(ALL_REQUIREMENT_PRIORITIES);
   const [ownerId, setOwnerId] = useState<number | null>(null);
-  const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]["value"]>(
-    "updated_desc"
-  );
+  const [sort, setSort] =
+    useState<(typeof REQUIREMENT_SORT_OPTIONS)[number]["value"]>("updated_desc");
   const { requirements, total, isLoading, isFetching } = useRequirements(
     projectId,
     {
@@ -79,10 +57,10 @@ export function RequirementsListSection({
       document_id: documentId,
       section_id: sectionId ?? undefined,
       q: q || undefined,
-      status: status === ALL_STATUSES ? undefined : status,
+      status: status === ALL_REQUIREMENT_STATUSES ? undefined : status,
       requirement_type:
-        requirementType === ALL_TYPES ? undefined : requirementType,
-      priority: priority === ALL_PRIORITIES ? undefined : priority,
+        requirementType === ALL_REQUIREMENT_TYPES ? undefined : requirementType,
+      priority: priority === ALL_REQUIREMENT_PRIORITIES ? undefined : priority,
       owner_id: ownerId ?? undefined,
     }
   );
@@ -153,55 +131,22 @@ export function RequirementsListSection({
           </Button>
         ) : null}
       </div>
-      <SearchFilterBar
-        searchValue={searchInput}
-        searchLabel="キーワード"
-        searchPlaceholder="要件コード、タイトル、説明で検索"
-        variant="compact"
-        onSearchValueChange={setSearchInput}
+      <RequirementsListFilters
+        projectId={projectId}
+        searchInput={searchInput}
+        status={status}
+        requirementType={requirementType}
+        priority={priority}
+        ownerId={ownerId}
+        sort={sort}
+        onSearchInputChange={setSearchInput}
         onSearch={handleSearch}
-      >
-        <RequirementFilterSelect
-          label="種別"
-          value={requirementType}
-          placeholder="種別を選択"
-          allValue={ALL_TYPES}
-          allLabel="すべての種別"
-          options={REQUIREMENT_TYPE_OPTIONS}
-          onValueChange={handleTypeChange}
-        />
-        <RequirementFilterSelect
-          label="ステータス"
-          value={status}
-          placeholder="ステータスを選択"
-          allValue={ALL_STATUSES}
-          allLabel="すべてのステータス"
-          options={REQUIREMENT_STATUS_OPTIONS}
-          onValueChange={handleStatusChange}
-        />
-        <RequirementFilterSelect
-          label="優先度"
-          value={priority}
-          placeholder="優先度を選択"
-          allValue={ALL_PRIORITIES}
-          allLabel="すべての優先度"
-          options={REQUIREMENT_PRIORITY_OPTIONS}
-          onValueChange={handlePriorityChange}
-        />
-        <RequirementOwnerFilter
-          projectId={projectId}
-          value={ownerId}
-          label="担当者"
-          onChange={handleOwnerChange}
-        />
-        <RequirementFilterSelect
-          label="並び順"
-          value={sort}
-          placeholder="並び順を選択"
-          options={SORT_OPTIONS}
-          onValueChange={(value) => setSort(value as typeof sort)}
-        />
-      </SearchFilterBar>
+        onStatusChange={handleStatusChange}
+        onTypeChange={handleTypeChange}
+        onPriorityChange={handlePriorityChange}
+        onOwnerChange={handleOwnerChange}
+        onSortChange={(value) => setSort(value as typeof sort)}
+      />
       <RequirementsTable
         projectId={projectId}
         documentId={documentId}
@@ -221,48 +166,5 @@ export function RequirementsListSection({
         onPageChange={setPage}
       />
     </div>
-  );
-}
-
-type RequirementFilterSelectProps = {
-  label: string;
-  value: string;
-  placeholder: string;
-  options: readonly { value: string; label: string }[];
-  allValue?: string;
-  allLabel?: string;
-  onValueChange: (value: string) => void;
-};
-
-function RequirementFilterSelect({
-  label,
-  value,
-  placeholder,
-  options,
-  allValue,
-  allLabel,
-  onValueChange,
-}: RequirementFilterSelectProps) {
-  return (
-    <Field>
-      <FieldLabel>{label}</FieldLabel>
-      <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {allValue && allLabel ? (
-              <SelectItem value={allValue}>{allLabel}</SelectItem>
-            ) : null}
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </Field>
   );
 }

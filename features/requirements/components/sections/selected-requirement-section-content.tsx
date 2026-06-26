@@ -4,29 +4,20 @@ import { useState } from "react";
 import { EditIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
+import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { RequirementSectionRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 
 import { useDeleteRequirementSection } from "../../hooks/use-delete-requirement-section";
-import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
-import { RequirementSectionForm } from "../forms/requirement-section-form";
 import {
   getRequirementDocumentStatusLabel,
   getRequirementSectionTypeLabel,
 } from "../../constants/requirement-options";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { useUpdateRequirementSection } from "../../hooks/use-update-requirement-section";
-import type { RequirementSectionFormValues } from "../../types/requirement-section-form";
+import { RequirementSectionEditDialog } from "./section-detail/requirement-section-edit-dialog";
 
 type SelectedRequirementSectionContentProps = {
   projectId: number;
@@ -137,29 +128,14 @@ export function SelectedRequirementSectionContent({
         </CardContent>
       </Card>
 
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-h-[90vh] w-[min(92vw,1200px)] overflow-y-auto sm:max-w-none">
-          <DialogHeader>
-            <DialogTitle>セクション編集</DialogTitle>
-            <DialogDescription>
-              選択中のセクション情報と本文を編集します。
-            </DialogDescription>
-          </DialogHeader>
-          <div>
-            <RequirementSectionForm
-              initialValues={toSectionFormValues(section)}
-              submitLabel="セクション更新"
-              resetOnSuccess={false}
-              isPending={isUpdatePending}
-              error={updateError}
-              onSubmit={(values) =>
-                updateRequirementSection(section.id, section.version, values)
-              }
-              onSuccess={() => setEditDialogOpen(false)}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RequirementSectionEditDialog
+        open={editDialogOpen}
+        section={section}
+        isPending={isUpdatePending}
+        error={updateError}
+        onOpenChange={setEditDialogOpen}
+        onSubmit={updateRequirementSection}
+      />
 
       <ResourceDeleteDialog
         open={deleteDialogOpen}
@@ -175,16 +151,4 @@ export function SelectedRequirementSectionContent({
       />
     </>
   );
-}
-
-function toSectionFormValues(
-  section: RequirementSectionRead
-): RequirementSectionFormValues {
-  return {
-    title: section.title,
-    sectionType: section.section_type,
-    content: section.content ?? "",
-    sortOrder: String(section.sort_order ?? 10),
-    status: section.status ?? "draft",
-  };
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
+import { CommentThreadList } from "@/components/shared/comments/comment-thread-list";
 import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,8 +44,6 @@ export function TaskCommentsSection({
   contentClassName,
 }: TaskCommentsSectionProps) {
   const [deleteTarget, setDeleteTarget] = useState<TaskCommentRead | null>(null);
-  const [editingTarget, setEditingTarget] = useState<TaskCommentRead | null>(null);
-  const [replyTarget, setReplyTarget] = useState<TaskCommentRead | null>(null);
   const { comments, isLoading } = useTaskComments(taskId);
   const {
     createTaskComment,
@@ -63,7 +62,6 @@ export function TaskCommentsSection({
   const { updateTaskStatus, isPending: isStatusPending } =
     useUpdateTaskStatus(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
-  const rootComments = comments.filter((comment) => !comment.parent_comment_id);
   const handleCreateCommentWithStatus = async (values: TaskCommentFormValues) => {
     await createTaskComment(values);
 
@@ -101,41 +99,59 @@ export function TaskCommentsSection({
           />
         ) : null}
 
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">コメントを読み込み中です。</p>
-        ) : rootComments.length ? (
-          <div className="flex flex-col gap-3">
-            {rootComments.map((comment) => (
-              <TaskCommentItem
-                key={comment.id}
-                comment={comment}
-                replies={comments.filter(
-                  (reply) => reply.parent_comment_id === comment.id
-                )}
-                canComment={canComment}
-                editingTarget={editingTarget}
-                replyTarget={replyTarget}
-                isCreatePending={isCreatePending}
-                isUpdatePending={isUpdatePending}
-                isStatePending={isStatePending}
-                createError={createError}
-                updateError={updateError}
-                getUserLabel={getTaskUserLabel}
-                onEdit={setEditingTarget}
-                onReply={setReplyTarget}
-                onDelete={setDeleteTarget}
-                onResolve={resolveTaskComment}
-                onReopen={reopenTaskComment}
-                onUpdate={updateTaskComment}
-                onCreateReply={createTaskComment}
-                onCloseEdit={() => setEditingTarget(null)}
-                onCloseReply={() => setReplyTarget(null)}
+        <CommentThreadList
+          comments={comments}
+          isLoading={isLoading}
+          canComment={canComment}
+          emptyMessage="コメントはありません。"
+          getCommentId={(comment) => comment.id}
+          getParentCommentId={(comment) => comment.parent_comment_id}
+          loadingFallback={<p className="text-sm text-muted-foreground">コメントを読み込み中です。</p>}
+          renderCommentBody={({ comment, onEdit, onReply }) => (
+            <TaskCommentBody
+              comment={comment}
+              canComment={canComment}
+              isStatePending={isStatePending}
+              getUserLabel={getTaskUserLabel}
+              onEdit={onEdit}
+              onReply={onReply}
+              onDelete={setDeleteTarget}
+              onResolve={resolveTaskComment}
+              onReopen={reopenTaskComment}
+            />
+          )}
+          renderEditForm={({ comment, onClose }) => (
+            <>
+              <CommentInlineHeader label="コメント編集" onClose={onClose} />
+              <TaskCommentForm
+                initialValues={{
+                  body: comment.body,
+                  status: TASK_COMMENT_STATUS_UNCHANGED,
+                }}
+                submitLabel="コメント更新"
+                resetOnSuccess={false}
+                isPending={isUpdatePending}
+                error={updateError}
+                onSubmit={(values) =>
+                  updateTaskComment(comment.id, comment.version, values)
+                }
+                onSuccess={onClose}
               />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">コメントはありません。</p>
-        )}
+            </>
+          )}
+          renderReplyForm={({ comment, onClose }) => (
+            <>
+              <CommentInlineHeader label="返信" onClose={onClose} />
+              <TaskCommentForm
+                submitLabel="返信追加"
+                isPending={isCreatePending}
+                error={createError}
+                onSubmit={(values) => createTaskComment(values, comment.id)}
+                onSuccess={onClose}
+              />
+            </>
+          )}
+        />
 
         <ResourceDeleteDialog
           open={Boolean(deleteTarget)}
@@ -157,128 +173,6 @@ export function TaskCommentsSection({
   );
 }
 
-type TaskCommentItemProps = {
-  comment: TaskCommentRead;
-  replies: TaskCommentRead[];
-  canComment: boolean;
-  editingTarget: TaskCommentRead | null;
-  replyTarget: TaskCommentRead | null;
-  isCreatePending: boolean;
-  isUpdatePending: boolean;
-  isStatePending: boolean;
-  createError?: Error | null;
-  updateError?: Error | null;
-  getUserLabel: (userId?: number | null) => string;
-  onEdit: (comment: TaskCommentRead | null) => void;
-  onReply: (comment: TaskCommentRead | null) => void;
-  onDelete: (comment: TaskCommentRead) => void;
-  onResolve: (commentId: number, version: number) => Promise<void>;
-  onReopen: (commentId: number, version: number) => Promise<void>;
-  onUpdate: (
-    commentId: number,
-    version: number,
-    values: TaskCommentFormValues
-  ) => Promise<unknown>;
-  onCreateReply: (
-    values: TaskCommentFormValues,
-    parentCommentId?: number | null
-  ) => Promise<unknown>;
-  onCloseEdit: () => void;
-  onCloseReply: () => void;
-};
-
-function TaskCommentItem({
-  comment,
-  replies,
-  canComment,
-  editingTarget,
-  replyTarget,
-  isCreatePending,
-  isUpdatePending,
-  isStatePending,
-  createError,
-  updateError,
-  getUserLabel,
-  onEdit,
-  onReply,
-  onDelete,
-  onResolve,
-  onReopen,
-  onUpdate,
-  onCreateReply,
-  onCloseEdit,
-  onCloseReply,
-}: TaskCommentItemProps) {
-  const isEditing = editingTarget?.id === comment.id;
-  const isReplying = replyTarget?.id === comment.id;
-
-  return (
-    <div className="rounded-lg border p-3">
-      <TaskCommentBody
-        comment={comment}
-        canComment={canComment}
-        isStatePending={isStatePending}
-        getUserLabel={getUserLabel}
-        onEdit={onEdit}
-        onReply={onReply}
-        onDelete={onDelete}
-        onResolve={onResolve}
-        onReopen={onReopen}
-      />
-
-      {isEditing ? (
-        <div className="mt-3 rounded-lg bg-muted p-3">
-          <CommentInlineHeader label="コメント編集" onClose={onCloseEdit} />
-          <TaskCommentForm
-            initialValues={{
-              body: comment.body,
-              status: TASK_COMMENT_STATUS_UNCHANGED,
-            }}
-            submitLabel="コメント更新"
-            resetOnSuccess={false}
-            isPending={isUpdatePending}
-            error={updateError}
-            onSubmit={(values) => onUpdate(comment.id, comment.version, values)}
-            onSuccess={onCloseEdit}
-          />
-        </div>
-      ) : null}
-
-      {isReplying ? (
-        <div className="mt-3 rounded-lg bg-muted p-3">
-          <CommentInlineHeader label="返信" onClose={onCloseReply} />
-          <TaskCommentForm
-            submitLabel="返信追加"
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={(values) => onCreateReply(values, comment.id)}
-            onSuccess={onCloseReply}
-          />
-        </div>
-      ) : null}
-
-      {replies.length ? (
-        <div className="mt-3 flex flex-col gap-2 border-l pl-3">
-          {replies.map((reply) => (
-            <TaskCommentBody
-              key={reply.id}
-              comment={reply}
-              canComment={canComment}
-              isStatePending={isStatePending}
-              getUserLabel={getUserLabel}
-              onEdit={onEdit}
-              onReply={onReply}
-              onDelete={onDelete}
-              onResolve={onResolve}
-              onReopen={onReopen}
-            />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function TaskCommentBody({
   comment,
   canComment,
@@ -294,8 +188,8 @@ function TaskCommentBody({
   canComment: boolean;
   isStatePending: boolean;
   getUserLabel: (userId?: number | null) => string;
-  onEdit: (comment: TaskCommentRead | null) => void;
-  onReply: (comment: TaskCommentRead | null) => void;
+  onEdit: (comment: TaskCommentRead) => void;
+  onReply: (comment: TaskCommentRead) => void;
   onDelete: (comment: TaskCommentRead) => void;
   onResolve: (commentId: number, version: number) => Promise<void>;
   onReopen: (commentId: number, version: number) => Promise<void>;

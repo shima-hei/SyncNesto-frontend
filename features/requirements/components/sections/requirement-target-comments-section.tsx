@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
+import { CommentThreadList } from "@/components/shared/comments/comment-thread-list";
 import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,10 +40,6 @@ export function RequirementTargetCommentsSection({
 }: RequirementTargetCommentsSectionProps) {
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementTargetCommentRead | null>(null);
-  const [editingTarget, setEditingTarget] =
-    useState<RequirementTargetCommentRead | null>(null);
-  const [replyTarget, setReplyTarget] =
-    useState<RequirementTargetCommentRead | null>(null);
   const { comments, isLoading } = useTargetComments(
     projectId,
     targetType,
@@ -65,7 +62,6 @@ export function RequirementTargetCommentsSection({
     reopenTargetComment,
     isPending: isStatePending,
   } = useToggleTargetCommentState(projectId, targetType, targetId);
-  const rootComments = comments.filter((comment) => !comment.parent_comment_id);
 
   return (
     <Card className={className}>
@@ -81,42 +77,56 @@ export function RequirementTargetCommentsSection({
           />
         ) : null}
 
-        {isLoading ? (
-          <RequirementSectionSkeleton />
-        ) : rootComments.length ? (
-          <div className="flex flex-col gap-3">
-            {rootComments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                replies={comments.filter(
-                  (reply) => reply.parent_comment_id === comment.id
-                )}
-                canComment={canComment}
-                isStatePending={isStatePending}
-                editingTarget={editingTarget}
-                replyTarget={replyTarget}
-                updateError={updateError}
-                isUpdatePending={isUpdatePending}
-                createError={createError}
-                isCreatePending={isCreatePending}
-                onEdit={setEditingTarget}
-                onReply={setReplyTarget}
-                onDelete={setDeleteTarget}
-                onResolve={resolveTargetComment}
-                onReopen={reopenTargetComment}
-                onUpdate={updateTargetComment}
-                onCreateReply={createTargetComment}
-                onCloseEdit={() => setEditingTarget(null)}
-                onCloseReply={() => setReplyTarget(null)}
+        <CommentThreadList
+          comments={comments}
+          isLoading={isLoading}
+          canComment={canComment}
+          emptyMessage="スレッドコメントはありません。"
+          getCommentId={(comment) => comment.id}
+          getParentCommentId={(comment) => comment.parent_comment_id}
+          loadingFallback={<RequirementSectionSkeleton />}
+          renderCommentBody={({ comment, onEdit, onReply }) => (
+            <CommentBody
+              comment={comment}
+              canComment={canComment}
+              isStatePending={isStatePending}
+              onEdit={onEdit}
+              onReply={onReply}
+              onDelete={setDeleteTarget}
+              onResolve={resolveTargetComment}
+              onReopen={reopenTargetComment}
+            />
+          )}
+          renderEditForm={({ comment, onClose }) => (
+            <>
+              <CommentInlineHeader label="コメント編集" onClose={onClose} />
+              <RequirementTargetCommentForm
+                initialValues={{ body: comment.body, reason: "" }}
+                submitLabel="コメント更新"
+                resetOnSuccess={false}
+                showReason
+                isPending={isUpdatePending}
+                error={updateError}
+                onSubmit={(values) =>
+                  updateTargetComment(comment.id, comment.version, values)
+                }
+                onSuccess={onClose}
               />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            スレッドコメントはありません。
-          </p>
-        )}
+            </>
+          )}
+          renderReplyForm={({ comment, onClose }) => (
+            <>
+              <CommentInlineHeader label="返信" onClose={onClose} />
+              <RequirementTargetCommentForm
+                submitLabel="返信追加"
+                isPending={isCreatePending}
+                error={createError}
+                onSubmit={(values) => createTargetComment(values, comment.id)}
+                onSuccess={onClose}
+              />
+            </>
+          )}
+        />
 
         <ResourceDeleteDialog
           open={Boolean(deleteTarget)}
@@ -135,122 +145,6 @@ export function RequirementTargetCommentsSection({
         />
       </CardContent>
     </Card>
-  );
-}
-
-type CommentItemProps = {
-  comment: RequirementTargetCommentRead;
-  replies: RequirementTargetCommentRead[];
-  canComment: boolean;
-  isStatePending: boolean;
-  editingTarget: RequirementTargetCommentRead | null;
-  replyTarget: RequirementTargetCommentRead | null;
-  updateError?: Error | null;
-  isUpdatePending: boolean;
-  createError?: Error | null;
-  isCreatePending: boolean;
-  onEdit: (comment: RequirementTargetCommentRead | null) => void;
-  onReply: (comment: RequirementTargetCommentRead | null) => void;
-  onDelete: (comment: RequirementTargetCommentRead) => void;
-  onResolve: (commentId: number, version: number) => Promise<void>;
-  onReopen: (commentId: number, version: number) => Promise<void>;
-  onUpdate: (
-    commentId: number,
-    version: number,
-    values: { body: string; reason: string }
-  ) => Promise<unknown>;
-  onCreateReply: (
-    values: { body: string; reason: string },
-    parentCommentId?: number | null
-  ) => Promise<unknown>;
-  onCloseEdit: () => void;
-  onCloseReply: () => void;
-};
-
-function CommentItem({
-  comment,
-  replies,
-  canComment,
-  isStatePending,
-  editingTarget,
-  replyTarget,
-  updateError,
-  isUpdatePending,
-  createError,
-  isCreatePending,
-  onEdit,
-  onReply,
-  onDelete,
-  onResolve,
-  onReopen,
-  onUpdate,
-  onCreateReply,
-  onCloseEdit,
-  onCloseReply,
-}: CommentItemProps) {
-  const isEditing = editingTarget?.id === comment.id;
-  const isReplying = replyTarget?.id === comment.id;
-
-  return (
-    <div className="rounded-lg border p-3">
-      <CommentBody
-        comment={comment}
-        canComment={canComment}
-        isStatePending={isStatePending}
-        onEdit={onEdit}
-        onReply={onReply}
-        onDelete={onDelete}
-        onResolve={onResolve}
-        onReopen={onReopen}
-      />
-
-      {isEditing ? (
-        <div className="mt-3 rounded-lg bg-muted p-3">
-          <CommentInlineHeader label="コメント編集" onClose={onCloseEdit} />
-          <RequirementTargetCommentForm
-            initialValues={{ body: comment.body, reason: "" }}
-            submitLabel="コメント更新"
-            resetOnSuccess={false}
-            showReason
-            isPending={isUpdatePending}
-            error={updateError}
-            onSubmit={(values) => onUpdate(comment.id, comment.version, values)}
-            onSuccess={onCloseEdit}
-          />
-        </div>
-      ) : null}
-
-      {isReplying ? (
-        <div className="mt-3 rounded-lg bg-muted p-3">
-          <CommentInlineHeader label="返信" onClose={onCloseReply} />
-          <RequirementTargetCommentForm
-            submitLabel="返信追加"
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={(values) => onCreateReply(values, comment.id)}
-            onSuccess={onCloseReply}
-          />
-        </div>
-      ) : null}
-
-      {replies.length ? (
-        <div className="mt-3 flex flex-col gap-2 border-l pl-3">
-          {replies.map((reply) => (
-            <CommentBody
-              key={reply.id}
-              comment={reply}
-              canComment={canComment}
-              isStatePending={isStatePending}
-              onEdit={onEdit}
-              onReply={onReply}
-              onDelete={onDelete}
-              onResolve={onResolve}
-              onReopen={onReopen}
-            />
-          ))}
-        </div>
-      ) : null}
-    </div>
   );
 }
 

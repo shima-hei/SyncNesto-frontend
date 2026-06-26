@@ -1,33 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CheckIcon,
-  PlusIcon,
-} from "lucide-react";
+import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type { RequirementSectionRead } from "@/lib/api/generated/model";
 
-import {
-  getRequirementDocumentStatusLabel,
-  getRequirementSectionTypeLabel,
-} from "../../constants/requirement-options";
 import { useCreateRequirementSection } from "../../hooks/use-create-requirement-section";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { useUpdateRequirementSectionSortOrder } from "../../hooks/use-update-requirement-section-sort-order";
-import { RequirementSectionForm } from "../forms/requirement-section-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
+import { RequirementSectionCreateDialog } from "./section-list/requirement-section-create-dialog";
+import { RequirementSectionListItem } from "./section-list/requirement-section-list-item";
 
 type RequirementSectionsSectionProps = {
   projectId: number;
@@ -118,75 +103,18 @@ export function RequirementSectionsSection({
               const isSelected = selectedSectionId === section.id;
 
               return (
-                <div
+                <RequirementSectionListItem
                   key={section.id}
-                  data-state={isSelected ? "selected" : undefined}
-                  className="rounded-lg border p-3 data-[state=selected]:border-primary"
-                >
-                  <div className="flex flex-col gap-3">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <button
-                        type="button"
-                        className="flex min-w-0 flex-col gap-1 text-left"
-                        onClick={() => onSelectSection?.(section.id)}
-                      >
-                        <span className="min-w-0 break-words font-medium">
-                          {section.title}
-                        </span>
-                        <span className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          <span>
-                            {getRequirementSectionTypeLabel(section.section_type)}
-                          </span>
-                          <span>
-                            {getRequirementDocumentStatusLabel(section.status)}
-                          </span>
-                        </span>
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {onSelectSection ? (
-                        <Button
-                          type="button"
-                          variant={isSelected ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => onSelectSection(section.id)}
-                        >
-                          {isSelected ? (
-                            <CheckIcon data-icon="inline-start" />
-                          ) : null}
-                          {isSelected ? "選択中" : "選択"}
-                        </Button>
-                      ) : null}
-                      {canUpdate ? (
-                        <>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon-sm"
-                            disabled={index === 0 || isSortPending}
-                            onClick={() => moveSection(section, "up")}
-                          >
-                            <ArrowUpIcon />
-                            <span className="sr-only">上へ</span>
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon-sm"
-                            disabled={
-                              index === sortedSections.length - 1 ||
-                              isSortPending
-                            }
-                            onClick={() => moveSection(section, "down")}
-                          >
-                            <ArrowDownIcon />
-                            <span className="sr-only">下へ</span>
-                          </Button>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
+                  section={section}
+                  isSelected={isSelected}
+                  canUpdate={canUpdate}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < sortedSections.length - 1}
+                  isSortPending={isSortPending}
+                  showSelectAction={Boolean(onSelectSection)}
+                  onSelect={onSelectSection ?? undefined}
+                  onMove={moveSection}
+                />
               );
             })}
           </div>
@@ -196,25 +124,14 @@ export function RequirementSectionsSection({
           </p>
         )}
 
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>セクション追加</DialogTitle>
-              <DialogDescription>
-                要件を分類するためのセクションを追加します。
-              </DialogDescription>
-            </DialogHeader>
-            <div>
-              <RequirementSectionForm
-                nextSortOrder={nextSortOrder}
-                isPending={isCreatePending}
-                error={createError}
-                onSubmit={createRequirementSection}
-                onSuccess={() => setCreateDialogOpen(false)}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <RequirementSectionCreateDialog
+          open={createDialogOpen}
+          nextSortOrder={nextSortOrder}
+          isPending={isCreatePending}
+          error={createError}
+          onOpenChange={setCreateDialogOpen}
+          onSubmit={createRequirementSection}
+        />
       </CardContent>
     </Card>
   );
