@@ -124,6 +124,7 @@ export * from './taskListResponse';
 export * from './taskMoveRequest';
 export * from './taskRead';
 export * from './taskRequirementSummary';
+export * from './taskTagListResponse';
 export * from './taskUpdate';
 export * from './userCreate';
 export * from './userListItem';

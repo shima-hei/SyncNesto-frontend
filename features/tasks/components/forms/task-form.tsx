@@ -28,6 +28,7 @@ import { taskSchema } from "../../schemas/task-schema";
 import type { TaskFormErrors, TaskFormValues } from "../../types/task-form";
 import { TaskParentSelectField } from "./task-parent-select-field";
 import { TaskRequirementSelectField } from "./task-requirement-select-field";
+import { TaskTagInput } from "./task-tag-input";
 import { TaskUserSelectField } from "./task-user-select-field";
 import { DateField, NumberField, TaskSelectField } from "./task-form-fields";
 
@@ -60,7 +61,6 @@ export function TaskForm({
 }: TaskFormProps) {
   const taskCodeId = useId();
   const titleId = useId();
-  const tagsId = useId();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<TaskFormErrors>({});
 
@@ -163,17 +163,12 @@ export function TaskForm({
             />
           </Field>
 
-          <Field data-invalid={errors.tags ? true : undefined}>
-            <FieldLabel htmlFor={tagsId}>タグ</FieldLabel>
-            <Input
-              id={tagsId}
-              value={values.tags}
-              placeholder="frontend, auth"
-              onChange={(event) => updateValue("tags", event.target.value)}
-              aria-invalid={Boolean(errors.tags)}
-            />
-            {errors.tags ? <FieldError>{errors.tags}</FieldError> : null}
-          </Field>
+          <TaskTagInput
+            projectId={projectId}
+            value={values.tags}
+            error={errors.tags}
+            onChange={(value) => updateValue("tags", value)}
+          />
 
           <div className="grid gap-4 md:grid-cols-3">
             <TaskSelectField

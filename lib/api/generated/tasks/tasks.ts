@@ -54,6 +54,7 @@ import type {
   TaskListResponse,
   TaskMoveRequest,
   TaskRead,
+  TaskTagListResponse,
   TaskUpdate
 } from '../model';
 
@@ -252,7 +253,108 @@ export const useCreateTaskProjectsProjectIdTasksPost = <TError = ErrorType<HTTPV
       > => {
       return useMutation(getCreateTaskProjectsProjectIdTasksPostMutationOptions(options), queryClient);
     }
-    export const getReadTaskTasksTaskIdGetUrl = (taskId: number,) => {
+    export const getListTaskTagsProjectsProjectIdTasksTagsGetUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/tasks/tags`
+}
+
+/**
+ * プロジェクト内で利用済みのタスクタグ候補を取得する。
+ * @summary List Task Tags
+ */
+export const listTaskTagsProjectsProjectIdTasksTagsGet = async (projectId: number, options?: RequestInit): Promise<TaskTagListResponse> => {
+
+  return apiClient<TaskTagListResponse>(getListTaskTagsProjectsProjectIdTasksTagsGetUrl(projectId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskTagsProjectsProjectIdTasksTagsGetQueryKey = (projectId: number,) => {
+    return [
+    `/projects/${projectId}/tasks/tags`
+    ] as const;
+    }
+
+
+export const getListTaskTagsProjectsProjectIdTasksTagsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskTagsProjectsProjectIdTasksTagsGetQueryKey(projectId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>> = ({ signal }) => listTaskTagsProjectsProjectIdTasksTagsGet(projectId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTaskTagsProjectsProjectIdTasksTagsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>>
+export type ListTaskTagsProjectsProjectIdTasksTagsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Task Tags
+ */
+
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTaskTagsProjectsProjectIdTasksTagsGetQueryOptions(projectId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getReadTaskTasksTaskIdGetUrl = (taskId: number,) => {
 
 
 
