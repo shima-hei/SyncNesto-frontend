@@ -1,16 +1,36 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import {
+  BoldIcon,
+  CheckSquareIcon,
+  ChevronDownIcon,
   Code2Icon,
   EyeIcon,
+  Heading1Icon,
   Heading2Icon,
+  Heading3Icon,
+  ItalicIcon,
+  LinkIcon,
   ListIcon,
+  ListOrderedIcon,
+  MinusIcon,
   PencilIcon,
+  QuoteIcon,
   TableIcon,
+  WorkflowIcon,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +48,7 @@ export function MarkdownTextarea({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
 
-  const insertTemplate = (template: string) => {
+  const insertTemplate = (template: string, cursorOffset = template.length) => {
     const textarea = textareaRef.current;
 
     if (!textarea) {
@@ -44,7 +64,8 @@ export function MarkdownTextarea({
 
     requestAnimationFrame(() => {
       textarea.focus();
-      textarea.setSelectionRange(start + template.length, start + template.length);
+      const cursorPosition = start + cursorOffset;
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
     });
   };
 
@@ -52,44 +73,102 @@ export function MarkdownTextarea({
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => insertTemplate("\n## 見出し\n\n")}
-          >
-            <Heading2Icon data-icon="inline-start" />
-            見出し
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => insertTemplate("\n- 項目1\n- 項目2\n")}
-          >
-            <ListIcon data-icon="inline-start" />
-            箇条書き
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              insertTemplate("\n| 項目 | 内容 |\n|---|---|\n|  |  |\n")
-            }
-          >
-            <TableIcon data-icon="inline-start" />
-            表
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => insertTemplate("\n```\n\n```\n")}
-          >
-            <Code2Icon data-icon="inline-start" />
-            コード
-          </Button>
+          <MarkdownToolbarMenu
+            label="見出し"
+            icon={<Heading2Icon data-icon="inline-start" />}
+            items={[
+              {
+                label: "大見出し",
+                icon: <Heading1Icon />,
+                template: "\n# 見出し1\n\n",
+              },
+              {
+                label: "中見出し",
+                icon: <Heading2Icon />,
+                template: "\n## 見出し2\n\n",
+              },
+              {
+                label: "小見出し",
+                icon: <Heading3Icon />,
+                template: "\n### 見出し3\n\n",
+              },
+            ]}
+            onSelect={insertTemplate}
+          />
+          <MarkdownToolbarMenu
+            label="装飾"
+            icon={<BoldIcon data-icon="inline-start" />}
+            items={[
+              {
+                label: "太字",
+                icon: <BoldIcon />,
+                template: "**強調**",
+                cursorOffset: 2,
+              },
+              {
+                label: "斜体",
+                icon: <ItalicIcon />,
+                template: "*斜体*",
+                cursorOffset: 1,
+              },
+              {
+                label: "リンク",
+                icon: <LinkIcon />,
+                template: "[リンク](https://example.com)",
+                cursorOffset: 1,
+              },
+              {
+                label: "引用",
+                icon: <QuoteIcon />,
+                template: "\n> 引用\n\n",
+              },
+            ]}
+            onSelect={insertTemplate}
+          />
+          <MarkdownToolbarMenu
+            label="挿入"
+            icon={<TableIcon data-icon="inline-start" />}
+            items={[
+              {
+                label: "区切り線",
+                icon: <MinusIcon />,
+                template: "\n---\n\n",
+              },
+              {
+                label: "箇条書き",
+                icon: <ListIcon />,
+                template: "\n- 項目1\n- 項目2\n",
+              },
+              {
+                label: "番号付きリスト",
+                icon: <ListOrderedIcon />,
+                template: "\n1. 項目1\n2. 項目2\n",
+              },
+              {
+                label: "チェックリスト",
+                icon: <CheckSquareIcon />,
+                template: "\n- [ ] 未完了\n- [x] 完了\n",
+              },
+              {
+                label: "表",
+                icon: <TableIcon />,
+                template: "\n| 項目 | 内容 |\n|---|---|\n|  |  |\n",
+              },
+              {
+                label: "コード",
+                icon: <Code2Icon />,
+                template: "\n```\n\n```\n",
+                cursorOffset: 5,
+              },
+              {
+                label: "Mermaid",
+                icon: <WorkflowIcon />,
+                template:
+                  "\n```mermaid\nflowchart TD\n  A[開始] --> B[処理]\n  B --> C[終了]\n```\n",
+              },
+            ]}
+            onSelect={insertTemplate}
+          />
         </div>
         <div className="flex gap-2">
           <Button
@@ -127,6 +206,52 @@ export function MarkdownTextarea({
   );
 }
 
+type MarkdownToolbarItem = {
+  label: string;
+  icon: ReactNode;
+  template: string;
+  cursorOffset?: number;
+};
+
+type MarkdownToolbarMenuProps = {
+  label: string;
+  icon: ReactNode;
+  items: MarkdownToolbarItem[];
+  onSelect: (template: string, cursorOffset?: number) => void;
+};
+
+function MarkdownToolbarMenu({
+  label,
+  icon,
+  items,
+  onSelect,
+}: MarkdownToolbarMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="outline" size="sm">
+          {icon}
+          {label}
+          <ChevronDownIcon data-icon="inline-end" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-44">
+        <DropdownMenuGroup>
+          {items.map((item) => (
+            <DropdownMenuItem
+              key={item.label}
+              onSelect={() => onSelect(item.template, item.cursorOffset)}
+            >
+              {item.icon}
+              {item.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 type MarkdownPreviewProps = {
   value: string;
   emptyMessage?: string;
@@ -138,8 +263,6 @@ export function MarkdownPreview({
   emptyMessage = "プレビューする本文がありません。",
   className,
 }: MarkdownPreviewProps) {
-  const blocks = createPreviewBlocks(value);
-
   if (!value.trim()) {
     return (
       <div
@@ -156,152 +279,187 @@ export function MarkdownPreview({
   return (
     <div
       className={cn(
-        "flex min-h-48 flex-col gap-3 rounded-md border bg-background p-3",
+        "min-h-48 rounded-md border bg-background p-3 text-sm leading-7",
         className
       )}
     >
-      {blocks.map((block, index) => {
-        if (block.type === "heading") {
-          return (
-            <h4 key={index} className="text-base font-semibold">
-              {block.content}
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => (
+            <h1 className="mb-3 mt-1 text-2xl font-semibold leading-tight">
+              {children}
+            </h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="mb-3 mt-5 text-xl font-semibold leading-tight">
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="mb-2 mt-4 text-lg font-semibold leading-tight">
+              {children}
+            </h3>
+          ),
+          h4: ({ children }) => (
+            <h4 className="mb-2 mt-3 text-base font-semibold leading-tight">
+              {children}
             </h4>
-          );
-        }
-
-        if (block.type === "list") {
-          return (
-            <ul key={index} className="list-disc pl-5 text-sm">
-              {block.items.map((item, itemIndex) => (
-                <li key={itemIndex}>{item}</li>
-              ))}
-            </ul>
-          );
-        }
-
-        if (block.type === "code") {
-          return (
-            <pre
-              key={index}
-              className="overflow-x-auto rounded-md bg-muted p-3 text-xs"
+          ),
+          h5: ({ children }) => (
+            <h5 className="mb-2 mt-3 text-sm font-semibold leading-tight">
+              {children}
+            </h5>
+          ),
+          h6: ({ children }) => (
+            <h6 className="mb-2 mt-3 text-xs font-semibold leading-tight text-muted-foreground">
+              {children}
+            </h6>
+          ),
+          p: ({ children }) => (
+            <p className="my-2 whitespace-pre-wrap">{children}</p>
+          ),
+          a: ({ children, href }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-primary underline underline-offset-4"
             >
-              {block.content}
-            </pre>
-          );
-        }
-
-        if (block.type === "table") {
-          return (
-            <div key={index} className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <tbody>
-                  {block.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {row.map((cell, cellIndex) => (
-                        <td key={cellIndex} className="border px-2 py-1">
-                          {cell}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {children}
+            </a>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="my-3 border-l-4 border-border pl-3 text-muted-foreground">
+              {children}
+            </blockquote>
+          ),
+          hr: () => <hr className="my-4 border-border" />,
+          ul: ({ children }) => (
+            <ul className="my-2 flex list-disc flex-col gap-1 pl-5">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="my-2 flex list-decimal flex-col gap-1 pl-5">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => <li className="pl-1">{children}</li>,
+          table: ({ children }) => (
+            <div className="my-3 overflow-x-auto">
+              <table className="w-full border-collapse text-sm">{children}</table>
             </div>
-          );
-        }
+          ),
+          th: ({ children }) => (
+            <th className="border bg-muted px-2 py-1 text-left font-semibold">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border px-2 py-1 align-top">{children}</td>
+          ),
+          pre: ({ children }) => <>{children}</>,
+          code: ({ className, children }) => {
+            const language = getCodeLanguage(className);
+            const rawContent = String(children);
+            const isCodeBlock = rawContent.includes("\n");
+            const content = rawContent.replace(/\n$/, "");
 
-        return (
-          <p key={index} className="whitespace-pre-wrap text-sm">
-            {block.content}
-          </p>
-        );
-      })}
+            if (language === "mermaid") {
+              return <MermaidDiagram chart={content} />;
+            }
+
+            if (language || isCodeBlock) {
+              return (
+                <pre className="my-3 overflow-x-auto rounded-md bg-muted p-3 text-xs leading-6">
+                  <code className={className}>{content}</code>
+                </pre>
+              );
+            }
+
+            return (
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+                {children}
+              </code>
+            );
+          },
+        }}
+      >
+        {value}
+      </ReactMarkdown>
     </div>
   );
 }
 
-type PreviewBlock =
-  | { type: "heading"; content: string }
-  | { type: "paragraph"; content: string }
-  | { type: "list"; items: string[] }
-  | { type: "code"; content: string }
-  | { type: "table"; rows: string[][] };
+type MermaidDiagramProps = {
+  chart: string;
+};
 
-const createPreviewBlocks = (value: string): PreviewBlock[] => {
-  const blocks: PreviewBlock[] = [];
-  const lines = value.split("\n");
-  let index = 0;
+function MermaidDiagram({ chart }: MermaidDiagramProps) {
+  const reactId = useId();
+  const diagramId = `mermaid-${reactId.replace(/:/g, "")}`;
+  const [svg, setSvg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  while (index < lines.length) {
-    const line = lines[index];
+  useEffect(() => {
+    let cancelled = false;
 
-    if (!line.trim()) {
-      index += 1;
-      continue;
-    }
+    const renderDiagram = async () => {
+      try {
+        setError(null);
+        setSvg(null);
 
-    if (line.startsWith("```")) {
-      const codeLines: string[] = [];
+        const mermaid = (await import("mermaid")).default;
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "strict",
+          theme: "default",
+        });
 
-      index += 1;
-      while (index < lines.length && !lines[index].startsWith("```")) {
-        codeLines.push(lines[index]);
-        index += 1;
+        const result = await mermaid.render(diagramId, chart);
+
+        if (!cancelled) {
+          setSvg(result.svg);
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Mermaidの描画に失敗しました。構文を確認してください。");
+        }
       }
-      blocks.push({ type: "code", content: codeLines.join("\n") });
-      index += 1;
-      continue;
-    }
+    };
 
-    if (line.startsWith("## ")) {
-      blocks.push({ type: "heading", content: line.replace(/^##\s+/, "") });
-      index += 1;
-      continue;
-    }
+    void renderDiagram();
 
-    if (line.startsWith("- ")) {
-      const items: string[] = [];
+    return () => {
+      cancelled = true;
+    };
+  }, [chart, diagramId]);
 
-      while (index < lines.length && lines[index].startsWith("- ")) {
-        items.push(lines[index].replace(/^-\s+/, ""));
-        index += 1;
-      }
-      blocks.push({ type: "list", items });
-      continue;
-    }
-
-    if (isTableLine(line)) {
-      const tableLines: string[] = [];
-
-      while (index < lines.length && isTableLine(lines[index])) {
-        tableLines.push(lines[index]);
-        index += 1;
-      }
-      blocks.push({
-        type: "table",
-        rows: tableLines
-          .filter((tableLine) => !/^\|?\s*-+/.test(tableLine))
-          .map(toTableCells),
-      });
-      continue;
-    }
-
-    blocks.push({ type: "paragraph", content: line });
-    index += 1;
+  if (error) {
+    return (
+      <pre className="my-3 overflow-x-auto rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+        {error}
+      </pre>
+    );
   }
 
-  return blocks;
-};
+  if (!svg) {
+    return (
+      <div className="my-3 rounded-md border bg-muted p-3 text-xs text-muted-foreground">
+        Mermaidを描画中...
+      </div>
+    );
+  }
 
-const isTableLine = (line: string) => {
-  return line.trim().startsWith("|") && line.includes("|");
-};
+  return (
+    <div
+      className="my-3 overflow-x-auto rounded-md border bg-white p-3 [&_svg]:mx-auto [&_svg]:max-w-full"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
 
-const toTableCells = (line: string) => {
-  return line
-    .trim()
-    .replace(/^\|/, "")
-    .replace(/\|$/, "")
-    .split("|")
-    .map((cell) => cell.trim());
+const getCodeLanguage = (className: string | undefined) => {
+  return className?.match(/language-(\S+)/)?.[1];
 };

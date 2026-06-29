@@ -30,7 +30,7 @@ export function RequirementSectionCreateDialog({
 }: RequirementSectionCreateDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
         <DialogHeader>
           <DialogTitle>セクション追加</DialogTitle>
           <DialogDescription>
