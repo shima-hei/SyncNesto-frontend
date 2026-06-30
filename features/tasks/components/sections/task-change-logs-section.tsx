@@ -20,6 +20,7 @@ import {
   getTaskChangeLogMissingSnapshotFieldLabels,
   getTaskChangeLogSnapshotDiffRows,
   getTaskChangeLogUpdatedFieldLabels,
+  getTaskChangeLogValueDisplayMode,
 } from "../../lib/task-change-log-format";
 
 type TaskChangeLogsSectionProps = {
@@ -84,6 +85,7 @@ function TaskChangeLogItem({
       reason={changeLog.reason}
       oldValue={changeLog.old_value}
       newValue={changeLog.new_value}
+      valueDisplayMode={getTaskChangeLogValueDisplayMode(changeLog.action)}
       showRawValues={shouldShowChangeValues(changeLog)}
       diffRows={snapshotDiffRows}
       missingFieldLabels={missingSnapshotFieldLabels}

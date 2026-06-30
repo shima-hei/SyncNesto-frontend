@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getConflictCurrent } from "@/lib/api/conflict";
 import type { ProjectMemberRead } from "@/lib/api/generated/model";
 import { useUpdateProjectMemberProjectsProjectIdMembersUserIdPatch } from "@/lib/api/generated/projects/projects";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { PROJECT_MESSAGES } from "../constants/project-messages";
 import { invalidateProjectMemberList } from "../lib/project-cache";
@@ -33,7 +34,9 @@ export function useUpdateProjectMember(projectId: number) {
             return;
           }
 
-          toast.error(PROJECT_MESSAGES.member.updateError);
+          toast.error(
+            getApiErrorMessage(error, PROJECT_MESSAGES.member.updateError)
+          );
         },
       },
     });

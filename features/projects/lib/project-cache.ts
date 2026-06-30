@@ -2,7 +2,9 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { ProjectRead } from "@/lib/api/generated/model";
 import {
+  getListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGetQueryKey as getProjectMemberCandidateListKey,
   getListProjectMembersProjectsProjectIdMembersGetQueryKey as getProjectMemberListKey,
+  getListProjectMemberUsersProjectsProjectIdMemberUsersGetQueryKey as getProjectMemberUserListKey,
   getListProjectsProjectsGetQueryKey as getProjectListKey,
   getReadProjectProjectsProjectIdGetQueryKey as getProjectDetailKey,
 } from "@/lib/api/generated/projects/projects";
@@ -36,5 +38,23 @@ export const invalidateProjectMemberList = (
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getProjectMemberListKey(projectId),
+  });
+};
+
+export const invalidateProjectMemberCandidateList = (
+  queryClient: QueryClient,
+  projectId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getProjectMemberCandidateListKey(projectId),
+  });
+};
+
+export const invalidateProjectMemberUserList = (
+  queryClient: QueryClient,
+  projectId: number
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: getProjectMemberUserListKey(projectId),
   });
 };

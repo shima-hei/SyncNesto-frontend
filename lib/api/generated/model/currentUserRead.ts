@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { RoleRead } from './roleRead';
+import type { UserType } from './userType';
 
 /**
  * 現在のログインユーザー読み取り時に返すschema。
@@ -17,6 +18,7 @@ export interface CurrentUserRead {
   department?: string | null;
   position?: string | null;
   avatar_url?: string | null;
+  user_type: UserType;
   is_active: boolean;
   last_login_at?: string | null;
   created_by?: number | null;

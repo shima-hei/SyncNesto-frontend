@@ -57,6 +57,13 @@ export const canViewProjectFeature = (role: MaybeCurrentProjectRole) => {
   return role?.is_system_admin === true || canViewProject(toProjectRoleKey(role));
 };
 
+export const canManageProjectMembers = (role: MaybeCurrentProjectRole) => {
+  return (
+    role?.is_system_admin === true ||
+    hasProjectRole(toProjectRoleKey(role), [PROJECT_ROLE_KEYS.projectAdmin])
+  );
+};
+
 export const canViewRequirement = (role: MaybeCurrentProjectRole) => {
   return (
     role?.is_system_admin === true ||

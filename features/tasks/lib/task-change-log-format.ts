@@ -57,8 +57,24 @@ const TARGET_TYPE_LABELS: Record<string, string> = {
   task_comment: "コメント",
 };
 
+const IGNORED_DIFF_FIELDS = ["task_id"];
+
 export const formatTaskChangeLogAction = (action: string) => {
   return ACTION_LABELS[action] ?? action;
+};
+
+export const getTaskChangeLogValueDisplayMode = (
+  action: string
+): "created" | "updated" | "deleted" => {
+  if (action === "created" || action === "comment_created") {
+    return "created";
+  }
+
+  if (action === "deleted" || action === "comment_deleted") {
+    return "deleted";
+  }
+
+  return "updated";
 };
 
 export const formatTaskChangeLogField = (fieldName?: string | null) => {
@@ -104,6 +120,7 @@ export const getTaskChangeLogSnapshotDiffRows = (
     newValue: changeLog.new_value,
     formatField: formatTaskChangeLogField,
     formatValue: formatTaskChangeLogValue,
+    ignoredFields: IGNORED_DIFF_FIELDS,
   });
 };
 

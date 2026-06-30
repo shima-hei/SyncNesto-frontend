@@ -19,6 +19,7 @@ import {
   formatRequirementChangeLogTarget,
   formatRequirementChangeLogValue,
   getRequirementChangeLogUpdatedFieldLabels,
+  getRequirementChangeLogValueDisplayMode,
 } from "../../lib/requirement-change-log-format";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
@@ -84,6 +85,9 @@ function ChangeLogItem({
       reason={changeLog.reason}
       oldValue={changeLog.old_value}
       newValue={changeLog.new_value}
+      valueDisplayMode={getRequirementChangeLogValueDisplayMode(
+        changeLog.action
+      )}
       showRawValues={Boolean(changeLog.field_name)}
       diffRows={diffRows}
       missingFieldLabels={missingFieldLabels}

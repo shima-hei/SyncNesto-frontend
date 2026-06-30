@@ -35,24 +35,33 @@ export const getChangeLogDiffRows = ({
   const oldRecord = getComparableRecord(oldValue);
   const newRecord = getComparableRecord(newValue);
 
-  if (!oldRecord || !newRecord) {
+  if (!oldRecord && !newRecord) {
     return [];
   }
 
+  const comparableOldRecord = oldRecord ?? {};
+  const comparableNewRecord = newRecord ?? {};
   const ignoredFieldSet = new Set(ignoredFields);
   const updatedFields = getChangeLogUpdatedFields(newValue);
   const targetFields = updatedFields.length
     ? updatedFields
-    : Array.from(new Set([...Object.keys(oldRecord), ...Object.keys(newRecord)]));
+    : Array.from(
+        new Set([
+          ...Object.keys(comparableOldRecord),
+          ...Object.keys(comparableNewRecord),
+        ])
+      );
 
   return targetFields
     .filter((field) => !ignoredFieldSet.has(field))
-    .filter((field) => field in oldRecord || field in newRecord)
+    .filter(
+      (field) => field in comparableOldRecord || field in comparableNewRecord
+    )
     .map((field) => ({
       field,
       label: formatField(field),
-      oldValue: formatValue(oldRecord[field], field),
-      newValue: formatValue(newRecord[field], field),
+      oldValue: formatValue(comparableOldRecord[field], field),
+      newValue: formatValue(comparableNewRecord[field], field),
     }))
     .filter((row) => row.oldValue !== row.newValue);
 };

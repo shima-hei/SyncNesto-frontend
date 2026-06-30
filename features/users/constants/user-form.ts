@@ -1,6 +1,6 @@
 import type { UserRead } from "@/lib/api/generated/model";
 
-import { SYSTEM_ROLE_KEYS } from "@/features/auth/constants/roles";
+import { SYSTEM_ROLE_KEYS, USER_TYPE_KEYS } from "@/features/auth/constants/roles";
 
 import type { UserFormValues } from "../types/user-form";
 
@@ -10,6 +10,7 @@ export const userInitialValues: UserFormValues = {
   password: "",
   department: "",
   position: "",
+  userType: USER_TYPE_KEYS.internal,
   isActive: true,
   isSystemAdmin: false,
 };
@@ -21,6 +22,7 @@ export const getUserFormValues = (user: UserRead): UserFormValues => {
     password: "",
     department: user.department ?? "",
     position: user.position ?? "",
+    userType: user.user_type ?? USER_TYPE_KEYS.internal,
     isActive: user.is_active,
     isSystemAdmin:
       user.system_roles?.some(

@@ -3,6 +3,7 @@
 import { ChevronsUpDownIcon } from "lucide-react";
 
 import { UserAvatar } from "@/components/shared/display/user-avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -17,12 +18,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { getUserTypeLabel } from "@/features/users/constants/user-types";
 import type { UserListItem } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 
 export type SelectableUser = Pick<
   UserListItem,
-  "id" | "name" | "email" | "avatar_url" | "is_active"
+  "id" | "name" | "email" | "avatar_url" | "user_type" | "is_active"
 >;
 
 type UserSelectProps = {
@@ -76,14 +78,17 @@ export function UserSelect({
           )}
         >
           {selectedUser ? (
-            <span className="flex min-w-0 items-center gap-2">
-              <UserAvatar
-                name={selectedUser.name}
-                src={selectedUser.avatar_url}
-                size="sm"
-              />
-              <span className="truncate">{selectedUser.name}</span>
-            </span>
+              <span className="flex min-w-0 items-center gap-2">
+                <UserAvatar
+                  name={selectedUser.name}
+                  src={selectedUser.avatar_url}
+                  size="sm"
+                />
+                <span className="truncate">{selectedUser.name}</span>
+                <Badge variant="outline">
+                  {getUserTypeLabel(selectedUser.user_type)}
+                </Badge>
+              </span>
           ) : (
             placeholder
           )}
@@ -116,7 +121,12 @@ export function UserSelect({
                       size="sm"
                     />
                     <span className="flex min-w-0 flex-col">
-                      <span className="truncate font-medium">{user.name}</span>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate font-medium">{user.name}</span>
+                        <Badge variant="outline">
+                          {getUserTypeLabel(user.user_type)}
+                        </Badge>
+                      </span>
                       <span className="truncate text-xs text-muted-foreground">
                         {user.email}
                       </span>

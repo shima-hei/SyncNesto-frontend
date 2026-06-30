@@ -15,6 +15,8 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   CONFLICT: "データの状態が競合しています。内容を確認してください。",
   DUPLICATE_RESOURCE: "同じ内容のデータが既に存在します。",
   VERSION_CONFLICT: "他の更新と競合しました。内容を確認してください。",
+  LAST_PROJECT_ADMIN_REQUIRED:
+    "プロジェクト管理者を0人にすることはできません。",
   EMAIL_ALREADY_REGISTERED: "このメールアドレスは既に登録されています。",
   INVALID_CSRF_TOKEN:
     "認証情報の確認に失敗しました。画面を更新して再度お試しください。",

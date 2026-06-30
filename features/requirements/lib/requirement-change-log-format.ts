@@ -75,11 +75,31 @@ const IGNORED_DIFF_FIELDS = [
   "project_id",
   "document_id",
   "requirement_id",
+  "target_type",
+  "target_id",
+  "parent_comment_id",
   "version",
+  "created_at",
+  "updated_at",
+  "deleted_at",
 ];
 
 export const formatRequirementChangeLogAction = (action: string) => {
   return ACTION_LABELS[action] ?? action;
+};
+
+export const getRequirementChangeLogValueDisplayMode = (
+  action: string
+): "created" | "updated" | "deleted" => {
+  if (action === "created" || action === "comment_created") {
+    return "created";
+  }
+
+  if (action === "deleted" || action === "comment_deleted") {
+    return "deleted";
+  }
+
+  return "updated";
 };
 
 export const formatRequirementChangeLogTarget = (targetType: string) => {

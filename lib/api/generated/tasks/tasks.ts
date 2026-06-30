@@ -66,1837 +66,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export const getListTasksProjectsProjectIdTasksGetUrl = (projectId: number,
-    params?: ListTasksProjectsProjectIdTasksGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/projects/${projectId}/tasks?${stringifiedParams}` : `/projects/${projectId}/tasks`
-}
-
-/**
- * プロジェクト内タスク一覧を取得する。
- * @summary List Tasks
- */
-export const listTasksProjectsProjectIdTasksGet = async (projectId: number,
-    params?: ListTasksProjectsProjectIdTasksGetParams, options?: RequestInit): Promise<TaskListResponse> => {
-
-  return apiClient<TaskListResponse>(getListTasksProjectsProjectIdTasksGetUrl(projectId,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListTasksProjectsProjectIdTasksGetQueryKey = (projectId: number,
-    params?: ListTasksProjectsProjectIdTasksGetParams,) => {
-    return [
-    `/projects/${projectId}/tasks`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getListTasksProjectsProjectIdTasksGetQueryOptions = <TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
-    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListTasksProjectsProjectIdTasksGetQueryKey(projectId,params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>> = ({ signal }) => listTasksProjectsProjectIdTasksGet(projectId,params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ListTasksProjectsProjectIdTasksGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>>
-export type ListTasksProjectsProjectIdTasksGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number,
-    params: undefined |  ListTasksProjectsProjectIdTasksGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number,
-    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number,
-    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Tasks
- */
-
-export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number,
-    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListTasksProjectsProjectIdTasksGetQueryOptions(projectId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getCreateTaskProjectsProjectIdTasksPostUrl = (projectId: number,) => {
-
-
-
-
-  return `/projects/${projectId}/tasks`
-}
-
-/**
- * プロジェクト内にタスクを作成する。
- * @summary Create Task
- */
-export const createTaskProjectsProjectIdTasksPost = async (projectId: number,
-    taskCreate: TaskCreate, options?: RequestInit): Promise<TaskRead> => {
-
-  return apiClient<TaskRead>(getCreateTaskProjectsProjectIdTasksPostUrl(projectId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskCreate)
-  }
-);}
-
-
-
-
-export const getCreateTaskProjectsProjectIdTasksPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, TError,{projectId: number;data: BodyType<TaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, TError,{projectId: number;data: BodyType<TaskCreate>}, TContext> => {
-
-const mutationKey = ['createTaskProjectsProjectIdTasksPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, {projectId: number;data: BodyType<TaskCreate>}> = (props) => {
-          const {projectId,data} = props ?? {};
-
-          return  createTaskProjectsProjectIdTasksPost(projectId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateTaskProjectsProjectIdTasksPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>>
-    export type CreateTaskProjectsProjectIdTasksPostMutationBody = BodyType<TaskCreate>
-    export type CreateTaskProjectsProjectIdTasksPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Create Task
- */
-export const useCreateTaskProjectsProjectIdTasksPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, TError,{projectId: number;data: BodyType<TaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>,
-        TError,
-        {projectId: number;data: BodyType<TaskCreate>},
-        TContext
-      > => {
-      return useMutation(getCreateTaskProjectsProjectIdTasksPostMutationOptions(options), queryClient);
-    }
-    export const getListTaskTagsProjectsProjectIdTasksTagsGetUrl = (projectId: number,) => {
-
-
-
-
-  return `/projects/${projectId}/tasks/tags`
-}
-
-/**
- * プロジェクト内で利用済みのタスクタグ候補を取得する。
- * @summary List Task Tags
- */
-export const listTaskTagsProjectsProjectIdTasksTagsGet = async (projectId: number, options?: RequestInit): Promise<TaskTagListResponse> => {
-
-  return apiClient<TaskTagListResponse>(getListTaskTagsProjectsProjectIdTasksTagsGetUrl(projectId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListTaskTagsProjectsProjectIdTasksTagsGetQueryKey = (projectId: number,) => {
-    return [
-    `/projects/${projectId}/tasks/tags`
-    ] as const;
-    }
-
-
-export const getListTaskTagsProjectsProjectIdTasksTagsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListTaskTagsProjectsProjectIdTasksTagsGetQueryKey(projectId);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>> = ({ signal }) => listTaskTagsProjectsProjectIdTasksTagsGet(projectId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ListTaskTagsProjectsProjectIdTasksTagsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>>
-export type ListTaskTagsProjectsProjectIdTasksTagsGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Task Tags
- */
-
-export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
- projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListTaskTagsProjectsProjectIdTasksTagsGetQueryOptions(projectId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getReadTaskTasksTaskIdGetUrl = (taskId: number,) => {
-
-
-
-
-  return `/tasks/${taskId}`
-}
-
-/**
- * タスク詳細を取得する。
- * @summary Read Task
- */
-export const readTaskTasksTaskIdGet = async (taskId: number, options?: RequestInit): Promise<TaskRead> => {
-
-  return apiClient<TaskRead>(getReadTaskTasksTaskIdGetUrl(taskId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getReadTaskTasksTaskIdGetQueryKey = (taskId: number,) => {
-    return [
-    `/tasks/${taskId}`
-    ] as const;
-    }
-
-
-export const getReadTaskTasksTaskIdGetQueryOptions = <TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getReadTaskTasksTaskIdGetQueryKey(taskId);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>> = ({ signal }) => readTaskTasksTaskIdGet(taskId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ReadTaskTasksTaskIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>>
-export type ReadTaskTasksTaskIdGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>,
-          TError,
-          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>,
-          TError,
-          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Read Task
- */
-
-export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getReadTaskTasksTaskIdGetQueryOptions(taskId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getUpdateTaskTasksTaskIdPatchUrl = (taskId: number,) => {
-
-
-
-
-  return `/tasks/${taskId}`
-}
-
-/**
- * タスクを更新する。
- * @summary Update Task
- */
-export const updateTaskTasksTaskIdPatch = async (taskId: number,
-    taskUpdate: TaskUpdate, options?: RequestInit): Promise<TaskRead> => {
-
-  return apiClient<TaskRead>(getUpdateTaskTasksTaskIdPatchUrl(taskId),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskUpdate)
-  }
-);}
-
-
-
-
-export const getUpdateTaskTasksTaskIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, TError,{taskId: number;data: BodyType<TaskUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, TError,{taskId: number;data: BodyType<TaskUpdate>}, TContext> => {
-
-const mutationKey = ['updateTaskTasksTaskIdPatch'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, {taskId: number;data: BodyType<TaskUpdate>}> = (props) => {
-          const {taskId,data} = props ?? {};
-
-          return  updateTaskTasksTaskIdPatch(taskId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateTaskTasksTaskIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>>
-    export type UpdateTaskTasksTaskIdPatchMutationBody = BodyType<TaskUpdate>
-    export type UpdateTaskTasksTaskIdPatchMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Update Task
- */
-export const useUpdateTaskTasksTaskIdPatch = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, TError,{taskId: number;data: BodyType<TaskUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>,
-        TError,
-        {taskId: number;data: BodyType<TaskUpdate>},
-        TContext
-      > => {
-      return useMutation(getUpdateTaskTasksTaskIdPatchMutationOptions(options), queryClient);
-    }
-    export const getDeleteTaskTasksTaskIdDeleteUrl = (taskId: number,) => {
-
-
-
-
-  return `/tasks/${taskId}`
-}
-
-/**
- * タスクを論理削除する。
- * @summary Delete Task
- */
-export const deleteTaskTasksTaskIdDelete = async (taskId: number, options?: RequestInit): Promise<void> => {
-
-  return apiClient<void>(getDeleteTaskTasksTaskIdDeleteUrl(taskId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-export const getDeleteTaskTasksTaskIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, TError,{taskId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, TError,{taskId: number}, TContext> => {
-
-const mutationKey = ['deleteTaskTasksTaskIdDelete'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, {taskId: number}> = (props) => {
-          const {taskId} = props ?? {};
-
-          return  deleteTaskTasksTaskIdDelete(taskId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteTaskTasksTaskIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>>
-
-    export type DeleteTaskTasksTaskIdDeleteMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Delete Task
- */
-export const useDeleteTaskTasksTaskIdDelete = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, TError,{taskId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>,
-        TError,
-        {taskId: number},
-        TContext
-      > => {
-      return useMutation(getDeleteTaskTasksTaskIdDeleteMutationOptions(options), queryClient);
-    }
-    export const getListTaskCommentsTasksTaskIdCommentsGetUrl = (taskId: number,) => {
-
-
-
-
-  return `/tasks/${taskId}/comments`
-}
-
-/**
- * タスクコメント一覧を取得する。
- * @summary List Task Comments
- */
-export const listTaskCommentsTasksTaskIdCommentsGet = async (taskId: number, options?: RequestInit): Promise<TaskCommentRead[]> => {
-
-  return apiClient<TaskCommentRead[]>(getListTaskCommentsTasksTaskIdCommentsGetUrl(taskId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListTaskCommentsTasksTaskIdCommentsGetQueryKey = (taskId: number,) => {
-    return [
-    `/tasks/${taskId}/comments`
-    ] as const;
-    }
-
-
-export const getListTaskCommentsTasksTaskIdCommentsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListTaskCommentsTasksTaskIdCommentsGetQueryKey(taskId);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>> = ({ signal }) => listTaskCommentsTasksTaskIdCommentsGet(taskId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ListTaskCommentsTasksTaskIdCommentsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>>
-export type ListTaskCommentsTasksTaskIdCommentsGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Task Comments
- */
-
-export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListTaskCommentsTasksTaskIdCommentsGetQueryOptions(taskId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getCreateTaskCommentTasksTaskIdCommentsPostUrl = (taskId: number,) => {
-
-
-
-
-  return `/tasks/${taskId}/comments`
-}
-
-/**
- * タスクコメントを作成する。
- * @summary Create Task Comment
- */
-export const createTaskCommentTasksTaskIdCommentsPost = async (taskId: number,
-    taskCommentCreate: TaskCommentCreate, options?: RequestInit): Promise<TaskCommentRead> => {
-
-  return apiClient<TaskCommentRead>(getCreateTaskCommentTasksTaskIdCommentsPostUrl(taskId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskCommentCreate)
-  }
-);}
-
-
-
-
-export const getCreateTaskCommentTasksTaskIdCommentsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext> => {
-
-const mutationKey = ['createTaskCommentTasksTaskIdCommentsPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, {taskId: number;data: BodyType<TaskCommentCreate>}> = (props) => {
-          const {taskId,data} = props ?? {};
-
-          return  createTaskCommentTasksTaskIdCommentsPost(taskId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateTaskCommentTasksTaskIdCommentsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>>
-    export type CreateTaskCommentTasksTaskIdCommentsPostMutationBody = BodyType<TaskCommentCreate>
-    export type CreateTaskCommentTasksTaskIdCommentsPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Create Task Comment
- */
-export const useCreateTaskCommentTasksTaskIdCommentsPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>,
-        TError,
-        {taskId: number;data: BodyType<TaskCommentCreate>},
-        TContext
-      > => {
-      return useMutation(getCreateTaskCommentTasksTaskIdCommentsPostMutationOptions(options), queryClient);
-    }
-    export const getUpdateTaskCommentTaskCommentsCommentIdPatchUrl = (commentId: number,) => {
-
-
-
-
-  return `/task-comments/${commentId}`
-}
-
-/**
- * タスクコメントを更新する。
- * @summary Update Task Comment
- */
-export const updateTaskCommentTaskCommentsCommentIdPatch = async (commentId: number,
-    taskCommentUpdate: TaskCommentUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
-
-  return apiClient<TaskCommentRead>(getUpdateTaskCommentTaskCommentsCommentIdPatchUrl(commentId),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskCommentUpdate)
-  }
-);}
-
-
-
-
-export const getUpdateTaskCommentTaskCommentsCommentIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext> => {
-
-const mutationKey = ['updateTaskCommentTaskCommentsCommentIdPatch'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, {commentId: number;data: BodyType<TaskCommentUpdate>}> = (props) => {
-          const {commentId,data} = props ?? {};
-
-          return  updateTaskCommentTaskCommentsCommentIdPatch(commentId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>>
-    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationBody = BodyType<TaskCommentUpdate>
-    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Update Task Comment
- */
-export const useUpdateTaskCommentTaskCommentsCommentIdPatch = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>,
-        TError,
-        {commentId: number;data: BodyType<TaskCommentUpdate>},
-        TContext
-      > => {
-      return useMutation(getUpdateTaskCommentTaskCommentsCommentIdPatchMutationOptions(options), queryClient);
-    }
-    export const getDeleteTaskCommentTaskCommentsCommentIdDeleteUrl = (commentId: number,) => {
-
-
-
-
-  return `/task-comments/${commentId}`
-}
-
-/**
- * タスクコメントを論理削除する。
- * @summary Delete Task Comment
- */
-export const deleteTaskCommentTaskCommentsCommentIdDelete = async (commentId: number, options?: RequestInit): Promise<void> => {
-
-  return apiClient<void>(getDeleteTaskCommentTaskCommentsCommentIdDeleteUrl(commentId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-export const getDeleteTaskCommentTaskCommentsCommentIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext> => {
-
-const mutationKey = ['deleteTaskCommentTaskCommentsCommentIdDelete'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, {commentId: number}> = (props) => {
-          const {commentId} = props ?? {};
-
-          return  deleteTaskCommentTaskCommentsCommentIdDelete(commentId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteTaskCommentTaskCommentsCommentIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>>
-
-    export type DeleteTaskCommentTaskCommentsCommentIdDeleteMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Delete Task Comment
- */
-export const useDeleteTaskCommentTaskCommentsCommentIdDelete = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>,
-        TError,
-        {commentId: number},
-        TContext
-      > => {
-      return useMutation(getDeleteTaskCommentTaskCommentsCommentIdDeleteMutationOptions(options), queryClient);
-    }
-    export const getResolveTaskCommentTaskCommentsCommentIdResolvePostUrl = (commentId: number,) => {
-
-
-
-
-  return `/task-comments/${commentId}/resolve`
-}
-
-/**
- * タスクコメントを解決済みにする。
- * @summary Resolve Task Comment
- */
-export const resolveTaskCommentTaskCommentsCommentIdResolvePost = async (commentId: number,
-    taskCommentStateUpdate: TaskCommentStateUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
-
-  return apiClient<TaskCommentRead>(getResolveTaskCommentTaskCommentsCommentIdResolvePostUrl(commentId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskCommentStateUpdate)
-  }
-);}
-
-
-
-
-export const getResolveTaskCommentTaskCommentsCommentIdResolvePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext> => {
-
-const mutationKey = ['resolveTaskCommentTaskCommentsCommentIdResolvePost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, {commentId: number;data: BodyType<TaskCommentStateUpdate>}> = (props) => {
-          const {commentId,data} = props ?? {};
-
-          return  resolveTaskCommentTaskCommentsCommentIdResolvePost(commentId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationResult = NonNullable<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>>
-    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationBody = BodyType<TaskCommentStateUpdate>
-    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Resolve Task Comment
- */
-export const useResolveTaskCommentTaskCommentsCommentIdResolvePost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>,
-        TError,
-        {commentId: number;data: BodyType<TaskCommentStateUpdate>},
-        TContext
-      > => {
-      return useMutation(getResolveTaskCommentTaskCommentsCommentIdResolvePostMutationOptions(options), queryClient);
-    }
-    export const getReopenTaskCommentTaskCommentsCommentIdReopenPostUrl = (commentId: number,) => {
-
-
-
-
-  return `/task-comments/${commentId}/reopen`
-}
-
-/**
- * タスクコメントを未解決に戻す。
- * @summary Reopen Task Comment
- */
-export const reopenTaskCommentTaskCommentsCommentIdReopenPost = async (commentId: number,
-    taskCommentStateUpdate: TaskCommentStateUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
-
-  return apiClient<TaskCommentRead>(getReopenTaskCommentTaskCommentsCommentIdReopenPostUrl(commentId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskCommentStateUpdate)
-  }
-);}
-
-
-
-
-export const getReopenTaskCommentTaskCommentsCommentIdReopenPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext> => {
-
-const mutationKey = ['reopenTaskCommentTaskCommentsCommentIdReopenPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, {commentId: number;data: BodyType<TaskCommentStateUpdate>}> = (props) => {
-          const {commentId,data} = props ?? {};
-
-          return  reopenTaskCommentTaskCommentsCommentIdReopenPost(commentId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationResult = NonNullable<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>>
-    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationBody = BodyType<TaskCommentStateUpdate>
-    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Reopen Task Comment
- */
-export const useReopenTaskCommentTaskCommentsCommentIdReopenPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>,
-        TError,
-        {commentId: number;data: BodyType<TaskCommentStateUpdate>},
-        TContext
-      > => {
-      return useMutation(getReopenTaskCommentTaskCommentsCommentIdReopenPostMutationOptions(options), queryClient);
-    }
-    export const getListTaskChangeLogsTasksTaskIdChangeLogsGetUrl = (taskId: number,
-    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/tasks/${taskId}/change-logs?${stringifiedParams}` : `/tasks/${taskId}/change-logs`
-}
-
-/**
- * タスク変更履歴一覧を取得する。
- * @summary List Task Change Logs
- */
-export const listTaskChangeLogsTasksTaskIdChangeLogsGet = async (taskId: number,
-    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: RequestInit): Promise<TaskChangeLogListResponse> => {
-
-  return apiClient<TaskChangeLogListResponse>(getListTaskChangeLogsTasksTaskIdChangeLogsGetUrl(taskId,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryKey = (taskId: number,
-    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,) => {
-    return [
-    `/tasks/${taskId}/change-logs`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number,
-    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryKey(taskId,params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>> = ({ signal }) => listTaskChangeLogsTasksTaskIdChangeLogsGet(taskId,params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ListTaskChangeLogsTasksTaskIdChangeLogsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>>
-export type ListTaskChangeLogsTasksTaskIdChangeLogsGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number,
-    params: undefined |  ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number,
-    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number,
-    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Task Change Logs
- */
-
-export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number,
-    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryOptions(taskId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getListRequirementTasksRequirementsRequirementIdTasksGetUrl = (requirementId: number,) => {
-
-
-
-
-  return `/requirements/${requirementId}/tasks`
-}
-
-/**
- * 要件に紐づくタスク一覧を取得する。
- * @summary List Requirement Tasks
- */
-export const listRequirementTasksRequirementsRequirementIdTasksGet = async (requirementId: number, options?: RequestInit): Promise<TaskRead[]> => {
-
-  return apiClient<TaskRead[]>(getListRequirementTasksRequirementsRequirementIdTasksGetUrl(requirementId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListRequirementTasksRequirementsRequirementIdTasksGetQueryKey = (requirementId: number,) => {
-    return [
-    `/requirements/${requirementId}/tasks`
-    ] as const;
-    }
-
-
-export const getListRequirementTasksRequirementsRequirementIdTasksGetQueryOptions = <TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListRequirementTasksRequirementsRequirementIdTasksGetQueryKey(requirementId);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>> = ({ signal }) => listRequirementTasksRequirementsRequirementIdTasksGet(requirementId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: requirementId !== null && requirementId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ListRequirementTasksRequirementsRequirementIdTasksGetQueryResult = NonNullable<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>>
-export type ListRequirementTasksRequirementsRequirementIdTasksGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>,
-          TError,
-          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>,
-          TError,
-          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Requirement Tasks
- */
-
-export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListRequirementTasksRequirementsRequirementIdTasksGetQueryOptions(requirementId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getCreateRequirementTaskRequirementsRequirementIdTasksPostUrl = (requirementId: number,) => {
-
-
-
-
-  return `/requirements/${requirementId}/tasks`
-}
-
-/**
- * 要件に紐づくタスクを作成する。
- * @summary Create Requirement Task
- */
-export const createRequirementTaskRequirementsRequirementIdTasksPost = async (requirementId: number,
-    requirementTaskCreate: RequirementTaskCreate, options?: RequestInit): Promise<TaskRead> => {
-
-  return apiClient<TaskRead>(getCreateRequirementTaskRequirementsRequirementIdTasksPostUrl(requirementId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(requirementTaskCreate)
-  }
-);}
-
-
-
-
-export const getCreateRequirementTaskRequirementsRequirementIdTasksPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskCreate>}, TContext> => {
-
-const mutationKey = ['createRequirementTaskRequirementsRequirementIdTasksPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, {requirementId: number;data: BodyType<RequirementTaskCreate>}> = (props) => {
-          const {requirementId,data} = props ?? {};
-
-          return  createRequirementTaskRequirementsRequirementIdTasksPost(requirementId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateRequirementTaskRequirementsRequirementIdTasksPostMutationResult = NonNullable<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>>
-    export type CreateRequirementTaskRequirementsRequirementIdTasksPostMutationBody = BodyType<RequirementTaskCreate>
-    export type CreateRequirementTaskRequirementsRequirementIdTasksPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Create Requirement Task
- */
-export const useCreateRequirementTaskRequirementsRequirementIdTasksPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>,
-        TError,
-        {requirementId: number;data: BodyType<RequirementTaskCreate>},
-        TContext
-      > => {
-      return useMutation(getCreateRequirementTaskRequirementsRequirementIdTasksPostMutationOptions(options), queryClient);
-    }
-    export const getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetUrl = (requirementId: number,) => {
-
-
-
-
-  return `/requirements/${requirementId}/task-progress`
-}
-
-/**
- * 要件に紐づくタスク進捗を取得する。
- * @summary Read Requirement Task Progress
- */
-export const readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet = async (requirementId: number, options?: RequestInit): Promise<RequirementTaskProgressRead> => {
-
-  return apiClient<RequirementTaskProgressRead>(getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetUrl(requirementId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryKey = (requirementId: number,) => {
-    return [
-    `/requirements/${requirementId}/task-progress`
-    ] as const;
-    }
-
-
-export const getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryOptions = <TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryKey(requirementId);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>> = ({ signal }) => readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet(requirementId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: requirementId !== null && requirementId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryResult = NonNullable<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>>
-export type ReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>,
-          TError,
-          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>,
-          TError,
-          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Read Requirement Task Progress
- */
-
-export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
- requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryOptions(requirementId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostUrl = (requirementId: number,) => {
-
-
-
-
-  return `/requirements/${requirementId}/task-relations`
-}
-
-/**
- * 要件タスク関連を作成する。
- * @summary Create Requirement Task Relation
- */
-export const createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost = async (requirementId: number,
-    requirementTaskRelationCreate: RequirementTaskRelationCreate, options?: RequestInit): Promise<RequirementTaskRelationRead> => {
-
-  return apiClient<RequirementTaskRelationRead>(getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostUrl(requirementId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(requirementTaskRelationCreate)
-  }
-);}
-
-
-
-
-export const getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskRelationCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskRelationCreate>}, TContext> => {
-
-const mutationKey = ['createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, {requirementId: number;data: BodyType<RequirementTaskRelationCreate>}> = (props) => {
-          const {requirementId,data} = props ?? {};
-
-          return  createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost(requirementId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>>
-    export type CreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationBody = BodyType<RequirementTaskRelationCreate>
-    export type CreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Create Requirement Task Relation
- */
-export const useCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskRelationCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>,
-        TError,
-        {requirementId: number;data: BodyType<RequirementTaskRelationCreate>},
-        TContext
-      > => {
-      return useMutation(getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationOptions(options), queryClient);
-    }
-    export const getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteUrl = (requirementId: number,
-    relationId: number,) => {
-
-
-
-
-  return `/requirements/${requirementId}/task-relations/${relationId}`
-}
-
-/**
- * 要件タスク関連を削除する。
- * @summary Delete Requirement Task Relation
- */
-export const deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete = async (requirementId: number,
-    relationId: number, options?: RequestInit): Promise<void> => {
-
-  return apiClient<void>(getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteUrl(requirementId,relationId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-export const getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, TError,{requirementId: number;relationId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, TError,{requirementId: number;relationId: number}, TContext> => {
-
-const mutationKey = ['deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, {requirementId: number;relationId: number}> = (props) => {
-          const {requirementId,relationId} = props ?? {};
-
-          return  deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete(requirementId,relationId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>>
-
-    export type DeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Delete Requirement Task Relation
- */
-export const useDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, TError,{requirementId: number;relationId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>,
-        TError,
-        {requirementId: number;relationId: number},
-        TContext
-      > => {
-      return useMutation(getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationOptions(options), queryClient);
-    }
-    export const getListTaskDependenciesTasksTaskIdDependenciesGetUrl = (taskId: number,) => {
-
-
-
-
-  return `/tasks/${taskId}/dependencies`
-}
-
-/**
- * タスク依存関係一覧を取得する。
- * @summary List Task Dependencies
- */
-export const listTaskDependenciesTasksTaskIdDependenciesGet = async (taskId: number, options?: RequestInit): Promise<TaskDependencyRead[]> => {
-
-  return apiClient<TaskDependencyRead[]>(getListTaskDependenciesTasksTaskIdDependenciesGetUrl(taskId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListTaskDependenciesTasksTaskIdDependenciesGetQueryKey = (taskId: number,) => {
-    return [
-    `/tasks/${taskId}/dependencies`
-    ] as const;
-    }
-
-
-export const getListTaskDependenciesTasksTaskIdDependenciesGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListTaskDependenciesTasksTaskIdDependenciesGetQueryKey(taskId);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>> = ({ signal }) => listTaskDependenciesTasksTaskIdDependenciesGet(taskId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ListTaskDependenciesTasksTaskIdDependenciesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>>
-export type ListTaskDependenciesTasksTaskIdDependenciesGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>,
-          TError,
-          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List Task Dependencies
- */
-
-export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
- taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListTaskDependenciesTasksTaskIdDependenciesGetQueryOptions(taskId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const getCreateTaskDependencyTasksTaskIdDependenciesPostUrl = (taskId: number,) => {
-
-
-
-
-  return `/tasks/${taskId}/dependencies`
-}
-
-/**
- * タスク依存関係を作成する。
- * @summary Create Task Dependency
- */
-export const createTaskDependencyTasksTaskIdDependenciesPost = async (taskId: number,
-    taskDependencyCreate: TaskDependencyCreate, options?: RequestInit): Promise<TaskDependencyRead> => {
-
-  return apiClient<TaskDependencyRead>(getCreateTaskDependencyTasksTaskIdDependenciesPostUrl(taskId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskDependencyCreate)
-  }
-);}
-
-
-
-
-export const getCreateTaskDependencyTasksTaskIdDependenciesPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, TError,{taskId: number;data: BodyType<TaskDependencyCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, TError,{taskId: number;data: BodyType<TaskDependencyCreate>}, TContext> => {
-
-const mutationKey = ['createTaskDependencyTasksTaskIdDependenciesPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, {taskId: number;data: BodyType<TaskDependencyCreate>}> = (props) => {
-          const {taskId,data} = props ?? {};
-
-          return  createTaskDependencyTasksTaskIdDependenciesPost(taskId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateTaskDependencyTasksTaskIdDependenciesPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>>
-    export type CreateTaskDependencyTasksTaskIdDependenciesPostMutationBody = BodyType<TaskDependencyCreate>
-    export type CreateTaskDependencyTasksTaskIdDependenciesPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Create Task Dependency
- */
-export const useCreateTaskDependencyTasksTaskIdDependenciesPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, TError,{taskId: number;data: BodyType<TaskDependencyCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>,
-        TError,
-        {taskId: number;data: BodyType<TaskDependencyCreate>},
-        TContext
-      > => {
-      return useMutation(getCreateTaskDependencyTasksTaskIdDependenciesPostMutationOptions(options), queryClient);
-    }
-    export const getUpdateTaskDependencyTaskDependenciesDependencyIdPatchUrl = (dependencyId: number,) => {
-
-
-
-
-  return `/task-dependencies/${dependencyId}`
-}
-
-/**
- * タスク依存関係を更新する。
- * @summary Update Task Dependency
- */
-export const updateTaskDependencyTaskDependenciesDependencyIdPatch = async (dependencyId: number,
-    taskDependencyUpdate: TaskDependencyUpdate, options?: RequestInit): Promise<TaskDependencyRead> => {
-
-  return apiClient<TaskDependencyRead>(getUpdateTaskDependencyTaskDependenciesDependencyIdPatchUrl(dependencyId),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(taskDependencyUpdate)
-  }
-);}
-
-
-
-
-export const getUpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, TError,{dependencyId: number;data: BodyType<TaskDependencyUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, TError,{dependencyId: number;data: BodyType<TaskDependencyUpdate>}, TContext> => {
-
-const mutationKey = ['updateTaskDependencyTaskDependenciesDependencyIdPatch'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, {dependencyId: number;data: BodyType<TaskDependencyUpdate>}> = (props) => {
-          const {dependencyId,data} = props ?? {};
-
-          return  updateTaskDependencyTaskDependenciesDependencyIdPatch(dependencyId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>>
-    export type UpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationBody = BodyType<TaskDependencyUpdate>
-    export type UpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Update Task Dependency
- */
-export const useUpdateTaskDependencyTaskDependenciesDependencyIdPatch = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, TError,{dependencyId: number;data: BodyType<TaskDependencyUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>,
-        TError,
-        {dependencyId: number;data: BodyType<TaskDependencyUpdate>},
-        TContext
-      > => {
-      return useMutation(getUpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationOptions(options), queryClient);
-    }
-    export const getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteUrl = (dependencyId: number,) => {
-
-
-
-
-  return `/task-dependencies/${dependencyId}`
-}
-
-/**
- * タスク依存関係を削除する。
- * @summary Delete Task Dependency
- */
-export const deleteTaskDependencyTaskDependenciesDependencyIdDelete = async (dependencyId: number, options?: RequestInit): Promise<void> => {
-
-  return apiClient<void>(getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteUrl(dependencyId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-export const getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, TError,{dependencyId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, TError,{dependencyId: number}, TContext> => {
-
-const mutationKey = ['deleteTaskDependencyTaskDependenciesDependencyIdDelete'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, {dependencyId: number}> = (props) => {
-          const {dependencyId} = props ?? {};
-
-          return  deleteTaskDependencyTaskDependenciesDependencyIdDelete(dependencyId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>>
-
-    export type DeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Delete Task Dependency
- */
-export const useDeleteTaskDependencyTaskDependenciesDependencyIdDelete = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, TError,{dependencyId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>,
-        TError,
-        {dependencyId: number},
-        TContext
-      > => {
-      return useMutation(getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationOptions(options), queryClient);
-    }
-    export const getListBoardsProjectsProjectIdBoardsGetUrl = (projectId: number,) => {
+export const getListBoardsProjectsProjectIdBoardsGetUrl = (projectId: number,) => {
 
 
 
@@ -2695,6 +865,1836 @@ export const useMoveTaskBoardsBoardIdTasksTaskIdMovePost = <TError = ErrorType<H
         TContext
       > => {
       return useMutation(getMoveTaskBoardsBoardIdTasksTaskIdMovePostMutationOptions(options), queryClient);
+    }
+    export const getListTaskChangeLogsTasksTaskIdChangeLogsGetUrl = (taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/tasks/${taskId}/change-logs?${stringifiedParams}` : `/tasks/${taskId}/change-logs`
+}
+
+/**
+ * タスク変更履歴一覧を取得する。
+ * @summary List Task Change Logs
+ */
+export const listTaskChangeLogsTasksTaskIdChangeLogsGet = async (taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: RequestInit): Promise<TaskChangeLogListResponse> => {
+
+  return apiClient<TaskChangeLogListResponse>(getListTaskChangeLogsTasksTaskIdChangeLogsGetUrl(taskId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryKey = (taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,) => {
+    return [
+    `/tasks/${taskId}/change-logs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryKey(taskId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>> = ({ signal }) => listTaskChangeLogsTasksTaskIdChangeLogsGet(taskId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTaskChangeLogsTasksTaskIdChangeLogsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>>
+export type ListTaskChangeLogsTasksTaskIdChangeLogsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params: undefined |  ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Task Change Logs
+ */
+
+export function useListTaskChangeLogsTasksTaskIdChangeLogsGet<TData = Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number,
+    params?: ListTaskChangeLogsTasksTaskIdChangeLogsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskChangeLogsTasksTaskIdChangeLogsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTaskChangeLogsTasksTaskIdChangeLogsGetQueryOptions(taskId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getListTaskCommentsTasksTaskIdCommentsGetUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}/comments`
+}
+
+/**
+ * タスクコメント一覧を取得する。
+ * @summary List Task Comments
+ */
+export const listTaskCommentsTasksTaskIdCommentsGet = async (taskId: number, options?: RequestInit): Promise<TaskCommentRead[]> => {
+
+  return apiClient<TaskCommentRead[]>(getListTaskCommentsTasksTaskIdCommentsGetUrl(taskId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskCommentsTasksTaskIdCommentsGetQueryKey = (taskId: number,) => {
+    return [
+    `/tasks/${taskId}/comments`
+    ] as const;
+    }
+
+
+export const getListTaskCommentsTasksTaskIdCommentsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskCommentsTasksTaskIdCommentsGetQueryKey(taskId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>> = ({ signal }) => listTaskCommentsTasksTaskIdCommentsGet(taskId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTaskCommentsTasksTaskIdCommentsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>>
+export type ListTaskCommentsTasksTaskIdCommentsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Task Comments
+ */
+
+export function useListTaskCommentsTasksTaskIdCommentsGet<TData = Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskCommentsTasksTaskIdCommentsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTaskCommentsTasksTaskIdCommentsGetQueryOptions(taskId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getCreateTaskCommentTasksTaskIdCommentsPostUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}/comments`
+}
+
+/**
+ * タスクコメントを作成する。
+ * @summary Create Task Comment
+ */
+export const createTaskCommentTasksTaskIdCommentsPost = async (taskId: number,
+    taskCommentCreate: TaskCommentCreate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getCreateTaskCommentTasksTaskIdCommentsPostUrl(taskId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentCreate)
+  }
+);}
+
+
+
+
+export const getCreateTaskCommentTasksTaskIdCommentsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext> => {
+
+const mutationKey = ['createTaskCommentTasksTaskIdCommentsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, {taskId: number;data: BodyType<TaskCommentCreate>}> = (props) => {
+          const {taskId,data} = props ?? {};
+
+          return  createTaskCommentTasksTaskIdCommentsPost(taskId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTaskCommentTasksTaskIdCommentsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>>
+    export type CreateTaskCommentTasksTaskIdCommentsPostMutationBody = BodyType<TaskCommentCreate>
+    export type CreateTaskCommentTasksTaskIdCommentsPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Task Comment
+ */
+export const useCreateTaskCommentTasksTaskIdCommentsPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>, TError,{taskId: number;data: BodyType<TaskCommentCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTaskCommentTasksTaskIdCommentsPost>>,
+        TError,
+        {taskId: number;data: BodyType<TaskCommentCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateTaskCommentTasksTaskIdCommentsPostMutationOptions(options), queryClient);
+    }
+    export const getUpdateTaskCommentTaskCommentsCommentIdPatchUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}`
+}
+
+/**
+ * タスクコメントを更新する。
+ * @summary Update Task Comment
+ */
+export const updateTaskCommentTaskCommentsCommentIdPatch = async (commentId: number,
+    taskCommentUpdate: TaskCommentUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getUpdateTaskCommentTaskCommentsCommentIdPatchUrl(commentId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateTaskCommentTaskCommentsCommentIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext> => {
+
+const mutationKey = ['updateTaskCommentTaskCommentsCommentIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, {commentId: number;data: BodyType<TaskCommentUpdate>}> = (props) => {
+          const {commentId,data} = props ?? {};
+
+          return  updateTaskCommentTaskCommentsCommentIdPatch(commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>>
+    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationBody = BodyType<TaskCommentUpdate>
+    export type UpdateTaskCommentTaskCommentsCommentIdPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Task Comment
+ */
+export const useUpdateTaskCommentTaskCommentsCommentIdPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>, TError,{commentId: number;data: BodyType<TaskCommentUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateTaskCommentTaskCommentsCommentIdPatch>>,
+        TError,
+        {commentId: number;data: BodyType<TaskCommentUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTaskCommentTaskCommentsCommentIdPatchMutationOptions(options), queryClient);
+    }
+    export const getDeleteTaskCommentTaskCommentsCommentIdDeleteUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}`
+}
+
+/**
+ * タスクコメントを論理削除する。
+ * @summary Delete Task Comment
+ */
+export const deleteTaskCommentTaskCommentsCommentIdDelete = async (commentId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteTaskCommentTaskCommentsCommentIdDeleteUrl(commentId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteTaskCommentTaskCommentsCommentIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext> => {
+
+const mutationKey = ['deleteTaskCommentTaskCommentsCommentIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, {commentId: number}> = (props) => {
+          const {commentId} = props ?? {};
+
+          return  deleteTaskCommentTaskCommentsCommentIdDelete(commentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTaskCommentTaskCommentsCommentIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>>
+
+    export type DeleteTaskCommentTaskCommentsCommentIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Task Comment
+ */
+export const useDeleteTaskCommentTaskCommentsCommentIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTaskCommentTaskCommentsCommentIdDelete>>,
+        TError,
+        {commentId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteTaskCommentTaskCommentsCommentIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getResolveTaskCommentTaskCommentsCommentIdResolvePostUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}/resolve`
+}
+
+/**
+ * タスクコメントを解決済みにする。
+ * @summary Resolve Task Comment
+ */
+export const resolveTaskCommentTaskCommentsCommentIdResolvePost = async (commentId: number,
+    taskCommentStateUpdate: TaskCommentStateUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getResolveTaskCommentTaskCommentsCommentIdResolvePostUrl(commentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentStateUpdate)
+  }
+);}
+
+
+
+
+export const getResolveTaskCommentTaskCommentsCommentIdResolvePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext> => {
+
+const mutationKey = ['resolveTaskCommentTaskCommentsCommentIdResolvePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, {commentId: number;data: BodyType<TaskCommentStateUpdate>}> = (props) => {
+          const {commentId,data} = props ?? {};
+
+          return  resolveTaskCommentTaskCommentsCommentIdResolvePost(commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationResult = NonNullable<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>>
+    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationBody = BodyType<TaskCommentStateUpdate>
+    export type ResolveTaskCommentTaskCommentsCommentIdResolvePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Resolve Task Comment
+ */
+export const useResolveTaskCommentTaskCommentsCommentIdResolvePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resolveTaskCommentTaskCommentsCommentIdResolvePost>>,
+        TError,
+        {commentId: number;data: BodyType<TaskCommentStateUpdate>},
+        TContext
+      > => {
+      return useMutation(getResolveTaskCommentTaskCommentsCommentIdResolvePostMutationOptions(options), queryClient);
+    }
+    export const getReopenTaskCommentTaskCommentsCommentIdReopenPostUrl = (commentId: number,) => {
+
+
+
+
+  return `/task-comments/${commentId}/reopen`
+}
+
+/**
+ * タスクコメントを未解決に戻す。
+ * @summary Reopen Task Comment
+ */
+export const reopenTaskCommentTaskCommentsCommentIdReopenPost = async (commentId: number,
+    taskCommentStateUpdate: TaskCommentStateUpdate, options?: RequestInit): Promise<TaskCommentRead> => {
+
+  return apiClient<TaskCommentRead>(getReopenTaskCommentTaskCommentsCommentIdReopenPostUrl(commentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCommentStateUpdate)
+  }
+);}
+
+
+
+
+export const getReopenTaskCommentTaskCommentsCommentIdReopenPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext> => {
+
+const mutationKey = ['reopenTaskCommentTaskCommentsCommentIdReopenPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, {commentId: number;data: BodyType<TaskCommentStateUpdate>}> = (props) => {
+          const {commentId,data} = props ?? {};
+
+          return  reopenTaskCommentTaskCommentsCommentIdReopenPost(commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationResult = NonNullable<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>>
+    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationBody = BodyType<TaskCommentStateUpdate>
+    export type ReopenTaskCommentTaskCommentsCommentIdReopenPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Reopen Task Comment
+ */
+export const useReopenTaskCommentTaskCommentsCommentIdReopenPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>, TError,{commentId: number;data: BodyType<TaskCommentStateUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reopenTaskCommentTaskCommentsCommentIdReopenPost>>,
+        TError,
+        {commentId: number;data: BodyType<TaskCommentStateUpdate>},
+        TContext
+      > => {
+      return useMutation(getReopenTaskCommentTaskCommentsCommentIdReopenPostMutationOptions(options), queryClient);
+    }
+    export const getListTaskDependenciesTasksTaskIdDependenciesGetUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}/dependencies`
+}
+
+/**
+ * タスク依存関係一覧を取得する。
+ * @summary List Task Dependencies
+ */
+export const listTaskDependenciesTasksTaskIdDependenciesGet = async (taskId: number, options?: RequestInit): Promise<TaskDependencyRead[]> => {
+
+  return apiClient<TaskDependencyRead[]>(getListTaskDependenciesTasksTaskIdDependenciesGetUrl(taskId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskDependenciesTasksTaskIdDependenciesGetQueryKey = (taskId: number,) => {
+    return [
+    `/tasks/${taskId}/dependencies`
+    ] as const;
+    }
+
+
+export const getListTaskDependenciesTasksTaskIdDependenciesGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskDependenciesTasksTaskIdDependenciesGetQueryKey(taskId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>> = ({ signal }) => listTaskDependenciesTasksTaskIdDependenciesGet(taskId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTaskDependenciesTasksTaskIdDependenciesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>>
+export type ListTaskDependenciesTasksTaskIdDependenciesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Task Dependencies
+ */
+
+export function useListTaskDependenciesTasksTaskIdDependenciesGet<TData = Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskDependenciesTasksTaskIdDependenciesGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTaskDependenciesTasksTaskIdDependenciesGetQueryOptions(taskId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getCreateTaskDependencyTasksTaskIdDependenciesPostUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}/dependencies`
+}
+
+/**
+ * タスク依存関係を作成する。
+ * @summary Create Task Dependency
+ */
+export const createTaskDependencyTasksTaskIdDependenciesPost = async (taskId: number,
+    taskDependencyCreate: TaskDependencyCreate, options?: RequestInit): Promise<TaskDependencyRead> => {
+
+  return apiClient<TaskDependencyRead>(getCreateTaskDependencyTasksTaskIdDependenciesPostUrl(taskId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskDependencyCreate)
+  }
+);}
+
+
+
+
+export const getCreateTaskDependencyTasksTaskIdDependenciesPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, TError,{taskId: number;data: BodyType<TaskDependencyCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, TError,{taskId: number;data: BodyType<TaskDependencyCreate>}, TContext> => {
+
+const mutationKey = ['createTaskDependencyTasksTaskIdDependenciesPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, {taskId: number;data: BodyType<TaskDependencyCreate>}> = (props) => {
+          const {taskId,data} = props ?? {};
+
+          return  createTaskDependencyTasksTaskIdDependenciesPost(taskId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTaskDependencyTasksTaskIdDependenciesPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>>
+    export type CreateTaskDependencyTasksTaskIdDependenciesPostMutationBody = BodyType<TaskDependencyCreate>
+    export type CreateTaskDependencyTasksTaskIdDependenciesPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Task Dependency
+ */
+export const useCreateTaskDependencyTasksTaskIdDependenciesPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>, TError,{taskId: number;data: BodyType<TaskDependencyCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTaskDependencyTasksTaskIdDependenciesPost>>,
+        TError,
+        {taskId: number;data: BodyType<TaskDependencyCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateTaskDependencyTasksTaskIdDependenciesPostMutationOptions(options), queryClient);
+    }
+    export const getUpdateTaskDependencyTaskDependenciesDependencyIdPatchUrl = (dependencyId: number,) => {
+
+
+
+
+  return `/task-dependencies/${dependencyId}`
+}
+
+/**
+ * タスク依存関係を更新する。
+ * @summary Update Task Dependency
+ */
+export const updateTaskDependencyTaskDependenciesDependencyIdPatch = async (dependencyId: number,
+    taskDependencyUpdate: TaskDependencyUpdate, options?: RequestInit): Promise<TaskDependencyRead> => {
+
+  return apiClient<TaskDependencyRead>(getUpdateTaskDependencyTaskDependenciesDependencyIdPatchUrl(dependencyId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskDependencyUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, TError,{dependencyId: number;data: BodyType<TaskDependencyUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, TError,{dependencyId: number;data: BodyType<TaskDependencyUpdate>}, TContext> => {
+
+const mutationKey = ['updateTaskDependencyTaskDependenciesDependencyIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, {dependencyId: number;data: BodyType<TaskDependencyUpdate>}> = (props) => {
+          const {dependencyId,data} = props ?? {};
+
+          return  updateTaskDependencyTaskDependenciesDependencyIdPatch(dependencyId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>>
+    export type UpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationBody = BodyType<TaskDependencyUpdate>
+    export type UpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Task Dependency
+ */
+export const useUpdateTaskDependencyTaskDependenciesDependencyIdPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>, TError,{dependencyId: number;data: BodyType<TaskDependencyUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateTaskDependencyTaskDependenciesDependencyIdPatch>>,
+        TError,
+        {dependencyId: number;data: BodyType<TaskDependencyUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTaskDependencyTaskDependenciesDependencyIdPatchMutationOptions(options), queryClient);
+    }
+    export const getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteUrl = (dependencyId: number,) => {
+
+
+
+
+  return `/task-dependencies/${dependencyId}`
+}
+
+/**
+ * タスク依存関係を削除する。
+ * @summary Delete Task Dependency
+ */
+export const deleteTaskDependencyTaskDependenciesDependencyIdDelete = async (dependencyId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteUrl(dependencyId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, TError,{dependencyId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, TError,{dependencyId: number}, TContext> => {
+
+const mutationKey = ['deleteTaskDependencyTaskDependenciesDependencyIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, {dependencyId: number}> = (props) => {
+          const {dependencyId} = props ?? {};
+
+          return  deleteTaskDependencyTaskDependenciesDependencyIdDelete(dependencyId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>>
+
+    export type DeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Task Dependency
+ */
+export const useDeleteTaskDependencyTaskDependenciesDependencyIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>, TError,{dependencyId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTaskDependencyTaskDependenciesDependencyIdDelete>>,
+        TError,
+        {dependencyId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteTaskDependencyTaskDependenciesDependencyIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getListTasksProjectsProjectIdTasksGetUrl = (projectId: number,
+    params?: ListTasksProjectsProjectIdTasksGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/projects/${projectId}/tasks?${stringifiedParams}` : `/projects/${projectId}/tasks`
+}
+
+/**
+ * プロジェクト内タスク一覧を取得する。
+ * @summary List Tasks
+ */
+export const listTasksProjectsProjectIdTasksGet = async (projectId: number,
+    params?: ListTasksProjectsProjectIdTasksGetParams, options?: RequestInit): Promise<TaskListResponse> => {
+
+  return apiClient<TaskListResponse>(getListTasksProjectsProjectIdTasksGetUrl(projectId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTasksProjectsProjectIdTasksGetQueryKey = (projectId: number,
+    params?: ListTasksProjectsProjectIdTasksGetParams,) => {
+    return [
+    `/projects/${projectId}/tasks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTasksProjectsProjectIdTasksGetQueryOptions = <TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number,
+    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTasksProjectsProjectIdTasksGetQueryKey(projectId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>> = ({ signal }) => listTasksProjectsProjectIdTasksGet(projectId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTasksProjectsProjectIdTasksGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>>
+export type ListTasksProjectsProjectIdTasksGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params: undefined |  ListTasksProjectsProjectIdTasksGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Tasks
+ */
+
+export function useListTasksProjectsProjectIdTasksGet<TData = Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number,
+    params?: ListTasksProjectsProjectIdTasksGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTasksProjectsProjectIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTasksProjectsProjectIdTasksGetQueryOptions(projectId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getCreateTaskProjectsProjectIdTasksPostUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/tasks`
+}
+
+/**
+ * プロジェクト内にタスクを作成する。
+ * @summary Create Task
+ */
+export const createTaskProjectsProjectIdTasksPost = async (projectId: number,
+    taskCreate: TaskCreate, options?: RequestInit): Promise<TaskRead> => {
+
+  return apiClient<TaskRead>(getCreateTaskProjectsProjectIdTasksPostUrl(projectId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskCreate)
+  }
+);}
+
+
+
+
+export const getCreateTaskProjectsProjectIdTasksPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, TError,{projectId: number;data: BodyType<TaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, TError,{projectId: number;data: BodyType<TaskCreate>}, TContext> => {
+
+const mutationKey = ['createTaskProjectsProjectIdTasksPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, {projectId: number;data: BodyType<TaskCreate>}> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  createTaskProjectsProjectIdTasksPost(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTaskProjectsProjectIdTasksPostMutationResult = NonNullable<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>>
+    export type CreateTaskProjectsProjectIdTasksPostMutationBody = BodyType<TaskCreate>
+    export type CreateTaskProjectsProjectIdTasksPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Task
+ */
+export const useCreateTaskProjectsProjectIdTasksPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>, TError,{projectId: number;data: BodyType<TaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTaskProjectsProjectIdTasksPost>>,
+        TError,
+        {projectId: number;data: BodyType<TaskCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateTaskProjectsProjectIdTasksPostMutationOptions(options), queryClient);
+    }
+    export const getListTaskTagsProjectsProjectIdTasksTagsGetUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/tasks/tags`
+}
+
+/**
+ * プロジェクト内で利用済みのタスクタグ候補を取得する。
+ * @summary List Task Tags
+ */
+export const listTaskTagsProjectsProjectIdTasksTagsGet = async (projectId: number, options?: RequestInit): Promise<TaskTagListResponse> => {
+
+  return apiClient<TaskTagListResponse>(getListTaskTagsProjectsProjectIdTasksTagsGetUrl(projectId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaskTagsProjectsProjectIdTasksTagsGetQueryKey = (projectId: number,) => {
+    return [
+    `/projects/${projectId}/tasks/tags`
+    ] as const;
+    }
+
+
+export const getListTaskTagsProjectsProjectIdTasksTagsGetQueryOptions = <TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaskTagsProjectsProjectIdTasksTagsGetQueryKey(projectId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>> = ({ signal }) => listTaskTagsProjectsProjectIdTasksTagsGet(projectId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTaskTagsProjectsProjectIdTasksTagsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>>
+export type ListTaskTagsProjectsProjectIdTasksTagsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Task Tags
+ */
+
+export function useListTaskTagsProjectsProjectIdTasksTagsGet<TData = Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError = ErrorType<HTTPValidationError>>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTaskTagsProjectsProjectIdTasksTagsGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTaskTagsProjectsProjectIdTasksTagsGetQueryOptions(projectId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getReadTaskTasksTaskIdGetUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}`
+}
+
+/**
+ * タスク詳細を取得する。
+ * @summary Read Task
+ */
+export const readTaskTasksTaskIdGet = async (taskId: number, options?: RequestInit): Promise<TaskRead> => {
+
+  return apiClient<TaskRead>(getReadTaskTasksTaskIdGetUrl(taskId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadTaskTasksTaskIdGetQueryKey = (taskId: number,) => {
+    return [
+    `/tasks/${taskId}`
+    ] as const;
+    }
+
+
+export const getReadTaskTasksTaskIdGetQueryOptions = <TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadTaskTasksTaskIdGetQueryKey(taskId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>> = ({ signal }) => readTaskTasksTaskIdGet(taskId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: taskId !== null && taskId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadTaskTasksTaskIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>>
+export type ReadTaskTasksTaskIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read Task
+ */
+
+export function useReadTaskTasksTaskIdGet<TData = Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ taskId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readTaskTasksTaskIdGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReadTaskTasksTaskIdGetQueryOptions(taskId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getUpdateTaskTasksTaskIdPatchUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}`
+}
+
+/**
+ * タスクを更新する。
+ * @summary Update Task
+ */
+export const updateTaskTasksTaskIdPatch = async (taskId: number,
+    taskUpdate: TaskUpdate, options?: RequestInit): Promise<TaskRead> => {
+
+  return apiClient<TaskRead>(getUpdateTaskTasksTaskIdPatchUrl(taskId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(taskUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateTaskTasksTaskIdPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, TError,{taskId: number;data: BodyType<TaskUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, TError,{taskId: number;data: BodyType<TaskUpdate>}, TContext> => {
+
+const mutationKey = ['updateTaskTasksTaskIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, {taskId: number;data: BodyType<TaskUpdate>}> = (props) => {
+          const {taskId,data} = props ?? {};
+
+          return  updateTaskTasksTaskIdPatch(taskId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTaskTasksTaskIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>>
+    export type UpdateTaskTasksTaskIdPatchMutationBody = BodyType<TaskUpdate>
+    export type UpdateTaskTasksTaskIdPatchMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Task
+ */
+export const useUpdateTaskTasksTaskIdPatch = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>, TError,{taskId: number;data: BodyType<TaskUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateTaskTasksTaskIdPatch>>,
+        TError,
+        {taskId: number;data: BodyType<TaskUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTaskTasksTaskIdPatchMutationOptions(options), queryClient);
+    }
+    export const getDeleteTaskTasksTaskIdDeleteUrl = (taskId: number,) => {
+
+
+
+
+  return `/tasks/${taskId}`
+}
+
+/**
+ * タスクを論理削除する。
+ * @summary Delete Task
+ */
+export const deleteTaskTasksTaskIdDelete = async (taskId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteTaskTasksTaskIdDeleteUrl(taskId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteTaskTasksTaskIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, TError,{taskId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, TError,{taskId: number}, TContext> => {
+
+const mutationKey = ['deleteTaskTasksTaskIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, {taskId: number}> = (props) => {
+          const {taskId} = props ?? {};
+
+          return  deleteTaskTasksTaskIdDelete(taskId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTaskTasksTaskIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>>
+
+    export type DeleteTaskTasksTaskIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Task
+ */
+export const useDeleteTaskTasksTaskIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>, TError,{taskId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTaskTasksTaskIdDelete>>,
+        TError,
+        {taskId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteTaskTasksTaskIdDeleteMutationOptions(options), queryClient);
+    }
+    export const getListRequirementTasksRequirementsRequirementIdTasksGetUrl = (requirementId: number,) => {
+
+
+
+
+  return `/requirements/${requirementId}/tasks`
+}
+
+/**
+ * 要件に紐づくタスク一覧を取得する。
+ * @summary List Requirement Tasks
+ */
+export const listRequirementTasksRequirementsRequirementIdTasksGet = async (requirementId: number, options?: RequestInit): Promise<TaskRead[]> => {
+
+  return apiClient<TaskRead[]>(getListRequirementTasksRequirementsRequirementIdTasksGetUrl(requirementId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRequirementTasksRequirementsRequirementIdTasksGetQueryKey = (requirementId: number,) => {
+    return [
+    `/requirements/${requirementId}/tasks`
+    ] as const;
+    }
+
+
+export const getListRequirementTasksRequirementsRequirementIdTasksGetQueryOptions = <TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRequirementTasksRequirementsRequirementIdTasksGetQueryKey(requirementId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>> = ({ signal }) => listRequirementTasksRequirementsRequirementIdTasksGet(requirementId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: requirementId !== null && requirementId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListRequirementTasksRequirementsRequirementIdTasksGetQueryResult = NonNullable<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>>
+export type ListRequirementTasksRequirementsRequirementIdTasksGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>,
+          TError,
+          Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Requirement Tasks
+ */
+
+export function useListRequirementTasksRequirementsRequirementIdTasksGet<TData = Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRequirementTasksRequirementsRequirementIdTasksGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListRequirementTasksRequirementsRequirementIdTasksGetQueryOptions(requirementId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getCreateRequirementTaskRequirementsRequirementIdTasksPostUrl = (requirementId: number,) => {
+
+
+
+
+  return `/requirements/${requirementId}/tasks`
+}
+
+/**
+ * 要件に紐づくタスクを作成する。
+ * @summary Create Requirement Task
+ */
+export const createRequirementTaskRequirementsRequirementIdTasksPost = async (requirementId: number,
+    requirementTaskCreate: RequirementTaskCreate, options?: RequestInit): Promise<TaskRead> => {
+
+  return apiClient<TaskRead>(getCreateRequirementTaskRequirementsRequirementIdTasksPostUrl(requirementId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementTaskCreate)
+  }
+);}
+
+
+
+
+export const getCreateRequirementTaskRequirementsRequirementIdTasksPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskCreate>}, TContext> => {
+
+const mutationKey = ['createRequirementTaskRequirementsRequirementIdTasksPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, {requirementId: number;data: BodyType<RequirementTaskCreate>}> = (props) => {
+          const {requirementId,data} = props ?? {};
+
+          return  createRequirementTaskRequirementsRequirementIdTasksPost(requirementId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRequirementTaskRequirementsRequirementIdTasksPostMutationResult = NonNullable<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>>
+    export type CreateRequirementTaskRequirementsRequirementIdTasksPostMutationBody = BodyType<RequirementTaskCreate>
+    export type CreateRequirementTaskRequirementsRequirementIdTasksPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Requirement Task
+ */
+export const useCreateRequirementTaskRequirementsRequirementIdTasksPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createRequirementTaskRequirementsRequirementIdTasksPost>>,
+        TError,
+        {requirementId: number;data: BodyType<RequirementTaskCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateRequirementTaskRequirementsRequirementIdTasksPostMutationOptions(options), queryClient);
+    }
+    export const getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetUrl = (requirementId: number,) => {
+
+
+
+
+  return `/requirements/${requirementId}/task-progress`
+}
+
+/**
+ * 要件に紐づくタスク進捗を取得する。
+ * @summary Read Requirement Task Progress
+ */
+export const readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet = async (requirementId: number, options?: RequestInit): Promise<RequirementTaskProgressRead> => {
+
+  return apiClient<RequirementTaskProgressRead>(getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetUrl(requirementId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryKey = (requirementId: number,) => {
+    return [
+    `/requirements/${requirementId}/task-progress`
+    ] as const;
+    }
+
+
+export const getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryOptions = <TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryKey(requirementId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>> = ({ signal }) => readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet(requirementId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: requirementId !== null && requirementId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryResult = NonNullable<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>>
+export type ReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>,
+          TError,
+          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>,
+          TError,
+          Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read Requirement Task Progress
+ */
+
+export function useReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGet<TData = Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError = ErrorType<HTTPValidationError>>(
+ requirementId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRequirementTaskProgressRequirementsRequirementIdTaskProgressGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryOptions(requirementId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostUrl = (requirementId: number,) => {
+
+
+
+
+  return `/requirements/${requirementId}/task-relations`
+}
+
+/**
+ * 要件タスク関連を作成する。
+ * @summary Create Requirement Task Relation
+ */
+export const createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost = async (requirementId: number,
+    requirementTaskRelationCreate: RequirementTaskRelationCreate, options?: RequestInit): Promise<RequirementTaskRelationRead> => {
+
+  return apiClient<RequirementTaskRelationRead>(getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostUrl(requirementId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(requirementTaskRelationCreate)
+  }
+);}
+
+
+
+
+export const getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskRelationCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskRelationCreate>}, TContext> => {
+
+const mutationKey = ['createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, {requirementId: number;data: BodyType<RequirementTaskRelationCreate>}> = (props) => {
+          const {requirementId,data} = props ?? {};
+
+          return  createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost(requirementId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>>
+    export type CreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationBody = BodyType<RequirementTaskRelationCreate>
+    export type CreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Create Requirement Task Relation
+ */
+export const useCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>, TError,{requirementId: number;data: BodyType<RequirementTaskRelationCreate>}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createRequirementTaskRelationRequirementsRequirementIdTaskRelationsPost>>,
+        TError,
+        {requirementId: number;data: BodyType<RequirementTaskRelationCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateRequirementTaskRelationRequirementsRequirementIdTaskRelationsPostMutationOptions(options), queryClient);
+    }
+    export const getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteUrl = (requirementId: number,
+    relationId: number,) => {
+
+
+
+
+  return `/requirements/${requirementId}/task-relations/${relationId}`
+}
+
+/**
+ * 要件タスク関連を削除する。
+ * @summary Delete Requirement Task Relation
+ */
+export const deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete = async (requirementId: number,
+    relationId: number, options?: RequestInit): Promise<void> => {
+
+  return apiClient<void>(getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteUrl(requirementId,relationId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, TError,{requirementId: number;relationId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, TError,{requirementId: number;relationId: number}, TContext> => {
+
+const mutationKey = ['deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, {requirementId: number;relationId: number}> = (props) => {
+          const {requirementId,relationId} = props ?? {};
+
+          return  deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete(requirementId,relationId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>>
+
+    export type DeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Delete Requirement Task Relation
+ */
+export const useDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>, TError,{requirementId: number;relationId: number}, TContext>, request?: SecondParameter<typeof apiClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDelete>>,
+        TError,
+        {requirementId: number;relationId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteRequirementTaskRelationRequirementsRequirementIdTaskRelationsRelationIdDeleteMutationOptions(options), queryClient);
     }
     export const getReadGanttProjectsProjectIdGanttGetUrl = (projectId: number,
     params?: ReadGanttProjectsProjectIdGanttGetParams,) => {

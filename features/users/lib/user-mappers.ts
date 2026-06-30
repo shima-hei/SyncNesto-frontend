@@ -10,6 +10,7 @@ export const toUserCreate = (values: UserFormValues): UserCreate => {
     password: values.password,
     department: values.department || null,
     position: values.position || null,
+    user_type: values.userType,
     is_active: values.isActive,
     system_role_keys: toSystemRoleKeys(values),
   };
@@ -26,6 +27,7 @@ export const toUserUpdate = (
     password: values.password || null,
     department: values.department || null,
     position: values.position || null,
+    user_type: values.userType,
     is_active: values.isActive,
     system_role_keys: toSystemRoleKeys(values),
   };
