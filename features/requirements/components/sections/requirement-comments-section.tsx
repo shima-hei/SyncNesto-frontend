@@ -6,6 +6,8 @@ import { Trash2Icon } from "lucide-react";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import { isSystemAdmin } from "@/features/auth/utils/authorization";
 import { formatDateTime } from "@/lib/format/date";
 import type { RequirementCommentRead } from "@/lib/api/generated/model";
 
@@ -26,6 +28,10 @@ export function RequirementCommentsSection({
   requirementId,
   canComment,
 }: RequirementCommentsSectionProps) {
+  const { user } = useAuth();
+  const canModerateComments = isSystemAdmin(user);
+  const canDeleteComment = (comment: RequirementCommentRead) =>
+    canComment && (canModerateComments || comment.user_id === user?.id);
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementCommentRead | null>(null);
   const { comments, isLoading } = useRequirementComments(
@@ -70,7 +76,7 @@ export function RequirementCommentsSection({
                       {comment.comment}
                     </p>
                   </div>
-                  {canComment ? (
+                  {canDeleteComment(comment) ? (
                     <Button
                       type="button"
                       variant="outline"

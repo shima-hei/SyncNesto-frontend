@@ -14,6 +14,10 @@ type CommentThreadActionsProps<TComment> = {
   isStatePending: boolean;
   resolvePlacement?: "first" | "after-edit";
   reopenLabel?: string;
+  canReply?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canResolve?: boolean;
   onReply: (comment: TComment) => void;
   onEdit: (comment: TComment) => void;
   onDelete: (comment: TComment) => void;
@@ -27,6 +31,10 @@ export function CommentThreadActions<TComment>({
   isStatePending,
   resolvePlacement = "after-edit",
   reopenLabel = "再オープン",
+  canReply = true,
+  canEdit = true,
+  canDelete = true,
+  canResolve = true,
   onReply,
   onEdit,
   onDelete,
@@ -52,35 +60,41 @@ export function CommentThreadActions<TComment>({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {resolvePlacement === "first" ? resolveButton : null}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onReply(comment)}
-      >
-        <MessageSquareReplyIcon data-icon="inline-start" />
-        返信
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onEdit(comment)}
-      >
-        <PencilIcon data-icon="inline-start" />
-        編集
-      </Button>
-      {resolvePlacement === "after-edit" ? resolveButton : null}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onDelete(comment)}
-      >
-        <Trash2Icon data-icon="inline-start" />
-        削除
-      </Button>
+      {canResolve && resolvePlacement === "first" ? resolveButton : null}
+      {canReply ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onReply(comment)}
+        >
+          <MessageSquareReplyIcon data-icon="inline-start" />
+          返信
+        </Button>
+      ) : null}
+      {canEdit ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(comment)}
+        >
+          <PencilIcon data-icon="inline-start" />
+          編集
+        </Button>
+      ) : null}
+      {canResolve && resolvePlacement === "after-edit" ? resolveButton : null}
+      {canDelete ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onDelete(comment)}
+        >
+          <Trash2Icon data-icon="inline-start" />
+          削除
+        </Button>
+      ) : null}
     </div>
   );
 }

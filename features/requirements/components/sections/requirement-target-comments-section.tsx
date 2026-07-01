@@ -7,6 +7,8 @@ import { CommentThreadList } from "@/components/shared/comments/comment-thread-l
 import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import { isSystemAdmin } from "@/features/auth/utils/authorization";
 import type { RequirementTargetCommentRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -51,6 +53,11 @@ export function RequirementTargetCommentsSection({
   className,
   contentClassName,
 }: RequirementTargetCommentsSectionProps) {
+  const { user } = useAuth();
+  const canModerateComments = isSystemAdmin(user);
+  const canMutateComment = (comment: RequirementTargetCommentRead) =>
+    canComment &&
+    (canModerateComments || comment.author_id === user?.id);
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementTargetCommentRead | null>(null);
   const { comments, isLoading } = useTargetComments(
@@ -113,11 +120,14 @@ export function RequirementTargetCommentsSection({
           emptyMessage="スレッドコメントはありません。"
           getCommentId={(comment) => comment.id}
           getParentCommentId={(comment) => comment.parent_comment_id}
+          canEditComment={canMutateComment}
+          canReplyComment={() => canComment}
           loadingFallback={<RequirementSectionSkeleton />}
           renderCommentBody={({ comment, onEdit, onReply }) => (
             <CommentBody
               comment={comment}
               canComment={canComment}
+              canMutate={canMutateComment(comment)}
               isStatePending={isStatePending}
               onEdit={onEdit}
               onReply={onReply}
@@ -188,6 +198,7 @@ export function RequirementTargetCommentsSection({
 type CommentBodyProps = {
   comment: RequirementTargetCommentRead;
   canComment: boolean;
+  canMutate: boolean;
   isStatePending: boolean;
   onEdit: (comment: RequirementTargetCommentRead) => void;
   onReply: (comment: RequirementTargetCommentRead) => void;
@@ -203,6 +214,7 @@ type CommentBodyProps = {
 function CommentBody({
   comment,
   canComment,
+  canMutate,
   isStatePending,
   onEdit,
   onReply,
@@ -232,6 +244,8 @@ function CommentBody({
           isStatePending={isStatePending}
           resolvePlacement="first"
           reopenLabel="再開"
+          canEdit={canMutate}
+          canDelete={canMutate}
           onReply={onReply}
           onEdit={onEdit}
           onDelete={onDelete}
