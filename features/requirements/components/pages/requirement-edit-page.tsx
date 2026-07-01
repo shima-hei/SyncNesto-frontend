@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { getRequirementFormValues } from "../../constants/requirement-form";
 import { useRequirement } from "../../hooks/use-requirement";
@@ -54,6 +55,14 @@ export function RequirementEditPage({
         documentId={documentId}
         mode="update"
         initialValues={getRequirementFormValues(requirement)}
+        draftScope={createDraftScope(
+          "requirements",
+          "items",
+          "update",
+          projectId,
+          requirementId
+        )}
+        draftResourceId={requirementId}
         isPending={isPending}
         error={updateError}
         conflictValues={

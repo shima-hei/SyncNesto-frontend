@@ -1,5 +1,6 @@
 export type RequirementTargetCommentFormValues = {
   body: string;
+  targetAnchor: string;
   reason: string;
 };
 

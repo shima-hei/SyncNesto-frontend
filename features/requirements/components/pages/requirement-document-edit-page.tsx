@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { getRequirementDocumentFormValues } from "../../constants/requirement-form";
 import { useRequirementDocument } from "../../hooks/use-requirement-document";
@@ -51,6 +52,14 @@ export function RequirementDocumentEditPage({
         projectId={projectId}
         mode="update"
         initialValues={getRequirementDocumentFormValues(document)}
+        draftScope={createDraftScope(
+          "requirements",
+          "documents",
+          "update",
+          projectId,
+          documentId
+        )}
+        draftResourceId={documentId}
         initialUsers={{
           author: document.author ?? null,
           reviewer: document.reviewer ?? null,

@@ -55,10 +55,14 @@ const downloadExportedDocument = (
   documentId: number,
   data: RequirementDocumentExportRead
 ) => {
-  const extension = data.format === "html" ? "html" : "md";
-  const blob = new Blob([data.content], {
-    type: data.format === "html" ? "text/html" : "text/markdown",
-  });
+  const extension =
+    data.format === "pdf" ? "pdf" : data.format === "html" ? "html" : "md";
+  const blob =
+    data.format === "pdf"
+      ? buildPdfBlob(data.content)
+      : new Blob([data.content], {
+          type: data.format === "html" ? "text/html" : "text/markdown",
+        });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
@@ -66,4 +70,11 @@ const downloadExportedDocument = (
   link.download = `requirement-document-${documentId}.${extension}`;
   link.click();
   URL.revokeObjectURL(url);
+};
+
+const buildPdfBlob = (base64Content: string) => {
+  const binary = window.atob(base64Content);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+
+  return new Blob([bytes], { type: "application/pdf" });
 };

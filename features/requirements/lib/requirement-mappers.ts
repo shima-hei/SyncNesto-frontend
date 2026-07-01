@@ -172,9 +172,28 @@ export const toRequirementTargetCommentCreate = (
   return {
     target_type: targetType,
     target_id: targetId,
+    target_anchor: toRequirementTargetAnchor(values.targetAnchor),
     parent_comment_id: parentCommentId ?? null,
     body: values.body,
   };
+};
+
+const toRequirementTargetAnchor = (value: string) => {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+  try {
+    const parsedValue: unknown = JSON.parse(trimmed);
+
+    if (parsedValue && typeof parsedValue === "object" && !Array.isArray(parsedValue)) {
+      return parsedValue as Record<string, unknown>;
+    }
+  } catch {
+    return { label: trimmed };
+  }
+  return { label: trimmed };
 };
 
 export const toRequirementTargetCommentUpdate = (

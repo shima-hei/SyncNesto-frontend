@@ -16,6 +16,7 @@ import { useDeleteTargetComment } from "../../hooks/use-delete-target-comment";
 import { useTargetComments } from "../../hooks/use-target-comments";
 import { useToggleTargetCommentState } from "../../hooks/use-toggle-target-comment-state";
 import { useUpdateTargetComment } from "../../hooks/use-update-target-comment";
+import type { ReviewAnchorStatus } from "../../lib/requirement-review-anchor";
 import { RequirementTargetCommentForm } from "../forms/requirement-target-comment-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
@@ -25,6 +26,13 @@ type RequirementTargetCommentsSectionProps = {
   targetId: number;
   title?: string;
   canComment: boolean;
+  targetLabel?: string;
+  selectedTargetAnchor?: Record<string, unknown> | null;
+  onTargetAnchorClick?: (targetAnchor: Record<string, unknown>) => void;
+  getTargetAnchorStatus?: (
+    targetAnchor: Record<string, unknown>
+  ) => ReviewAnchorStatus | null;
+  showTargetAnchorInput?: boolean;
   className?: string;
   contentClassName?: string;
 };
@@ -35,6 +43,11 @@ export function RequirementTargetCommentsSection({
   targetId,
   title = "スレッドコメント",
   canComment,
+  targetLabel,
+  selectedTargetAnchor = null,
+  onTargetAnchorClick,
+  getTargetAnchorStatus,
+  showTargetAnchorInput = true,
   className,
   contentClassName,
 }: RequirementTargetCommentsSectionProps) {
@@ -69,8 +82,24 @@ export function RequirementTargetCommentsSection({
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className={cn("flex flex-col gap-4", contentClassName)}>
+        {targetLabel ? (
+          <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+            現在の対象: {targetLabel}
+          </div>
+        ) : null}
+
         {canComment ? (
           <RequirementTargetCommentForm
+            key={JSON.stringify(selectedTargetAnchor)}
+            initialValues={{
+              body: "",
+              targetAnchor: selectedTargetAnchor
+                ? JSON.stringify(selectedTargetAnchor)
+                : "",
+              reason: "",
+            }}
+            showTargetAnchorInput={showTargetAnchorInput}
+            targetAnchorLabel={getTargetAnchorLabel(selectedTargetAnchor)}
             isPending={isCreatePending}
             error={createError}
             onSubmit={(values) => createTargetComment(values)}
@@ -95,13 +124,19 @@ export function RequirementTargetCommentsSection({
               onDelete={setDeleteTarget}
               onResolve={resolveTargetComment}
               onReopen={reopenTargetComment}
+              onTargetAnchorClick={onTargetAnchorClick}
+              getTargetAnchorStatus={getTargetAnchorStatus}
             />
           )}
           renderEditForm={({ comment, onClose }) => (
             <>
               <CommentInlineHeader label="コメント編集" onClose={onClose} />
               <RequirementTargetCommentForm
-                initialValues={{ body: comment.body, reason: "" }}
+                initialValues={{
+                  body: comment.body,
+                  targetAnchor: getTargetAnchorLabel(comment.target_anchor),
+                  reason: "",
+                }}
                 submitLabel="コメント更新"
                 resetOnSuccess={false}
                 showReason
@@ -118,7 +153,9 @@ export function RequirementTargetCommentsSection({
             <>
               <CommentInlineHeader label="返信" onClose={onClose} />
               <RequirementTargetCommentForm
+                initialValues={{ body: "", targetAnchor: "", reason: "" }}
                 submitLabel="返信追加"
+                showTargetAnchorInput={false}
                 isPending={isCreatePending}
                 error={createError}
                 onSubmit={(values) => createTargetComment(values, comment.id)}
@@ -157,6 +194,10 @@ type CommentBodyProps = {
   onDelete: (comment: RequirementTargetCommentRead) => void;
   onResolve: (commentId: number, version: number) => Promise<void>;
   onReopen: (commentId: number, version: number) => Promise<void>;
+  onTargetAnchorClick?: (targetAnchor: Record<string, unknown>) => void;
+  getTargetAnchorStatus?: (
+    targetAnchor: Record<string, unknown>
+  ) => ReviewAnchorStatus | null;
 };
 
 function CommentBody({
@@ -168,33 +209,88 @@ function CommentBody({
   onDelete,
   onResolve,
   onReopen,
+  onTargetAnchorClick,
+  getTargetAnchorStatus,
 }: CommentBodyProps) {
+  const targetAnchorStatus = comment.target_anchor
+    ? getTargetAnchorStatus?.(comment.target_anchor)
+    : null;
+
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-      <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-xs text-muted-foreground">
-          {comment.author?.name ?? `投稿者ID: ${comment.author_id}`} /{" "}
-          {formatDateTime(comment.created_at)} /{" "}
-          {comment.is_resolved ? "解決済み" : "未解決"}
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-1 text-xs leading-5 text-muted-foreground">
+        <span className="truncate">
+          {comment.author?.name ?? `投稿者ID: ${comment.author_id}`}
         </span>
-        <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
+        <span>{formatDateTime(comment.created_at)}</span>
+        <span>{comment.is_resolved ? "解決済み" : "未解決"}</span>
       </div>
       {canComment ? (
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <CommentThreadActions
-            comment={comment}
-            isResolved={comment.is_resolved}
-            isStatePending={isStatePending}
-            resolvePlacement="first"
-            reopenLabel="再開"
-            onReply={onReply}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onResolve={() => onResolve(comment.id, comment.version)}
-            onReopen={() => onReopen(comment.id, comment.version)}
-          />
-        </div>
+        <CommentThreadActions
+          comment={comment}
+          isResolved={comment.is_resolved}
+          isStatePending={isStatePending}
+          resolvePlacement="first"
+          reopenLabel="再開"
+          onReply={onReply}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onResolve={() => onResolve(comment.id, comment.version)}
+          onReopen={() => onReopen(comment.id, comment.version)}
+        />
       ) : null}
+      {comment.target_anchor ? (
+        <button
+          type="button"
+          className="w-full rounded-md border bg-muted px-3 py-2 text-left text-xs leading-5 text-muted-foreground hover:bg-accent"
+          onClick={() => onTargetAnchorClick?.(comment.target_anchor ?? {})}
+        >
+          <span className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">
+              対象
+            </span>
+            <span className="break-words">
+              {getTargetAnchorLabel(comment.target_anchor)}
+            </span>
+            {targetAnchorStatus ? (
+              <span>{getTargetAnchorStatusLabel(targetAnchorStatus)}</span>
+            ) : null}
+          </span>
+        </button>
+      ) : null}
+      <p className="whitespace-pre-wrap break-words text-sm">{comment.body}</p>
     </div>
   );
 }
+
+const getTargetAnchorLabel = (
+  targetAnchor: RequirementTargetCommentRead["target_anchor"] | null | undefined
+) => {
+  if (!targetAnchor) {
+    return "";
+  }
+  const label = targetAnchor.label;
+  const quote = targetAnchor.quote;
+  const field = targetAnchor.field;
+
+  if (typeof quote === "string") {
+    return quote;
+  }
+  if (typeof label === "string") {
+    return label;
+  }
+  return typeof field === "string" ? field : JSON.stringify(targetAnchor);
+};
+
+const getTargetAnchorStatusLabel = (status: ReviewAnchorStatus) => {
+  switch (status) {
+    case "current":
+      return "アンカー状態: 現在";
+    case "moved":
+      return "アンカー状態: 位置変更";
+    case "changed":
+      return "アンカー状態: 対象更新";
+    case "missing":
+      return "アンカー状態: 失効";
+  }
+};

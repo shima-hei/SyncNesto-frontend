@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
+import { DraftRestoreDialog } from "@/components/shared/dialogs/draft-restore-dialog";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
@@ -21,7 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getConflictFields } from "@/lib/api/conflict";
+import { useFormDraft } from "@/hooks/use-form-draft";
 
 import { REQUIREMENT_CONFLICT_FIELD_LABELS } from "../../constants/requirement-conflict-fields";
 import {
@@ -42,6 +45,8 @@ type RequirementFormProps = {
   documentId: number;
   mode: "create" | "update";
   initialValues: RequirementFormValues;
+  draftScope?: string;
+  draftResourceId?: number | null;
   isPending: boolean;
   error?: Error | null;
   conflictValues?: RequirementFormValues | null;
@@ -55,6 +60,8 @@ export function RequirementForm({
   documentId,
   mode,
   initialValues,
+  draftScope,
+  draftResourceId = null,
   isPending,
   error,
   conflictValues,
@@ -77,6 +84,22 @@ export function RequirementForm({
   const reasonId = useId();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RequirementFormErrors>({});
+  const { user } = useAuth();
+  const draft = useFormDraft({
+    userId: user?.id ?? null,
+    scope: draftScope ?? "",
+    values,
+    initialValues,
+    serverDraft: draftScope
+      ? {
+          enabled: true,
+          resourceType: "requirement",
+          resourceId: draftResourceId,
+          projectId,
+        }
+      : undefined,
+    onRestore: setValues,
+  });
   const conflictFields = conflictValues
     ? getConflictFields({
         original: initialValues as unknown as Record<string, unknown>,
@@ -105,7 +128,9 @@ export function RequirementForm({
     }
 
     setErrors({});
-    await onSubmit(result.data).catch(() => undefined);
+    await onSubmit(result.data)
+      .then(() => draft.clearDraft())
+      .catch(() => undefined);
   };
 
   const updateValue = <TKey extends keyof RequirementFormValues>(
@@ -371,6 +396,12 @@ export function RequirementForm({
           }}
         />
       ) : null}
+      <DraftRestoreDialog
+        open={Boolean(draftScope && draft.pendingDraft)}
+        updatedAt={draft.pendingDraft?.updatedAt}
+        onRestore={draft.restoreDraft}
+        onDiscard={draft.discardDraft}
+      />
     </>
   );
 }

@@ -22,4 +22,7 @@ status?: string | null;
 requirement_type?: string | null;
 priority?: string | null;
 owner_id?: number | null;
+sort?: string | null;
+sort_by?: string | null;
+sort_order?: string | null;
 };

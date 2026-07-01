@@ -1,6 +1,13 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import {
+  Children,
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import {
   BoldIcon,
   CheckSquareIcon,
@@ -256,12 +263,14 @@ type MarkdownPreviewProps = {
   value: string;
   emptyMessage?: string;
   className?: string;
+  highlightQuotes?: string[];
 };
 
 export function MarkdownPreview({
   value,
   emptyMessage = "プレビューする本文がありません。",
   className,
+  highlightQuotes = [],
 }: MarkdownPreviewProps) {
   if (!value.trim()) {
     return (
@@ -288,36 +297,38 @@ export function MarkdownPreview({
         components={{
           h1: ({ children }) => (
             <h1 className="mb-3 mt-1 text-2xl font-semibold leading-tight">
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </h1>
           ),
           h2: ({ children }) => (
             <h2 className="mb-3 mt-5 text-xl font-semibold leading-tight">
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </h2>
           ),
           h3: ({ children }) => (
             <h3 className="mb-2 mt-4 text-lg font-semibold leading-tight">
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </h3>
           ),
           h4: ({ children }) => (
             <h4 className="mb-2 mt-3 text-base font-semibold leading-tight">
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </h4>
           ),
           h5: ({ children }) => (
             <h5 className="mb-2 mt-3 text-sm font-semibold leading-tight">
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </h5>
           ),
           h6: ({ children }) => (
             <h6 className="mb-2 mt-3 text-xs font-semibold leading-tight text-muted-foreground">
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </h6>
           ),
           p: ({ children }) => (
-            <p className="my-2 whitespace-pre-wrap">{children}</p>
+            <p className="my-2 whitespace-pre-wrap">
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+            </p>
           ),
           a: ({ children, href }) => (
             <a
@@ -326,8 +337,16 @@ export function MarkdownPreview({
               rel="noreferrer"
               className="font-medium text-primary underline underline-offset-4"
             >
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </a>
+          ),
+          strong: ({ children }) => (
+            <strong>
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+            </strong>
+          ),
+          em: ({ children }) => (
+            <em>{renderHighlightedMarkdownChildren(children, highlightQuotes)}</em>
           ),
           blockquote: ({ children }) => (
             <blockquote className="my-3 border-l-4 border-border pl-3 text-muted-foreground">
@@ -345,7 +364,11 @@ export function MarkdownPreview({
               {children}
             </ol>
           ),
-          li: ({ children }) => <li className="pl-1">{children}</li>,
+          li: ({ children }) => (
+            <li className="pl-1">
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+            </li>
+          ),
           table: ({ children }) => (
             <div className="my-3 overflow-x-auto">
               <table className="w-full border-collapse text-sm">{children}</table>
@@ -353,11 +376,13 @@ export function MarkdownPreview({
           ),
           th: ({ children }) => (
             <th className="border bg-muted px-2 py-1 text-left font-semibold">
-              {children}
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border px-2 py-1 align-top">{children}</td>
+            <td className="border px-2 py-1 align-top">
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+            </td>
           ),
           pre: ({ children }) => <>{children}</>,
           code: ({ className, children }) => {
@@ -391,6 +416,50 @@ export function MarkdownPreview({
     </div>
   );
 }
+
+const renderHighlightedMarkdownChildren = (
+  children: ReactNode,
+  highlightQuotes: string[]
+) => {
+  const quotes = highlightQuotes.filter((quote) => quote.trim());
+
+  if (!quotes.length) {
+    return children;
+  }
+
+  return Children.map(children, (child, childIndex) => {
+    if (typeof child !== "string") {
+      return child;
+    }
+    return renderHighlightedMarkdownText(child, quotes, childIndex);
+  });
+};
+
+const renderHighlightedMarkdownText = (
+  value: string,
+  highlightQuotes: string[],
+  childIndex: number
+) => {
+  const quote = highlightQuotes.find((item) => value.includes(item));
+
+  if (!quote) {
+    return value;
+  }
+  const [before, after] = value.split(quote, 2);
+
+  return (
+    <>
+      {before}
+      <mark
+        key={`highlight-${childIndex}`}
+        className="rounded-sm bg-yellow-200 px-0.5 text-foreground"
+      >
+        {quote}
+      </mark>
+      {after}
+    </>
+  );
+};
 
 type MermaidDiagramProps = {
   chart: string;

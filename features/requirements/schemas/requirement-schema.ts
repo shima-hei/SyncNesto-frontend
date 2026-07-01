@@ -55,6 +55,7 @@ export const requirementRelationSchema = z.object({
 
 export const requirementTargetCommentSchema = z.object({
   body: z.string().min(1, VALIDATION_MESSAGES.required("コメント")),
+  targetAnchor: z.string(),
   reason: z.string(),
 });
 

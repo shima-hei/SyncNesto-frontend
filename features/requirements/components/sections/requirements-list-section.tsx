@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
+import type { RequirementRead } from "@/lib/api/generated/model";
 
 import {
   ALL_REQUIREMENT_PRIORITIES,
@@ -15,6 +16,7 @@ import {
 } from "../../constants/requirement-view-options";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { useRequirements } from "../../hooks/use-requirements";
+import type { RequirementReviewTargetAnchor } from "../../lib/requirement-review-anchor";
 import { RequirementsListFilters } from "../filters/requirements-list-filters";
 import { RequirementsTable } from "../tables/requirements-table";
 
@@ -27,7 +29,13 @@ type RequirementsListSectionProps = {
   canCreate: boolean;
   canUpdate: boolean;
   selectedRequirementId?: number | null;
-  onSelectRequirement?: (requirementId: number) => void;
+  targetAnchors?: RequirementReviewTargetAnchor[];
+  activeAnchorKey?: string | null;
+  onSelectRequirement?: (requirement: RequirementRead) => void;
+  onSelectReviewAnchor?: (
+    requirement: RequirementRead,
+    targetAnchor: RequirementReviewTargetAnchor
+  ) => void;
 };
 
 export function RequirementsListSection({
@@ -37,7 +45,10 @@ export function RequirementsListSection({
   canCreate,
   canUpdate,
   selectedRequirementId,
+  targetAnchors = [],
+  activeAnchorKey = null,
   onSelectRequirement,
+  onSelectReviewAnchor,
 }: RequirementsListSectionProps) {
   const { sections } = useRequirementSections(projectId, documentId);
   const [page, setPage] = useState(1);
@@ -62,27 +73,9 @@ export function RequirementsListSection({
         requirementType === ALL_REQUIREMENT_TYPES ? undefined : requirementType,
       priority: priority === ALL_REQUIREMENT_PRIORITIES ? undefined : priority,
       owner_id: ownerId ?? undefined,
+      sort,
     }
   );
-  const sortedRequirements = useMemo(() => {
-    return requirements.slice().sort((left, right) => {
-      switch (sort) {
-        case "updated_asc":
-          return left.updated_at.localeCompare(right.updated_at);
-        case "code_asc":
-          return left.requirement_code.localeCompare(right.requirement_code);
-        case "code_desc":
-          return right.requirement_code.localeCompare(left.requirement_code);
-        case "title_asc":
-          return left.title.localeCompare(right.title);
-        case "title_desc":
-          return right.title.localeCompare(left.title);
-        case "updated_desc":
-        default:
-          return right.updated_at.localeCompare(left.updated_at);
-      }
-    });
-  }, [requirements, sort]);
   const selectedSection = sections.find((section) => section.id === sectionId);
   const createHref = sectionId
     ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${sectionId}`
@@ -111,6 +104,11 @@ export function RequirementsListSection({
   const handleOwnerChange = (value: number | null) => {
     setPage(1);
     setOwnerId(value);
+  };
+
+  const handleSortChange = (value: string) => {
+    setPage(1);
+    setSort(value as typeof sort);
   };
 
   return (
@@ -145,22 +143,25 @@ export function RequirementsListSection({
         onTypeChange={handleTypeChange}
         onPriorityChange={handlePriorityChange}
         onOwnerChange={handleOwnerChange}
-        onSortChange={(value) => setSort(value as typeof sort)}
+        onSortChange={handleSortChange}
       />
       <RequirementsTable
         projectId={projectId}
         documentId={documentId}
-        requirements={sortedRequirements}
+        requirements={requirements}
         isLoading={isLoading}
         canUpdate={canUpdate}
         selectedRequirementId={selectedRequirementId}
+        targetAnchors={targetAnchors}
+        activeAnchorKey={activeAnchorKey}
         onSelectRequirement={onSelectRequirement}
+        onSelectReviewAnchor={onSelectReviewAnchor}
       />
       <DataPagination
         page={page}
         pageSize={PAGE_SIZE}
         total={total}
-        currentCount={sortedRequirements.length}
+        currentCount={requirements.length}
         isFetching={isFetching}
         isLoading={isLoading}
         onPageChange={setPage}

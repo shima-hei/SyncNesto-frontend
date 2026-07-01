@@ -1,5 +1,7 @@
 "use client";
 
+import { createDraftScope } from "@/lib/draft/draft-key";
+
 import { RequirementDocumentForm } from "../forms/requirement-document-form";
 import { initialRequirementDocumentValues } from "../../constants/requirement-form";
 import { useCreateRequirementDocument } from "../../hooks/use-create-requirement-document";
@@ -26,6 +28,12 @@ export function RequirementDocumentCreatePage({
         projectId={projectId}
         mode="create"
         initialValues={initialRequirementDocumentValues}
+        draftScope={createDraftScope(
+          "requirements",
+          "documents",
+          "create",
+          projectId
+        )}
         isPending={isPending}
         error={error}
         onSubmit={createRequirementDocument}

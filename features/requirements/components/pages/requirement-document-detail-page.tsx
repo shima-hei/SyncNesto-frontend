@@ -27,6 +27,7 @@ import type {
 import { useDeleteRequirementDocument } from "../../hooks/use-delete-requirement-document";
 import { useExportRequirementDocument } from "../../hooks/use-export-requirement-document";
 import { useRequirementDocument } from "../../hooks/use-requirement-document";
+import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { RequirementDocumentExportDialog } from "../forms/requirement-document-export-dialog";
 import { RequirementApprovalsSection } from "../sections/requirement-approvals-section";
 import { RequirementChangeLogsSection } from "../sections/requirement-change-logs-section";
@@ -52,6 +53,7 @@ export function RequirementDocumentDetailPage({
     projectId,
     documentId
   );
+  const { sections } = useRequirementSections(projectId, documentId);
   const { deleteRequirementDocument, isPending: isDeletePending } =
     useDeleteRequirementDocument(projectId, documentId);
   const { exportRequirementDocument, isPending: isExportPending } =
@@ -192,6 +194,7 @@ export function RequirementDocumentDetailPage({
         open={exportDialogOpen}
         isPending={isExportPending}
         preview={exportPreview}
+        sections={sections}
         onOpenChange={(open) => {
           setExportDialogOpen(open);
           if (!open) {

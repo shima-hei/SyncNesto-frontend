@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { RequirementForm } from "../forms/requirement-form";
 import {
@@ -72,6 +73,13 @@ export function RequirementCreatePage({
         documentId={documentId}
         mode="create"
         initialValues={initialValues}
+        draftScope={createDraftScope(
+          "requirements",
+          "items",
+          "create",
+          projectId,
+          documentId
+        )}
         isPending={isPending}
         error={error}
         onSubmit={createRequirement}

@@ -5,11 +5,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequirementApprovalsSection } from "../../sections/requirement-approvals-section";
 import { RequirementChangeLogsSection } from "../../sections/requirement-change-logs-section";
 import { RequirementTargetCommentsSection } from "../../sections/requirement-target-comments-section";
+import type { ReviewAnchorStatus } from "../../../lib/requirement-review-anchor";
 
 type SelectedSectionSupportTabsProps = {
   projectId: number;
   documentId: number;
-  sectionId: number;
+  commentTargetType: string;
+  commentTargetId: number;
+  commentTitle: string;
+  targetLabel?: string;
+  selectedTargetAnchor?: Record<string, unknown> | null;
+  onTargetAnchorClick?: (targetAnchor: Record<string, unknown>) => void;
+  getTargetAnchorStatus?: (
+    targetAnchor: Record<string, unknown>
+  ) => ReviewAnchorStatus | null;
+  approvalTargetType: string;
+  approvalTargetId: number;
+  approvalTitle: string;
+  historyTargetType: string;
+  historyTargetId: number;
+  historyTitle: string;
   canComment: boolean;
   canReview: boolean;
 };
@@ -17,7 +32,19 @@ type SelectedSectionSupportTabsProps = {
 export function SelectedSectionSupportTabs({
   projectId,
   documentId,
-  sectionId,
+  commentTargetType,
+  commentTargetId,
+  commentTitle,
+  targetLabel,
+  selectedTargetAnchor = null,
+  onTargetAnchorClick,
+  getTargetAnchorStatus,
+  approvalTargetType,
+  approvalTargetId,
+  approvalTitle,
+  historyTargetType,
+  historyTargetId,
+  historyTitle,
   canComment,
   canReview,
 }: SelectedSectionSupportTabsProps) {
@@ -32,19 +59,24 @@ export function SelectedSectionSupportTabs({
       <TabsContent value="comments">
         <RequirementTargetCommentsSection
           projectId={projectId}
-          targetType="section"
-          targetId={sectionId}
-          title="セクションコメント"
+          targetType={commentTargetType}
+          targetId={commentTargetId}
+          title={commentTitle}
           canComment={canComment}
+          targetLabel={targetLabel}
+          selectedTargetAnchor={selectedTargetAnchor}
+          onTargetAnchorClick={onTargetAnchorClick}
+          getTargetAnchorStatus={getTargetAnchorStatus}
+          showTargetAnchorInput={false}
         />
       </TabsContent>
 
       <TabsContent value="approvals">
         <RequirementApprovalsSection
           projectId={projectId}
-          targetType="section"
-          targetId={sectionId}
-          title="セクションの承認"
+          targetType={approvalTargetType}
+          targetId={approvalTargetId}
+          title={approvalTitle}
           canReview={canReview}
         />
       </TabsContent>
@@ -53,9 +85,9 @@ export function SelectedSectionSupportTabs({
         <RequirementChangeLogsSection
           projectId={projectId}
           documentId={documentId}
-          title="セクションの変更履歴"
-          targetType="requirement_section"
-          targetId={sectionId}
+          title={historyTitle}
+          targetType={historyTargetType}
+          targetId={historyTargetId}
         />
       </TabsContent>
     </Tabs>

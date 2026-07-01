@@ -1702,6 +1702,9 @@ Args:
     requirement_type: 絞り込み対象の要件種別。
     priority: 絞り込み対象の優先度。
     owner_id: 絞り込み対象のオーナーID。
+    sort: ソート指定。
+    sort_by: ソート対象フィールド。
+    sort_order: ソート順。
     _: 認可済みユーザー。
     db: DBセッション。
 

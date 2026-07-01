@@ -23,6 +23,8 @@ type RequirementTargetCommentFormProps = {
   submitLabel?: string;
   resetOnSuccess?: boolean;
   showReason?: boolean;
+  showTargetAnchorInput?: boolean;
+  targetAnchorLabel?: string;
   isPending: boolean;
   error?: Error | null;
   onSubmit: (values: RequirementTargetCommentFormValues) => Promise<unknown>;
@@ -31,6 +33,7 @@ type RequirementTargetCommentFormProps = {
 
 const defaultValues: RequirementTargetCommentFormValues = {
   body: "",
+  targetAnchor: "",
   reason: "",
 };
 
@@ -39,6 +42,8 @@ export function RequirementTargetCommentForm({
   submitLabel = "コメント追加",
   resetOnSuccess = true,
   showReason = false,
+  showTargetAnchorInput = true,
+  targetAnchorLabel,
   isPending,
   error,
   onSubmit,
@@ -59,6 +64,7 @@ export function RequirementTargetCommentForm({
 
       setErrors({
         body: fieldErrors.body?.[0],
+        targetAnchor: fieldErrors.targetAnchor?.[0],
         reason: fieldErrors.reason?.[0],
       });
       return;
@@ -90,6 +96,38 @@ export function RequirementTargetCommentForm({
           />
           {errors.body ? <FieldError>{errors.body}</FieldError> : null}
         </Field>
+
+        {!showReason && showTargetAnchorInput ? (
+          <Field data-invalid={errors.targetAnchor ? true : undefined}>
+            <FieldLabel>対象アンカー</FieldLabel>
+            <Textarea
+              value={values.targetAnchor}
+              rows={2}
+              onChange={(event) => {
+                setValues((current) => ({
+                  ...current,
+                  targetAnchor: event.target.value,
+                }));
+                setErrors((current) => ({
+                  ...current,
+                  targetAnchor: undefined,
+                }));
+              }}
+              aria-invalid={Boolean(errors.targetAnchor)}
+            />
+            {errors.targetAnchor ? (
+              <FieldError>{errors.targetAnchor}</FieldError>
+            ) : null}
+          </Field>
+        ) : null}
+        {!showReason && !showTargetAnchorInput && values.targetAnchor ? (
+          <Field>
+            <FieldLabel>選択箇所</FieldLabel>
+            <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+              {targetAnchorLabel ?? values.targetAnchor}
+            </div>
+          </Field>
+        ) : null}
 
         {showReason ? (
           <Field>

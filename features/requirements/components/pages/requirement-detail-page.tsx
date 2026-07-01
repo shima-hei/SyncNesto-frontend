@@ -34,6 +34,11 @@ import {
 } from "../../constants/requirement-options";
 import { useDeleteRequirement } from "../../hooks/use-delete-requirement";
 import { useRequirementSummary } from "../../hooks/use-requirement-summary";
+import { useTargetComments } from "../../hooks/use-target-comments";
+import {
+  evaluateRequirementReviewAnchor,
+  isRequirementReviewTargetAnchor,
+} from "../../lib/requirement-review-anchor";
 import { RequirementApprovalsSection } from "../sections/requirement-approvals-section";
 import { RequirementChangeLogsSection } from "../sections/requirement-change-logs-section";
 import { RequirementCommentsSection } from "../sections/requirement-comments-section";
@@ -50,15 +55,29 @@ type RequirementDetailPageProps = {
   requirementId: number;
 };
 
+type RequirementTargetAnchor = {
+  field: string;
+  quote?: string;
+  start_offset?: number;
+  end_offset?: number;
+};
+
 export function RequirementDetailPage({
   projectId,
   documentId,
   requirementId,
 }: RequirementDetailPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedTargetAnchor, setSelectedTargetAnchor] =
+    useState<RequirementTargetAnchor | null>(null);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const { summary, isLoading, error } = useRequirementSummary(
     projectId,
+    requirementId
+  );
+  const { comments: targetComments } = useTargetComments(
+    projectId,
+    "requirement_item",
     requirementId
   );
   const { deleteRequirement, isPending: isDeletePending } =
@@ -77,6 +96,32 @@ export function RequirementDetailPage({
   }
 
   const { requirement } = summary;
+  const targetAnchors = targetComments
+    .map((comment) => comment.target_anchor)
+    .filter(isRequirementTargetAnchor);
+
+  const handleTargetAnchorClick = (targetAnchor: Record<string, unknown>) => {
+    if (!isRequirementTargetAnchor(targetAnchor)) {
+      return;
+    }
+    const element = document.querySelector(
+      `[data-requirement-anchor-field="${targetAnchor.field}"]`
+    );
+
+    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const getTargetAnchorStatus = (targetAnchor: Record<string, unknown>) => {
+    if (!isRequirementReviewTargetAnchor(targetAnchor)) {
+      return null;
+    }
+
+    return evaluateRequirementReviewAnchor(
+      targetAnchor,
+      getRequirementAnchorFieldValue(requirement, targetAnchor.field),
+      requirement.version
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6 p-4 lg:p-6">
@@ -141,15 +186,24 @@ export function RequirementDetailPage({
               <RequirementInfo
                 label="種別"
                 value={getRequirementTypeLabel(requirement.requirement_type)}
+                field="requirement_type"
+                targetAnchors={targetAnchors}
+                onSelectTargetAnchor={setSelectedTargetAnchor}
               />
               <RequirementInfo label="カテゴリ" value={requirement.category ?? "-"} />
               <RequirementInfo
                 label="優先度"
                 value={getRequirementPriorityLabel(requirement.priority)}
+                field="priority"
+                targetAnchors={targetAnchors}
+                onSelectTargetAnchor={setSelectedTargetAnchor}
               />
               <RequirementInfo
                 label="ステータス"
                 value={getRequirementStatusLabel(requirement.status)}
+                field="status"
+                targetAnchors={targetAnchors}
+                onSelectTargetAnchor={setSelectedTargetAnchor}
               />
               <RequirementInfo
                 label="担当者ID"
@@ -167,13 +221,34 @@ export function RequirementDetailPage({
               <CardTitle>本文</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <RequirementInfo label="説明" value={requirement.description ?? "-"} />
-              <RequirementInfo label="理由" value={requirement.rationale ?? "-"} />
+              <RequirementInfo
+                label="説明"
+                value={requirement.description ?? "-"}
+                field="description"
+                targetAnchors={targetAnchors}
+                onSelectTargetAnchor={setSelectedTargetAnchor}
+              />
+              <RequirementInfo
+                label="理由"
+                value={requirement.rationale ?? "-"}
+                field="rationale"
+                targetAnchors={targetAnchors}
+                onSelectTargetAnchor={setSelectedTargetAnchor}
+              />
               <RequirementInfo
                 label="受け入れ条件"
                 value={requirement.acceptance_criteria ?? "-"}
+                field="acceptance_criteria"
+                targetAnchors={targetAnchors}
+                onSelectTargetAnchor={setSelectedTargetAnchor}
               />
-              <RequirementInfo label="情報源" value={requirement.source ?? "-"} />
+              <RequirementInfo
+                label="情報源"
+                value={requirement.source ?? "-"}
+                field="source"
+                targetAnchors={targetAnchors}
+                onSelectTargetAnchor={setSelectedTargetAnchor}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -220,6 +295,9 @@ export function RequirementDetailPage({
               targetId={requirementId}
               title="要件スレッドコメント"
               canComment={canCommentRequirement(currentProjectRole)}
+              selectedTargetAnchor={selectedTargetAnchor}
+              onTargetAnchorClick={handleTargetAnchorClick}
+              getTargetAnchorStatus={getTargetAnchorStatus}
             />
           </div>
         </TabsContent>
@@ -271,11 +349,56 @@ export function RequirementDetailPage({
   );
 }
 
-function RequirementInfo({ label, value }: { label: string; value: string }) {
+function RequirementInfo({
+  label,
+  value,
+  field,
+  targetAnchors = [],
+  onSelectTargetAnchor,
+}: {
+  label: string;
+  value: string;
+  field?: string;
+  targetAnchors?: RequirementTargetAnchor[];
+  onSelectTargetAnchor?: (targetAnchor: RequirementTargetAnchor) => void;
+}) {
+  const handleMouseUp = (event: React.MouseEvent<HTMLSpanElement>) => {
+    if (!field || !onSelectTargetAnchor) {
+      return;
+    }
+    const selection = window.getSelection();
+    const quote = selection?.toString().trim();
+
+    if (!quote || !event.currentTarget.contains(selection?.anchorNode ?? null)) {
+      return;
+    }
+    const startOffset = value.indexOf(quote);
+    onSelectTargetAnchor({
+      field,
+      quote,
+      ...(startOffset >= 0
+        ? {
+            start_offset: startOffset,
+            end_offset: startOffset + quote.length,
+          }
+        : {}),
+    });
+    selection?.removeAllRanges();
+  };
+
+  const fieldAnchors = field
+    ? targetAnchors.filter((targetAnchor) => targetAnchor.field === field)
+    : [];
+
   return (
-    <div className="flex flex-col gap-1">
+    <div
+      className="flex flex-col gap-1 scroll-mt-24"
+      data-requirement-anchor-field={field}
+    >
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="whitespace-pre-wrap text-sm">{value}</span>
+      <span className="whitespace-pre-wrap text-sm" onMouseUp={handleMouseUp}>
+        {renderHighlightedValue(value, fieldAnchors)}
+      </span>
     </div>
   );
 }
@@ -292,4 +415,72 @@ function RequirementDetailSkeleton() {
 
 const formatOptionalId = (id?: number | null) => {
   return id ? String(id) : "-";
+};
+
+const isRequirementTargetAnchor = (
+  value: Record<string, unknown> | null | undefined
+): value is RequirementTargetAnchor => {
+  return Boolean(value && typeof value.field === "string");
+};
+
+const renderHighlightedValue = (
+  value: string,
+  targetAnchors: RequirementTargetAnchor[]
+) => {
+  const quote = targetAnchors
+    .map((targetAnchor) => targetAnchor.quote)
+    .find((item): item is string => Boolean(item && value.includes(item)));
+
+  if (!quote) {
+    return value;
+  }
+  const [before, after] = value.split(quote, 2);
+
+  return (
+    <>
+      {before}
+      <mark className="rounded-sm bg-yellow-200 px-0.5 text-foreground">
+        {quote}
+      </mark>
+      {after}
+    </>
+  );
+};
+
+const getRequirementAnchorFieldValue = (
+  requirement: {
+    requirement_code: string;
+    requirement_type: string;
+    title: string;
+    description?: string | null;
+    rationale?: string | null;
+    acceptance_criteria?: string | null;
+    priority?: string | null;
+    status?: string | null;
+    source?: string | null;
+  },
+  field: string
+) => {
+  switch (field) {
+    case "requirement_code":
+      return requirement.requirement_code;
+    case "title":
+      return requirement.title;
+    case "description":
+      return requirement.description ?? "";
+    case "rationale":
+      return requirement.rationale ?? "";
+    case "acceptance_criteria":
+      return requirement.acceptance_criteria ?? "";
+    case "source":
+      return requirement.source ?? "";
+    case "requirement_type":
+      return getRequirementTypeLabel(requirement.requirement_type);
+    case "priority":
+      return getRequirementPriorityLabel(requirement.priority);
+    case "status":
+      return getRequirementStatusLabel(requirement.status);
+    default:
+      return "";
+  }
 };
