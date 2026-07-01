@@ -29,7 +29,9 @@ export function useAddProjectMember(projectId: number) {
           ]);
         },
         onError: (error) => {
-          toast.error(getApiErrorMessage(error, PROJECT_MESSAGES.member.addError));
+          toast.error(
+            getApiErrorMessage(error, PROJECT_MESSAGES.member.addError),
+          );
         },
       },
     });

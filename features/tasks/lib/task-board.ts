@@ -24,7 +24,7 @@ export const getTaskBoardSwimlanes = (
   tasks: TaskRead[],
   swimlane: BoardSwimlane,
   getTaskUserLabel: (userId?: number | null) => string,
-  tasksById: Map<number, TaskRead>
+  tasksById: Map<number, TaskRead>,
 ): TaskBoardSwimlane[] => {
   if (swimlane === "none") {
     return [{ key: "all", label: "すべて", tasks }];
@@ -45,14 +45,20 @@ export const getTaskBoardSwimlanes = (
   });
 
   return Array.from(lanes.values()).sort((left, right) =>
-    left.label.localeCompare(right.label, "ja")
+    left.label.localeCompare(right.label, "ja"),
   );
 };
 
-export const getNextTaskBoardSortOrder = (tasks: TaskRead[], status: string) => {
+export const getNextTaskBoardSortOrder = (
+  tasks: TaskRead[],
+  status: string,
+) => {
   const maxSortOrder = tasks
     .filter((task) => task.status === status)
-    .reduce((currentMax, task) => Math.max(currentMax, task.sort_order ?? 0), 0);
+    .reduce(
+      (currentMax, task) => Math.max(currentMax, task.sort_order ?? 0),
+      0,
+    );
 
   return maxSortOrder + 1;
 };
@@ -69,7 +75,7 @@ export const getBoardStatusClassName = (status?: string | null) => {
     status === "done" &&
       "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
     status === "blocked" &&
-      "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]"
+      "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]",
   );
 };
 
@@ -80,7 +86,7 @@ export const getBoardCardClassName = (status?: string | null) => {
     status === "in_progress" && "border-l-[var(--status-progress-border)]",
     status === "in_review" && "border-l-[var(--status-warning-border)]",
     status === "done" && "border-l-[var(--status-success-border)]",
-    status === "blocked" && "border-l-[var(--status-danger-border)]"
+    status === "blocked" && "border-l-[var(--status-danger-border)]",
   );
 };
 
@@ -93,7 +99,9 @@ export const isTaskBoardInteractiveTarget = (target: EventTarget | null) => {
 const getSwimlaneKey = (task: TaskRead, swimlane: BoardSwimlane) => {
   switch (swimlane) {
     case "assignee":
-      return task.assignee_id ? `assignee-${task.assignee_id}` : "assignee-none";
+      return task.assignee_id
+        ? `assignee-${task.assignee_id}`
+        : "assignee-none";
     case "requirement": {
       const requirement = task.requirements?.[0];
 
@@ -117,11 +125,13 @@ const getSwimlaneLabel = (
   task: TaskRead,
   swimlane: BoardSwimlane,
   getTaskUserLabel: (userId?: number | null) => string,
-  tasksById: Map<number, TaskRead>
+  tasksById: Map<number, TaskRead>,
 ) => {
   switch (swimlane) {
     case "assignee":
-      return task.assignee_id ? getTaskUserLabel(task.assignee_id) : "担当者未設定";
+      return task.assignee_id
+        ? getTaskUserLabel(task.assignee_id)
+        : "担当者未設定";
     case "requirement": {
       const requirement = task.requirements?.[0];
 

@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { UserType } from './userType';
+import type { UserType } from "./userType";
 
 /**
  * ユーザー登録リクエストで受け取るschema。

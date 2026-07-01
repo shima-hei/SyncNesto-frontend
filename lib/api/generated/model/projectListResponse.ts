@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { ProjectListItem } from './projectListItem';
+import type { ProjectListItem } from "./projectListItem";
 
 /**
  * プロジェクト一覧レスポンスschema。

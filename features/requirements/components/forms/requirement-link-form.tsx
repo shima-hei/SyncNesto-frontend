@@ -4,7 +4,12 @@ import { useState } from "react";
 
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -42,7 +47,7 @@ export function RequirementLinkForm({
   const [errors, setErrors] = useState<RequirementLinkFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -66,7 +71,7 @@ export function RequirementLinkForm({
 
   const updateValue = <TKey extends keyof RequirementLinkFormValues>(
     field: TKey,
-    value: RequirementLinkFormValues[TKey]
+    value: RequirementLinkFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -107,7 +112,9 @@ export function RequirementLinkForm({
               placeholder="例: POST /auth/login"
               aria-invalid={Boolean(errors.linkedId)}
             />
-            {errors.linkedId ? <FieldError>{errors.linkedId}</FieldError> : null}
+            {errors.linkedId ? (
+              <FieldError>{errors.linkedId}</FieldError>
+            ) : null}
           </Field>
         </div>
         <FormApiError error={error} />

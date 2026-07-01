@@ -6,13 +6,13 @@
  */
 
 export type ListTaskChangeLogsTasksTaskIdChangeLogsGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  page_size?: number;
 };

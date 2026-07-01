@@ -4,9 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useQuery
-} from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -16,28 +14,19 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
-import type {
-  ReadRootGet200
-} from '../model';
+import type { ReadRootGet200 } from "../model";
 
-import { apiClient } from '../../client';
-import type { ErrorType } from '../../client';
-
+import { apiClient } from "../../client";
+import type { ErrorType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-
-
 export const getReadRootGetUrl = () => {
-
-
-
-
-  return `/`
-}
+  return `/`;
+};
 
 /**
  * ヘルスチェック結果を返す。
@@ -46,92 +35,130 @@ Returns:
     ヘルスチェック結果。
  * @summary Read Root
  */
-export const readRootGet = async ( options?: RequestInit): Promise<ReadRootGet200> => {
-
-  return apiClient<ReadRootGet200>(getReadRootGetUrl(),
-  {
+export const readRootGet = async (
+  options?: RequestInit,
+): Promise<ReadRootGet200> => {
+  return apiClient<ReadRootGet200>(getReadRootGetUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getReadRootGetQueryKey = () => {
-    return [
-    `/`
-    ] as const;
-    }
+  return [`/`] as const;
+};
 
+export const getReadRootGetQueryOptions = <
+  TData = Awaited<ReturnType<typeof readRootGet>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getReadRootGetQueryOptions = <TData = Awaited<ReturnType<typeof readRootGet>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
+  const queryKey = queryOptions?.queryKey ?? getReadRootGetQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof readRootGet>>> = ({
+    signal,
+  }) => readRootGet({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getReadRootGetQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof readRootGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type ReadRootGetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof readRootGet>>
+>;
+export type ReadRootGetQueryError = ErrorType<unknown>;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof readRootGet>>> = ({ signal }) => readRootGet({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ReadRootGetQueryResult = NonNullable<Awaited<ReturnType<typeof readRootGet>>>
-export type ReadRootGetQueryError = ErrorType<unknown>
-
-
-export function useReadRootGet<TData = Awaited<ReturnType<typeof readRootGet>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>> & Pick<
+export function useReadRootGet<
+  TData = Awaited<ReturnType<typeof readRootGet>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof readRootGet>>,
           TError,
           Awaited<ReturnType<typeof readRootGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadRootGet<TData = Awaited<ReturnType<typeof readRootGet>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadRootGet<
+  TData = Awaited<ReturnType<typeof readRootGet>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof readRootGet>>,
           TError,
           Awaited<ReturnType<typeof readRootGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadRootGet<TData = Awaited<ReturnType<typeof readRootGet>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadRootGet<
+  TData = Awaited<ReturnType<typeof readRootGet>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Read Root
  */
 
-export function useReadRootGet<TData = Awaited<ReturnType<typeof readRootGet>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useReadRootGet<
+  TData = Awaited<ReturnType<typeof readRootGet>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof readRootGet>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getReadRootGetQueryOptions(options);
 
-  const queryOptions = getReadRootGetQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
-
-
-

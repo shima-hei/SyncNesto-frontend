@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RoleRead } from './roleRead';
+import type { RoleRead } from "./roleRead";
 
 /**
  * 現在のログインユーザーのプロジェクトロール読み取りschema。

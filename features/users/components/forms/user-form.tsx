@@ -68,7 +68,7 @@ export function UserForm({
   const isGuest = values.userType === USER_TYPE_KEYS.guest;
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -93,7 +93,7 @@ export function UserForm({
 
   const updateValue = <TKey extends keyof UserFormValues>(
     field: TKey,
-    value: UserFormValues[TKey]
+    value: UserFormValues[TKey],
   ) => {
     setValues((current) => {
       if (field === "userType" && value === USER_TYPE_KEYS.guest) {
@@ -151,7 +151,9 @@ export function UserForm({
               onChange={(event) => updateValue("password", event.target.value)}
               aria-invalid={Boolean(errors.password)}
             />
-            {errors.password ? <FieldError>{errors.password}</FieldError> : null}
+            {errors.password ? (
+              <FieldError>{errors.password}</FieldError>
+            ) : null}
           </Field>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -201,7 +203,9 @@ export function UserForm({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              {errors.userType ? <FieldError>{errors.userType}</FieldError> : null}
+              {errors.userType ? (
+                <FieldError>{errors.userType}</FieldError>
+              ) : null}
             </Field>
             <Field orientation="horizontal">
               <Checkbox

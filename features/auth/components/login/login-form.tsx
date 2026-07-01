@@ -28,7 +28,7 @@ export function LoginForm({
   const [errors, setErrors] = useState<LoginFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 

@@ -8,7 +8,7 @@ import type {
 
 export const getVisibleNavigationItems = (
   items: AppNavigationItem[],
-  user: CurrentUserRead | null
+  user: CurrentUserRead | null,
 ) => {
   return items.reduce<AppNavigationItem[]>((visibleItems, item) => {
     if (!canShowNavigationItem(item, user)) {
@@ -16,7 +16,7 @@ export const getVisibleNavigationItems = (
     }
 
     const visibleChildren = item.children?.filter((child) =>
-      canShowNavigationItem(child, user)
+      canShowNavigationItem(child, user),
     );
 
     if (item.children && !visibleChildren?.length) {
@@ -34,7 +34,7 @@ export const getVisibleNavigationItems = (
 
 export const findNavigationItemByPathname = (
   items: AppNavigationItem[],
-  pathname: string
+  pathname: string,
 ) => {
   const flattenedItems = getFlattenedNavigationItems(items);
 
@@ -52,18 +52,20 @@ export const getFlattenedNavigationItems = (items: AppNavigationItem[]) => {
 
 export const isNavigationItemActive = (
   item: Pick<AppNavigationItem, "href">,
-  pathname: string
+  pathname: string,
 ) => {
   if (!item.href) {
     return false;
   }
 
-  return item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
+  return item.href === "/"
+    ? pathname === item.href
+    : pathname.startsWith(item.href);
 };
 
 const canShowNavigationItem = (
   item: AppNavigationItem | AppNavigationChildItem,
-  user: CurrentUserRead | null
+  user: CurrentUserRead | null,
 ) => {
   if (!item.requiredSystemRoles?.length) {
     return true;

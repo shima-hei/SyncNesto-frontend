@@ -97,8 +97,9 @@ export const REQUIREMENT_APPROVAL_STATUS_OPTIONS = [
 
 export const getRequirementDocumentStatusLabel = (status?: string | null) => {
   return (
-    REQUIREMENT_DOCUMENT_STATUS_OPTIONS.find((option) => option.value === status)
-      ?.label ??
+    REQUIREMENT_DOCUMENT_STATUS_OPTIONS.find(
+      (option) => option.value === status,
+    )?.label ??
     status ??
     "-"
   );
@@ -139,12 +140,10 @@ export const getRequirementLinkTypeLabel = (type?: string | null) => {
   );
 };
 
-export const getRequirementRelationTargetTypeLabel = (
-  type?: string | null
-) => {
+export const getRequirementRelationTargetTypeLabel = (type?: string | null) => {
   return (
     REQUIREMENT_RELATION_TARGET_TYPE_OPTIONS.find(
-      (option) => option.value === type
+      (option) => option.value === type,
     )?.label ??
     type ??
     "-"
@@ -181,7 +180,7 @@ export const getRequirementSectionTypeLabel = (type?: string | null) => {
 export const getRequirementOpenIssueStatusLabel = (status?: string | null) => {
   return (
     REQUIREMENT_OPEN_ISSUE_STATUS_OPTIONS.find(
-      (option) => option.value === status
+      (option) => option.value === status,
     )?.label ??
     status ??
     "-"
@@ -190,8 +189,9 @@ export const getRequirementOpenIssueStatusLabel = (status?: string | null) => {
 
 export const getRequirementApprovalStatusLabel = (status?: string | null) => {
   return (
-    REQUIREMENT_APPROVAL_STATUS_OPTIONS.find((option) => option.value === status)
-      ?.label ??
+    REQUIREMENT_APPROVAL_STATUS_OPTIONS.find(
+      (option) => option.value === status,
+    )?.label ??
     status ??
     "-"
   );

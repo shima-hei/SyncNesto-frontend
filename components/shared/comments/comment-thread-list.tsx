@@ -48,7 +48,9 @@ export function CommentThreadList<TComment>({
 }: CommentThreadListProps<TComment>) {
   const [editingTarget, setEditingTarget] = useState<TComment | null>(null);
   const [replyTarget, setReplyTarget] = useState<TComment | null>(null);
-  const rootComments = comments.filter((comment) => !getParentCommentId(comment));
+  const rootComments = comments.filter(
+    (comment) => !getParentCommentId(comment),
+  );
 
   if (isLoading) {
     return loadingFallback ?? <LoadingState />;
@@ -63,12 +65,14 @@ export function CommentThreadList<TComment>({
       {rootComments.map((comment) => {
         const commentId = getCommentId(comment);
         const replies = comments.filter(
-          (reply) => getParentCommentId(reply) === commentId
+          (reply) => getParentCommentId(reply) === commentId,
         );
-        const isEditing =
-          editingTarget ? getCommentId(editingTarget) === commentId : false;
-        const isReplying =
-          replyTarget ? getCommentId(replyTarget) === commentId : false;
+        const isEditing = editingTarget
+          ? getCommentId(editingTarget) === commentId
+          : false;
+        const isReplying = replyTarget
+          ? getCommentId(replyTarget) === commentId
+          : false;
 
         return (
           <div key={commentId} className="rounded-lg border p-3">
@@ -87,7 +91,9 @@ export function CommentThreadList<TComment>({
               </div>
             ) : null}
 
-            {canComment && isReplying && (canReplyComment?.(comment) ?? true) ? (
+            {canComment &&
+            isReplying &&
+            (canReplyComment?.(comment) ?? true) ? (
               <div className="mt-3 rounded-lg bg-muted p-3">
                 {renderReplyForm({
                   comment,

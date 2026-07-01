@@ -5,17 +5,18 @@ import { useListRequirementApprovalsProjectsProjectIdApprovalsGet } from "@/lib/
 export function useRequirementApprovals(
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) {
-  const approvalsQuery = useListRequirementApprovalsProjectsProjectIdApprovalsGet(
-    projectId,
-    { target_type: targetType, target_id: targetId, page: 1, page_size: 20 },
-    {
-      query: {
-        retry: false,
+  const approvalsQuery =
+    useListRequirementApprovalsProjectsProjectIdApprovalsGet(
+      projectId,
+      { target_type: targetType, target_id: targetId, page: 1, page_size: 20 },
+      {
+        query: {
+          retry: false,
+        },
       },
-    }
-  );
+    );
 
   return {
     approvals: approvalsQuery.data?.items ?? [],

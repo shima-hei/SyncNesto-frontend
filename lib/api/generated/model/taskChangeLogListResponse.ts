@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { TaskChangeLogRead } from './taskChangeLogRead';
+import type { TaskChangeLogRead } from "./taskChangeLogRead";
 
 /**
  * タスク変更履歴一覧レスポンスschema。

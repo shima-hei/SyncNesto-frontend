@@ -21,7 +21,7 @@ export const getChangeLogUpdatedFields = (value: unknown) => {
   }
 
   return value.updated_fields.filter(
-    (updatedField): updatedField is string => typeof updatedField === "string"
+    (updatedField): updatedField is string => typeof updatedField === "string",
   );
 };
 
@@ -49,13 +49,13 @@ export const getChangeLogDiffRows = ({
         new Set([
           ...Object.keys(comparableOldRecord),
           ...Object.keys(comparableNewRecord),
-        ])
+        ]),
       );
 
   return targetFields
     .filter((field) => !ignoredFieldSet.has(field))
     .filter(
-      (field) => field in comparableOldRecord || field in comparableNewRecord
+      (field) => field in comparableOldRecord || field in comparableNewRecord,
     )
     .map((field) => ({
       field,
@@ -69,7 +69,7 @@ export const getChangeLogDiffRows = ({
 export const getMissingChangeLogFieldLabels = (
   oldValue: unknown,
   newValue: unknown,
-  formatField: (fieldName: string) => string
+  formatField: (fieldName: string) => string,
 ) => {
   const oldRecord = getComparableRecord(oldValue);
   const newRecord = getComparableRecord(newValue);
@@ -85,7 +85,7 @@ export const getMissingChangeLogFieldLabels = (
 
 export const hasVisibleChangeLogDiff = (
   oldValue: unknown,
-  newValue: unknown
+  newValue: unknown,
 ) => {
   return !areChangeLogValuesEqual(oldValue, newValue);
 };

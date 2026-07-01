@@ -34,7 +34,7 @@ export function RequirementRelationsSection({
     useState<RequirementRelationRead | null>(null);
   const { relations, isLoading } = useRequirementRelations(
     projectId,
-    requirementId
+    requirementId,
   );
   const {
     createRequirementRelation,
@@ -68,11 +68,13 @@ export function RequirementRelationsSection({
                   <div className="flex min-w-0 flex-col gap-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">
-                        {getRequirementRelationTypeLabel(relation.relation_type)}
+                        {getRequirementRelationTypeLabel(
+                          relation.relation_type,
+                        )}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {getRequirementRelationTargetTypeLabel(
-                          relation.target_type
+                          relation.target_type,
                         )}{" "}
                         #{relation.target_id}
                       </span>

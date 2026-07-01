@@ -4,12 +4,12 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequirementCommentRead } from './requirementCommentRead';
-import type { RequirementDetailRead } from './requirementDetailRead';
-import type { RequirementLinkRead } from './requirementLinkRead';
-import type { RequirementRead } from './requirementRead';
-import type { RequirementReviewRead } from './requirementReviewRead';
-import type { RequirementRevisionRead } from './requirementRevisionRead';
+import type { RequirementCommentRead } from "./requirementCommentRead";
+import type { RequirementDetailRead } from "./requirementDetailRead";
+import type { RequirementLinkRead } from "./requirementLinkRead";
+import type { RequirementRead } from "./requirementRead";
+import type { RequirementReviewRead } from "./requirementReviewRead";
+import type { RequirementRevisionRead } from "./requirementRevisionRead";
 
 /**
  * 要件詳細画面用の集約レスポンスschema。

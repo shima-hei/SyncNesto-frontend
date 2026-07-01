@@ -48,8 +48,8 @@ export function SidebarNav({
               isNavigationItemActive(item, pathname) ||
               Boolean(
                 item.children?.some((child) =>
-                  isNavigationItemActive(child, pathname)
-                )
+                  isNavigationItemActive(child, pathname),
+                ),
               );
             const Icon = item.icon;
 
@@ -68,7 +68,7 @@ export function SidebarNav({
                       aria-hidden="true"
                       className={cn(
                         "ml-auto transition-transform",
-                        isOpen && "rotate-90"
+                        isOpen && "rotate-90",
                       )}
                     />
                   </SidebarMenuButton>
@@ -77,7 +77,7 @@ export function SidebarNav({
                       {item.children.map((child) => {
                         const isChildActive = isNavigationItemActive(
                           child,
-                          pathname
+                          pathname,
                         );
                         const ChildIcon = child.icon;
 

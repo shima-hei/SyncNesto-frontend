@@ -32,7 +32,7 @@ export function RequirementDocumentCreatePage({
           "requirements",
           "documents",
           "create",
-          projectId
+          projectId,
         )}
         isPending={isPending}
         error={error}

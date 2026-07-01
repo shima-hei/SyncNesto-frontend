@@ -21,7 +21,9 @@ export const requirementDocumentSchema = z.object({
 export const requirementSchema = z.object({
   sectionId: z.string(),
   requirementCode: z.string(),
-  requirementType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("種別")),
+  requirementType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("種別")),
   category: z.string(),
   title: z.string().min(1, VALIDATION_MESSAGES.required("タイトル")),
   description: z.string(),
@@ -42,14 +44,18 @@ export const requirementCommentSchema = z.object({
 });
 
 export const requirementLinkSchema = z.object({
-  linkedType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("リンク種別")),
+  linkedType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("リンク種別")),
   linkedId: z.string().min(1, VALIDATION_MESSAGES.required("リンク先ID")),
 });
 
 export const requirementRelationSchema = z.object({
   targetType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("対象種別")),
   targetId: z.string().min(1, VALIDATION_MESSAGES.required("対象ID")),
-  relationType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("関連種別")),
+  relationType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("関連種別")),
   description: z.string(),
 });
 
@@ -93,7 +99,7 @@ export const requirementOpenIssueSchema = z.object({
     .string()
     .refine(
       (value) => !value || Number.isInteger(Number(value)),
-      VALIDATION_MESSAGES.number("関連要件ID")
+      VALIDATION_MESSAGES.number("関連要件ID"),
     ),
   assigneeId: z.string(),
   dueDate: z.string(),

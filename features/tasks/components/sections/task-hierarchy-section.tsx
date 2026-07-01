@@ -43,7 +43,7 @@ export function TaskHierarchySection({
       parent_task_id: task.parent_task_id ?? undefined,
       root_only: task.parent_task_id ? undefined : true,
       sort: "code_asc",
-    }
+    },
   );
   const sortedChildTasks = sortTasksByCreatedAt(childTasks);
   const sortedSiblingTasks = sortTasksByCreatedAt(siblingTasks);
@@ -65,57 +65,63 @@ export function TaskHierarchySection({
       </CardHeader>
       <CardContent>
         <div className="max-h-[32rem] overflow-y-auto pr-2">
-        {task.parent_task_id ? (
-          <div className="flex flex-col gap-1.5">
-            <TaskTreeNode
-              projectId={projectId}
-              task={parentTask}
-              fallbackTaskId={task.parent_task_id}
-              depth={0}
-            />
-            <TaskTreeBranch>
-              {isSiblingLoading ? (
-                <EmptyHierarchyText>階層を読み込んでいます。</EmptyHierarchyText>
-              ) : (
-                currentTreeSiblings.map((treeTask) => (
-                  <TaskTreeNodeGroup
-                    key={treeTask.id}
-                    projectId={projectId}
-                    task={treeTask}
-                    currentTaskId={task.id}
-                    childTasks={sortedChildTasks}
-                    isChildLoading={isChildLoading}
-                  />
-                ))
-              )}
-            </TaskTreeBranch>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <TaskTreeNode
-              projectId={projectId}
-              task={task}
-              depth={0}
-              isCurrent
-            />
-            <TaskTreeBranch>
-              {isChildLoading ? (
-                <EmptyHierarchyText>子タスクを読み込んでいます。</EmptyHierarchyText>
-              ) : sortedChildTasks.length ? (
-                sortedChildTasks.map((childTask) => (
-                  <TaskTreeNode
-                    key={childTask.id}
-                    projectId={projectId}
-                    task={childTask}
-                    depth={1}
-                  />
-                ))
-              ) : (
-                <EmptyHierarchyText>子タスクはありません。</EmptyHierarchyText>
-              )}
-            </TaskTreeBranch>
-          </div>
-        )}
+          {task.parent_task_id ? (
+            <div className="flex flex-col gap-1.5">
+              <TaskTreeNode
+                projectId={projectId}
+                task={parentTask}
+                fallbackTaskId={task.parent_task_id}
+                depth={0}
+              />
+              <TaskTreeBranch>
+                {isSiblingLoading ? (
+                  <EmptyHierarchyText>
+                    階層を読み込んでいます。
+                  </EmptyHierarchyText>
+                ) : (
+                  currentTreeSiblings.map((treeTask) => (
+                    <TaskTreeNodeGroup
+                      key={treeTask.id}
+                      projectId={projectId}
+                      task={treeTask}
+                      currentTaskId={task.id}
+                      childTasks={sortedChildTasks}
+                      isChildLoading={isChildLoading}
+                    />
+                  ))
+                )}
+              </TaskTreeBranch>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <TaskTreeNode
+                projectId={projectId}
+                task={task}
+                depth={0}
+                isCurrent
+              />
+              <TaskTreeBranch>
+                {isChildLoading ? (
+                  <EmptyHierarchyText>
+                    子タスクを読み込んでいます。
+                  </EmptyHierarchyText>
+                ) : sortedChildTasks.length ? (
+                  sortedChildTasks.map((childTask) => (
+                    <TaskTreeNode
+                      key={childTask.id}
+                      projectId={projectId}
+                      task={childTask}
+                      depth={1}
+                    />
+                  ))
+                ) : (
+                  <EmptyHierarchyText>
+                    子タスクはありません。
+                  </EmptyHierarchyText>
+                )}
+              </TaskTreeBranch>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -148,7 +154,9 @@ function TaskTreeNodeGroup({
       {isCurrent ? (
         <TaskTreeBranch>
           {isChildLoading ? (
-            <EmptyHierarchyText>子タスクを読み込んでいます。</EmptyHierarchyText>
+            <EmptyHierarchyText>
+              子タスクを読み込んでいます。
+            </EmptyHierarchyText>
           ) : childTasks.length ? (
             childTasks.map((childTask) => (
               <TaskTreeNode
@@ -212,7 +220,9 @@ function TaskTreeNode({
               表示中
             </span>
           ) : null}
-          {projectId ? <TaskDetailLink projectId={projectId} task={task} /> : null}
+          {projectId ? (
+            <TaskDetailLink projectId={projectId} task={task} />
+          ) : null}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">

@@ -35,7 +35,7 @@ export function useUpdateProjectMember(projectId: number) {
           }
 
           toast.error(
-            getApiErrorMessage(error, PROJECT_MESSAGES.member.updateError)
+            getApiErrorMessage(error, PROJECT_MESSAGES.member.updateError),
           );
         },
       },

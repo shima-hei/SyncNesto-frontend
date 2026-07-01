@@ -31,7 +31,7 @@ export function useCreateRequirementTaskRelation(requirementId: number) {
 
   const createRequirementTaskRelation = async (
     taskId: number,
-    relationType: string
+    relationType: string,
   ) => {
     return mutation.mutateAsync({
       requirementId,

@@ -12,7 +12,7 @@ export type StoredDraft<TValues> = {
 export const readStoredDraft = <TValues>(
   userId: number | null | undefined,
   scope: string,
-  schemaVersion = 1
+  schemaVersion = 1,
 ) => {
   if (!userId || typeof window === "undefined") {
     return null;
@@ -45,7 +45,7 @@ export const writeStoredDraft = <TValues>(
   userId: number | null | undefined,
   scope: string,
   values: TValues,
-  schemaVersion = 1
+  schemaVersion = 1,
 ) => {
   if (!userId || typeof window === "undefined") {
     return;
@@ -61,13 +61,13 @@ export const writeStoredDraft = <TValues>(
       values,
       updatedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
-    } satisfies StoredDraft<TValues>)
+    } satisfies StoredDraft<TValues>),
   );
 };
 
 export const removeStoredDraft = (
   userId: number | null | undefined,
-  scope: string
+  scope: string,
 ) => {
   if (!userId || typeof window === "undefined") {
     return;

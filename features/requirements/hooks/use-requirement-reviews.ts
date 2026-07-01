@@ -2,7 +2,10 @@
 
 import { useListRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGet } from "@/lib/api/generated/requirements/requirements";
 
-export function useRequirementReviews(projectId: number, requirementId: number) {
+export function useRequirementReviews(
+  projectId: number,
+  requirementId: number,
+) {
   const reviewsQuery =
     useListRequirementReviewsProjectsProjectIdRequirementsRequirementIdReviewsGet(
       projectId,
@@ -11,7 +14,7 @@ export function useRequirementReviews(projectId: number, requirementId: number) 
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

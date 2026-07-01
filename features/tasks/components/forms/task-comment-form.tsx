@@ -59,7 +59,7 @@ export function TaskCommentForm({
   const [errors, setErrors] = useState<TaskCommentFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 

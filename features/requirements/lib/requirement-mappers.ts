@@ -21,6 +21,10 @@ import type {
 } from "@/lib/api/generated/model";
 
 import { toOptionalNumber } from "../constants/requirement-form";
+import {
+  toRequirementDetailJson,
+  toRequirementDetailType,
+} from "./requirement-detail-metadata";
 import type { RequirementApprovalRequestFormValues } from "../types/requirement-approval-form";
 import type { RequirementCommentFormValues } from "../types/requirement-comment-form";
 import type { RequirementDetailFormValues } from "../types/requirement-detail-form";
@@ -33,19 +37,9 @@ import type { RequirementReviewFormValues } from "../types/requirement-review-fo
 import type { RequirementSectionFormValues } from "../types/requirement-section-form";
 import type { RequirementTargetCommentFormValues } from "../types/requirement-target-comment-form";
 
-export const parseRequirementDetailJson = (value: string) => {
-  const parsedValue: unknown = JSON.parse(value);
-
-  if (!parsedValue || typeof parsedValue !== "object" || Array.isArray(parsedValue)) {
-    throw new Error("JSONはオブジェクト形式で入力してください。");
-  }
-
-  return parsedValue as Record<string, unknown>;
-};
-
 export const toRequirementCreate = (
   values: RequirementFormValues,
-  documentId: number
+  documentId: number,
 ): RequirementCreate => {
   return {
     document_id: documentId,
@@ -67,7 +61,7 @@ export const toRequirementCreate = (
 
 export const toRequirementUpdate = (
   values: RequirementFormValues,
-  version: number
+  version: number,
 ): RequirementUpdate => {
   return {
     version,
@@ -90,7 +84,7 @@ export const toRequirementUpdate = (
 };
 
 export const toRequirementDocumentCreate = (
-  values: RequirementDocumentFormValues
+  values: RequirementDocumentFormValues,
 ): RequirementDocumentCreate => {
   return {
     title: values.title,
@@ -108,26 +102,26 @@ export const toRequirementDocumentCreate = (
 };
 
 export const toRequirementDetailCreate = (
-  values: RequirementDetailFormValues
+  values: RequirementDetailFormValues,
 ): RequirementDetailCreate => {
   return {
-    detail_type: values.detailType,
-    detail_json: parseRequirementDetailJson(values.detailJson),
+    detail_type: toRequirementDetailType(values),
+    detail_json: toRequirementDetailJson(values),
   };
 };
 
 export const toRequirementDetailUpdate = (
-  values: RequirementDetailFormValues
+  values: RequirementDetailFormValues,
 ): RequirementDetailUpdate => {
   return {
-    detail_type: values.detailType,
-    detail_json: parseRequirementDetailJson(values.detailJson),
+    detail_type: toRequirementDetailType(values),
+    detail_json: toRequirementDetailJson(values),
   };
 };
 
 export const toRequirementDocumentUpdate = (
   values: RequirementDocumentFormValues,
-  version: number
+  version: number,
 ): RequirementDocumentUpdate => {
   return {
     version,
@@ -136,7 +130,7 @@ export const toRequirementDocumentUpdate = (
 };
 
 export const toRequirementCommentCreate = (
-  values: RequirementCommentFormValues
+  values: RequirementCommentFormValues,
 ): RequirementCommentCreate => {
   return {
     comment: values.comment,
@@ -144,7 +138,7 @@ export const toRequirementCommentCreate = (
 };
 
 export const toRequirementLinkCreate = (
-  values: RequirementLinkFormValues
+  values: RequirementLinkFormValues,
 ): RequirementLinkCreate => {
   return {
     linked_type: values.linkedType,
@@ -153,7 +147,7 @@ export const toRequirementLinkCreate = (
 };
 
 export const toRequirementRelationCreate = (
-  values: RequirementRelationFormValues
+  values: RequirementRelationFormValues,
 ): RequirementRelationCreate => {
   return {
     target_type: values.targetType,
@@ -167,7 +161,7 @@ export const toRequirementTargetCommentCreate = (
   values: RequirementTargetCommentFormValues,
   targetType: string,
   targetId: number,
-  parentCommentId?: number | null
+  parentCommentId?: number | null,
 ): RequirementTargetCommentCreate => {
   return {
     target_type: targetType,
@@ -187,7 +181,11 @@ const toRequirementTargetAnchor = (value: string) => {
   try {
     const parsedValue: unknown = JSON.parse(trimmed);
 
-    if (parsedValue && typeof parsedValue === "object" && !Array.isArray(parsedValue)) {
+    if (
+      parsedValue &&
+      typeof parsedValue === "object" &&
+      !Array.isArray(parsedValue)
+    ) {
       return parsedValue as Record<string, unknown>;
     }
   } catch {
@@ -198,7 +196,7 @@ const toRequirementTargetAnchor = (value: string) => {
 
 export const toRequirementTargetCommentUpdate = (
   values: RequirementTargetCommentFormValues,
-  version: number
+  version: number,
 ): RequirementTargetCommentUpdate => {
   return {
     version,
@@ -208,7 +206,7 @@ export const toRequirementTargetCommentUpdate = (
 };
 
 export const toRequirementReviewCreate = (
-  values: RequirementReviewFormValues
+  values: RequirementReviewFormValues,
 ): RequirementReviewCreate => {
   return {
     reviewer_id: Number(values.reviewerId),
@@ -219,13 +217,13 @@ export const toRequirementReviewCreate = (
 };
 
 export const toRequirementReviewUpdate = (
-  values: RequirementReviewFormValues
+  values: RequirementReviewFormValues,
 ): RequirementReviewUpdate => {
   return toRequirementReviewCreate(values);
 };
 
 export const toRequirementSectionCreate = (
-  values: RequirementSectionFormValues
+  values: RequirementSectionFormValues,
 ): RequirementSectionCreate => {
   return {
     title: values.title,
@@ -238,7 +236,7 @@ export const toRequirementSectionCreate = (
 
 export const toRequirementSectionUpdate = (
   values: RequirementSectionFormValues,
-  version: number
+  version: number,
 ): RequirementSectionUpdate => {
   return {
     version,
@@ -252,7 +250,7 @@ export const toRequirementSectionUpdate = (
 
 export const toRequirementOpenIssueCreate = (
   values: RequirementOpenIssueFormValues,
-  documentId: number
+  documentId: number,
 ): RequirementOpenIssueCreate => {
   return {
     document_id: documentId,
@@ -269,7 +267,7 @@ export const toRequirementOpenIssueCreate = (
 
 export const toRequirementOpenIssueUpdate = (
   values: RequirementOpenIssueFormValues,
-  version: number
+  version: number,
 ): RequirementOpenIssueUpdate => {
   return {
     version,
@@ -287,7 +285,7 @@ export const toRequirementOpenIssueUpdate = (
 
 export const toRequirementOpenIssuePromoteCreate = (
   issue: RequirementOpenIssueFormValues,
-  version: number
+  version: number,
 ): RequirementOpenIssuePromoteCreate => {
   return {
     version,
@@ -303,7 +301,7 @@ export const toRequirementOpenIssuePromoteCreate = (
 export const toRequirementApprovalRequestCreate = (
   values: RequirementApprovalRequestFormValues,
   targetType: string,
-  targetId: number
+  targetId: number,
 ): RequirementApprovalRequestCreate => {
   return {
     target_type: targetType,

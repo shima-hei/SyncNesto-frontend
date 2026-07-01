@@ -47,17 +47,17 @@ export function TaskTagInput({
   const selectedTags = useMemo(() => parseTags(value), [value]);
   const normalizedSelectedTags = useMemo(
     () => new Set(selectedTags.map((tag) => tag.toLowerCase())),
-    [selectedTags]
+    [selectedTags],
   );
   const normalizedOptionTags = useMemo(
     () => new Set(tagOptions.map((tag) => tag.toLowerCase())),
-    [tagOptions]
+    [tagOptions],
   );
   const searchText = search.trim().toLowerCase();
   const filteredOptions = tagOptions.filter(
     (tag) =>
       !normalizedSelectedTags.has(tag.toLowerCase()) &&
-      (!searchText || tag.toLowerCase().includes(searchText))
+      (!searchText || tag.toLowerCase().includes(searchText)),
   );
   const canCreateSearchTag =
     search.trim().length > 0 &&
@@ -95,7 +95,7 @@ export function TaskTagInput({
         <div
           className={cn(
             "flex min-h-10 flex-wrap items-center gap-2 rounded-md border bg-background px-3 py-2",
-            error ? "border-destructive" : "border-input"
+            error ? "border-destructive" : "border-input",
           )}
         >
           {selectedTags.length ? (
@@ -130,7 +130,10 @@ export function TaskTagInput({
               タグを選択・追加
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[min(28rem,calc(100vw-2rem))] p-0" align="start">
+          <PopoverContent
+            className="w-[min(28rem,calc(100vw-2rem))] p-0"
+            align="start"
+          >
             <Command shouldFilter={false}>
               <CommandInput
                 value={search}
@@ -139,7 +142,9 @@ export function TaskTagInput({
               />
               <CommandList>
                 <CommandEmpty>
-                  {isLoading ? "タグ候補を読み込み中です。" : "候補タグはありません。"}
+                  {isLoading
+                    ? "タグ候補を読み込み中です。"
+                    : "候補タグはありません。"}
                 </CommandEmpty>
                 <CommandGroup>
                   {canCreateSearchTag ? (

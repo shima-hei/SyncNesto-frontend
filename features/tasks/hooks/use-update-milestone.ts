@@ -16,7 +16,7 @@ import type { MilestoneFormValues } from "../types/milestone-form";
 export function useUpdateMilestone(projectId: number) {
   const queryClient = useQueryClient();
   const [conflictCurrent, setConflictCurrent] = useState<MilestoneRead | null>(
-    null
+    null,
   );
   const mutation = useUpdateMilestoneMilestonesMilestoneIdPatch({
     mutation: {
@@ -45,7 +45,7 @@ export function useUpdateMilestone(projectId: number) {
   const updateMilestone = async (
     milestoneId: number,
     values: MilestoneFormValues,
-    version: number
+    version: number,
   ) => {
     return mutation.mutateAsync({
       milestoneId,

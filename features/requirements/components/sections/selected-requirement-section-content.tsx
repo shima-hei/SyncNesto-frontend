@@ -122,8 +122,12 @@ export function SelectedRequirementSectionContent({
               <div className="min-w-0">
                 <CardTitle>選択中セクション</CardTitle>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span>{getRequirementSectionTypeLabel(section.section_type)}</span>
-                  <span>{getRequirementDocumentStatusLabel(section.status)}</span>
+                  <span>
+                    {getRequirementSectionTypeLabel(section.section_type)}
+                  </span>
+                  <span>
+                    {getRequirementDocumentStatusLabel(section.status)}
+                  </span>
                   <span>更新: {formatDateTime(section.updated_at)}</span>
                 </div>
               </div>
@@ -268,7 +272,7 @@ function ReviewableSectionContent({
         base: baseAnchor,
         quote: normalizeReviewText(quote),
         sourceValue: content,
-      })
+      }),
     );
     selection.removeAllRanges();
   };
@@ -287,7 +291,9 @@ function ReviewableSectionContent({
     <section
       className={cn(
         "scroll-mt-24 rounded-md transition-colors",
-        activeAnchorKey === anchorKey ? "bg-yellow-100/70 ring-2 ring-yellow-300" : ""
+        activeAnchorKey === anchorKey
+          ? "bg-yellow-100/70 ring-2 ring-yellow-300"
+          : "",
       )}
       data-requirement-review-anchor-key={anchorKey}
       onMouseUp={handleMouseUp}

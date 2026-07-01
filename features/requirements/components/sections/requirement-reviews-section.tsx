@@ -39,12 +39,14 @@ export function RequirementReviewsSection({
   canReview,
 }: RequirementReviewsSectionProps) {
   const [editTarget, setEditTarget] = useState<RequirementReviewRead | null>(
-    null
+    null,
   );
-  const [deleteTarget, setDeleteTarget] = useState<RequirementReviewRead | null>(
-    null
+  const [deleteTarget, setDeleteTarget] =
+    useState<RequirementReviewRead | null>(null);
+  const { reviews, isLoading } = useRequirementReviews(
+    projectId,
+    requirementId,
   );
-  const { reviews, isLoading } = useRequirementReviews(projectId, requirementId);
   const {
     createRequirementReview,
     isPending: isCreatePending,
@@ -122,10 +124,15 @@ export function RequirementReviewsSection({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">レビューはありません。</p>
+          <p className="text-sm text-muted-foreground">
+            レビューはありません。
+          </p>
         )}
 
-        <Dialog open={Boolean(editTarget)} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <Dialog
+          open={Boolean(editTarget)}
+          onOpenChange={(open) => !open && setEditTarget(null)}
+        >
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>レビュー編集</DialogTitle>

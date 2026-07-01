@@ -14,7 +14,7 @@ import {
 
 export function useUpdateRequirementSectionSortOrder(
   projectId: number,
-  documentId: number
+  documentId: number,
 ) {
   const queryClient = useQueryClient();
   const updateSortOrderMutation =
@@ -32,11 +32,11 @@ export function useUpdateRequirementSectionSortOrder(
             toast.error(REQUIREMENT_MESSAGES.section.sortError);
           },
         },
-      }
+      },
     );
 
   const updateRequirementSectionSortOrder = async (
-    sections: RequirementSectionRead[]
+    sections: RequirementSectionRead[],
   ) => {
     await updateSortOrderMutation.mutateAsync({
       projectId,

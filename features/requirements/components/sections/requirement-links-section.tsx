@@ -28,7 +28,7 @@ export function RequirementLinksSection({
   canLink,
 }: RequirementLinksSectionProps) {
   const [deleteTarget, setDeleteTarget] = useState<RequirementLinkRead | null>(
-    null
+    null,
   );
   const { links, isLoading } = useRequirementLinks(projectId, requirementId);
   const {

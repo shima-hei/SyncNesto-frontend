@@ -18,6 +18,7 @@ import {
   canUpdateTask,
 } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
+import { useUrlTabState } from "@/hooks/use-url-tab-state";
 import type { MilestoneRead } from "@/lib/api/generated/model";
 
 import {
@@ -49,12 +50,17 @@ import { TasksGanttSection } from "../sections/tasks-gantt-section";
 import { TasksTable } from "../tables/tasks-table";
 
 const PAGE_SIZE = 20;
+const TASK_TABS = ["list", "board", "gantt"] as const;
 
 type TasksPageProps = {
   projectId: number;
 };
 
 export function TasksPage({ projectId }: TasksPageProps) {
+  const [activeTab, setActiveTab] = useUrlTabState({
+    values: TASK_TABS,
+    defaultValue: "list",
+  });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
@@ -68,9 +74,8 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [tag, setTag] = useState("");
   const [startDateFrom, setStartDateFrom] = useState("");
   const [dueDateTo, setDueDateTo] = useState("");
-  const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]["value"]>(
-    "updated_desc"
-  );
+  const [sort, setSort] =
+    useState<(typeof SORT_OPTIONS)[number]["value"]>("updated_desc");
   const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
   const [bulkStatus, setBulkStatus] = useState(NO_BULK_STATUS_CHANGE);
   const [bulkAssigneeId, setBulkAssigneeId] = useState("");
@@ -116,15 +121,19 @@ export function TasksPage({ projectId }: TasksPageProps) {
     requirement_id: ganttRequirementId ? Number(ganttRequirementId) : undefined,
   });
   const { milestones } = useMilestones(projectId);
-  const { createTask, isPending: isCreatePending, error: createError } =
-    useCreateTask(projectId);
+  const {
+    createTask,
+    isPending: isCreatePending,
+    error: createError,
+  } = useCreateTask(projectId);
   const { bulkUpdateTasks, isPending: isBulkUpdatePending } =
     useBulkUpdateTasks(projectId);
   const selectedTasks = useMemo(() => {
     return tasks.filter((task) => selectedTaskIds.includes(task.id));
   }, [selectedTaskIds, tasks]);
   const hasBulkChange =
-    bulkStatus !== NO_BULK_STATUS_CHANGE || Boolean(bulkAssigneeId || bulkDueDate);
+    bulkStatus !== NO_BULK_STATUS_CHANGE ||
+    Boolean(bulkAssigneeId || bulkDueDate);
 
   const handleSearch = () => {
     setPage(1);
@@ -144,15 +153,13 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const handleToggleAllTasks = (checked: boolean) => {
     if (!checked) {
       setSelectedTaskIds((current) =>
-        current.filter(
-          (taskId) => !tasks.some((task) => task.id === taskId)
-        )
+        current.filter((taskId) => !tasks.some((task) => task.id === taskId)),
       );
       return;
     }
 
     setSelectedTaskIds((current) =>
-      Array.from(new Set([...current, ...tasks.map((task) => task.id)]))
+      Array.from(new Set([...current, ...tasks.map((task) => task.id)])),
     );
   };
 
@@ -185,7 +192,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
         ) : null}
       </div>
 
-      <Tabs defaultValue="list">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start">
           <TabsTrigger value="list">一覧</TabsTrigger>
           <TabsTrigger value="board">ボード</TabsTrigger>
@@ -380,7 +387,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
             onMilestoneSelect={setEditingMilestone}
           />
         </TabsContent>
-
       </Tabs>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

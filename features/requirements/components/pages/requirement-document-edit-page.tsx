@@ -19,7 +19,7 @@ export function RequirementDocumentEditPage({
 }: RequirementDocumentEditPageProps) {
   const { document, isLoading, error } = useRequirementDocument(
     projectId,
-    documentId
+    documentId,
   );
   const {
     updateRequirementDocument,
@@ -57,7 +57,7 @@ export function RequirementDocumentEditPage({
           "documents",
           "update",
           projectId,
-          documentId
+          documentId,
         )}
         draftResourceId={documentId}
         initialUsers={{
@@ -80,7 +80,9 @@ export function RequirementDocumentEditPage({
 
           return updateRequirementDocument(values, conflictCurrent.version);
         }}
-        onSubmit={(values) => updateRequirementDocument(values, document.version)}
+        onSubmit={(values) =>
+          updateRequirementDocument(values, document.version)
+        }
       />
     </div>
   );

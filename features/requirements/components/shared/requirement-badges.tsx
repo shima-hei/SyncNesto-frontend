@@ -33,7 +33,9 @@ export function RequirementPriorityBadge({
 }: {
   priority?: string | null;
 }) {
-  return <Badge variant="secondary">{getRequirementPriorityLabel(priority)}</Badge>;
+  return (
+    <Badge variant="secondary">{getRequirementPriorityLabel(priority)}</Badge>
+  );
 }
 
 export function RequirementTypeBadge({ type }: { type?: string | null }) {
@@ -55,6 +57,6 @@ const getRequirementStatusClassName = (status?: string | null) => {
     (status === "rejected" || status === "deprecated") &&
       "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]",
     status === "on_hold" &&
-      "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]"
+      "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]",
   );
 };

@@ -5,18 +5,19 @@ import { useListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGet } fr
 
 export function useProjectMemberCandidates(
   projectId: number,
-  params: ListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGetParams
+  params: ListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGetParams,
 ) {
-  const usersQuery = useListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGet(
-    projectId,
-    params,
-    {
-      query: {
-        retry: false,
-        placeholderData: (previousData) => previousData,
+  const usersQuery =
+    useListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGet(
+      projectId,
+      params,
+      {
+        query: {
+          retry: false,
+          placeholderData: (previousData) => previousData,
+        },
       },
-    }
-  );
+    );
 
   return {
     users: usersQuery.data?.items ?? [],

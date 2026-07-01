@@ -26,7 +26,7 @@ export function RequirementCreatePage({
 }: RequirementCreatePageProps) {
   const { createRequirement, isPending, error } = useCreateRequirement(
     projectId,
-    documentId
+    documentId,
   );
   const {
     requirement: duplicateSource,
@@ -40,7 +40,9 @@ export function RequirementCreatePage({
     : initialRequirementValues;
   const initialValues = {
     ...baseInitialValues,
-    sectionId: initialSectionId ? String(initialSectionId) : baseInitialValues.sectionId,
+    sectionId: initialSectionId
+      ? String(initialSectionId)
+      : baseInitialValues.sectionId,
   };
 
   if (isDuplicateSourceLoading) {
@@ -78,7 +80,7 @@ export function RequirementCreatePage({
           "items",
           "create",
           projectId,
-          documentId
+          documentId,
         )}
         isPending={isPending}
         error={error}

@@ -31,7 +31,7 @@ export function useDecideRequirementApproval(projectId: number) {
             toast.error(REQUIREMENT_MESSAGES.approval.approveError);
           },
         },
-      }
+      },
     );
   const rejectMutation =
     useRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPost({
@@ -51,7 +51,7 @@ export function useDecideRequirementApproval(projectId: number) {
 
   const approveRequirementApproval = async (
     approvalId: number,
-    comment?: string | null
+    comment?: string | null,
   ) => {
     await approveMutation.mutateAsync({
       projectId,
@@ -62,7 +62,7 @@ export function useDecideRequirementApproval(projectId: number) {
 
   const rejectRequirementApproval = async (
     approvalId: number,
-    comment?: string | null
+    comment?: string | null,
   ) => {
     await rejectMutation.mutateAsync({
       projectId,

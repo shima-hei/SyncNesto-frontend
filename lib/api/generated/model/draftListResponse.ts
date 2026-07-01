@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { DraftRead } from './draftRead';
+import type { DraftRead } from "./draftRead";
 
 /**
  * 下書き一覧レスポンスschema。

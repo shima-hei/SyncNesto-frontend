@@ -65,9 +65,10 @@ export function TasksTable({
     useDuplicateTask(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
   const isAllVisibleSelected =
-    Boolean(tasks.length) && tasks.every((task) => selectedTaskIds.includes(task.id));
+    Boolean(tasks.length) &&
+    tasks.every((task) => selectedTaskIds.includes(task.id));
   const isSomeVisibleSelected = tasks.some((task) =>
-    selectedTaskIds.includes(task.id)
+    selectedTaskIds.includes(task.id),
   );
   const tasksById = new Map(tasks.map((task) => [task.id, task]));
   const selectionState = isAllVisibleSelected
@@ -89,7 +90,9 @@ export function TasksTable({
               <Checkbox
                 aria-label="表示中のタスクを選択"
                 checked={selectionState}
-                onCheckedChange={(checked) => onToggleAllTasks(checked === true)}
+                onCheckedChange={(checked) =>
+                  onToggleAllTasks(checked === true)
+                }
               />
             </TableHead>
           ) : null}
@@ -190,7 +193,7 @@ export function TasksTable({
                   <span className="text-xs text-muted-foreground">
                     {getParentTaskLabel(
                       task.parent_task_id,
-                      tasksById.get(task.parent_task_id)
+                      tasksById.get(task.parent_task_id),
                     )}
                   </span>
                 ) : (
@@ -236,17 +239,12 @@ export function TaskDetailLink({
 }) {
   return (
     <Button asChild variant="outline" size="sm">
-      <Link href={`/projects/joined/${projectId}/tasks/${task.id}`}>
-        詳細
-      </Link>
+      <Link href={`/projects/joined/${projectId}/tasks/${task.id}`}>詳細</Link>
     </Button>
   );
 }
 
-const getParentTaskLabel = (
-  parentTaskId: number,
-  parentTask?: TaskRead
-) => {
+const getParentTaskLabel = (parentTaskId: number, parentTask?: TaskRead) => {
   if (!parentTask) {
     return `親: ${parentTaskId}`;
   }

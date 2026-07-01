@@ -6,26 +6,26 @@
  */
 
 export type ListTasksProjectsProjectIdTasksGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
-status?: string | null;
-assignee_id?: number | null;
-requirement_id?: number | null;
-parent_task_id?: number | null;
-root_only?: boolean | null;
-start_date_from?: string | null;
-due_date_to?: string | null;
-overdue?: boolean | null;
-task_type?: string | null;
-priority?: string | null;
-tag?: string | null;
-sort?: string | null;
-q?: string | null;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  page_size?: number;
+  status?: string | null;
+  assignee_id?: number | null;
+  requirement_id?: number | null;
+  parent_task_id?: number | null;
+  root_only?: boolean | null;
+  start_date_from?: string | null;
+  due_date_to?: string | null;
+  overdue?: boolean | null;
+  task_type?: string | null;
+  priority?: string | null;
+  tag?: string | null;
+  sort?: string | null;
+  q?: string | null;
 };

@@ -32,7 +32,7 @@ type RequirementTargetCommentsSectionProps = {
   selectedTargetAnchor?: Record<string, unknown> | null;
   onTargetAnchorClick?: (targetAnchor: Record<string, unknown>) => void;
   getTargetAnchorStatus?: (
-    targetAnchor: Record<string, unknown>
+    targetAnchor: Record<string, unknown>,
   ) => ReviewAnchorStatus | null;
   showTargetAnchorInput?: boolean;
   className?: string;
@@ -56,14 +56,13 @@ export function RequirementTargetCommentsSection({
   const { user } = useAuth();
   const canModerateComments = isSystemAdmin(user);
   const canMutateComment = (comment: RequirementTargetCommentRead) =>
-    canComment &&
-    (canModerateComments || comment.author_id === user?.id);
+    canComment && (canModerateComments || comment.author_id === user?.id);
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementTargetCommentRead | null>(null);
   const { comments, isLoading } = useTargetComments(
     projectId,
     targetType,
-    targetId
+    targetId,
   );
   const {
     createTargetComment,
@@ -207,7 +206,7 @@ type CommentBodyProps = {
   onReopen: (commentId: number, version: number) => Promise<void>;
   onTargetAnchorClick?: (targetAnchor: Record<string, unknown>) => void;
   getTargetAnchorStatus?: (
-    targetAnchor: Record<string, unknown>
+    targetAnchor: Record<string, unknown>,
   ) => ReviewAnchorStatus | null;
 };
 
@@ -278,7 +277,8 @@ function CommentBody({
 }
 
 const getTargetAnchorLabel = (
-  targetAnchor: RequirementTargetCommentRead["target_anchor"] | null | undefined
+  targetAnchor:
+    RequirementTargetCommentRead["target_anchor"] | null | undefined,
 ) => {
   if (!targetAnchor) {
     return "";

@@ -42,10 +42,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
       <TableBody>
         {users.length ? (
           users.map((user) => (
-            <ClickableTableRow
-              key={user.id}
-              href={`/system/users/${user.id}`}
-            >
+            <ClickableTableRow key={user.id} href={`/system/users/${user.id}`}>
               <TableCell>
                 <div className="flex min-w-64 items-center gap-3">
                   <UserAvatar name={user.name} src={user.avatar_url} />
@@ -58,7 +55,9 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant="outline">{getUserTypeLabel(user.user_type)}</Badge>
+                <Badge variant="outline">
+                  {getUserTypeLabel(user.user_type)}
+                </Badge>
               </TableCell>
               <TableCell>{user.department ?? "-"}</TableCell>
               <TableCell>{user.position ?? "-"}</TableCell>
@@ -74,7 +73,10 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
             </ClickableTableRow>
           ))
         ) : (
-          <TableEmptyRow colSpan={7} message="条件に一致するユーザーがありません。" />
+          <TableEmptyRow
+            colSpan={7}
+            message="条件に一致するユーザーがありません。"
+          />
         )}
       </TableBody>
     </Table>

@@ -9,11 +9,7 @@ import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
 import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -149,14 +145,16 @@ export function RequirementRelatedTasksSection({
             {tasks.length ? (
               tasks.map((task) => {
                 const relation = task.requirements?.find(
-                  (requirement) => requirement.id === requirementId
+                  (requirement) => requirement.id === requirementId,
                 );
 
                 return (
                   <TableRow key={task.id}>
                     <TableCell>
                       <div className="flex min-w-52 flex-col">
-                        <span className="truncate font-medium">{task.title}</span>
+                        <span className="truncate font-medium">
+                          {task.title}
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           {task.task_code}
                         </span>
@@ -170,7 +168,8 @@ export function RequirementRelatedTasksSection({
                       <TaskStatusBadge status={task.status} />
                     </TableCell>
                     <TableCell>
-                      {formatDate(task.start_date)} - {formatDate(task.due_date)}
+                      {formatDate(task.start_date)} -{" "}
+                      {formatDate(task.due_date)}
                     </TableCell>
                     <TableCell>{task.progress_percent ?? 0}%</TableCell>
                     <TableCell>{relation?.relation_type ?? "-"}</TableCell>
@@ -237,7 +236,7 @@ function RequirementTaskRelationForm({
   } = useCreateRequirementTaskRelation(requirementId);
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 

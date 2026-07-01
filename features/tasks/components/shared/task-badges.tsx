@@ -21,7 +21,8 @@ export function TaskStatusBadge({ status }: { status?: string | null }) {
 }
 
 export function TaskPriorityBadge({ priority }: { priority?: string | null }) {
-  const variant = priority === "critical" || priority === "high" ? "destructive" : "outline";
+  const variant =
+    priority === "critical" || priority === "high" ? "destructive" : "outline";
 
   return <Badge variant={variant}>{getTaskPriorityLabel(priority)}</Badge>;
 }
@@ -93,6 +94,6 @@ const getTaskStatusClassName = (status?: string | null) => {
     status === "done" &&
       "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
     status === "blocked" &&
-      "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]"
+      "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]",
   );
 };

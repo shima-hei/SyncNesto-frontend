@@ -31,25 +31,30 @@ export const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
   }
 
   const segments = pathname.split("/").filter(Boolean);
-  const items = segments.reduce<BreadcrumbItem[]>((currentItems, segment, index) => {
-    const href = `/${segments.slice(0, index + 1).join("/")}`;
-    const previousSegment = segments[index - 1];
-    const nextItem = getBreadcrumbItemForSegment({
-      segment,
-      previousSegment,
-      href,
-    });
+  const items = segments.reduce<BreadcrumbItem[]>(
+    (currentItems, segment, index) => {
+      const href = `/${segments.slice(0, index + 1).join("/")}`;
+      const previousSegment = segments[index - 1];
+      const nextItem = getBreadcrumbItemForSegment({
+        segment,
+        previousSegment,
+        href,
+      });
 
-    return nextItem ? [...currentItems, nextItem] : currentItems;
-  }, []);
+      return nextItem ? [...currentItems, nextItem] : currentItems;
+    },
+    [],
+  );
 
   return items.length ? markLastItemAsCurrent(items) : [{ label: "Syncnesto" }];
 };
 
 export const getProjectIdFromBreadcrumbItems = (
-  items: readonly BreadcrumbItem[]
+  items: readonly BreadcrumbItem[],
 ) => {
-  return items.find((item) => item.dynamicType === "project")?.dynamicId ?? null;
+  return (
+    items.find((item) => item.dynamicType === "project")?.dynamicId ?? null
+  );
 };
 
 const getBreadcrumbItemForSegment = ({
@@ -139,7 +144,7 @@ const getNewPageLabel = (previousSegment?: string) => {
     users: "ユーザー登録",
   };
 
-  return previousSegment ? labels[previousSegment] ?? "登録" : "登録";
+  return previousSegment ? (labels[previousSegment] ?? "登録") : "登録";
 };
 
 const isProjectIdSegment = (previousSegment?: string) => {
@@ -160,6 +165,6 @@ const formatUnknownSegment = (segment: string) => {
 
 const markLastItemAsCurrent = (items: BreadcrumbItem[]) => {
   return items.map((item, index) =>
-    index === items.length - 1 ? { ...item, href: undefined } : item
+    index === items.length - 1 ? { ...item, href: undefined } : item,
   );
 };

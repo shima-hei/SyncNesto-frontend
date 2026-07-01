@@ -31,7 +31,7 @@ export function usePromoteOpenIssue(projectId: number) {
             toast.error(REQUIREMENT_MESSAGES.openIssue.promoteError);
           },
         },
-      }
+      },
     );
 
   const promoteOpenIssue = async (issue: RequirementOpenIssueRead) => {

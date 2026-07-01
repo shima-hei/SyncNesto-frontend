@@ -12,7 +12,10 @@ export function AccountReadonlyInfo({ user }: AccountReadonlyInfoProps) {
   return (
     <dl className="grid max-w-2xl gap-4 text-sm md:grid-cols-2">
       <ReadonlyItem label="メールアドレス" value={user.email} />
-      <ReadonlyItem label="ユーザー区分" value={getUserTypeLabel(user.user_type)} />
+      <ReadonlyItem
+        label="ユーザー区分"
+        value={getUserTypeLabel(user.user_type)}
+      />
       <div className="flex flex-col gap-1">
         <dt className="text-muted-foreground">状態</dt>
         <dd>

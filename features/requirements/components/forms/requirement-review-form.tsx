@@ -4,7 +4,12 @@ import { useState } from "react";
 
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -46,7 +51,7 @@ export function RequirementReviewForm({
   const [errors, setErrors] = useState<RequirementReviewFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -74,7 +79,7 @@ export function RequirementReviewForm({
 
   const updateValue = <TKey extends keyof RequirementReviewFormValues>(
     field: TKey,
-    value: RequirementReviewFormValues[TKey]
+    value: RequirementReviewFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -117,7 +122,9 @@ export function RequirementReviewForm({
             <Input
               type="datetime-local"
               value={values.reviewedAt}
-              onChange={(event) => updateValue("reviewedAt", event.target.value)}
+              onChange={(event) =>
+                updateValue("reviewedAt", event.target.value)
+              }
             />
           </Field>
         </div>
@@ -138,7 +145,7 @@ export function RequirementReviewForm({
 }
 
 export const getRequirementReviewFormValues = (
-  review: RequirementReviewRead
+  review: RequirementReviewRead,
 ): RequirementReviewFormValues => {
   return {
     reviewerId: String(review.reviewer_id),

@@ -36,7 +36,7 @@ type RequirementDocumentExportDialogProps = {
   onOpenChange: (open: boolean) => void;
   onExport: (
     values: RequirementDocumentExportCreate,
-    options: { download: boolean }
+    options: { download: boolean },
   ) => Promise<RequirementDocumentExportRead>;
   onPreviewChange: (preview: RequirementDocumentExportRead | null) => void;
 };
@@ -88,7 +88,8 @@ export function RequirementDocumentExportDialog({
 
     setValues((current) => ({
       ...current,
-      section_ids: nextIds.length === sortedSections.length ? undefined : nextIds,
+      section_ids:
+        nextIds.length === sortedSections.length ? undefined : nextIds,
     }));
     onPreviewChange(null);
   };

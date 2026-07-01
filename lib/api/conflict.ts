@@ -21,13 +21,15 @@ export type ConflictFieldOptions<T extends Record<string, unknown>> = {
   keys?: readonly (keyof T & string)[];
 };
 
-export type ConflictRetryPayload<TLocal, TCurrent extends VersionedResource> =
-  TLocal & {
-    version: TCurrent["version"];
-  };
+export type ConflictRetryPayload<
+  TLocal,
+  TCurrent extends VersionedResource,
+> = TLocal & {
+  version: TCurrent["version"];
+};
 
 export const isVersionConflictError = <TCurrent = unknown>(
-  error: unknown
+  error: unknown,
 ): error is ApiError & {
   status: 409;
   code: typeof VERSION_CONFLICT_CODE;
@@ -54,7 +56,7 @@ export const createConflictRetryPayload = <
   TCurrent extends VersionedResource,
 >(
   local: TLocal,
-  current: TCurrent
+  current: TCurrent,
 ): ConflictRetryPayload<TLocal, TCurrent> => {
   return {
     ...local,
@@ -94,7 +96,7 @@ export const getConflictFields = <T extends Record<string, unknown>>({
 };
 
 const isConflictErrorResponse = <TCurrent>(
-  data: unknown
+  data: unknown,
 ): data is ApiConflictErrorResponse<TCurrent> => {
   return (
     typeof data === "object" &&
@@ -110,14 +112,14 @@ const isConflictErrorResponse = <TCurrent>(
 const getComparableKeys = <T extends Record<string, unknown>>(
   original: T,
   local: T,
-  current: Partial<T>
+  current: Partial<T>,
 ) => {
   return Array.from(
     new Set([
       ...Object.keys(original),
       ...Object.keys(local),
       ...Object.keys(current),
-    ])
+    ]),
   ) as (keyof T & string)[];
 };
 

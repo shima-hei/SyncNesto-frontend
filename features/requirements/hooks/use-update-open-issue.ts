@@ -34,7 +34,7 @@ export function useUpdateOpenIssue(projectId: number) {
   const updateOpenIssue = async (
     issueId: number,
     version: number,
-    values: RequirementOpenIssueFormValues
+    values: RequirementOpenIssueFormValues,
   ) => {
     return updateOpenIssueMutation.mutateAsync({
       projectId,

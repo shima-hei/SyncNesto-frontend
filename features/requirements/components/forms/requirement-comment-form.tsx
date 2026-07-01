@@ -4,7 +4,12 @@ import { useState } from "react";
 
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 
 import { requirementCommentSchema } from "../../schemas/requirement-schema";
@@ -32,7 +37,7 @@ export function RequirementCommentForm({
   const [errors, setErrors] = useState<RequirementCommentFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 

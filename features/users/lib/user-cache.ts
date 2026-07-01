@@ -15,7 +15,7 @@ export const invalidateUserList = (queryClient: QueryClient) => {
 export const setUserDetailCache = (
   queryClient: QueryClient,
   userId: number,
-  user: UserRead
+  user: UserRead,
 ) => {
   queryClient.setQueryData(getUserDetailKey(userId), user);
 };

@@ -36,10 +36,8 @@ export function RequirementSectionsSection({
     isPending: isCreatePending,
     error: createError,
   } = useCreateRequirementSection(projectId, documentId);
-  const {
-    updateRequirementSectionSortOrder,
-    isPending: isSortPending,
-  } = useUpdateRequirementSectionSortOrder(projectId, documentId);
+  const { updateRequirementSectionSortOrder, isPending: isSortPending } =
+    useUpdateRequirementSectionSortOrder(projectId, documentId);
   const sortedSections = sections
     .slice()
     .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0));
@@ -48,12 +46,18 @@ export function RequirementSectionsSection({
 
   const moveSection = async (
     section: RequirementSectionRead,
-    direction: "up" | "down"
+    direction: "up" | "down",
   ) => {
-    const currentIndex = sortedSections.findIndex((item) => item.id === section.id);
+    const currentIndex = sortedSections.findIndex(
+      (item) => item.id === section.id,
+    );
     const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
 
-    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= sortedSections.length) {
+    if (
+      currentIndex < 0 ||
+      nextIndex < 0 ||
+      nextIndex >= sortedSections.length
+    ) {
       return;
     }
 

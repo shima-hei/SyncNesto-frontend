@@ -6,13 +6,16 @@ import { toast } from "sonner";
 import { useCreateRequirementSectionProjectsProjectIdRequirementDocumentsDocumentIdSectionsPost } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
-import { invalidateRequirementChangeLogs, invalidateRequirementSections } from "../lib/requirement-cache";
+import {
+  invalidateRequirementChangeLogs,
+  invalidateRequirementSections,
+} from "../lib/requirement-cache";
 import { toRequirementSectionCreate } from "../lib/requirement-mappers";
 import type { RequirementSectionFormValues } from "../types/requirement-section-form";
 
 export function useCreateRequirementSection(
   projectId: number,
-  documentId: number
+  documentId: number,
 ) {
   const queryClient = useQueryClient();
   const createSectionMutation =
@@ -30,11 +33,11 @@ export function useCreateRequirementSection(
             toast.error(REQUIREMENT_MESSAGES.section.createError);
           },
         },
-      }
+      },
     );
 
   const createRequirementSection = async (
-    values: RequirementSectionFormValues
+    values: RequirementSectionFormValues,
   ) => {
     return createSectionMutation.mutateAsync({
       projectId,

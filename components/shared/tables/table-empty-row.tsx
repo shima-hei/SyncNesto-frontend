@@ -8,7 +8,10 @@ type TableEmptyRowProps = {
 export function TableEmptyRow({ colSpan, message }: TableEmptyRowProps) {
   return (
     <TableRow>
-      <TableCell colSpan={colSpan} className="h-24 text-center text-muted-foreground">
+      <TableCell
+        colSpan={colSpan}
+        className="h-24 text-center text-muted-foreground"
+      >
         {message}
       </TableCell>
     </TableRow>

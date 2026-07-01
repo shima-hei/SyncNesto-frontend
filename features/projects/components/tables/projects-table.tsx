@@ -48,15 +48,10 @@ export function ProjectsTable({
             const href = `${detailBasePath}/${project.id}`;
 
             return (
-              <ClickableTableRow
-                key={project.id}
-                href={href}
-              >
+              <ClickableTableRow key={project.id} href={href}>
                 <TableCell>
                   <div className="flex min-w-64 flex-col">
-                    <span className="truncate font-medium">
-                      {project.name}
-                    </span>
+                    <span className="truncate font-medium">{project.name}</span>
                     <span className="truncate text-xs text-muted-foreground">
                       {project.project_code}
                     </span>

@@ -195,14 +195,14 @@ export function MilestoneDialogs({
                 return updateMilestone(
                   editingMilestone.id,
                   values,
-                  conflictCurrent.version
+                  conflictCurrent.version,
                 ).then(() => onEditingMilestoneChange(null));
               }}
               onSubmit={(values) =>
                 updateMilestone(
                   editingMilestone.id,
                   values,
-                  editingMilestone.version
+                  editingMilestone.version,
                 ).then(() => onEditingMilestoneChange(null))
               }
             />

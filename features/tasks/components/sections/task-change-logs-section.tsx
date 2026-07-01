@@ -29,13 +29,8 @@ type TaskChangeLogsSectionProps = {
 
 export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
   const [page, setPage] = useState(1);
-  const {
-    changeLogs,
-    total,
-    pageSize,
-    isLoading,
-    isFetching,
-  } = useTaskChangeLogs(taskId, page);
+  const { changeLogs, total, pageSize, isLoading, isFetching } =
+    useTaskChangeLogs(taskId, page);
   const visibleChangeLogs = getVisibleChangeLogs(changeLogs);
 
   return (
@@ -58,11 +53,7 @@ export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
   );
 }
 
-function TaskChangeLogItem({
-  changeLog,
-}: {
-  changeLog: TaskChangeLogRead;
-}) {
+function TaskChangeLogItem({ changeLog }: { changeLog: TaskChangeLogRead }) {
   const updatedFieldLabels = getTaskChangeLogUpdatedFieldLabels(changeLog);
   const snapshotDiffRows = getTaskChangeLogSnapshotDiffRows(changeLog);
   const missingSnapshotFieldLabels =
@@ -71,7 +62,7 @@ function TaskChangeLogItem({
     changeLog.field_name,
     updatedFieldLabels,
     snapshotDiffRows.length,
-    formatTaskChangeLogField
+    formatTaskChangeLogField,
   );
 
   return (

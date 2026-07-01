@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { ChangeLogSnapshotValueSnapshot } from './changeLogSnapshotValueSnapshot';
+import type { ChangeLogSnapshotValueSnapshot } from "./changeLogSnapshotValueSnapshot";
 
 /**
  * 変更前後のスナップショットを返すschema。

@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CopyIcon, EditIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, CopyIcon, EditIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequirementRelatedTasksSection } from "@/features/tasks/components/sections/requirement-related-tasks-section";
 import {
   canCreateTask,
@@ -73,12 +68,12 @@ export function RequirementDetailPage({
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const { summary, isLoading, error } = useRequirementSummary(
     projectId,
-    requirementId
+    requirementId,
   );
   const { comments: targetComments } = useTargetComments(
     projectId,
     "requirement_item",
-    requirementId
+    requirementId,
   );
   const { deleteRequirement, isPending: isDeletePending } =
     useDeleteRequirement(projectId, documentId, requirementId);
@@ -105,7 +100,7 @@ export function RequirementDetailPage({
       return;
     }
     const element = document.querySelector(
-      `[data-requirement-anchor-field="${targetAnchor.field}"]`
+      `[data-requirement-anchor-field="${targetAnchor.field}"]`,
     );
 
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -119,7 +114,7 @@ export function RequirementDetailPage({
     return evaluateRequirementReviewAnchor(
       targetAnchor,
       getRequirementAnchorFieldValue(requirement, targetAnchor.field),
-      requirement.version
+      requirement.version,
     );
   };
 
@@ -127,7 +122,17 @@ export function RequirementDetailPage({
     <div className="flex flex-col gap-6 p-4 lg:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="truncate text-lg font-semibold">{requirement.title}</h2>
+          <Button asChild variant="outline" className="mb-2 w-fit">
+            <Link
+              href={`/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`}
+            >
+              <ArrowLeftIcon data-icon="inline-start" />
+              要件タブへ戻る
+            </Link>
+          </Button>
+          <h2 className="truncate text-lg font-semibold">
+            {requirement.title}
+          </h2>
           <p className="truncate text-sm text-muted-foreground">
             {requirement.requirement_code}
           </p>
@@ -169,7 +174,7 @@ export function RequirementDetailPage({
       <Tabs defaultValue="overview" className="gap-4">
         <TabsList className="flex h-auto w-full flex-wrap justify-start">
           <TabsTrigger value="overview">概要</TabsTrigger>
-          <TabsTrigger value="details">詳細</TabsTrigger>
+          <TabsTrigger value="details">実現内容</TabsTrigger>
           <TabsTrigger value="relations">関連</TabsTrigger>
           <TabsTrigger value="comments">コメント</TabsTrigger>
           <TabsTrigger value="reviews">レビュー</TabsTrigger>
@@ -190,7 +195,10 @@ export function RequirementDetailPage({
                 targetAnchors={targetAnchors}
                 onSelectTargetAnchor={setSelectedTargetAnchor}
               />
-              <RequirementInfo label="カテゴリ" value={requirement.category ?? "-"} />
+              <RequirementInfo
+                label="カテゴリ"
+                value={requirement.category ?? "-"}
+              />
               <RequirementInfo
                 label="優先度"
                 value={getRequirementPriorityLabel(requirement.priority)}
@@ -341,7 +349,7 @@ export function RequirementDetailPage({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         resourceName="要件"
-        description="削除すると元に戻せません。関連する詳細、コメント、レビューも利用できなくなります。"
+        description="削除すると元に戻せません。関連する実現内容、コメント、レビューも利用できなくなります。"
         isPending={isDeletePending}
         onConfirm={deleteRequirement}
       />
@@ -369,7 +377,10 @@ function RequirementInfo({
     const selection = window.getSelection();
     const quote = selection?.toString().trim();
 
-    if (!quote || !event.currentTarget.contains(selection?.anchorNode ?? null)) {
+    if (
+      !quote ||
+      !event.currentTarget.contains(selection?.anchorNode ?? null)
+    ) {
       return;
     }
     const startOffset = value.indexOf(quote);
@@ -418,14 +429,14 @@ const formatOptionalId = (id?: number | null) => {
 };
 
 const isRequirementTargetAnchor = (
-  value: Record<string, unknown> | null | undefined
+  value: Record<string, unknown> | null | undefined,
 ): value is RequirementTargetAnchor => {
   return Boolean(value && typeof value.field === "string");
 };
 
 const renderHighlightedValue = (
   value: string,
-  targetAnchors: RequirementTargetAnchor[]
+  targetAnchors: RequirementTargetAnchor[],
 ) => {
   const quote = targetAnchors
     .map((targetAnchor) => targetAnchor.quote)
@@ -459,7 +470,7 @@ const getRequirementAnchorFieldValue = (
     status?: string | null;
     source?: string | null;
   },
-  field: string
+  field: string,
 ) => {
   switch (field) {
     case "requirement_code":

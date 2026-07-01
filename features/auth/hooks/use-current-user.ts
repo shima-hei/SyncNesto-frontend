@@ -15,7 +15,7 @@ export function useCurrentUser() {
   });
 
   const isUnauthorized = isUnauthorizedError(currentUserQuery.error);
-  const user = isUnauthorized ? null : currentUserQuery.data ?? null;
+  const user = isUnauthorized ? null : (currentUserQuery.data ?? null);
 
   return {
     user,

@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { DraftUpsertContent } from './draftUpsertContent';
+import type { DraftUpsertContent } from "./draftUpsertContent";
 
 /**
  * 下書き作成・更新リクエストschema。

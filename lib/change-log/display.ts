@@ -12,7 +12,7 @@ export const getChangeLogHeaderFieldLabel = (
   fieldName: string | null | undefined,
   updatedFieldLabels: string[],
   diffRowCount: number,
-  formatField: (fieldName: string) => string
+  formatField: (fieldName: string) => string,
 ) => {
   if (fieldName) {
     return formatField(fieldName);
@@ -22,7 +22,7 @@ export const getChangeLogHeaderFieldLabel = (
 };
 
 export const getVisibleChangeLogs = <TChangeLog extends ChangeLogBase>(
-  changeLogs: TChangeLog[]
+  changeLogs: TChangeLog[],
 ) => {
   return changeLogs.filter((changeLog) => {
     return !areChangeLogValuesEqual(changeLog.old_value, changeLog.new_value);

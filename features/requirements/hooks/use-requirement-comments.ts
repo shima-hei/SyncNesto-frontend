@@ -2,7 +2,10 @@
 
 import { useListRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGet } from "@/lib/api/generated/requirements/requirements";
 
-export function useRequirementComments(projectId: number, requirementId: number) {
+export function useRequirementComments(
+  projectId: number,
+  requirementId: number,
+) {
   const commentsQuery =
     useListRequirementCommentsProjectsProjectIdRequirementsRequirementIdCommentsGet(
       projectId,
@@ -11,7 +14,7 @@ export function useRequirementComments(projectId: number, requirementId: number)
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

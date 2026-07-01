@@ -10,7 +10,7 @@ import { invalidateRequirementCommentsWithSummary } from "../lib/requirement-cac
 
 export function useDeleteRequirementComment(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const deleteCommentMutation =
@@ -21,7 +21,7 @@ export function useDeleteRequirementComment(
             await invalidateRequirementCommentsWithSummary(
               queryClient,
               projectId,
-              requirementId
+              requirementId,
             );
             toast.success(REQUIREMENT_MESSAGES.comment.deleteSuccess);
           },
@@ -29,7 +29,7 @@ export function useDeleteRequirementComment(
             toast.error(REQUIREMENT_MESSAGES.comment.deleteError);
           },
         },
-      }
+      },
     );
 
   const deleteRequirementComment = async (commentId: number) => {

@@ -18,14 +18,14 @@ export const invalidateProjectList = (queryClient: QueryClient) => {
 export const setProjectDetailCache = (
   queryClient: QueryClient,
   projectId: number,
-  project: ProjectRead
+  project: ProjectRead,
 ) => {
   queryClient.setQueryData(getProjectDetailKey(projectId), project);
 };
 
 export const removeProjectDetailCache = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   queryClient.removeQueries({
     queryKey: getProjectDetailKey(projectId),
@@ -34,7 +34,7 @@ export const removeProjectDetailCache = (
 
 export const invalidateProjectMemberList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getProjectMemberListKey(projectId),
@@ -43,7 +43,7 @@ export const invalidateProjectMemberList = (
 
 export const invalidateProjectMemberCandidateList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getProjectMemberCandidateListKey(projectId),
@@ -52,7 +52,7 @@ export const invalidateProjectMemberCandidateList = (
 
 export const invalidateProjectMemberUserList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getProjectMemberUserListKey(projectId),

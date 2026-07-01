@@ -19,7 +19,7 @@ import type { ProjectFormValues } from "../types/project-form";
 export function useUpdateProject(projectId: number) {
   const queryClient = useQueryClient();
   const [conflictCurrent, setConflictCurrent] = useState<ProjectRead | null>(
-    null
+    null,
   );
   const updateProjectMutation = useUpdateProjectProjectsProjectIdPatch({
     mutation: {

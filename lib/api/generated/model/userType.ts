@@ -8,10 +8,9 @@
 /**
  * ユーザー区分を表すEnum。
  */
-export type UserType = typeof UserType[keyof typeof UserType];
-
+export type UserType = (typeof UserType)[keyof typeof UserType];
 
 export const UserType = {
-  internal: 'internal',
-  guest: 'guest',
+  internal: "internal",
+  guest: "guest",
 } as const;

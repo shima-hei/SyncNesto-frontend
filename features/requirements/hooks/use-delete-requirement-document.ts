@@ -14,7 +14,7 @@ import {
 
 export function useDeleteRequirementDocument(
   projectId: number,
-  documentId: number
+  documentId: number,
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -23,7 +23,11 @@ export function useDeleteRequirementDocument(
       {
         mutation: {
           onSuccess: async () => {
-            removeRequirementDocumentDetailCache(queryClient, projectId, documentId);
+            removeRequirementDocumentDetailCache(
+              queryClient,
+              projectId,
+              documentId,
+            );
             await invalidateRequirementDocumentList(queryClient, projectId);
             toast.success(REQUIREMENT_MESSAGES.document.deleteSuccess);
             router.push(`/projects/joined/${projectId}/requirements`);
@@ -32,7 +36,7 @@ export function useDeleteRequirementDocument(
             toast.error(REQUIREMENT_MESSAGES.document.deleteError);
           },
         },
-      }
+      },
     );
 
   const deleteRequirementDocument = async () => {

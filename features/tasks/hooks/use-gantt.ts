@@ -5,7 +5,7 @@ import { useReadGanttProjectsProjectIdGanttGet } from "@/lib/api/generated/tasks
 
 export function useGantt(
   projectId: number,
-  params: ReadGanttProjectsProjectIdGanttGetParams
+  params: ReadGanttProjectsProjectIdGanttGetParams,
 ) {
   const ganttQuery = useReadGanttProjectsProjectIdGanttGet(projectId, params, {
     query: {

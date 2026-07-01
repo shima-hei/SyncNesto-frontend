@@ -17,14 +17,19 @@ import {
 export function useToggleTargetCommentState(
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) {
   const queryClient = useQueryClient();
   const resolveMutation =
     useResolveTargetCommentProjectsProjectIdCommentsCommentIdResolvePost({
       mutation: {
         onSuccess: async () => {
-          await invalidateComments(queryClient, projectId, targetType, targetId);
+          await invalidateComments(
+            queryClient,
+            projectId,
+            targetType,
+            targetId,
+          );
           toast.success(REQUIREMENT_MESSAGES.targetComment.resolveSuccess);
         },
         onError: () => {
@@ -36,7 +41,12 @@ export function useToggleTargetCommentState(
     useReopenTargetCommentProjectsProjectIdCommentsCommentIdReopenPost({
       mutation: {
         onSuccess: async () => {
-          await invalidateComments(queryClient, projectId, targetType, targetId);
+          await invalidateComments(
+            queryClient,
+            projectId,
+            targetType,
+            targetId,
+          );
           toast.success(REQUIREMENT_MESSAGES.targetComment.reopenSuccess);
         },
         onError: () => {
@@ -72,14 +82,14 @@ const invalidateComments = (
   queryClient: ReturnType<typeof useQueryClient>,
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) => {
   return Promise.all([
     invalidateRequirementTargetComments(
       queryClient,
       projectId,
       targetType,
-      targetId
+      targetId,
     ),
     invalidateRequirementChangeLogs(queryClient, projectId),
   ]);

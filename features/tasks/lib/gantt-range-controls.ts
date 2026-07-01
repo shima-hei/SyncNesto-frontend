@@ -1,7 +1,7 @@
 export const getCurrentGanttRange = (
   startDate: string,
   endDate: string,
-  displayUnit: string
+  displayUnit: string,
 ) => {
   if (startDate && endDate) {
     return { start: new Date(startDate), end: new Date(endDate) };
@@ -30,7 +30,7 @@ export const getTodayGanttRange = (displayUnit: string) => {
 export const moveGanttRange = (
   range: { start: Date; end: Date },
   displayUnit: string,
-  direction: -1 | 1
+  direction: -1 | 1,
 ) => {
   if (displayUnit === "month") {
     return {

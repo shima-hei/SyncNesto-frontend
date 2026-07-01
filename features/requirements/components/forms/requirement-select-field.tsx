@@ -12,11 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   Popover,
   PopoverContent,
@@ -59,10 +55,10 @@ export function RequirementSelectField({
     () =>
       valueAsNumber
         ? (requirements.find(
-            (requirement) => requirement.id === valueAsNumber
+            (requirement) => requirement.id === valueAsNumber,
           ) ?? selectedRequirement)
         : null,
-    [requirements, selectedRequirement, valueAsNumber]
+    [requirements, selectedRequirement, valueAsNumber],
   );
   const selectedLabel = currentRequirement
     ? formatRequirementLabel(currentRequirement)
@@ -83,7 +79,7 @@ export function RequirementSelectField({
               aria-invalid={Boolean(error)}
               className={cn(
                 "min-w-0 flex-1 justify-between",
-                !selectedLabel && "text-muted-foreground"
+                !selectedLabel && "text-muted-foreground",
               )}
             >
               <span className="truncate">

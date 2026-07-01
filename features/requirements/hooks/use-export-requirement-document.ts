@@ -12,7 +12,7 @@ import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 
 export function useExportRequirementDocument(
   projectId: number,
-  documentId: number
+  documentId: number,
 ) {
   const exportMutation =
     useExportRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdExportsPost(
@@ -25,12 +25,12 @@ export function useExportRequirementDocument(
             toast.error(REQUIREMENT_MESSAGES.export.error);
           },
         },
-      }
+      },
     );
 
   const exportRequirementDocument = async (
     values: RequirementDocumentExportCreate,
-    options: { download: boolean }
+    options: { download: boolean },
   ) => {
     const data = await exportMutation.mutateAsync({
       projectId,
@@ -53,7 +53,7 @@ export function useExportRequirementDocument(
 
 const downloadExportedDocument = (
   documentId: number,
-  data: RequirementDocumentExportRead
+  data: RequirementDocumentExportRead,
 ) => {
   const extension =
     data.format === "pdf" ? "pdf" : data.format === "html" ? "html" : "md";

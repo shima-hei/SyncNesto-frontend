@@ -14,7 +14,7 @@ type AuthSessionInvalidDetail = {
 const AUTH_SESSION_INVALID_EVENT = "syncnesto:auth-session-invalid";
 
 export const isAuthSessionInvalidCode = (
-  code: string | undefined
+  code: string | undefined,
 ): code is
   | typeof AUTH_ERROR_CODES.authenticationRequired
   | typeof AUTH_ERROR_CODES.invalidToken
@@ -34,12 +34,12 @@ export const emitAuthSessionInvalid = (detail: AuthSessionInvalidDetail) => {
   window.dispatchEvent(
     new CustomEvent<AuthSessionInvalidDetail>(AUTH_SESSION_INVALID_EVENT, {
       detail,
-    })
+    }),
   );
 };
 
 export const subscribeAuthSessionInvalid = (
-  handler: (detail: AuthSessionInvalidDetail) => void
+  handler: (detail: AuthSessionInvalidDetail) => void,
 ) => {
   if (typeof window === "undefined") {
     return () => {};

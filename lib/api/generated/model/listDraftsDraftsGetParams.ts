@@ -6,6 +6,6 @@
  */
 
 export type ListDraftsDraftsGetParams = {
-resource_type?: string | null;
-project_id?: number | null;
+  resource_type?: string | null;
+  project_id?: number | null;
 };

@@ -199,7 +199,7 @@ export function RequirementOpenIssuesSection({
 }
 
 function toOpenIssueFormValues(
-  issue: RequirementOpenIssueRead
+  issue: RequirementOpenIssueRead,
 ): RequirementOpenIssueFormValues {
   return {
     issueCode: issue.issue_code,

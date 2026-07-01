@@ -15,8 +15,8 @@ import type { RequirementOpenIssueFormValues } from "../types/requirement-open-i
 
 export function useCreateOpenIssue(projectId: number, documentId: number) {
   const queryClient = useQueryClient();
-  const createOpenIssueMutation = useCreateOpenIssueProjectsProjectIdOpenIssuesPost(
-    {
+  const createOpenIssueMutation =
+    useCreateOpenIssueProjectsProjectIdOpenIssuesPost({
       mutation: {
         onSuccess: async () => {
           await Promise.all([
@@ -29,8 +29,7 @@ export function useCreateOpenIssue(projectId: number, documentId: number) {
           toast.error(REQUIREMENT_MESSAGES.openIssue.createError);
         },
       },
-    }
-  );
+    });
 
   const createOpenIssue = async (values: RequirementOpenIssueFormValues) => {
     return createOpenIssueMutation.mutateAsync({

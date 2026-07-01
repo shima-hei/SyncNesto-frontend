@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequirementDetailCreateDetailJson } from './requirementDetailCreateDetailJson';
+import type { RequirementDetailCreateDetailJson } from "./requirementDetailCreateDetailJson";
 
 /**
  * 要件詳細作成リクエストで受け取るschema。

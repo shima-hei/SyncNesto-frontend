@@ -14,26 +14,25 @@ import type { TaskCommentFormValues } from "../types/task-comment-form";
 
 export function useUpdateTaskComment(taskId: number) {
   const queryClient = useQueryClient();
-  const updateCommentMutation =
-    useUpdateTaskCommentTaskCommentsCommentIdPatch({
-      mutation: {
-        onSuccess: async () => {
-          await Promise.all([
-            invalidateTaskComments(queryClient, taskId),
-            invalidateTaskChangeLogs(queryClient, taskId),
-          ]);
-          toast.success(TASK_MESSAGES.comment.updateSuccess);
-        },
-        onError: () => {
-          toast.error(TASK_MESSAGES.comment.updateError);
-        },
+  const updateCommentMutation = useUpdateTaskCommentTaskCommentsCommentIdPatch({
+    mutation: {
+      onSuccess: async () => {
+        await Promise.all([
+          invalidateTaskComments(queryClient, taskId),
+          invalidateTaskChangeLogs(queryClient, taskId),
+        ]);
+        toast.success(TASK_MESSAGES.comment.updateSuccess);
       },
-    });
+      onError: () => {
+        toast.error(TASK_MESSAGES.comment.updateError);
+      },
+    },
+  });
 
   const updateTaskComment = async (
     commentId: number,
     version: number,
-    values: TaskCommentFormValues
+    values: TaskCommentFormValues,
   ) => {
     return updateCommentMutation.mutateAsync({
       commentId,

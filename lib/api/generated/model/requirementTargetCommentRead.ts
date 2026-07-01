@@ -4,8 +4,8 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { ChangeLogUserRead } from './changeLogUserRead';
-import type { RequirementTargetCommentReadTargetAnchor } from './requirementTargetCommentReadTargetAnchor';
+import type { ChangeLogUserRead } from "./changeLogUserRead";
+import type { RequirementTargetCommentReadTargetAnchor } from "./requirementTargetCommentReadTargetAnchor";
 
 /**
  * 要件定義対象コメント読み取り時に返すschema。

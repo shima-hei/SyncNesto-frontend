@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -73,7 +69,9 @@ export function NumberField({
           onChange={(event) => onChange(event.target.value)}
           aria-invalid={Boolean(error)}
         />
-        {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
+        {suffix ? (
+          <span className="text-sm text-muted-foreground">{suffix}</span>
+        ) : null}
       </div>
       {error ? <FieldError>{error}</FieldError> : null}
     </Field>

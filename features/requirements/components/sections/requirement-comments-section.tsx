@@ -36,7 +36,7 @@ export function RequirementCommentsSection({
     useState<RequirementCommentRead | null>(null);
   const { comments, isLoading } = useRequirementComments(
     projectId,
-    requirementId
+    requirementId,
   );
   const {
     createRequirementComment,
@@ -92,7 +92,9 @@ export function RequirementCommentsSection({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">コメントはありません。</p>
+          <p className="text-sm text-muted-foreground">
+            コメントはありません。
+          </p>
         )}
 
         <ResourceDeleteDialog

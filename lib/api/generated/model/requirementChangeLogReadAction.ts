@@ -5,22 +5,22 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RequirementChangeLogReadAction = typeof RequirementChangeLogReadAction[keyof typeof RequirementChangeLogReadAction];
-
+export type RequirementChangeLogReadAction =
+  (typeof RequirementChangeLogReadAction)[keyof typeof RequirementChangeLogReadAction];
 
 export const RequirementChangeLogReadAction = {
-  created: 'created',
-  updated: 'updated',
-  deleted: 'deleted',
-  exported: 'exported',
-  sorted: 'sorted',
-  promoted_to_requirement: 'promoted_to_requirement',
-  comment_created: 'comment_created',
-  comment_updated: 'comment_updated',
-  comment_deleted: 'comment_deleted',
-  comment_resolved: 'comment_resolved',
-  comment_reopened: 'comment_reopened',
-  approval_requested: 'approval_requested',
-  approval_approved: 'approval_approved',
-  approval_rejected: 'approval_rejected',
+  created: "created",
+  updated: "updated",
+  deleted: "deleted",
+  exported: "exported",
+  sorted: "sorted",
+  promoted_to_requirement: "promoted_to_requirement",
+  comment_created: "comment_created",
+  comment_updated: "comment_updated",
+  comment_deleted: "comment_deleted",
+  comment_resolved: "comment_resolved",
+  comment_reopened: "comment_reopened",
+  approval_requested: "approval_requested",
+  approval_approved: "approval_approved",
+  approval_rejected: "approval_rejected",
 } as const;

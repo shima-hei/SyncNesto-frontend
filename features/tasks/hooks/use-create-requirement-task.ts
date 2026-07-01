@@ -15,7 +15,10 @@ import {
 import { toRequirementTaskCreate } from "../lib/task-mappers";
 import type { TaskFormValues } from "../types/task-form";
 
-export function useCreateRequirementTask(projectId: number, requirementId: number) {
+export function useCreateRequirementTask(
+  projectId: number,
+  requirementId: number,
+) {
   const queryClient = useQueryClient();
   const mutation = useCreateRequirementTaskRequirementsRequirementIdTasksPost({
     mutation: {

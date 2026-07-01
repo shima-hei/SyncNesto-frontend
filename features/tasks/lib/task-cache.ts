@@ -16,7 +16,7 @@ import {
 
 export const invalidateTaskList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getTaskListKey(projectId),
@@ -25,7 +25,7 @@ export const invalidateTaskList = (
 
 export const invalidateBoardList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getBoardListKey(projectId),
@@ -34,7 +34,7 @@ export const invalidateBoardList = (
 
 export const invalidateGantt = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getGanttKey(projectId),
@@ -43,7 +43,7 @@ export const invalidateGantt = (
 
 export const invalidateMilestoneList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getMilestoneListKey(projectId),
@@ -52,7 +52,7 @@ export const invalidateMilestoneList = (
 
 export const invalidateRequirementTaskList = (
   queryClient: QueryClient,
-  requirementId: number
+  requirementId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementTaskListKey(requirementId),
@@ -61,7 +61,7 @@ export const invalidateRequirementTaskList = (
 
 export const invalidateRequirementTaskProgress = (
   queryClient: QueryClient,
-  requirementId: number
+  requirementId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementTaskProgressKey(requirementId),
@@ -70,7 +70,7 @@ export const invalidateRequirementTaskProgress = (
 
 export const invalidateTaskDependencies = (
   queryClient: QueryClient,
-  taskId: number
+  taskId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getTaskDependencyListKey(taskId),
@@ -79,7 +79,7 @@ export const invalidateTaskDependencies = (
 
 export const invalidateTaskComments = (
   queryClient: QueryClient,
-  taskId: number
+  taskId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getTaskCommentListKey(taskId),
@@ -88,7 +88,7 @@ export const invalidateTaskComments = (
 
 export const invalidateTaskChangeLogs = (
   queryClient: QueryClient,
-  taskId: number
+  taskId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getTaskChangeLogListKey(taskId),
@@ -97,7 +97,7 @@ export const invalidateTaskChangeLogs = (
 
 export const invalidateTaskDetail = (
   queryClient: QueryClient,
-  taskId: number
+  taskId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getTaskDetailKey(taskId),
@@ -107,7 +107,7 @@ export const invalidateTaskDetail = (
 export const invalidateTaskProjectSurfaces = (
   queryClient: QueryClient,
   projectId: number,
-  options: { includeBoard?: boolean } = {}
+  options: { includeBoard?: boolean } = {},
 ) => {
   const invalidations = [
     invalidateTaskList(queryClient, projectId),
@@ -124,14 +124,14 @@ export const invalidateTaskProjectSurfaces = (
 export const setTaskDetailCache = (
   queryClient: QueryClient,
   taskId: number,
-  task: TaskRead
+  task: TaskRead,
 ) => {
   queryClient.setQueryData(getTaskDetailKey(taskId), task);
 };
 
 export const removeTaskDetailCache = (
   queryClient: QueryClient,
-  taskId: number
+  taskId: number,
 ) => {
   queryClient.removeQueries({
     queryKey: getTaskDetailKey(taskId),

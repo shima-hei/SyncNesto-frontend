@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequirementChangeLogRead } from './requirementChangeLogRead';
+import type { RequirementChangeLogRead } from "./requirementChangeLogRead";
 
 /**
  * 要件定義変更履歴一覧レスポンスschema。

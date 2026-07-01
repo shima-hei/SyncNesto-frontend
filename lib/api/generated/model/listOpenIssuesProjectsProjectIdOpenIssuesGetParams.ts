@@ -6,20 +6,20 @@
  */
 
 export type ListOpenIssuesProjectsProjectIdOpenIssuesGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
-document_id?: number | null;
-q?: string | null;
-status?: string | null;
-assignee_id?: number | null;
-due_date_from?: string | null;
-due_date_to?: string | null;
-related_requirement_id?: number | null;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  page_size?: number;
+  document_id?: number | null;
+  q?: string | null;
+  status?: string | null;
+  assignee_id?: number | null;
+  due_date_from?: string | null;
+  due_date_to?: string | null;
+  related_requirement_id?: number | null;
 };

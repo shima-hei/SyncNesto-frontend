@@ -6,12 +6,7 @@ import { DownloadIcon, EditIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   canCreateRequirement,
   canCommentRequirement,
@@ -20,9 +15,8 @@ import {
   canUpdateRequirement,
 } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
-import type {
-  RequirementDocumentExportRead,
-} from "@/lib/api/generated/model";
+import { useUrlTabState } from "@/hooks/use-url-tab-state";
+import type { RequirementDocumentExportRead } from "@/lib/api/generated/model";
 
 import { useDeleteRequirementDocument } from "../../hooks/use-delete-requirement-document";
 import { useExportRequirementDocument } from "../../hooks/use-export-requirement-document";
@@ -35,15 +29,28 @@ import { RequirementOpenIssuesSection } from "../sections/requirement-open-issue
 import { RequirementDocumentDetailSkeleton } from "./document-detail/requirement-document-detail-skeleton";
 import { RequirementDocumentOverview } from "./document-detail/requirement-document-overview";
 import { RequirementDocumentRequirementsTab } from "./document-detail/requirement-document-requirements-tab";
+
 type RequirementDocumentDetailPageProps = {
   projectId: number;
   documentId: number;
 };
 
+const REQUIREMENT_DOCUMENT_TABS = [
+  "overview",
+  "requirements",
+  "issues",
+  "approvals",
+  "history",
+] as const;
+
 export function RequirementDocumentDetailPage({
   projectId,
   documentId,
 }: RequirementDocumentDetailPageProps) {
+  const [activeTab, setActiveTab] = useUrlTabState({
+    values: REQUIREMENT_DOCUMENT_TABS,
+    defaultValue: "overview",
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportPreview, setExportPreview] =
@@ -51,7 +58,7 @@ export function RequirementDocumentDetailPage({
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const { document, isLoading, error } = useRequirementDocument(
     projectId,
-    documentId
+    documentId,
   );
   const { sections } = useRequirementSections(projectId, documentId);
   const { deleteRequirementDocument, isPending: isDeletePending } =
@@ -122,7 +129,7 @@ export function RequirementDocumentDetailPage({
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="gap-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
         <TabsList className="flex h-auto w-full flex-wrap justify-start">
           <TabsTrigger value="overview">概要</TabsTrigger>
           <TabsTrigger value="requirements">要件</TabsTrigger>

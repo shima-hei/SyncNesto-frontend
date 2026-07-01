@@ -18,7 +18,7 @@ export const toUserCreate = (values: UserFormValues): UserCreate => {
 
 export const toUserUpdate = (
   values: UserFormValues,
-  version: number
+  version: number,
 ): UserUpdate => {
   return {
     version,

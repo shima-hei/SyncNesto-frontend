@@ -11,7 +11,7 @@ export function useRequirementSections(projectId: number, documentId: number) {
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

@@ -5,17 +5,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RequirementChangeLogReadTargetType = typeof RequirementChangeLogReadTargetType[keyof typeof RequirementChangeLogReadTargetType];
-
+export type RequirementChangeLogReadTargetType =
+  (typeof RequirementChangeLogReadTargetType)[keyof typeof RequirementChangeLogReadTargetType];
 
 export const RequirementChangeLogReadTargetType = {
-  requirement_document: 'requirement_document',
-  requirement_section: 'requirement_section',
-  requirement: 'requirement',
-  requirement_detail: 'requirement_detail',
-  requirement_link: 'requirement_link',
-  requirement_relation: 'requirement_relation',
-  requirement_review: 'requirement_review',
-  requirement_open_issue: 'requirement_open_issue',
-  requirement_comment: 'requirement_comment',
+  requirement_document: "requirement_document",
+  requirement_section: "requirement_section",
+  requirement: "requirement",
+  requirement_detail: "requirement_detail",
+  requirement_link: "requirement_link",
+  requirement_relation: "requirement_relation",
+  requirement_review: "requirement_review",
+  requirement_open_issue: "requirement_open_issue",
+  requirement_comment: "requirement_comment",
 } as const;

@@ -28,7 +28,7 @@ export function useRemoveProjectMember(projectId: number) {
         },
         onError: (error) => {
           toast.error(
-            getApiErrorMessage(error, PROJECT_MESSAGES.member.removeError)
+            getApiErrorMessage(error, PROJECT_MESSAGES.member.removeError),
           );
         },
       },

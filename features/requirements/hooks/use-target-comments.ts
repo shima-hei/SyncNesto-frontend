@@ -6,7 +6,7 @@ export function useTargetComments(
   projectId: number,
   targetType: string,
   targetId: number,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean },
 ) {
   const commentsQuery = useListTargetCommentsProjectsProjectIdCommentsGet(
     projectId,
@@ -16,7 +16,7 @@ export function useTargetComments(
         enabled: options?.enabled ?? true,
         retry: false,
       },
-    }
+    },
   );
 
   return {

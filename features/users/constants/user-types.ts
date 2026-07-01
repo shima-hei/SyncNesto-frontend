@@ -1,4 +1,7 @@
-import { USER_TYPE_KEYS, type UserTypeKey } from "@/features/auth/constants/roles";
+import {
+  USER_TYPE_KEYS,
+  type UserTypeKey,
+} from "@/features/auth/constants/roles";
 
 export const USER_TYPE_OPTIONS = [
   {

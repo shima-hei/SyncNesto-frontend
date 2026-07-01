@@ -11,7 +11,7 @@ export function useRequirementDocument(projectId: number, documentId: number) {
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

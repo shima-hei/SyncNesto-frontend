@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getConflictFields } from "@/lib/api/conflict";
 import { useFormDraft } from "@/hooks/use-form-draft";
+import { cn } from "@/lib/utils";
 
 import { REQUIREMENT_CONFLICT_FIELD_LABELS } from "../../constants/requirement-conflict-fields";
 import {
@@ -47,6 +48,7 @@ type RequirementFormProps = {
   initialValues: RequirementFormValues;
   draftScope?: string;
   draftResourceId?: number | null;
+  className?: string;
   isPending: boolean;
   error?: Error | null;
   conflictValues?: RequirementFormValues | null;
@@ -62,6 +64,7 @@ export function RequirementForm({
   initialValues,
   draftScope,
   draftResourceId = null,
+  className,
   isPending,
   error,
   conflictValues,
@@ -71,7 +74,7 @@ export function RequirementForm({
 }: RequirementFormProps) {
   const { sections, isLoading: isSectionsLoading } = useRequirementSections(
     projectId,
-    documentId
+    documentId,
   );
   const categoryId = useId();
   const titleId = useId();
@@ -109,7 +112,7 @@ export function RequirementForm({
     : [];
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -135,7 +138,7 @@ export function RequirementForm({
 
   const updateValue = <TKey extends keyof RequirementFormValues>(
     field: TKey,
-    value: RequirementFormValues[TKey]
+    value: RequirementFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -143,7 +146,7 @@ export function RequirementForm({
 
   return (
     <>
-      <form className="max-w-4xl" onSubmit={handleSubmit}>
+      <form className={cn("max-w-4xl", className)} onSubmit={handleSubmit}>
         <FieldGroup>
           <FormSection
             title="配置先"
@@ -188,7 +191,9 @@ export function RequirementForm({
                 <FieldLabel>種別</FieldLabel>
                 <Select
                   value={values.requirementType}
-                  onValueChange={(value) => updateValue("requirementType", value)}
+                  onValueChange={(value) =>
+                    updateValue("requirementType", value)
+                  }
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="種別を選択" />
@@ -251,7 +256,9 @@ export function RequirementForm({
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                {errors.status ? <FieldError>{errors.status}</FieldError> : null}
+                {errors.status ? (
+                  <FieldError>{errors.status}</FieldError>
+                ) : null}
               </Field>
             </div>
 
@@ -260,7 +267,9 @@ export function RequirementForm({
               <Input
                 id={categoryId}
                 value={values.category}
-                onChange={(event) => updateValue("category", event.target.value)}
+                onChange={(event) =>
+                  updateValue("category", event.target.value)
+                }
               />
             </Field>
 
@@ -321,7 +330,9 @@ export function RequirementForm({
                 <Input
                   id={sourceId}
                   value={values.source}
-                  onChange={(event) => updateValue("source", event.target.value)}
+                  onChange={(event) =>
+                    updateValue("source", event.target.value)
+                  }
                 />
               </Field>
               <RequirementUserSelectField
@@ -367,7 +378,9 @@ export function RequirementForm({
                 <Input
                   id={reasonId}
                   value={values.reason}
-                  onChange={(event) => updateValue("reason", event.target.value)}
+                  onChange={(event) =>
+                    updateValue("reason", event.target.value)
+                  }
                 />
               </Field>
             </div>

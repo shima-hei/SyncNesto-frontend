@@ -43,7 +43,9 @@ export function TaskCommentsSection({
   className,
   contentClassName,
 }: TaskCommentsSectionProps) {
-  const [deleteTarget, setDeleteTarget] = useState<TaskCommentRead | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TaskCommentRead | null>(
+    null,
+  );
   const { comments, isLoading } = useTaskComments(taskId);
   const {
     createTaskComment,
@@ -57,12 +59,17 @@ export function TaskCommentsSection({
   } = useUpdateTaskComment(taskId);
   const { deleteTaskComment, isPending: isDeletePending } =
     useDeleteTaskComment(taskId);
-  const { resolveTaskComment, reopenTaskComment, isPending: isStatePending } =
-    useToggleTaskCommentState(taskId);
+  const {
+    resolveTaskComment,
+    reopenTaskComment,
+    isPending: isStatePending,
+  } = useToggleTaskCommentState(taskId);
   const { updateTaskStatus, isPending: isStatusPending } =
     useUpdateTaskStatus(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
-  const handleCreateCommentWithStatus = async (values: TaskCommentFormValues) => {
+  const handleCreateCommentWithStatus = async (
+    values: TaskCommentFormValues,
+  ) => {
     await createTaskComment(values);
 
     if (
@@ -82,7 +89,7 @@ export function TaskCommentsSection({
       <CardContent
         className={cn(
           "flex max-h-[640px] flex-col gap-4 overflow-y-auto",
-          contentClassName
+          contentClassName,
         )}
       >
         {canComment ? (
@@ -106,7 +113,11 @@ export function TaskCommentsSection({
           emptyMessage="コメントはありません。"
           getCommentId={(comment) => comment.id}
           getParentCommentId={(comment) => comment.parent_comment_id}
-          loadingFallback={<p className="text-sm text-muted-foreground">コメントを読み込み中です。</p>}
+          loadingFallback={
+            <p className="text-sm text-muted-foreground">
+              コメントを読み込み中です。
+            </p>
+          }
           renderCommentBody={({ comment, onEdit, onReply }) => (
             <TaskCommentBody
               comment={comment}

@@ -3,9 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  useCreateRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsPost,
-} from "@/lib/api/generated/requirements/requirements";
+import { useCreateRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsPost } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import { invalidateRequirementReviewsWithSummary } from "../lib/requirement-cache";
@@ -14,7 +12,7 @@ import type { RequirementReviewFormValues } from "../types/requirement-review-fo
 
 export function useCreateRequirementReview(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const createReviewMutation =
@@ -25,7 +23,7 @@ export function useCreateRequirementReview(
             await invalidateRequirementReviewsWithSummary(
               queryClient,
               projectId,
-              requirementId
+              requirementId,
             );
             toast.success(REQUIREMENT_MESSAGES.review.createSuccess);
           },
@@ -33,10 +31,12 @@ export function useCreateRequirementReview(
             toast.error(REQUIREMENT_MESSAGES.review.createError);
           },
         },
-      }
+      },
     );
 
-  const createRequirementReview = async (values: RequirementReviewFormValues) => {
+  const createRequirementReview = async (
+    values: RequirementReviewFormValues,
+  ) => {
     return createReviewMutation.mutateAsync({
       projectId,
       requirementId,

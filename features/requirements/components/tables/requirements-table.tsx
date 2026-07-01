@@ -59,7 +59,7 @@ type RequirementsTableProps = {
   onSelectRequirement?: (requirement: RequirementRead) => void;
   onSelectReviewAnchor?: (
     requirement: RequirementRead,
-    targetAnchor: RequirementReviewTargetAnchor
+    targetAnchor: RequirementReviewTargetAnchor,
   ) => void;
 };
 
@@ -133,7 +133,9 @@ export function RequirementsTable({
                     requirement={requirement}
                     field="requirement_type"
                     label={`${requirement.requirement_code} 種別`}
-                    value={getRequirementTypeLabel(requirement.requirement_type)}
+                    value={getRequirementTypeLabel(
+                      requirement.requirement_type,
+                    )}
                     targetAnchors={targetAnchors}
                     activeAnchorKey={activeAnchorKey}
                     onSelectRequirement={onSelectRequirement}
@@ -147,7 +149,9 @@ export function RequirementsTable({
                     <div className="flex flex-col gap-1">
                       <RequirementInlineSelect
                         value={requirement.priority ?? "must"}
-                        label={getRequirementPriorityLabel(requirement.priority)}
+                        label={getRequirementPriorityLabel(
+                          requirement.priority,
+                        )}
                         disabled={isPending}
                         options={REQUIREMENT_PRIORITY_OPTIONS}
                         onValueChange={(priority) =>
@@ -159,7 +163,9 @@ export function RequirementsTable({
                         requirement={requirement}
                         field="priority"
                         label={`${requirement.requirement_code} 優先度`}
-                        value={getRequirementPriorityLabel(requirement.priority)}
+                        value={getRequirementPriorityLabel(
+                          requirement.priority,
+                        )}
                         className="text-xs text-muted-foreground"
                         targetAnchors={targetAnchors}
                         activeAnchorKey={activeAnchorKey}
@@ -179,7 +185,9 @@ export function RequirementsTable({
                       onSelectRequirement={onSelectRequirement}
                       onSelectReviewAnchor={onSelectReviewAnchor}
                     >
-                      <RequirementPriorityBadge priority={requirement.priority} />
+                      <RequirementPriorityBadge
+                        priority={requirement.priority}
+                      />
                     </ReviewableRequirementText>
                   )}
                 </TableCell>
@@ -261,7 +269,10 @@ export function RequirementsTable({
             );
           })
         ) : (
-          <TableEmptyRow colSpan={6} message="条件に一致する要件がありません。" />
+          <TableEmptyRow
+            colSpan={6}
+            message="条件に一致する要件がありません。"
+          />
         )}
       </TableBody>
     </Table>
@@ -281,7 +292,7 @@ type ReviewableRequirementTextProps = {
   onSelectRequirement?: (requirement: RequirementRead) => void;
   onSelectReviewAnchor?: (
     requirement: RequirementRead,
-    targetAnchor: RequirementReviewTargetAnchor
+    targetAnchor: RequirementReviewTargetAnchor,
   ) => void;
 };
 
@@ -354,7 +365,7 @@ function ReviewableRequirementText({
           activeAnchorKey === anchorKey
             ? "rounded-sm bg-yellow-100 ring-2 ring-yellow-300"
             : "",
-          hasHighlight && children ? "rounded-sm bg-yellow-200 px-0.5" : ""
+          hasHighlight && children ? "rounded-sm bg-yellow-200 px-0.5" : "",
         )}
       >
         {children ?? renderHighlightedText(value, highlightQuotes)}

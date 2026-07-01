@@ -64,7 +64,7 @@ export function ProjectMembersPage({
   const { removeProjectMember, isPending: isRemovePending } =
     useRemoveProjectMember(projectId);
   const projectAdminCount = members.filter(
-    (member) => member.role.key === PROJECT_ROLE_KEYS.projectAdmin
+    (member) => member.role.key === PROJECT_ROLE_KEYS.projectAdmin,
   ).length;
   const conflictValues = conflictCurrent
     ? toProjectMemberRoleValues(conflictCurrent)
@@ -72,9 +72,10 @@ export function ProjectMembersPage({
   const conflictFields =
     updateAttempt && conflictValues
       ? getConflictFields({
-          original: toProjectMemberRoleValues(
-            updateAttempt.member
-          ) as Record<string, unknown>,
+          original: toProjectMemberRoleValues(updateAttempt.member) as Record<
+            string,
+            unknown
+          >,
           local: updateAttempt.values as Record<string, unknown>,
           current: conflictValues as Record<string, unknown>,
         })
@@ -188,7 +189,7 @@ function ProjectMembersSkeleton() {
 }
 
 const toProjectMemberRoleValues = (
-  member: ProjectMemberRead
+  member: ProjectMemberRead,
 ): ProjectMemberRoleValues => {
   return {
     roleKey: member.role.key,

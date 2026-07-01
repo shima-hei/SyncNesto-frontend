@@ -1,6 +1,9 @@
 import type { UserRead } from "@/lib/api/generated/model";
 
-import { SYSTEM_ROLE_KEYS, USER_TYPE_KEYS } from "@/features/auth/constants/roles";
+import {
+  SYSTEM_ROLE_KEYS,
+  USER_TYPE_KEYS,
+} from "@/features/auth/constants/roles";
 
 import type { UserFormValues } from "../types/user-form";
 
@@ -26,7 +29,7 @@ export const getUserFormValues = (user: UserRead): UserFormValues => {
     isActive: user.is_active,
     isSystemAdmin:
       user.system_roles?.some(
-        (role) => role.key === SYSTEM_ROLE_KEYS.systemAdmin
+        (role) => role.key === SYSTEM_ROLE_KEYS.systemAdmin,
       ) ?? false,
   };
 };

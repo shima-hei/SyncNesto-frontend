@@ -56,7 +56,7 @@ export function ProjectMemberForm({
   const [errors, setErrors] = useState<ProjectMemberFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -82,7 +82,7 @@ export function ProjectMemberForm({
 
   const updateValue = <TKey extends keyof ProjectMemberFormValues>(
     field: TKey,
-    value: ProjectMemberFormValues[TKey]
+    value: ProjectMemberFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -198,7 +198,7 @@ function CandidateUserSelectField({
     {
       limit: 20,
       q: userSearch.trim() || undefined,
-    }
+    },
   );
 
   const handleUserSelect = (user: UserSummary) => {

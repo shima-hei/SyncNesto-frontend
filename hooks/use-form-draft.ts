@@ -45,7 +45,7 @@ export const useFormDraft = <TValues>({
   const serializedValues = useMemo(() => JSON.stringify(values), [values]);
   const serializedInitialValues = useMemo(
     () => JSON.stringify(initialValues),
-    [initialValues]
+    [initialValues],
   );
   const draftKey = `${userId ?? "anonymous"}:${scope}:${schemaVersion}`;
   const serverDraftEnabled = Boolean(userId && serverDraft?.enabled);
@@ -59,13 +59,13 @@ export const useFormDraft = <TValues>({
         enabled: serverDraftEnabled,
         retry: false,
       },
-    }
+    },
   );
   const upsertServerDraft = useUpsertDraftDraftsScopeKeyPut();
   const deleteServerDraft = useDeleteDraftDraftsDraftIdDelete();
   const currentServerDraft = useMemo(() => {
     return serverDraftsQuery.data?.items.find(
-      (item) => item.scope_key === scope
+      (item) => item.scope_key === scope,
     );
   }, [scope, serverDraftsQuery.data?.items]);
   const pendingDraft = useMemo(() => {
@@ -76,7 +76,14 @@ export const useFormDraft = <TValues>({
       readStoredDraft<TValues>(userId, scope, schemaVersion) ??
       toStoredDraft<TValues>(currentServerDraft)
     );
-  }, [currentServerDraft, draftKey, handledDraftKey, schemaVersion, scope, userId]);
+  }, [
+    currentServerDraft,
+    draftKey,
+    handledDraftKey,
+    schemaVersion,
+    scope,
+    userId,
+  ]);
 
   useEffect(() => {
     if (!userId || serializedValues === serializedInitialValues) {
@@ -145,8 +152,8 @@ export const useFormDraft = <TValues>({
   };
 };
 
-const toStoredDraft = <TValues,>(
-  draft: DraftRead | null | undefined
+const toStoredDraft = <TValues>(
+  draft: DraftRead | null | undefined,
 ): StoredDraft<TValues> | null => {
   if (!draft) {
     return null;

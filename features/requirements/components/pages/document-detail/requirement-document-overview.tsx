@@ -54,11 +54,12 @@ export function RequirementDocumentOverview({
 }: RequirementDocumentOverviewProps) {
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementReviewTargetAnchor | null>(null);
-  const [activePreviewAnchorKey, setActivePreviewAnchorKey] =
-    useState<string | null>(null);
+  const [activePreviewAnchorKey, setActivePreviewAnchorKey] = useState<
+    string | null
+  >(null);
   const { sections, isLoading: isSectionsLoading } = useRequirementSections(
     projectId,
-    documentId
+    documentId,
   );
   const { requirements, isLoading: isRequirementsLoading } = useRequirements(
     projectId,
@@ -66,21 +67,21 @@ export function RequirementDocumentOverview({
       page: 1,
       page_size: 100,
       document_id: documentId,
-    }
+    },
   );
   const { comments: targetComments } = useTargetComments(
     projectId,
     "document",
-    documentId
+    documentId,
   );
   const sortedSections = sections
     .slice()
     .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0));
   const unassignedRequirements = requirements.filter(
-    (requirement) => !requirement.section_id
+    (requirement) => !requirement.section_id,
   );
   const targetAnchors = getUnresolvedReviewAnchors(targetComments).filter(
-    (targetAnchor) => targetAnchor.scope === "document_preview"
+    (targetAnchor) => targetAnchor.scope === "document_preview",
   );
 
   const handleTargetAnchorClick = (targetAnchor: Record<string, unknown>) => {
@@ -89,14 +90,14 @@ export function RequirementDocumentOverview({
     }
     const anchorKey = getRequirementReviewAnchorKey(targetAnchor);
     const element = window.document.querySelector(
-      `[data-document-preview-anchor-key="${anchorKey}"]`
+      `[data-document-preview-anchor-key="${anchorKey}"]`,
     );
 
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
     setActivePreviewAnchorKey(anchorKey);
     window.setTimeout(() => {
       setActivePreviewAnchorKey((current) =>
-        current === anchorKey ? null : current
+        current === anchorKey ? null : current,
       );
     }, 1600);
   };
@@ -113,16 +114,17 @@ export function RequirementDocumentOverview({
       return evaluateRequirementReviewAnchor(
         targetAnchor,
         document.purpose ?? "",
-        document.version
+        document.version,
       );
     }
 
     if (targetAnchor.preview_target_type === "section") {
       const section = sections.find(
-        (item) => item.id === targetAnchor.preview_target_id
+        (item) => item.id === targetAnchor.preview_target_id,
       );
       const sectionRequirements = requirements.filter(
-        (requirement) => requirement.section_id === targetAnchor.preview_target_id
+        (requirement) =>
+          requirement.section_id === targetAnchor.preview_target_id,
       );
 
       return evaluateRequirementReviewAnchor(
@@ -130,9 +132,9 @@ export function RequirementDocumentOverview({
         getDocumentPreviewSectionSourceText(
           section?.title ?? "",
           section?.content ?? "",
-          sectionRequirements
+          sectionRequirements,
         ),
-        section?.version
+        section?.version,
       );
     }
 
@@ -142,8 +144,8 @@ export function RequirementDocumentOverview({
         getDocumentPreviewSectionSourceText(
           "セクション未設定",
           "",
-          unassignedRequirements
-        )
+          unassignedRequirements,
+        ),
       );
     }
     return null;
@@ -168,7 +170,10 @@ export function RequirementDocumentOverview({
             label="対象システム"
             value={document.target_system_name ?? "-"}
           />
-          <DocumentInfo label="クライアント" value={document.client_name ?? "-"} />
+          <DocumentInfo
+            label="クライアント"
+            value={document.client_name ?? "-"}
+          />
           <DocumentInfo label="ベンダー" value={document.vendor_name ?? "-"} />
           <DocumentInfo
             label="更新日時"
@@ -256,7 +261,7 @@ export function RequirementDocumentOverview({
                         previewTargetId: documentId,
                         documentId,
                         field: "purpose",
-                      })
+                      }),
                     )}
                   </p>
                 </ReviewablePreviewBlock>
@@ -270,7 +275,7 @@ export function RequirementDocumentOverview({
                     content={section.content ?? ""}
                     sectionVersion={section.version}
                     requirements={requirements.filter(
-                      (requirement) => requirement.section_id === section.id
+                      (requirement) => requirement.section_id === section.id,
                     )}
                     targetAnchors={targetAnchors}
                     activeAnchorKey={activePreviewAnchorKey}
@@ -353,7 +358,7 @@ function DocumentPreviewSection({
   const sourceText = getDocumentPreviewSectionSourceText(
     title,
     content,
-    requirements
+    requirements,
   );
   const highlightQuotes = getReviewHighlightQuotes({
     targetAnchors,
@@ -413,7 +418,7 @@ function DocumentPreviewSection({
                   <TableCell className="font-medium">
                     {renderHighlightedText(
                       requirement.requirement_code,
-                      highlightQuotes
+                      highlightQuotes,
                     )}
                   </TableCell>
                   <TableCell className="whitespace-normal">
@@ -422,19 +427,19 @@ function DocumentPreviewSection({
                   <TableCell>
                     {renderHighlightedText(
                       getRequirementTypeLabel(requirement.requirement_type),
-                      highlightQuotes
+                      highlightQuotes,
                     )}
                   </TableCell>
                   <TableCell>
                     {renderHighlightedText(
                       getRequirementPriorityLabel(requirement.priority),
-                      highlightQuotes
+                      highlightQuotes,
                     )}
                   </TableCell>
                   <TableCell>
                     {renderHighlightedText(
                       getRequirementStatusLabel(requirement.status),
-                      highlightQuotes
+                      highlightQuotes,
                     )}
                   </TableCell>
                 </TableRow>
@@ -483,7 +488,9 @@ function ReviewablePreviewBlock({
     ) {
       return;
     }
-    const selectableText = normalizeReviewText(currentTarget.textContent ?? sourceText);
+    const selectableText = normalizeReviewText(
+      currentTarget.textContent ?? sourceText,
+    );
     const normalizedQuote = normalizeReviewText(quote);
 
     onSelectTargetAnchor(
@@ -491,7 +498,7 @@ function ReviewablePreviewBlock({
         base: anchor,
         quote: normalizedQuote,
         sourceValue: sourceText || selectableText,
-      })
+      }),
     );
     selection.removeAllRanges();
   };
@@ -500,8 +507,10 @@ function ReviewablePreviewBlock({
     <section
       className={cn(
         "scroll-mt-24 rounded-md transition-colors",
-        activeAnchorKey === anchorKey ? "bg-yellow-100/70 ring-2 ring-yellow-300" : "",
-        className
+        activeAnchorKey === anchorKey
+          ? "bg-yellow-100/70 ring-2 ring-yellow-300"
+          : "",
+        className,
       )}
       data-document-preview-anchor-key={anchorKey}
       onMouseUp={handleMouseUp}
@@ -557,7 +566,7 @@ const getDocumentPreviewSectionSourceText = (
     requirement_type?: string | null;
     priority?: string | null;
     status?: string | null;
-  }[]
+  }[],
 ) => {
   return [
     title,
@@ -569,7 +578,7 @@ const getDocumentPreviewSectionSourceText = (
         getRequirementTypeLabel(requirement.requirement_type),
         getRequirementPriorityLabel(requirement.priority),
         getRequirementStatusLabel(requirement.status),
-      ].join(" ")
+      ].join(" "),
     ),
   ].join("\n");
 };

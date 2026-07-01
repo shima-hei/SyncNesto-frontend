@@ -277,7 +277,7 @@ export function MarkdownPreview({
       <div
         className={cn(
           "min-h-48 rounded-md border bg-muted p-3 text-sm text-muted-foreground",
-          className
+          className,
         )}
       >
         {emptyMessage}
@@ -289,7 +289,7 @@ export function MarkdownPreview({
     <div
       className={cn(
         "min-h-48 rounded-md border bg-background p-3 text-sm leading-7",
-        className
+        className,
       )}
     >
       <ReactMarkdown
@@ -346,7 +346,9 @@ export function MarkdownPreview({
             </strong>
           ),
           em: ({ children }) => (
-            <em>{renderHighlightedMarkdownChildren(children, highlightQuotes)}</em>
+            <em>
+              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+            </em>
           ),
           blockquote: ({ children }) => (
             <blockquote className="my-3 border-l-4 border-border pl-3 text-muted-foreground">
@@ -371,7 +373,9 @@ export function MarkdownPreview({
           ),
           table: ({ children }) => (
             <div className="my-3 overflow-x-auto">
-              <table className="w-full border-collapse text-sm">{children}</table>
+              <table className="w-full border-collapse text-sm">
+                {children}
+              </table>
             </div>
           ),
           th: ({ children }) => (
@@ -419,7 +423,7 @@ export function MarkdownPreview({
 
 const renderHighlightedMarkdownChildren = (
   children: ReactNode,
-  highlightQuotes: string[]
+  highlightQuotes: string[],
 ) => {
   const quotes = highlightQuotes.filter((quote) => quote.trim());
 
@@ -438,7 +442,7 @@ const renderHighlightedMarkdownChildren = (
 const renderHighlightedMarkdownText = (
   value: string,
   highlightQuotes: string[],
-  childIndex: number
+  childIndex: number,
 ) => {
   const quote = highlightQuotes.find((item) => value.includes(item));
 

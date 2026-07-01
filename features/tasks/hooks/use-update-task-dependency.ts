@@ -33,7 +33,7 @@ export function useUpdateTaskDependency(projectId: number, taskId: number) {
   const updateTaskDependency = async (
     dependencyId: number,
     version: number,
-    lagDays: string
+    lagDays: string,
   ) => {
     return mutation.mutateAsync({
       dependencyId,

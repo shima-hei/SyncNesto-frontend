@@ -81,7 +81,7 @@ export function TaskParentSelectField({
                 aria-expanded={open}
                 className={cn(
                   "w-full justify-between",
-                  !selectedValue && "text-muted-foreground"
+                  !selectedValue && "text-muted-foreground",
                 )}
               >
                 {selectedValue ? (
@@ -179,5 +179,8 @@ const getSelectedValue = ({
     return selectedTask;
   }
 
-  return tasks.find((task) => String(task.id) === value) ?? getFallbackSelectedTask(value);
+  return (
+    tasks.find((task) => String(task.id) === value) ??
+    getFallbackSelectedTask(value)
+  );
 };

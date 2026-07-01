@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequirementTargetCommentCreateTargetAnchor } from './requirementTargetCommentCreateTargetAnchor';
+import type { RequirementTargetCommentCreateTargetAnchor } from "./requirementTargetCommentCreateTargetAnchor";
 
 /**
  * 要件定義対象コメント作成リクエストで受け取るschema。

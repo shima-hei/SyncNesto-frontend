@@ -62,7 +62,9 @@ export function TaskBulkActions({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value={NO_BULK_STATUS_CHANGE}>変更しない</SelectItem>
+                  <SelectItem value={NO_BULK_STATUS_CHANGE}>
+                    変更しない
+                  </SelectItem>
                   {TASK_STATUS_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}

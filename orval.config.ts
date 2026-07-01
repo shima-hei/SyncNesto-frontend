@@ -3,7 +3,8 @@ import { defineConfig } from "orval";
 export default defineConfig({
   syncnesto: {
     input: {
-      target: process.env.OPENAPI_TARGET ?? "http://localhost:8000/openapi.json",
+      target:
+        process.env.OPENAPI_TARGET ?? "http://localhost:8000/openapi.json",
     },
     output: {
       mode: "tags-split",

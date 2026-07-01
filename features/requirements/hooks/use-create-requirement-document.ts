@@ -20,7 +20,9 @@ export function useCreateRequirementDocument(projectId: number) {
         onSuccess: async (document) => {
           await invalidateRequirementDocumentList(queryClient, projectId);
           toast.success(REQUIREMENT_MESSAGES.document.createSuccess);
-          router.push(`/projects/joined/${projectId}/requirements/${document.id}`);
+          router.push(
+            `/projects/joined/${projectId}/requirements/${document.id}`,
+          );
         },
         onError: () => {
           toast.error(REQUIREMENT_MESSAGES.document.createError);
@@ -29,7 +31,7 @@ export function useCreateRequirementDocument(projectId: number) {
     });
 
   const createRequirementDocument = async (
-    values: RequirementDocumentFormValues
+    values: RequirementDocumentFormValues,
   ) => {
     return createDocumentMutation.mutateAsync({
       projectId,

@@ -44,7 +44,9 @@ export function RequirementDocumentRequirementsTab({
   canComment,
   canReview,
 }: RequirementDocumentRequirementsTabProps) {
-  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(
+    null,
+  );
   const [selectedRequirement, setSelectedRequirement] =
     useState<RequirementRead | null>(null);
   const [commentTargetMode, setCommentTargetMode] =
@@ -54,54 +56,57 @@ export function RequirementDocumentRequirementsTab({
   const [activeAnchorKey, setActiveAnchorKey] = useState<string | null>(null);
   const { sections } = useRequirementSections(projectId, documentId);
   const selectedRequirementId = selectedRequirement?.id ?? null;
-  const selectedSection = sections.find((section) => section.id === selectedSectionId);
+  const selectedSection = sections.find(
+    (section) => section.id === selectedSectionId,
+  );
   const { comments: sectionComments } = useTargetComments(
     projectId,
     "section",
     selectedSectionId ?? 0,
-    { enabled: Boolean(selectedSectionId) }
+    { enabled: Boolean(selectedSectionId) },
   );
   const { comments: requirementComments } = useTargetComments(
     projectId,
     "requirement_item",
     selectedRequirementId ?? 0,
-    { enabled: Boolean(selectedRequirementId) }
+    { enabled: Boolean(selectedRequirementId) },
   );
-  const sectionTargetAnchors = getUnresolvedReviewAnchors(sectionComments).filter(
-    (targetAnchor) => targetAnchor.scope === "section_review"
+  const sectionTargetAnchors = getUnresolvedReviewAnchors(
+    sectionComments,
+  ).filter((targetAnchor) => targetAnchor.scope === "section_review");
+  const requirementTargetAnchors = getUnresolvedReviewAnchors(
+    requirementComments,
+  ).filter(
+    (targetAnchor) => targetAnchor.scope === "section_requirements_review",
   );
-  const requirementTargetAnchors =
-    getUnresolvedReviewAnchors(requirementComments).filter(
-      (targetAnchor) => targetAnchor.scope === "section_requirements_review"
-    );
   const reviewTarget =
     commentTargetMode === "requirement" && selectedRequirement
-    ? {
-        targetType: "requirement_item",
-        targetId: selectedRequirement.id,
-        title: `要件コメント: ${selectedRequirement.requirement_code}`,
-        label: `${selectedRequirement.requirement_code} ${selectedRequirement.title}`,
-        approvalTargetType: "requirement_item",
-        approvalTargetId: selectedRequirement.id,
-        approvalTitle: "要件の承認",
-        historyTargetType: "requirement",
-        historyTargetId: selectedRequirement.id,
-        historyTitle: "要件の変更履歴",
-      }
-    : selectedSectionId
       ? {
-          targetType: "section",
-          targetId: selectedSectionId,
-          title: "セクションコメント",
-          label: selectedSection?.title ?? "選択中セクション",
-          approvalTargetType: "section",
-          approvalTargetId: selectedSectionId,
-          approvalTitle: "セクションの承認",
-          historyTargetType: "requirement_section",
-          historyTargetId: selectedSectionId,
-          historyTitle: "セクションの変更履歴",
+          targetType: "requirement_item",
+          targetId: selectedRequirement.id,
+          title: `要件コメント: ${selectedRequirement.requirement_code}`,
+          label: `${selectedRequirement.requirement_code} ${selectedRequirement.title}`,
+          approvalTargetType: "requirement_item",
+          approvalTargetId: selectedRequirement.id,
+          approvalTitle: "要件の承認",
+          historyTargetType: "requirement",
+          historyTargetId: selectedRequirement.id,
+          historyTitle: "要件の変更履歴",
         }
-      : null;
+      : selectedSectionId
+        ? {
+            targetType: "section",
+            targetId: selectedSectionId,
+            title: "セクションコメント",
+            label: selectedSection?.title ?? "選択中セクション",
+            approvalTargetType: "section",
+            approvalTargetId: selectedSectionId,
+            approvalTitle: "セクションの承認",
+            historyTargetType: "requirement_section",
+            historyTargetId: selectedSectionId,
+            historyTitle: "セクションの変更履歴",
+          }
+        : null;
 
   const handleSelectSection = (sectionId: number | null) => {
     setSelectedSectionId(sectionId);
@@ -122,7 +127,7 @@ export function RequirementDocumentRequirementsTab({
 
   const handleSelectRequirementAnchor = (
     requirement: RequirementRead,
-    targetAnchor: RequirementReviewTargetAnchor
+    targetAnchor: RequirementReviewTargetAnchor,
   ) => {
     setCommentTargetMode("requirement");
     setSelectedRequirement(requirement);
@@ -143,7 +148,7 @@ export function RequirementDocumentRequirementsTab({
     }
     const anchorKey = getRequirementReviewAnchorKey(targetAnchor);
     const element = window.document.querySelector(
-      `[data-requirement-review-anchor-key="${anchorKey}"]`
+      `[data-requirement-review-anchor-key="${anchorKey}"]`,
     );
 
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -162,7 +167,7 @@ export function RequirementDocumentRequirementsTab({
       return evaluateRequirementReviewAnchor(
         targetAnchor,
         selectedSection.content ?? "",
-        selectedSection.version
+        selectedSection.version,
       );
     }
 
@@ -173,7 +178,7 @@ export function RequirementDocumentRequirementsTab({
       return evaluateRequirementReviewAnchor(
         targetAnchor,
         getRequirementAnchorFieldValue(selectedRequirement, targetAnchor.field),
-        selectedRequirement.version
+        selectedRequirement.version,
       );
     }
     return null;
@@ -274,7 +279,7 @@ export function RequirementDocumentRequirementsTab({
 
 const getRequirementAnchorFieldValue = (
   requirement: RequirementRead,
-  field: string
+  field: string,
 ) => {
   switch (field) {
     case "requirement_code":

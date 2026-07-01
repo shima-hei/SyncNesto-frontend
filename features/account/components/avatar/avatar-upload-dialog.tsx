@@ -102,7 +102,7 @@ export function AvatarUploadDialog({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : API_ERROR_FALLBACK_MESSAGES.avatarUpload
+          : API_ERROR_FALLBACK_MESSAGES.avatarUpload,
       );
     }
   };
@@ -116,7 +116,7 @@ export function AvatarUploadDialog({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : API_ERROR_FALLBACK_MESSAGES.avatarDelete
+          : API_ERROR_FALLBACK_MESSAGES.avatarDelete,
       );
     }
   };
@@ -201,7 +201,7 @@ export function AvatarUploadDialog({
           <FieldError>
             {getApiErrorMessage(
               uploadError,
-              API_ERROR_FALLBACK_MESSAGES.avatarUpload
+              API_ERROR_FALLBACK_MESSAGES.avatarUpload,
             )}
           </FieldError>
         ) : null}

@@ -10,7 +10,7 @@ type UseRequirementChangeLogsOptions = {
 export function useRequirementChangeLogs(
   projectId: number,
   documentId: number,
-  options: UseRequirementChangeLogsOptions = {}
+  options: UseRequirementChangeLogsOptions = {},
 ) {
   const changeLogsQuery =
     useListRequirementChangeLogsProjectsProjectIdChangeLogsGet(
@@ -26,7 +26,7 @@ export function useRequirementChangeLogs(
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

@@ -13,8 +13,8 @@ import {
 
 export function useDeleteTaskComment(taskId: number) {
   const queryClient = useQueryClient();
-  const deleteCommentMutation =
-    useDeleteTaskCommentTaskCommentsCommentIdDelete({
+  const deleteCommentMutation = useDeleteTaskCommentTaskCommentsCommentIdDelete(
+    {
       mutation: {
         onSuccess: async () => {
           await Promise.all([
@@ -27,7 +27,8 @@ export function useDeleteTaskComment(taskId: number) {
           toast.error(TASK_MESSAGES.comment.deleteError);
         },
       },
-    });
+    },
+  );
 
   const deleteTaskComment = async (commentId: number) => {
     return deleteCommentMutation.mutateAsync({ commentId });

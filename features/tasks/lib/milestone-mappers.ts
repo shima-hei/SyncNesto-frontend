@@ -14,7 +14,7 @@ export const defaultMilestoneFormValues: MilestoneFormValues = {
 };
 
 export const getMilestoneFormValues = (
-  milestone: MilestoneRead
+  milestone: MilestoneRead,
 ): MilestoneFormValues => {
   return {
     title: milestone.title,
@@ -25,7 +25,7 @@ export const getMilestoneFormValues = (
 };
 
 export const toMilestoneCreate = (
-  values: MilestoneFormValues
+  values: MilestoneFormValues,
 ): MilestoneCreate => {
   return {
     title: values.title.trim(),
@@ -37,7 +37,7 @@ export const toMilestoneCreate = (
 
 export const toMilestoneUpdate = (
   values: MilestoneFormValues,
-  version: number
+  version: number,
 ): MilestoneUpdate => {
   return {
     version,

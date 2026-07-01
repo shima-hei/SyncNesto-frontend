@@ -5,7 +5,7 @@ export const createDraftScope = (
   resource: string,
   action: "create" | "update",
   projectId: number,
-  resourceId?: number | null
+  resourceId?: number | null,
 ) => {
   return [domain, resource, action, projectId, resourceId ?? null]
     .filter((part) => part !== null)

@@ -63,7 +63,7 @@ export function useUpdateTaskQuick(projectId: number) {
 
   const updateTaskQuick = async (
     task: TaskRead,
-    values: TaskQuickUpdateValues
+    values: TaskQuickUpdateValues,
   ) => {
     return updateMutation.mutateAsync({
       taskId: task.id,

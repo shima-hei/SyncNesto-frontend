@@ -53,7 +53,7 @@ export function RequirementRelationForm({
   const [errors, setErrors] = useState<RequirementRelationFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -121,7 +121,9 @@ export function RequirementRelationForm({
               }}
               aria-invalid={Boolean(errors.targetId)}
             />
-            {errors.targetId ? <FieldError>{errors.targetId}</FieldError> : null}
+            {errors.targetId ? (
+              <FieldError>{errors.targetId}</FieldError>
+            ) : null}
           </Field>
 
           <Field data-invalid={errors.relationType ? true : undefined}>

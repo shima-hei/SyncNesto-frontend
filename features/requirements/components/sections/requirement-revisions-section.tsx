@@ -17,7 +17,7 @@ export function RequirementRevisionsSection({
 }: RequirementRevisionsSectionProps) {
   const { revisions, isLoading } = useRequirementRevisions(
     projectId,
-    requirementId
+    requirementId,
   );
 
   return (
@@ -51,7 +51,9 @@ export function RequirementRevisionsSection({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">改訂履歴はありません。</p>
+          <p className="text-sm text-muted-foreground">
+            改訂履歴はありません。
+          </p>
         )}
       </CardContent>
     </Card>

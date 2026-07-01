@@ -21,6 +21,6 @@ const getProjectStatusClassName = (status?: string | null) => {
     status === "active" &&
       "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
     status === "archived" &&
-      "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]"
+      "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]",
   );
 };

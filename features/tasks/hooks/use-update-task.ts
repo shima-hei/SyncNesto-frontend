@@ -48,7 +48,7 @@ export function useUpdateTask(projectId: number, taskId: number) {
   const updateTask = async (
     values: TaskFormValues,
     version: number,
-    currentTask?: TaskRead
+    currentTask?: TaskRead,
   ) => {
     return updateTaskMutation.mutateAsync({
       taskId,

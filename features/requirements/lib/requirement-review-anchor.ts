@@ -1,13 +1,10 @@
 import type { RequirementTargetCommentRead } from "@/lib/api/generated/model";
 
 export type ReviewAnchorScope =
-  | "document_preview"
-  | "section_review"
-  | "section_requirements_review";
+  "document_preview" | "section_review" | "section_requirements_review";
 
 export type ReviewAnchorSourceView =
-  | "requirement_document_overview_tab"
-  | "requirement_document_requirements_tab";
+  "requirement_document_overview_tab" | "requirement_document_requirements_tab";
 
 export type ReviewAnchorStatus = "current" | "moved" | "changed" | "missing";
 
@@ -63,7 +60,7 @@ export const createRequirementReviewAnchor = async ({
 export const evaluateRequirementReviewAnchor = (
   targetAnchor: RequirementReviewTargetAnchor,
   currentValue: string,
-  currentVersion?: number | null
+  currentVersion?: number | null,
 ): ReviewAnchorStatus => {
   const value = normalizeReviewText(currentValue);
   const quote = normalizeReviewText(targetAnchor.quote);
@@ -113,7 +110,7 @@ export const getRequirementReviewAnchorKey = (targetAnchor: {
 
 export const isSelectionInsideElement = (
   selection: Selection,
-  element: HTMLElement
+  element: HTMLElement,
 ) => {
   if (!selection.rangeCount) {
     return false;
@@ -131,9 +128,9 @@ export const isSelectionInsideElement = (
 
   return Boolean(
     selection.anchorNode &&
-      selection.focusNode &&
-      element.contains(selection.anchorNode) &&
-      element.contains(selection.focusNode)
+    selection.focusNode &&
+    element.contains(selection.anchorNode) &&
+    element.contains(selection.focusNode),
   );
 };
 
@@ -142,7 +139,7 @@ export const normalizeReviewText = (value: string) => {
 };
 
 export const getUnresolvedReviewAnchors = (
-  comments: RequirementTargetCommentRead[]
+  comments: RequirementTargetCommentRead[],
 ) => {
   return comments
     .filter((comment) => !comment.is_resolved)
@@ -190,13 +187,13 @@ export const getReviewHighlightQuotes = ({
 };
 
 export const isRequirementReviewTargetAnchor = (
-  value: Record<string, unknown> | null | undefined
+  value: Record<string, unknown> | null | undefined,
 ): value is RequirementReviewTargetAnchor => {
   return Boolean(
     value &&
-      typeof value.scope === "string" &&
-      typeof value.field === "string" &&
-      typeof value.quote === "string"
+    typeof value.scope === "string" &&
+    typeof value.field === "string" &&
+    typeof value.quote === "string",
   );
 };
 

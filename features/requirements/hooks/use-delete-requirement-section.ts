@@ -13,7 +13,7 @@ import {
 
 export function useDeleteRequirementSection(
   projectId: number,
-  documentId: number
+  documentId: number,
 ) {
   const queryClient = useQueryClient();
   const deleteSectionMutation =
@@ -31,7 +31,7 @@ export function useDeleteRequirementSection(
             toast.error(REQUIREMENT_MESSAGES.section.deleteError);
           },
         },
-      }
+      },
     );
 
   const deleteRequirementSection = async (sectionId: number) => {

@@ -59,7 +59,7 @@ export function MilestoneForm({
   const [errors, setErrors] = useState<MilestoneFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -82,7 +82,7 @@ export function MilestoneForm({
 
   const updateValue = <TKey extends keyof MilestoneFormValues>(
     field: TKey,
-    value: MilestoneFormValues[TKey]
+    value: MilestoneFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -133,7 +133,10 @@ export function MilestoneForm({
               value={values.status}
               onValueChange={(value) => updateValue("status", value)}
             >
-              <SelectTrigger className="w-full" aria-invalid={Boolean(errors.status)}>
+              <SelectTrigger
+                className="w-full"
+                aria-invalid={Boolean(errors.status)}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

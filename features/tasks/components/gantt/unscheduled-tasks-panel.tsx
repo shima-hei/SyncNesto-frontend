@@ -109,12 +109,19 @@ function UnscheduledTaskDragItem({
           className="min-w-0 text-left"
           onClick={() => onOpenDetail(task.id)}
         >
-          <span className="block truncate text-sm font-medium">{task.title}</span>
-          <span className="text-xs text-muted-foreground">{task.task_code}</span>
+          <span className="block truncate text-sm font-medium">
+            {task.title}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {task.task_code}
+          </span>
         </button>
         <div className="flex flex-wrap gap-1">
           <TaskStatusBadge status={task.status} />
-          <TaskFlagBadges isOverdue={task.is_overdue} isBlocked={task.is_blocked} />
+          <TaskFlagBadges
+            isOverdue={task.is_overdue}
+            isBlocked={task.is_blocked}
+          />
         </div>
         <Button
           type="button"

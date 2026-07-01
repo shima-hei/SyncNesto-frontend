@@ -49,7 +49,9 @@ type RequirementDocumentFormProps = {
   error?: Error | null;
   conflictValues?: RequirementDocumentFormValues | null;
   onCloseConflict?: () => void;
-  onResolveConflict?: (values: RequirementDocumentFormValues) => Promise<unknown>;
+  onResolveConflict?: (
+    values: RequirementDocumentFormValues,
+  ) => Promise<unknown>;
   onSubmit: (values: RequirementDocumentFormValues) => Promise<unknown>;
 };
 
@@ -101,7 +103,7 @@ export function RequirementDocumentForm({
     : [];
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -126,7 +128,7 @@ export function RequirementDocumentForm({
 
   const updateValue = <TKey extends keyof RequirementDocumentFormValues>(
     field: TKey,
-    value: RequirementDocumentFormValues[TKey]
+    value: RequirementDocumentFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -138,7 +140,9 @@ export function RequirementDocumentForm({
         <FieldGroup>
           <div className="grid gap-4 md:grid-cols-2">
             <Field data-invalid={errors.documentCode ? true : undefined}>
-              <FieldLabel htmlFor={documentCodeId}>ドキュメントコード</FieldLabel>
+              <FieldLabel htmlFor={documentCodeId}>
+                ドキュメントコード
+              </FieldLabel>
               <Input
                 id={documentCodeId}
                 value={values.documentCode}

@@ -80,7 +80,7 @@ const getGanttPrintHtml = (gantt: GanttResponse, displayUnit: string) => {
           <td>${escapeHtml(task.due_date ?? "")}</td>
           <td>${task.progress_percent ?? 0}%</td>
         </tr>
-      `
+      `,
     )
     .join("");
   const milestones = gantt.milestones
@@ -91,7 +91,7 @@ const getGanttPrintHtml = (gantt: GanttResponse, displayUnit: string) => {
           <td>${escapeHtml(milestone.target_date)}</td>
           <td>${escapeHtml(milestone.status ?? "")}</td>
         </tr>
-      `
+      `,
     )
     .join("");
   const dependencies = gantt.dependencies
@@ -103,7 +103,7 @@ const getGanttPrintHtml = (gantt: GanttResponse, displayUnit: string) => {
           <td>${escapeHtml(dependency.dependency_type ?? "")}</td>
           <td>${dependency.lag_days ?? 0}</td>
         </tr>
-      `
+      `,
     )
     .join("");
 
@@ -204,7 +204,9 @@ const getPrintEmptyRow = (colSpan: number) => {
 };
 
 const getGanttDisplayUnitLabel = (displayUnit: string) => {
-  const option = GANTT_DISPLAY_OPTIONS.find((item) => item.value === displayUnit);
+  const option = GANTT_DISPLAY_OPTIONS.find(
+    (item) => item.value === displayUnit,
+  );
 
   return option?.label ?? displayUnit;
 };

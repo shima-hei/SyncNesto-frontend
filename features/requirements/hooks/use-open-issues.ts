@@ -10,7 +10,7 @@ export function useOpenIssues(projectId: number, documentId: number) {
       query: {
         retry: false,
       },
-    }
+    },
   );
 
   return {

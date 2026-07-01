@@ -23,7 +23,7 @@ const validateGuestSystemAdmin = {
 
 export const userCreateSchema = userFormBaseSchema.refine(
   (values) => values.userType !== USER_TYPE_KEYS.guest || !values.isSystemAdmin,
-  validateGuestSystemAdmin
+  validateGuestSystemAdmin,
 );
 
 export const userUpdateSchema = userFormBaseSchema
@@ -32,10 +32,11 @@ export const userUpdateSchema = userFormBaseSchema
       .string()
       .refine(
         (value) => value.length === 0 || value.length >= 8,
-        VALIDATION_MESSAGES.optionalMinLength("パスワード", 8)
+        VALIDATION_MESSAGES.optionalMinLength("パスワード", 8),
       ),
   })
   .refine(
-    (values) => values.userType !== USER_TYPE_KEYS.guest || !values.isSystemAdmin,
-    validateGuestSystemAdmin
+    (values) =>
+      values.userType !== USER_TYPE_KEYS.guest || !values.isSystemAdmin,
+    validateGuestSystemAdmin,
   );

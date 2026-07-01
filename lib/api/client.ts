@@ -8,8 +8,7 @@ import {
 import { ApiError } from "./error";
 import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 const CSRF_COOKIE_NAME = "csrf_token";
 const CSRF_HEADER_NAME = "X-CSRF-Token";
 
@@ -26,7 +25,7 @@ export type BodyType<BodyData> = BodyData;
 
 export async function apiClient<T>(
   url: string,
-  options: ApiClientOptions
+  options: ApiClientOptions,
 ): Promise<T> {
   const { method, params, body, headers, signal } = options;
   const requestUrl = buildUrl(url, params);
@@ -64,7 +63,7 @@ const buildUrl = (path: string, params?: Record<string, unknown>) => {
     ? new URL(path, API_BASE_URL)
     : new URL(
         `${normalizeBasePath(API_BASE_URL)}${normalizePath(path)}`,
-        "http://bff.local"
+        "http://bff.local",
       );
 
   if (params) {
@@ -108,7 +107,7 @@ const normalizePath = (path: string) => {
 const buildHeaders = (
   headers: HeadersInit | undefined,
   body: unknown,
-  method: string
+  method: string,
 ) => {
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Accept", "application/json");
@@ -215,7 +214,7 @@ const isApiErrorResponse = (data: unknown): data is ApiErrorResponse => {
 };
 
 const isApiValidationErrorResponse = (
-  data: unknown
+  data: unknown,
 ): data is ApiValidationErrorResponse => {
   return (
     typeof data === "object" &&

@@ -15,4 +15,3 @@ export function useUser(userId: number) {
     error: userQuery.error,
   };
 }
-

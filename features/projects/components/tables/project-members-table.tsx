@@ -24,10 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type {
-  ProjectMemberRead,
-  UserSummary,
-} from "@/lib/api/generated/model";
+import type { ProjectMemberRead, UserSummary } from "@/lib/api/generated/model";
 
 import { PROJECT_ROLE_KEYS } from "@/features/auth/constants/roles";
 import {
@@ -44,7 +41,10 @@ type ProjectMembersTableProps = {
   canManageMembers?: boolean;
   currentUserId?: number | null;
   projectAdminCount?: number;
-  onUpdateRole?: (member: ProjectMemberRead, roleKey: string) => Promise<unknown>;
+  onUpdateRole?: (
+    member: ProjectMemberRead,
+    roleKey: string,
+  ) => Promise<unknown>;
   onRemove?: (userId: number) => Promise<void>;
 };
 
@@ -61,7 +61,7 @@ export function ProjectMembersTable({
   onRemove,
 }: ProjectMembersTableProps) {
   const [removeTarget, setRemoveTarget] = useState<ProjectMemberRead | null>(
-    null
+    null,
   );
 
   if (isLoading) {
@@ -148,14 +148,18 @@ function ProjectMemberRow({
   currentUserId: number | null;
   projectAdminCount: number;
   isUpdatePending: boolean;
-  onUpdateRole?: (member: ProjectMemberRead, roleKey: string) => Promise<unknown>;
+  onUpdateRole?: (
+    member: ProjectMemberRead,
+    roleKey: string,
+  ) => Promise<unknown>;
   onRemove: () => void;
 }) {
   const [roleKey, setRoleKey] = useState(member.role.key);
   const isChanged = roleKey !== member.role.key;
   const isCurrentUser = member.user_id === currentUserId;
   const isLastProjectAdmin =
-    member.role.key === PROJECT_ROLE_KEYS.projectAdmin && projectAdminCount <= 1;
+    member.role.key === PROJECT_ROLE_KEYS.projectAdmin &&
+    projectAdminCount <= 1;
   const isDemotingLastProjectAdmin =
     isLastProjectAdmin && roleKey !== PROJECT_ROLE_KEYS.projectAdmin;
   const isRoleSelectDisabled = isLastProjectAdmin;
@@ -215,7 +219,9 @@ function ProjectMemberRow({
             </p>
           </>
         ) : (
-          <span className="text-sm">{getProjectRoleLabel(member.role.key)}</span>
+          <span className="text-sm">
+            {getProjectRoleLabel(member.role.key)}
+          </span>
         )}
       </TableCell>
       {canManageMembers ? (

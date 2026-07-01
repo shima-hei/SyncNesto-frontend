@@ -5,11 +5,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGetParams = {
-q?: string | null;
-/**
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
-};
+export type ListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGetParams =
+  {
+    q?: string | null;
+    /**
+     * @minimum 1
+     * @maximum 100
+     */
+    limit?: number;
+  };

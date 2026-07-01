@@ -3,9 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-import {
-  useLoginUserAuthLoginPost,
-} from "@/lib/api/generated/auth/auth";
+import { useLoginUserAuthLoginPost } from "@/lib/api/generated/auth/auth";
 import { getLoginApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { invalidateCurrentUser } from "../lib/current-user-cache";

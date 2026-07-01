@@ -16,17 +16,19 @@ import {
 
 export function useToggleTaskCommentState(taskId: number) {
   const queryClient = useQueryClient();
-  const resolveMutation = useResolveTaskCommentTaskCommentsCommentIdResolvePost({
-    mutation: {
-      onSuccess: async () => {
-        await invalidateComments(queryClient, taskId);
-        toast.success(TASK_MESSAGES.comment.resolveSuccess);
-      },
-      onError: () => {
-        toast.error(TASK_MESSAGES.comment.resolveError);
+  const resolveMutation = useResolveTaskCommentTaskCommentsCommentIdResolvePost(
+    {
+      mutation: {
+        onSuccess: async () => {
+          await invalidateComments(queryClient, taskId);
+          toast.success(TASK_MESSAGES.comment.resolveSuccess);
+        },
+        onError: () => {
+          toast.error(TASK_MESSAGES.comment.resolveError);
+        },
       },
     },
-  });
+  );
   const reopenMutation = useReopenTaskCommentTaskCommentsCommentIdReopenPost({
     mutation: {
       onSuccess: async () => {
@@ -62,7 +64,7 @@ export function useToggleTaskCommentState(taskId: number) {
 
 const invalidateComments = (
   queryClient: ReturnType<typeof useQueryClient>,
-  taskId: number
+  taskId: number,
 ) => {
   return Promise.all([
     invalidateTaskComments(queryClient, taskId),

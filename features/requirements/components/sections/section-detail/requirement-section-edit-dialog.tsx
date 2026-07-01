@@ -21,7 +21,7 @@ type RequirementSectionEditDialogProps = {
   onSubmit: (
     sectionId: number,
     version: number,
-    values: RequirementSectionFormValues
+    values: RequirementSectionFormValues,
   ) => Promise<unknown>;
 };
 
@@ -57,7 +57,7 @@ export function RequirementSectionEditDialog({
 }
 
 function toSectionFormValues(
-  section: RequirementSectionRead
+  section: RequirementSectionRead,
 ): RequirementSectionFormValues {
   return {
     title: section.title,

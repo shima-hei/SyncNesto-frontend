@@ -17,7 +17,7 @@ type SelectedSectionSupportTabsProps = {
   selectedTargetAnchor?: Record<string, unknown> | null;
   onTargetAnchorClick?: (targetAnchor: Record<string, unknown>) => void;
   getTargetAnchorStatus?: (
-    targetAnchor: Record<string, unknown>
+    targetAnchor: Record<string, unknown>,
   ) => ReviewAnchorStatus | null;
   approvalTargetType: string;
   approvalTargetId: number;

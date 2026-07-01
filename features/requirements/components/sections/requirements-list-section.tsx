@@ -34,7 +34,7 @@ type RequirementsListSectionProps = {
   onSelectRequirement?: (requirement: RequirementRead) => void;
   onSelectReviewAnchor?: (
     requirement: RequirementRead,
-    targetAnchor: RequirementReviewTargetAnchor
+    targetAnchor: RequirementReviewTargetAnchor,
   ) => void;
 };
 
@@ -59,7 +59,9 @@ export function RequirementsListSection({
   const [priority, setPriority] = useState(ALL_REQUIREMENT_PRIORITIES);
   const [ownerId, setOwnerId] = useState<number | null>(null);
   const [sort, setSort] =
-    useState<(typeof REQUIREMENT_SORT_OPTIONS)[number]["value"]>("updated_desc");
+    useState<(typeof REQUIREMENT_SORT_OPTIONS)[number]["value"]>(
+      "updated_desc",
+    );
   const { requirements, total, isLoading, isFetching } = useRequirements(
     projectId,
     {
@@ -74,7 +76,7 @@ export function RequirementsListSection({
       priority: priority === ALL_REQUIREMENT_PRIORITIES ? undefined : priority,
       owner_id: ownerId ?? undefined,
       sort,
-    }
+    },
   );
   const selectedSection = sections.find((section) => section.id === sectionId);
   const createHref = sectionId

@@ -33,7 +33,7 @@ export function UsersPage() {
       q: q || undefined,
       is_active: isActive,
     }),
-    [isActive, page, q]
+    [isActive, page, q],
   );
   const { users, total, isLoading, isFetching } = useUsers(userListParams);
 

@@ -5,4 +5,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RequirementDetailUpdateDetailJson = { [key: string]: unknown } | null;
+export type RequirementDetailUpdateDetailJson = {
+  [key: string]: unknown;
+} | null;

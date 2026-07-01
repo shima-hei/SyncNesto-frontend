@@ -27,11 +27,15 @@ export function useUpdateRequirementListItem(projectId: number) {
             queryClient,
             projectId,
             requirement.id,
-            requirement
+            requirement,
           );
           await Promise.all([
             invalidateRequirementList(queryClient, projectId),
-            invalidateRequirementSummary(queryClient, projectId, requirement.id),
+            invalidateRequirementSummary(
+              queryClient,
+              projectId,
+              requirement.id,
+            ),
             invalidateRequirementChangeLogs(queryClient, projectId),
           ]);
           toast.success(REQUIREMENT_MESSAGES.requirement.updateSuccess);
@@ -44,7 +48,7 @@ export function useUpdateRequirementListItem(projectId: number) {
 
   const updateRequirementListItem = async (
     requirement: RequirementRead,
-    values: Omit<RequirementUpdate, "version">
+    values: Omit<RequirementUpdate, "version">,
   ) => {
     return updateRequirementMutation.mutateAsync({
       projectId,

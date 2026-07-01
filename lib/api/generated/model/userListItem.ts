@@ -4,8 +4,8 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RoleRead } from './roleRead';
-import type { UserType } from './userType';
+import type { RoleRead } from "./roleRead";
+import type { UserType } from "./userType";
 
 /**
  * ユーザー一覧で返す軽量schema。

@@ -53,7 +53,7 @@ export function RequirementTargetCommentForm({
   const [errors, setErrors] = useState<RequirementTargetCommentFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -89,7 +89,10 @@ export function RequirementTargetCommentForm({
           <Textarea
             value={values.body}
             onChange={(event) => {
-              setValues((current) => ({ ...current, body: event.target.value }));
+              setValues((current) => ({
+                ...current,
+                body: event.target.value,
+              }));
               setErrors((current) => ({ ...current, body: undefined }));
             }}
             aria-invalid={Boolean(errors.body)}

@@ -15,28 +15,34 @@ import type { RequirementDetailFormValues } from "../types/requirement-detail-fo
 
 export function useUpdateRequirementDetail(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const updateDetailMutation =
-    useUpdateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdPatch({
-      mutation: {
-        onSuccess: async () => {
-          await Promise.all([
-            invalidateRequirementSummary(queryClient, projectId, requirementId),
-            invalidateRequirementChangeLogs(queryClient, projectId),
-          ]);
-          toast.success(REQUIREMENT_MESSAGES.detail.updateSuccess);
-        },
-        onError: () => {
-          toast.error(REQUIREMENT_MESSAGES.detail.updateError);
+    useUpdateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdPatch(
+      {
+        mutation: {
+          onSuccess: async () => {
+            await Promise.all([
+              invalidateRequirementSummary(
+                queryClient,
+                projectId,
+                requirementId,
+              ),
+              invalidateRequirementChangeLogs(queryClient, projectId),
+            ]);
+            toast.success(REQUIREMENT_MESSAGES.detail.updateSuccess);
+          },
+          onError: () => {
+            toast.error(REQUIREMENT_MESSAGES.detail.updateError);
+          },
         },
       },
-    });
+    );
 
   const updateRequirementDetail = async (
     detailId: number,
-    values: RequirementDetailFormValues
+    values: RequirementDetailFormValues,
   ) => {
     return updateDetailMutation.mutateAsync({
       projectId,

@@ -40,7 +40,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
     error,
   } = useUpdateCurrentUser();
   const [values, setValues] = useState<AccountProfileFormValues>(
-    getAccountProfileFormValues(user)
+    getAccountProfileFormValues(user),
   );
   const [errors, setErrors] = useState<AccountProfileFormErrors>({});
   const conflictValues = conflictCurrent
@@ -55,7 +55,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
     : [];
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -73,13 +73,13 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
 
     setErrors({});
     await updateCurrentUser(
-      toUserProfileUpdate(result.data, user.version)
+      toUserProfileUpdate(result.data, user.version),
     ).catch(() => undefined);
   };
 
   const updateValue = <TKey extends keyof AccountProfileFormValues>(
     field: TKey,
-    value: AccountProfileFormValues[TKey]
+    value: AccountProfileFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -133,7 +133,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
 
             setValues(resolvedValues);
             await updateCurrentUser(
-              toUserProfileUpdate(resolvedValues, conflictCurrent.version)
+              toUserProfileUpdate(resolvedValues, conflictCurrent.version),
             );
           }}
         />

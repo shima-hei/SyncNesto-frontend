@@ -2,7 +2,10 @@
 
 import { useListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet } from "@/lib/api/generated/requirements/requirements";
 
-export function useRequirementRelations(projectId: number, requirementId: number) {
+export function useRequirementRelations(
+  projectId: number,
+  requirementId: number,
+) {
   const relationsQuery =
     useListRequirementRelationsProjectsProjectIdRequirementsRequirementIdRelationsGet(
       projectId,
@@ -11,7 +14,7 @@ export function useRequirementRelations(projectId: number, requirementId: number
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

@@ -14,7 +14,10 @@ export default async function Page({ params }: PageProps) {
   const parsedProjectId = Number(projectId);
   const parsedDocumentId = Number(documentId);
 
-  if (!Number.isInteger(parsedProjectId) || !Number.isInteger(parsedDocumentId)) {
+  if (
+    !Number.isInteger(parsedProjectId) ||
+    !Number.isInteger(parsedDocumentId)
+  ) {
     notFound();
   }
 

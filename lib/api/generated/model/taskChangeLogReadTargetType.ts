@@ -5,10 +5,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TaskChangeLogReadTargetType = typeof TaskChangeLogReadTargetType[keyof typeof TaskChangeLogReadTargetType];
-
+export type TaskChangeLogReadTargetType =
+  (typeof TaskChangeLogReadTargetType)[keyof typeof TaskChangeLogReadTargetType];
 
 export const TaskChangeLogReadTargetType = {
-  task: 'task',
-  task_comment: 'task_comment',
+  task: "task",
+  task_comment: "task_comment",
 } as const;

@@ -60,7 +60,7 @@ export function ProjectForm({
   const [errors, setErrors] = useState<ProjectFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -83,7 +83,7 @@ export function ProjectForm({
 
   const updateValue = <TKey extends keyof ProjectFormValues>(
     field: TKey,
-    value: ProjectFormValues[TKey]
+    value: ProjectFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));

@@ -64,7 +64,7 @@ export const formatTaskChangeLogAction = (action: string) => {
 };
 
 export const getTaskChangeLogValueDisplayMode = (
-  action: string
+  action: string,
 ): "created" | "updated" | "deleted" => {
   if (action === "created" || action === "comment_created") {
     return "created";
@@ -101,7 +101,7 @@ export const formatTaskChangeLogActor = (changeLog: TaskChangeLogRead) => {
 };
 
 export const getTaskChangeLogUpdatedFieldLabels = (
-  changeLog: TaskChangeLogRead
+  changeLog: TaskChangeLogRead,
 ) => {
   if (changeLog.field_name) {
     return [];
@@ -113,7 +113,7 @@ export const getTaskChangeLogUpdatedFieldLabels = (
 };
 
 export const getTaskChangeLogSnapshotDiffRows = (
-  changeLog: TaskChangeLogRead
+  changeLog: TaskChangeLogRead,
 ) => {
   return getChangeLogDiffRows({
     oldValue: changeLog.old_value,
@@ -125,18 +125,18 @@ export const getTaskChangeLogSnapshotDiffRows = (
 };
 
 export const getTaskChangeLogMissingSnapshotFieldLabels = (
-  changeLog: TaskChangeLogRead
+  changeLog: TaskChangeLogRead,
 ) => {
   return getMissingChangeLogFieldLabels(
     changeLog.old_value,
     changeLog.new_value,
-    formatTaskChangeLogField
+    formatTaskChangeLogField,
   );
 };
 
 export const formatTaskChangeLogValue = (
   value: unknown,
-  fieldName?: string | null
+  fieldName?: string | null,
 ): string => {
   if (isEmptyValue(value)) {
     return "-";
@@ -147,7 +147,9 @@ export const formatTaskChangeLogValue = (
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => formatTaskChangeLogValue(item, fieldName)).join(", ");
+    return value
+      .map((item) => formatTaskChangeLogValue(item, fieldName))
+      .join(", ");
   }
 
   if (typeof value === "string") {
@@ -219,8 +221,8 @@ const formatBooleanValue = (value: boolean, fieldName?: string | null) => {
 
 const getRequirementRelationLabel = (value: string) => {
   return (
-    TASK_RELATION_TYPE_OPTIONS.find((option) => option.value === value)?.label ??
-    value
+    TASK_RELATION_TYPE_OPTIONS.find((option) => option.value === value)
+      ?.label ?? value
   );
 };
 

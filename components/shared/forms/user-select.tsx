@@ -61,7 +61,7 @@ export function UserSelect({
   onSelect,
 }: UserSelectProps) {
   const selectableUsers = users.filter(
-    (user) => !excludedUserIds.includes(user.id)
+    (user) => !excludedUserIds.includes(user.id),
   );
 
   return (
@@ -74,21 +74,21 @@ export function UserSelect({
           disabled={disabled}
           className={cn(
             "w-full justify-between",
-            !selectedUser && "text-muted-foreground"
+            !selectedUser && "text-muted-foreground",
           )}
         >
           {selectedUser ? (
-              <span className="flex min-w-0 items-center gap-2">
-                <UserAvatar
-                  name={selectedUser.name}
-                  src={selectedUser.avatar_url}
-                  size="sm"
-                />
-                <span className="truncate">{selectedUser.name}</span>
-                <Badge variant="outline">
-                  {getUserTypeLabel(selectedUser.user_type)}
-                </Badge>
-              </span>
+            <span className="flex min-w-0 items-center gap-2">
+              <UserAvatar
+                name={selectedUser.name}
+                src={selectedUser.avatar_url}
+                size="sm"
+              />
+              <span className="truncate">{selectedUser.name}</span>
+              <Badge variant="outline">
+                {getUserTypeLabel(selectedUser.user_type)}
+              </Badge>
+            </span>
           ) : (
             placeholder
           )}
@@ -103,7 +103,9 @@ export function UserSelect({
             placeholder={searchPlaceholder}
           />
           <CommandList>
-            <CommandEmpty>{isLoading ? loadingMessage : emptyMessage}</CommandEmpty>
+            <CommandEmpty>
+              {isLoading ? loadingMessage : emptyMessage}
+            </CommandEmpty>
             <CommandGroup>
               {selectableUsers.map((user) => {
                 const isSelected = selectedUser?.id === user.id;
@@ -122,7 +124,9 @@ export function UserSelect({
                     />
                     <span className="flex min-w-0 flex-col">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate font-medium">{user.name}</span>
+                        <span className="truncate font-medium">
+                          {user.name}
+                        </span>
                         <Badge variant="outline">
                           {getUserTypeLabel(user.user_type)}
                         </Badge>

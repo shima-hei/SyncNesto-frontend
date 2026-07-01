@@ -6,23 +6,23 @@
  */
 
 export type ListRequirementsProjectsProjectIdRequirementsGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
-document_id?: number | null;
-section_id?: number | null;
-q?: string | null;
-status?: string | null;
-requirement_type?: string | null;
-priority?: string | null;
-owner_id?: number | null;
-sort?: string | null;
-sort_by?: string | null;
-sort_order?: string | null;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  page_size?: number;
+  document_id?: number | null;
+  section_id?: number | null;
+  q?: string | null;
+  status?: string | null;
+  requirement_type?: string | null;
+  priority?: string | null;
+  owner_id?: number | null;
+  sort?: string | null;
+  sort_by?: string | null;
+  sort_order?: string | null;
 };
