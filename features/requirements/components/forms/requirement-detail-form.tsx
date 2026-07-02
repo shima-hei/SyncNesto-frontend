@@ -45,6 +45,7 @@ type RequirementDetailFormProps = {
   initialValues?: RequirementDetailFormValues;
   details?: RequirementDetailRead[];
   allowedDetailTypes?: readonly string[];
+  fixedFieldKeys?: readonly string[];
   submitLabel?: string;
   resetOnSuccess?: boolean;
   isPending: boolean;
@@ -57,6 +58,7 @@ export function RequirementDetailForm({
   initialValues,
   details = [],
   allowedDetailTypes,
+  fixedFieldKeys = [],
   submitLabel = "実現内容を追加",
   resetOnSuccess = true,
   isPending,
@@ -76,6 +78,16 @@ export function RequirementDetailForm({
       getDefaultRequirementDetailFormValues(selectableDefinitions[0].value),
   );
   const [errors, setErrors] = useState<RequirementDetailFormErrors>({});
+  const fixedFieldKeySet = useMemo(
+    () => new Set(fixedFieldKeys),
+    [fixedFieldKeys],
+  );
+  const fixedParentUnitId = fixedFieldKeySet.has(PARENT_UNIT_FIELD)
+    ? (initialValues?.fields[PARENT_UNIT_FIELD] ?? "")
+    : "";
+  const fixedParentScreenId = fixedFieldKeySet.has(PARENT_SCREEN_FIELD)
+    ? (initialValues?.fields[PARENT_SCREEN_FIELD] ?? "")
+    : "";
   const detailDefinition = getRequirementDetailDefinition(values.detailType);
   const unitOptions = getRequirementDetailUnitOptions(details);
   const screenOptions = getRequirementDetailScreenOptions(
@@ -87,6 +99,42 @@ export function RequirementDetailForm({
   const shouldSelectScreen =
     values.detailType === INPUT_DETAIL_TYPE ||
     values.detailType === DISPLAY_DETAIL_TYPE;
+  const shouldShowUnitSelect = shouldSelectUnit && !fixedParentUnitId;
+  const shouldShowScreenSelect = shouldSelectScreen && !fixedParentScreenId;
+
+  const getContextFields = (
+    detailType: string,
+    currentFields: Record<string, string>,
+  ) => {
+    const contextFields: Record<string, string> = {};
+
+    if (detailType === IMPLEMENTATION_UNIT_DETAIL_TYPE) {
+      return contextFields;
+    }
+
+    const parentUnitId =
+      fixedParentUnitId || currentFields[PARENT_UNIT_FIELD] || "";
+
+    if (parentUnitId) {
+      contextFields[PARENT_UNIT_FIELD] = parentUnitId;
+    }
+
+    if (
+      detailType !== INPUT_DETAIL_TYPE &&
+      detailType !== DISPLAY_DETAIL_TYPE
+    ) {
+      return contextFields;
+    }
+
+    const parentScreenId =
+      fixedParentScreenId || currentFields[PARENT_SCREEN_FIELD] || "";
+
+    if (parentScreenId) {
+      contextFields[PARENT_SCREEN_FIELD] = parentScreenId;
+    }
+
+    return contextFields;
+  };
 
   const handleSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
@@ -150,12 +198,12 @@ export function RequirementDetailForm({
           <Select
             value={values.detailType}
             onValueChange={(detailType) => {
-              setValues({
+              setValues((current) => ({
                 detailType,
                 sourceDetailType: undefined,
-                fields: {},
+                fields: getContextFields(detailType, current.fields),
                 rawJson: "",
-              });
+              }));
               setErrors({});
             }}
           >
@@ -180,7 +228,7 @@ export function RequirementDetailForm({
           ) : null}
         </Field>
 
-        {shouldSelectUnit ? (
+        {shouldShowUnitSelect ? (
           <Field>
             <FieldLabel>紐づけ先の実現単位</FieldLabel>
             <Select
@@ -191,7 +239,7 @@ export function RequirementDetailForm({
                   fields: {
                     ...current.fields,
                     [PARENT_UNIT_FIELD]: unitId === "none" ? "" : unitId,
-                    [PARENT_SCREEN_FIELD]: "",
+                    [PARENT_SCREEN_FIELD]: fixedParentScreenId,
                   },
                   rawJson: "",
                 }));
@@ -216,7 +264,7 @@ export function RequirementDetailForm({
           </Field>
         ) : null}
 
-        {shouldSelectScreen ? (
+        {shouldShowScreenSelect ? (
           <Field>
             <FieldLabel>紐づけ先の画面・操作</FieldLabel>
             <Select

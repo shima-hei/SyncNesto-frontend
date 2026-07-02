@@ -38,6 +38,7 @@ type CreateDialogState = {
   description: string;
   allowedDetailTypes: readonly string[];
   initialValues?: RequirementDetailFormValues;
+  fixedFieldKeys?: readonly string[];
 };
 
 export function RequirementDetailsSection({
@@ -114,6 +115,7 @@ export function RequirementDetailsSection({
                 details={details}
                 allowedDetailTypes={createDialog.allowedDetailTypes}
                 initialValues={createDialog.initialValues}
+                fixedFieldKeys={createDialog.fixedFieldKeys}
                 isPending={isCreatePending}
                 error={createError}
                 onSubmit={createRequirementDetail}

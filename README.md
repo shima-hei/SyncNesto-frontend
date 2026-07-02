@@ -45,11 +45,15 @@ AUTH_COOKIE_NAME=access_token
 
 ```bash
 npm run dev
+npm run format
+npm run format:check
 npm run typecheck
 npm run lint
 npm run build
 npm run api:generate
 ```
+
+変更後は必要に応じて `npm run format` を実行し、少なくとも `npm run format:check`、`npm run typecheck`、`npm run lint` を確認します。本番ビルドに影響する変更では `npm run build` も確認します。
 
 ## API生成
 

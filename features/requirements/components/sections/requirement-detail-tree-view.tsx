@@ -34,6 +34,7 @@ export type RequirementDetailCreateDialogState = {
   description: string;
   allowedDetailTypes: readonly string[];
   initialValues?: RequirementDetailFormValues;
+  fixedFieldKeys?: readonly string[];
 };
 
 type RequirementDetailTreeViewProps = {
@@ -173,6 +174,7 @@ function ImplementationUnitSection({
                 },
                 rawJson: "",
               },
+              fixedFieldKeys: [PARENT_UNIT_FIELD],
             })
           }
         >
@@ -255,6 +257,7 @@ function ScreenSection({
             },
             rawJson: "",
           },
+          fixedFieldKeys: [PARENT_UNIT_FIELD, PARENT_SCREEN_FIELD],
         })
       }
     >
