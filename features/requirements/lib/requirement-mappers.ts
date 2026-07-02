@@ -7,6 +7,7 @@ import type {
   RequirementDocumentCreate,
   RequirementDocumentUpdate,
   RequirementLinkCreate,
+  RequirementLinkUpdate,
   RequirementOpenIssueCreate,
   RequirementOpenIssuePromoteCreate,
   RequirementOpenIssueUpdate,
@@ -143,6 +144,19 @@ export const toRequirementLinkCreate = (
   return {
     linked_type: values.linkedType,
     linked_id: values.linkedId,
+    linked_url: values.linkedUrl || null,
+    status: values.status,
+  };
+};
+
+export const toRequirementLinkUpdate = (
+  values: RequirementLinkFormValues,
+): RequirementLinkUpdate => {
+  return {
+    linked_type: values.linkedType,
+    linked_id: values.linkedId,
+    linked_url: values.linkedUrl || null,
+    status: values.status,
   };
 };
 

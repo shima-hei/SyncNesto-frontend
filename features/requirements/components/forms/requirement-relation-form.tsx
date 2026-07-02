@@ -10,7 +10,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -30,8 +29,14 @@ import type {
   RequirementRelationFormErrors,
   RequirementRelationFormValues,
 } from "../../types/requirement-relation-form";
+import { RequirementRelationTargetSelectField } from "./requirement-relation-target-select-field";
+import { RequirementSelectField } from "./requirement-select-field";
 
 type RequirementRelationFormProps = {
+  projectId: number;
+  documentId: number;
+  excludedRequirementIds?: number[];
+  excludedTargetIdsByType?: Record<string, string[]>;
   isPending: boolean;
   error?: Error | null;
   onSubmit: (values: RequirementRelationFormValues) => Promise<unknown>;
@@ -45,6 +50,10 @@ const initialValues: RequirementRelationFormValues = {
 };
 
 export function RequirementRelationForm({
+  projectId,
+  documentId,
+  excludedRequirementIds = [],
+  excludedTargetIdsByType = {},
   isPending,
   error,
   onSubmit,
@@ -82,11 +91,15 @@ export function RequirementRelationForm({
       <FieldGroup>
         <div className="grid gap-4 md:grid-cols-3">
           <Field data-invalid={errors.targetType ? true : undefined}>
-            <FieldLabel>対象種別</FieldLabel>
+            <FieldLabel>関連先の種類</FieldLabel>
             <Select
               value={values.targetType}
               onValueChange={(value) => {
-                setValues((current) => ({ ...current, targetType: value }));
+                setValues((current) => ({
+                  ...current,
+                  targetType: value,
+                  targetId: "",
+                }));
                 setErrors((current) => ({ ...current, targetType: undefined }));
               }}
             >
@@ -108,23 +121,34 @@ export function RequirementRelationForm({
             ) : null}
           </Field>
 
-          <Field data-invalid={errors.targetId ? true : undefined}>
-            <FieldLabel>対象ID</FieldLabel>
-            <Input
+          {values.targetType === "requirement_item" ? (
+            <RequirementSelectField
+              projectId={projectId}
+              documentId={documentId}
+              label="関連先"
               value={values.targetId}
-              onChange={(event) => {
-                setValues((current) => ({
-                  ...current,
-                  targetId: event.target.value,
-                }));
+              error={errors.targetId}
+              excludedRequirementIds={excludedRequirementIds}
+              onChange={(value) => {
+                setValues((current) => ({ ...current, targetId: value }));
                 setErrors((current) => ({ ...current, targetId: undefined }));
               }}
-              aria-invalid={Boolean(errors.targetId)}
             />
-            {errors.targetId ? (
-              <FieldError>{errors.targetId}</FieldError>
-            ) : null}
-          </Field>
+          ) : (
+            <RequirementRelationTargetSelectField
+              projectId={projectId}
+              documentId={documentId}
+              targetType={values.targetType}
+              label="関連先"
+              value={values.targetId}
+              error={errors.targetId}
+              excludedTargetIds={excludedTargetIdsByType[values.targetType]}
+              onChange={(value) => {
+                setValues((current) => ({ ...current, targetId: value }));
+                setErrors((current) => ({ ...current, targetId: undefined }));
+              }}
+            />
+          )}
 
           <Field data-invalid={errors.relationType ? true : undefined}>
             <FieldLabel>関連種別</FieldLabel>
@@ -158,9 +182,10 @@ export function RequirementRelationForm({
         </div>
 
         <Field>
-          <FieldLabel>説明</FieldLabel>
+          <FieldLabel>関係のメモ</FieldLabel>
           <Textarea
             value={values.description}
+            placeholder="例: この要件が完了しないと、関連先の要件を確定できない"
             onChange={(event) =>
               setValues((current) => ({
                 ...current,
@@ -171,7 +196,7 @@ export function RequirementRelationForm({
         </Field>
 
         <FormApiError error={error} />
-        <FormSubmitButton isPending={isPending}>要件関連追加</FormSubmitButton>
+        <FormSubmitButton isPending={isPending}>関連を追加</FormSubmitButton>
       </FieldGroup>
     </form>
   );

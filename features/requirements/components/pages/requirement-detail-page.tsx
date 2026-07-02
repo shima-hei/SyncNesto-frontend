@@ -272,6 +272,13 @@ export function RequirementDetailPage({
 
         <TabsContent value="relations">
           <div className="grid gap-4 xl:grid-cols-2">
+            <div className="xl:col-span-2">
+              <RequirementRelatedTasksSection
+                projectId={projectId}
+                requirementId={requirementId}
+                canCreate={canCreateTask(currentProjectRole)}
+              />
+            </div>
             <RequirementLinksSection
               projectId={projectId}
               requirementId={requirementId}
@@ -279,13 +286,10 @@ export function RequirementDetailPage({
             />
             <RequirementRelationsSection
               projectId={projectId}
+              documentId={documentId}
+              currentSectionId={requirement.section_id}
               requirementId={requirementId}
               canLink={canLinkRequirement(currentProjectRole)}
-            />
-            <RequirementRelatedTasksSection
-              projectId={projectId}
-              requirementId={requirementId}
-              canCreate={canCreateTask(currentProjectRole)}
             />
           </div>
         </TabsContent>

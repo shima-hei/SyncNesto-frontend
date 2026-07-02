@@ -82,6 +82,7 @@ export * from "./requirementDocumentRead";
 export * from "./requirementDocumentUpdate";
 export * from "./requirementLinkCreate";
 export * from "./requirementLinkRead";
+export * from "./requirementLinkUpdate";
 export * from "./requirementListResponse";
 export * from "./requirementOpenIssueCreate";
 export * from "./requirementOpenIssueListResponse";

@@ -47,6 +47,7 @@ import type {
   RequirementDocumentUpdate,
   RequirementLinkCreate,
   RequirementLinkRead,
+  RequirementLinkUpdate,
   RequirementListResponse,
   RequirementOpenIssueCreate,
   RequirementOpenIssueListResponse,
@@ -8075,6 +8076,168 @@ export function useListRequirementLinksProjectsProjectIdRequirementsRequirementI
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+export const getUpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatchUrl =
+  (projectId: number, requirementId: number, linkId: number) => {
+    return `/projects/${projectId}/requirements/${requirementId}/links/${linkId}`;
+  };
+
+/**
+ * 要件リンクを更新する。
+ * @summary Update Requirement Link
+ */
+export const updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch =
+  async (
+    projectId: number,
+    requirementId: number,
+    linkId: number,
+    requirementLinkUpdate: RequirementLinkUpdate,
+    options?: RequestInit,
+  ): Promise<RequirementLinkRead> => {
+    return apiClient<RequirementLinkRead>(
+      getUpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatchUrl(
+        projectId,
+        requirementId,
+        linkId,
+      ),
+      {
+        ...options,
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...options?.headers },
+        body: JSON.stringify(requirementLinkUpdate),
+      },
+    );
+  };
+
+export const getUpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatchMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch
+        >
+      >,
+      TError,
+      {
+        projectId: number;
+        requirementId: number;
+        linkId: number;
+        data: BodyType<RequirementLinkUpdate>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch
+      >
+    >,
+    TError,
+    {
+      projectId: number;
+      requirementId: number;
+      linkId: number;
+      data: BodyType<RequirementLinkUpdate>;
+    },
+    TContext
+  > => {
+    const mutationKey = [
+      "updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch",
+    ];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch
+        >
+      >,
+      {
+        projectId: number;
+        requirementId: number;
+        linkId: number;
+        data: BodyType<RequirementLinkUpdate>;
+      }
+    > = (props) => {
+      const { projectId, requirementId, linkId, data } = props ?? {};
+
+      return updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch(
+        projectId,
+        requirementId,
+        linkId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatchMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch
+      >
+    >
+  >;
+export type UpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatchMutationBody =
+  BodyType<RequirementLinkUpdate>;
+export type UpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatchMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Update Requirement Link
+ */
+export const useUpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch
+          >
+        >,
+        TError,
+        {
+          projectId: number;
+          requirementId: number;
+          linkId: number;
+          data: BodyType<RequirementLinkUpdate>;
+        },
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof updateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatch
+      >
+    >,
+    TError,
+    {
+      projectId: number;
+      requirementId: number;
+      linkId: number;
+      data: BodyType<RequirementLinkUpdate>;
+    },
+    TContext
+  > => {
+    return useMutation(
+      getUpdateRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdPatchMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
 export const getDeleteRequirementLinkProjectsProjectIdRequirementsRequirementIdLinksLinkIdDeleteUrl =
   (projectId: number, requirementId: number, linkId: number) => {
     return `/projects/${projectId}/requirements/${requirementId}/links/${linkId}`;
@@ -9263,7 +9426,7 @@ Args:
     project_id: 削除対象のプロジェクトID。
     requirement_id: 削除対象の要件ID。
     comment_id: 削除対象の要件コメントID。
-    _: 認可済みユーザー。
+    current_user: 認可済みユーザー。
     db: DBセッション。
  * @summary Delete Requirement Comment
  */

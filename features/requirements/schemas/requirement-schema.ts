@@ -46,13 +46,17 @@ export const requirementCommentSchema = z.object({
 export const requirementLinkSchema = z.object({
   linkedType: z
     .string()
-    .min(1, VALIDATION_MESSAGES.selectRequired("リンク種別")),
-  linkedId: z.string().min(1, VALIDATION_MESSAGES.required("リンク先ID")),
+    .min(1, VALIDATION_MESSAGES.selectRequired("成果物の種類")),
+  linkedId: z.string().min(1, VALIDATION_MESSAGES.required("参照先")),
+  linkedUrl: z.string(),
+  status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("成果物状態")),
 });
 
 export const requirementRelationSchema = z.object({
-  targetType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("対象種別")),
-  targetId: z.string().min(1, VALIDATION_MESSAGES.required("対象ID")),
+  targetType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("関連先の種類")),
+  targetId: z.string().min(1, VALIDATION_MESSAGES.required("関連先")),
   relationType: z
     .string()
     .min(1, VALIDATION_MESSAGES.selectRequired("関連種別")),

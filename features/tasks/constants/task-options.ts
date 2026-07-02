@@ -63,6 +63,15 @@ export const getTaskPriorityLabel = (value?: string | null) => {
   );
 };
 
+export const getTaskRelationTypeLabel = (value?: string | null) => {
+  return (
+    TASK_RELATION_TYPE_OPTIONS.find((option) => option.value === value)
+      ?.label ??
+    value ??
+    "-"
+  );
+};
+
 export const getMilestoneStatusLabel = (value?: string | null) => {
   return (
     MILESTONE_STATUS_OPTIONS.find((option) => option.value === value)?.label ??
