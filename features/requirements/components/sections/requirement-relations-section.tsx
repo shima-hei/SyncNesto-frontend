@@ -134,14 +134,14 @@ export function RequirementRelationsSection({
                           {getRequirementRelationTargetTypeLabel(
                             relation.target_type,
                           )}{" "}
-                          #{relation.target_id}
+                          {formatRelationTarget(relation)}
                         </span>
                       </div>
                       <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                         {relation.description || "説明はありません。"}
                       </p>
                       <span className="text-xs text-muted-foreground">
-                        作成者ID: {relation.created_by ?? "-"} /{" "}
+                        作成者: {relation.created_by_user?.name ?? "-"} /{" "}
                         {formatDateTime(relation.created_at)}
                       </span>
                     </div>
@@ -208,4 +208,14 @@ export function RequirementRelationsSection({
       </CardContent>
     </Card>
   );
+}
+
+function formatRelationTarget(relation: RequirementRelationRead) {
+  if (!relation.target_summary) {
+    return `#${relation.target_id}`;
+  }
+
+  return [relation.target_summary.code, relation.target_summary.title]
+    .filter(Boolean)
+    .join(" ");
 }

@@ -150,6 +150,11 @@ export function RequirementRelationTargetSelectField({
               <CommandInput
                 value={search}
                 onValueChange={setSearch}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
                 placeholder="コードまたは名称で検索"
               />
               <CommandList>

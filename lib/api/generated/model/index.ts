@@ -92,6 +92,7 @@ export * from "./requirementOpenIssueUpdate";
 export * from "./requirementRead";
 export * from "./requirementRelationCreate";
 export * from "./requirementRelationRead";
+export * from "./requirementRelationTargetSummaryRead";
 export * from "./requirementReviewCreate";
 export * from "./requirementReviewRead";
 export * from "./requirementReviewUpdate";

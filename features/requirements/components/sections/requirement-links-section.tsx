@@ -100,9 +100,7 @@ export function RequirementLinksSection({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline">
-                          {getRequirementLinkTypeLabel(link.linked_type)}
-                        </Badge>
+                        <LinkTypeBadge type={link.linked_type} />
                         <LinkStatusBadge status={link.status} />
                         <span className="text-xs text-muted-foreground">
                           {formatDateTime(link.created_at)}
@@ -232,6 +230,31 @@ export function RequirementLinksSection({
         />
       </CardContent>
     </Card>
+  );
+}
+
+function LinkTypeBadge({ type }: { type?: string | null }) {
+  const toneClass =
+    type === "screen"
+      ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+      : type === "api"
+        ? "border-cyan-200 bg-cyan-50 text-cyan-700"
+        : type === "database"
+          ? "border-violet-200 bg-violet-50 text-violet-700"
+          : type === "task"
+            ? "border-blue-200 bg-blue-50 text-blue-700"
+            : type === "test_case"
+              ? "border-rose-200 bg-rose-50 text-rose-700"
+              : type === "document"
+                ? "border-teal-200 bg-teal-50 text-teal-700"
+                : type === "project"
+                  ? "border-orange-200 bg-orange-50 text-orange-700"
+                  : "border-zinc-200 bg-zinc-50 text-zinc-600";
+
+  return (
+    <Badge variant="outline" className={toneClass}>
+      {getRequirementLinkTypeLabel(type)}
+    </Badge>
   );
 }
 

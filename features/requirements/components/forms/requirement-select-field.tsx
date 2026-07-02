@@ -99,6 +99,11 @@ export function RequirementSelectField({
               <CommandInput
                 value={search}
                 onValueChange={setSearch}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
                 placeholder="要件IDまたはタイトルで検索"
               />
               <CommandList>

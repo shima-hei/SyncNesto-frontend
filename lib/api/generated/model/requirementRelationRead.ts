@@ -4,6 +4,8 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChangeLogUserRead } from "./changeLogUserRead";
+import type { RequirementRelationTargetSummaryRead } from "./requirementRelationTargetSummaryRead";
 
 /**
  * 要件関連読み取り時に返すschema。
@@ -17,5 +19,7 @@ export interface RequirementRelationRead {
   relation_type: string;
   description?: string | null;
   created_by?: number | null;
+  created_by_user?: ChangeLogUserRead | null;
+  target_summary?: RequirementRelationTargetSummaryRead | null;
   created_at: string;
 }
