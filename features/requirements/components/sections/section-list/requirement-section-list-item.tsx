@@ -49,7 +49,9 @@ export function RequirementSectionListItem({
               {section.title}
             </span>
             <span className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <span>{getRequirementSectionTypeLabel(section.section_type)}</span>
+              <span>
+                {getRequirementSectionTypeLabel(section.section_type)}
+              </span>
               <span>{getRequirementDocumentStatusLabel(section.status)}</span>
             </span>
           </button>

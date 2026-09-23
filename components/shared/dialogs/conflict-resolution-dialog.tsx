@@ -30,7 +30,9 @@ type ConflictResolutionDialogProps<TValues extends Record<string, unknown>> = {
   onResolve: (values: TValues) => Promise<unknown> | unknown;
 };
 
-export function ConflictResolutionDialog<TValues extends Record<string, unknown>>({
+export function ConflictResolutionDialog<
+  TValues extends Record<string, unknown>,
+>({
   open,
   fields,
   localValues,
@@ -121,7 +123,7 @@ export function ConflictResolutionDialog<TValues extends Record<string, unknown>
                       更新前:{" "}
                       {formatConflictValue(
                         field.originalValue,
-                        valueFormatters?.[field.key]
+                        valueFormatters?.[field.key],
                       )}
                     </div>
                   </div>
@@ -167,9 +169,7 @@ function ConflictValue({
   return (
     <div
       className={
-        selected
-          ? "rounded-lg border bg-muted p-2"
-          : "rounded-lg border p-2"
+        selected ? "rounded-lg border bg-muted p-2" : "rounded-lg border p-2"
       }
     >
       <div className="text-xs text-muted-foreground">{label}</div>
@@ -204,7 +204,7 @@ const getResolvedValues = <TValues extends Record<string, unknown>>({
 
       return resolvedValues;
     },
-    { ...localValues }
+    { ...localValues },
   );
 };
 
@@ -214,7 +214,7 @@ const isConflictChoice = (value: string): value is ConflictChoice => {
 
 const formatConflictValue = (
   value: unknown,
-  formatter?: (value: unknown) => string
+  formatter?: (value: unknown) => string,
 ) => {
   if (formatter) {
     return formatter(value);

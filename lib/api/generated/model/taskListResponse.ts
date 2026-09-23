@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { TaskRead } from './taskRead';
+import type { TaskRead } from "./taskRead";
 
 /**
  * タスク一覧レスポンスschema。

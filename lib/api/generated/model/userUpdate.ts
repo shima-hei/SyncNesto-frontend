@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { UserType } from "./userType";
 
 /**
  * ユーザー更新リクエストで受け取るschema。
@@ -15,6 +16,7 @@ export interface UserUpdate {
   password?: string | null;
   department?: string | null;
   position?: string | null;
+  user_type?: UserType | null;
   is_active?: boolean | null;
   system_role_keys?: string[] | null;
 }

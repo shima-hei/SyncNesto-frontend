@@ -85,7 +85,7 @@ export const toTaskCreate = (values: TaskFormValues): TaskCreate => {
 };
 
 export const toRequirementTaskCreate = (
-  values: TaskFormValues
+  values: TaskFormValues,
 ): RequirementTaskCreate => {
   return toTaskCreate(values);
 };
@@ -117,7 +117,7 @@ export const toTaskDuplicateCreate = (task: TaskRead): TaskCreate => {
 export const toTaskUpdate = (
   values: TaskFormValues,
   version: number,
-  currentTask?: TaskRead
+  currentTask?: TaskRead,
 ): TaskUpdate => {
   const nextValues: TaskUpdate = {
     version,
@@ -185,7 +185,7 @@ const TASK_UPDATE_FIELDS = [
 
 const areTaskUpdateValuesEqual = (
   left: TaskUpdate[(typeof TASK_UPDATE_FIELDS)[number]],
-  right: TaskUpdate[(typeof TASK_UPDATE_FIELDS)[number]]
+  right: TaskUpdate[(typeof TASK_UPDATE_FIELDS)[number]],
 ) => {
   if (Array.isArray(left) || Array.isArray(right)) {
     return JSON.stringify(left ?? []) === JSON.stringify(right ?? []);

@@ -75,20 +75,38 @@ const IGNORED_DIFF_FIELDS = [
   "project_id",
   "document_id",
   "requirement_id",
+  "target_type",
+  "target_id",
+  "parent_comment_id",
   "version",
+  "created_at",
+  "updated_at",
+  "deleted_at",
 ];
 
 export const formatRequirementChangeLogAction = (action: string) => {
   return ACTION_LABELS[action] ?? action;
 };
 
+export const getRequirementChangeLogValueDisplayMode = (
+  action: string,
+): "created" | "updated" | "deleted" => {
+  if (action === "created" || action === "comment_created") {
+    return "created";
+  }
+
+  if (action === "deleted" || action === "comment_deleted") {
+    return "deleted";
+  }
+
+  return "updated";
+};
+
 export const formatRequirementChangeLogTarget = (targetType: string) => {
   return TARGET_TYPE_LABELS[targetType] ?? targetType;
 };
 
-export const formatRequirementChangeLogField = (
-  fieldName?: string | null
-) => {
+export const formatRequirementChangeLogField = (fieldName?: string | null) => {
   if (!fieldName) {
     return "複数項目";
   }
@@ -97,7 +115,7 @@ export const formatRequirementChangeLogField = (
 };
 
 export const formatRequirementChangeLogActor = (
-  changeLog: RequirementChangeLogRead
+  changeLog: RequirementChangeLogRead,
 ) => {
   return (
     changeLog.changed_by_user?.name ??
@@ -106,19 +124,19 @@ export const formatRequirementChangeLogActor = (
 };
 
 export const getRequirementChangeLogUpdatedFieldLabels = (
-  changeLog: RequirementChangeLogRead
+  changeLog: RequirementChangeLogRead,
 ) => {
   if (changeLog.field_name) {
     return [];
   }
 
   return getChangeLogUpdatedFields(changeLog.new_value).map(
-    formatRequirementChangeLogField
+    formatRequirementChangeLogField,
   );
 };
 
 export const getRequirementChangeLogDiffRows = (
-  changeLog: RequirementChangeLogRead
+  changeLog: RequirementChangeLogRead,
 ) => {
   return getChangeLogDiffRows({
     oldValue: changeLog.old_value,
@@ -130,18 +148,18 @@ export const getRequirementChangeLogDiffRows = (
 };
 
 export const getRequirementChangeLogMissingFieldLabels = (
-  changeLog: RequirementChangeLogRead
+  changeLog: RequirementChangeLogRead,
 ) => {
   return getMissingChangeLogFieldLabels(
     changeLog.old_value,
     changeLog.new_value,
-    formatRequirementChangeLogField
+    formatRequirementChangeLogField,
   );
 };
 
 export const formatRequirementChangeLogValue = (
   value: unknown,
-  fieldName?: string | null
+  fieldName?: string | null,
 ): string => {
   if (value === null || value === undefined || value === "") {
     return "-";

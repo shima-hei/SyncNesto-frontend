@@ -30,6 +30,7 @@ type TaskParentSelectFieldProps = {
   placeholder?: string;
   error?: string;
   excludedTaskId?: number;
+  excludedTaskIds?: number[];
   onChange: (value: string) => void;
 };
 
@@ -40,6 +41,7 @@ export function TaskParentSelectField({
   placeholder,
   error,
   excludedTaskId,
+  excludedTaskIds = [],
   onChange,
 }: TaskParentSelectFieldProps) {
   const [open, setOpen] = useState(false);
@@ -50,7 +52,12 @@ export function TaskParentSelectField({
     page_size: 20,
     q: search.trim() || undefined,
   });
-  const selectableTasks = tasks.filter((task) => task.id !== excludedTaskId);
+  const excludedIds = new Set(
+    [excludedTaskId, ...excludedTaskIds].filter(
+      (id): id is number => typeof id === "number",
+    ),
+  );
+  const selectableTasks = tasks.filter((task) => !excludedIds.has(task.id));
   const selectedValue = getSelectedValue({
     value,
     tasks,
@@ -81,7 +88,7 @@ export function TaskParentSelectField({
                 aria-expanded={open}
                 className={cn(
                   "w-full justify-between",
-                  !selectedValue && "text-muted-foreground"
+                  !selectedValue && "text-muted-foreground",
                 )}
               >
                 {selectedValue ? (
@@ -179,5 +186,8 @@ const getSelectedValue = ({
     return selectedTask;
   }
 
-  return tasks.find((task) => String(task.id) === value) ?? getFallbackSelectedTask(value);
+  return (
+    tasks.find((task) => String(task.id) === value) ??
+    getFallbackSelectedTask(value)
+  );
 };

@@ -2,7 +2,7 @@ import type { Area } from "react-easy-crop";
 
 export const createCroppedImageBlob = async (
   imageSrc: string,
-  cropArea: Area
+  cropArea: Area,
 ) => {
   const image = await loadImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -24,7 +24,7 @@ export const createCroppedImageBlob = async (
     0,
     0,
     cropArea.width,
-    cropArea.height
+    cropArea.height,
   );
 
   return canvasToBlob(canvas);
@@ -52,8 +52,7 @@ const canvasToBlob = async (canvas: HTMLCanvasElement) => {
         resolve(blob);
       },
       "image/webp",
-      0.92
+      0.92,
     );
   });
 };
-

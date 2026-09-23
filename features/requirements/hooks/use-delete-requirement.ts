@@ -15,7 +15,7 @@ import {
 export function useDeleteRequirement(
   projectId: number,
   documentId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -26,7 +26,9 @@ export function useDeleteRequirement(
           removeRequirementDetailCache(queryClient, projectId, requirementId);
           await invalidateRequirementList(queryClient, projectId);
           toast.success(REQUIREMENT_MESSAGES.requirement.deleteSuccess);
-          router.push(`/projects/joined/${projectId}/requirements/${documentId}`);
+          router.push(
+            `/projects/joined/${projectId}/requirements/${documentId}`,
+          );
         },
         onError: () => {
           toast.error(REQUIREMENT_MESSAGES.requirement.deleteError);

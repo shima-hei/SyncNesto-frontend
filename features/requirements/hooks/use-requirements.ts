@@ -5,7 +5,7 @@ import { useListRequirementsProjectsProjectIdRequirementsGet } from "@/lib/api/g
 
 export function useRequirements(
   projectId: number,
-  params: ListRequirementsProjectsProjectIdRequirementsGetParams
+  params: ListRequirementsProjectsProjectIdRequirementsGetParams,
 ) {
   const requirementsQuery = useListRequirementsProjectsProjectIdRequirementsGet(
     projectId,
@@ -15,7 +15,7 @@ export function useRequirements(
         retry: false,
         placeholderData: (previousData) => previousData,
       },
-    }
+    },
   );
 
   return {

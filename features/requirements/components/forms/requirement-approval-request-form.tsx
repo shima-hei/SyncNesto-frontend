@@ -33,11 +33,12 @@ export function RequirementApprovalRequestForm({
   onSubmit,
 }: RequirementApprovalRequestFormProps) {
   const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] =
-    useState<RequirementApprovalRequestFormErrors>({});
+  const [errors, setErrors] = useState<RequirementApprovalRequestFormErrors>(
+    {},
+  );
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -81,7 +82,10 @@ export function RequirementApprovalRequestForm({
           <Textarea
             value={values.comment}
             onChange={(event) =>
-              setValues((current) => ({ ...current, comment: event.target.value }))
+              setValues((current) => ({
+                ...current,
+                comment: event.target.value,
+              }))
             }
           />
         </Field>

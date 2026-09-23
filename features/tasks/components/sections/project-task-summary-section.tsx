@@ -81,7 +81,12 @@ function TaskSummaryList({
   tasks,
 }: {
   title: string;
-  tasks: { id: number; task_code: string; title: string; due_date?: string | null }[];
+  tasks: {
+    id: number;
+    task_code: string;
+    title: string;
+    due_date?: string | null;
+  }[];
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-3">
@@ -102,7 +107,9 @@ function TaskSummaryList({
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">対象タスクはありません。</p>
+        <p className="text-sm text-muted-foreground">
+          対象タスクはありません。
+        </p>
       )}
     </div>
   );

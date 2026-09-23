@@ -21,7 +21,7 @@ type RequirementSectionEditDialogProps = {
   onSubmit: (
     sectionId: number,
     version: number,
-    values: RequirementSectionFormValues
+    values: RequirementSectionFormValues,
   ) => Promise<unknown>;
 };
 
@@ -35,7 +35,7 @@ export function RequirementSectionEditDialog({
 }: RequirementSectionEditDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[min(92vw,1200px)] overflow-y-auto sm:max-w-none">
+      <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
         <DialogHeader>
           <DialogTitle>セクション編集</DialogTitle>
           <DialogDescription>
@@ -57,7 +57,7 @@ export function RequirementSectionEditDialog({
 }
 
 function toSectionFormValues(
-  section: RequirementSectionRead
+  section: RequirementSectionRead,
 ): RequirementSectionFormValues {
   return {
     title: section.title,

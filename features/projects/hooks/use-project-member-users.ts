@@ -5,7 +5,7 @@ import { useListProjectMemberUsersProjectsProjectIdMemberUsersGet } from "@/lib/
 
 export function useProjectMemberUsers(
   projectId: number,
-  params: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams
+  params: ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams,
 ) {
   const usersQuery = useListProjectMemberUsersProjectsProjectIdMemberUsersGet(
     projectId,
@@ -15,7 +15,7 @@ export function useProjectMemberUsers(
         retry: false,
         placeholderData: (previousData) => previousData,
       },
-    }
+    },
   );
 
   return {

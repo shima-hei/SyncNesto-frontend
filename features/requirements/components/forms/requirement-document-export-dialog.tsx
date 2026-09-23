@@ -25,16 +25,18 @@ import {
 import type {
   RequirementDocumentExportCreate,
   RequirementDocumentExportRead,
+  RequirementSectionRead,
 } from "@/lib/api/generated/model";
 
 type RequirementDocumentExportDialogProps = {
   open: boolean;
   isPending: boolean;
   preview?: RequirementDocumentExportRead | null;
+  sections: RequirementSectionRead[];
   onOpenChange: (open: boolean) => void;
   onExport: (
     values: RequirementDocumentExportCreate,
-    options: { download: boolean }
+    options: { download: boolean },
   ) => Promise<RequirementDocumentExportRead>;
   onPreviewChange: (preview: RequirementDocumentExportRead | null) => void;
 };
@@ -43,6 +45,7 @@ export function RequirementDocumentExportDialog({
   open,
   isPending,
   preview,
+  sections,
   onOpenChange,
   onExport,
   onPreviewChange,
@@ -61,6 +64,34 @@ export function RequirementDocumentExportDialog({
 
   const handleDownload = async () => {
     await onExport(values, { download: true });
+  };
+
+  const selectedSectionIds = values.section_ids ?? null;
+  const sortedSections = sections
+    .slice()
+    .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0));
+
+  const handleAllSectionsChange = (checked: boolean) => {
+    setValues((current) => ({
+      ...current,
+      section_ids: checked ? undefined : [],
+    }));
+    onPreviewChange(null);
+  };
+
+  const handleSectionChange = (sectionId: number, checked: boolean) => {
+    const currentIds =
+      selectedSectionIds ?? sortedSections.map((section) => section.id);
+    const nextIds = checked
+      ? Array.from(new Set([...currentIds, sectionId]))
+      : currentIds.filter((id) => id !== sectionId);
+
+    setValues((current) => ({
+      ...current,
+      section_ids:
+        nextIds.length === sortedSections.length ? undefined : nextIds,
+    }));
+    onPreviewChange(null);
   };
 
   return (
@@ -90,9 +121,42 @@ export function RequirementDocumentExportDialog({
                 <SelectGroup>
                   <SelectItem value="markdown">Markdown</SelectItem>
                   <SelectItem value="html">HTML</SelectItem>
+                  <SelectItem value="pdf">PDF</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
+          </Field>
+
+          <Field>
+            <FieldLabel>出力セクション</FieldLabel>
+            <div className="grid gap-2 rounded-md border p-3">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={selectedSectionIds === null}
+                  onCheckedChange={(checked) =>
+                    handleAllSectionsChange(checked === true)
+                  }
+                />
+                すべてのセクション
+              </label>
+              {sortedSections.map((section) => (
+                <label
+                  key={section.id}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <Checkbox
+                    checked={
+                      selectedSectionIds === null ||
+                      selectedSectionIds.includes(section.id)
+                    }
+                    onCheckedChange={(checked) =>
+                      handleSectionChange(section.id, checked === true)
+                    }
+                  />
+                  {section.title}
+                </label>
+              ))}
+            </div>
           </Field>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -127,9 +191,15 @@ export function RequirementDocumentExportDialog({
           {preview ? (
             <div className="rounded-md border bg-muted p-3">
               <div className="mb-2 text-sm font-medium">プレビュー</div>
-              <pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">
-                {preview.content}
-              </pre>
+              {preview.format === "pdf" ? (
+                <p className="text-sm text-muted-foreground">
+                  PDFはダウンロードして確認してください。
+                </p>
+              ) : (
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs">
+                  {preview.content}
+                </pre>
+              )}
             </div>
           ) : null}
         </div>

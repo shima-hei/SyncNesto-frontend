@@ -3,12 +3,14 @@
 import { useListTaskDependenciesTasksTaskIdDependenciesGet } from "@/lib/api/generated/tasks/tasks";
 
 export function useTaskDependencies(taskId: number) {
-  const dependenciesQuery =
-    useListTaskDependenciesTasksTaskIdDependenciesGet(taskId, {
+  const dependenciesQuery = useListTaskDependenciesTasksTaskIdDependenciesGet(
+    taskId,
+    {
       query: {
         retry: false,
       },
-    });
+    },
+  );
 
   return {
     dependencies: dependenciesQuery.data ?? [],

@@ -13,7 +13,7 @@ import {
 
 export function useDeleteRequirementRelation(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const deleteRelationMutation =
@@ -22,7 +22,11 @@ export function useDeleteRequirementRelation(
         mutation: {
           onSuccess: async () => {
             await Promise.all([
-              invalidateRequirementRelations(queryClient, projectId, requirementId),
+              invalidateRequirementRelations(
+                queryClient,
+                projectId,
+                requirementId,
+              ),
               invalidateRequirementChangeLogs(queryClient, projectId),
             ]);
             toast.success(REQUIREMENT_MESSAGES.relation.deleteSuccess);
@@ -31,7 +35,7 @@ export function useDeleteRequirementRelation(
             toast.error(REQUIREMENT_MESSAGES.relation.deleteError);
           },
         },
-      }
+      },
     );
 
   const deleteRequirementRelation = async (relationId: number) => {

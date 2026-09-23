@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import type { UserListItem } from "@/lib/api/generated/model";
 
+import { getUserTypeLabel } from "../../constants/user-types";
 import { UserSystemRoles } from "../shared/user-system-roles";
 
 type UsersTableProps = {
@@ -30,6 +31,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead>ユーザー</TableHead>
+          <TableHead>区分</TableHead>
           <TableHead>部署</TableHead>
           <TableHead>役職</TableHead>
           <TableHead>権限</TableHead>
@@ -40,10 +42,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
       <TableBody>
         {users.length ? (
           users.map((user) => (
-            <ClickableTableRow
-              key={user.id}
-              href={`/system/users/${user.id}`}
-            >
+            <ClickableTableRow key={user.id} href={`/system/users/${user.id}`}>
               <TableCell>
                 <div className="flex min-w-64 items-center gap-3">
                   <UserAvatar name={user.name} src={user.avatar_url} />
@@ -54,6 +53,11 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
                     </span>
                   </div>
                 </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">
+                  {getUserTypeLabel(user.user_type)}
+                </Badge>
               </TableCell>
               <TableCell>{user.department ?? "-"}</TableCell>
               <TableCell>{user.position ?? "-"}</TableCell>
@@ -69,7 +73,10 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
             </ClickableTableRow>
           ))
         ) : (
-          <TableEmptyRow colSpan={6} message="条件に一致するユーザーがありません。" />
+          <TableEmptyRow
+            colSpan={7}
+            message="条件に一致するユーザーがありません。"
+          />
         )}
       </TableBody>
     </Table>

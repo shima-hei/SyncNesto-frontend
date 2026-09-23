@@ -15,7 +15,7 @@ import type { RequirementSectionFormValues } from "../types/requirement-section-
 
 export function useUpdateRequirementSection(
   projectId: number,
-  documentId: number
+  documentId: number,
 ) {
   const queryClient = useQueryClient();
   const updateSectionMutation =
@@ -33,13 +33,13 @@ export function useUpdateRequirementSection(
             toast.error(REQUIREMENT_MESSAGES.section.updateError);
           },
         },
-      }
+      },
     );
 
   const updateRequirementSection = async (
     sectionId: number,
     version: number,
-    values: RequirementSectionFormValues
+    values: RequirementSectionFormValues,
   ) => {
     return updateSectionMutation.mutateAsync({
       projectId,

@@ -4,7 +4,8 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RoleRead } from './roleRead';
+import type { RoleRead } from "./roleRead";
+import type { UserType } from "./userType";
 
 /**
  * ユーザー一覧で返す軽量schema。
@@ -16,6 +17,7 @@ export interface UserListItem {
   department?: string | null;
   position?: string | null;
   avatar_url?: string | null;
+  user_type: UserType;
   is_active: boolean;
   last_login_at?: string | null;
   system_roles?: RoleRead[];

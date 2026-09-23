@@ -1,10 +1,12 @@
-import { ProjectFeaturePlaceholderPage } from "@/features/projects/components/joined/project-feature-placeholder-page";
+import { notFound } from "next/navigation";
+import { DesignsPage } from "@/features/test-designs/components/pages/designs-page";
 
-export default function Page() {
-  return (
-    <ProjectFeaturePlaceholderPage
-      title="テスト設計書"
-      description="プロジェクトのテスト設計書を管理します。"
-    />
-  );
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
+  const projectId = Number((await params).projectId);
+  if (!Number.isInteger(projectId) || projectId < 1) notFound();
+  return <DesignsPage projectId={projectId} />;
 }

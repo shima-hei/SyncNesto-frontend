@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { UserType } from "./userType";
 
 /**
  * ユーザー選択や担当者表示で返す軽量schema。
@@ -13,5 +14,6 @@ export interface UserSummary {
   name: string;
   id: number;
   avatar_url?: string | null;
+  user_type: UserType;
   is_active: boolean;
 }

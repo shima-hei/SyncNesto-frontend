@@ -32,7 +32,9 @@ export function SiteBreadcrumbs() {
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           const label =
-            item.dynamicType === "project" && project ? project.name : item.label;
+            item.dynamicType === "project" && project
+              ? project.name
+              : item.label;
 
           return (
             <Fragment key={`${item.href ?? item.label}-${index}`}>

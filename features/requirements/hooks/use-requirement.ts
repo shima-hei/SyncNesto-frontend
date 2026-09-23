@@ -9,7 +9,7 @@ type UseRequirementOptions = {
 export function useRequirement(
   projectId: number,
   requirementId: number,
-  options: UseRequirementOptions = {}
+  options: UseRequirementOptions = {},
 ) {
   const requirementQuery =
     useReadRequirementProjectsProjectIdRequirementsRequirementIdGet(
@@ -20,7 +20,7 @@ export function useRequirement(
           enabled: options.enabled ?? true,
           retry: false,
         },
-      }
+      },
     );
 
   return {

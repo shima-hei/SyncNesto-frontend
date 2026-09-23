@@ -37,7 +37,7 @@ export function TaskBoardCard({
   onOpenDetail: (taskId: number) => void;
 }) {
   const statusIndex = TASK_STATUS_OPTIONS.findIndex(
-    (option) => option.value === task.status
+    (option) => option.value === task.status,
   );
   const nextStatus = TASK_STATUS_OPTIONS[statusIndex + 1];
   const handleOpenDetail = (event: React.MouseEvent<HTMLElement>) => {
@@ -54,7 +54,7 @@ export function TaskBoardCard({
       data-draggable={canUpdate ? "true" : undefined}
       className={cn(
         "flex flex-col gap-2 rounded-lg border border-l-4 bg-card p-3 text-card-foreground shadow-sm data-[draggable=true]:cursor-grab",
-        getBoardCardClassName(task.status)
+        getBoardCardClassName(task.status),
       )}
       role="button"
       tabIndex={0}
@@ -83,7 +83,10 @@ export function TaskBoardCard({
       </div>
       <div className="flex flex-wrap gap-1">
         <TaskTypeBadge type={task.task_type} />
-        <TaskFlagBadges isOverdue={task.is_overdue} isBlocked={task.is_blocked} />
+        <TaskFlagBadges
+          isOverdue={task.is_overdue}
+          isBlocked={task.is_blocked}
+        />
       </div>
       <TaskRequirementBadges requirements={task.requirements} />
       <TaskTags tags={task.tags} />

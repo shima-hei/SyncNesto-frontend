@@ -6,10 +6,10 @@
  */
 
 export type ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams = {
-q?: string | null;
-/**
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
+  q?: string | null;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
 };

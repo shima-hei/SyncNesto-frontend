@@ -6,4 +6,3 @@ export type AccountProfileFormValues = {
 export type AccountProfileFormErrors = Partial<
   Record<keyof AccountProfileFormValues, string>
 >;
-

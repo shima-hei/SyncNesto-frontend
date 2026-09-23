@@ -40,7 +40,7 @@ export const initialRequirementValues: RequirementFormValues = {
 };
 
 export const getRequirementDocumentFormValues = (
-  document: RequirementDocumentRead
+  document: RequirementDocumentRead,
 ): RequirementDocumentFormValues => {
   return {
     title: document.title,
@@ -58,7 +58,7 @@ export const getRequirementDocumentFormValues = (
 };
 
 export const getRequirementFormValues = (
-  requirement: RequirementRead
+  requirement: RequirementRead,
 ): RequirementFormValues => {
   return {
     sectionId: toOptionalId(requirement.section_id),
@@ -81,7 +81,7 @@ export const getRequirementFormValues = (
 };
 
 export const getDuplicatedRequirementFormValues = (
-  requirement: RequirementRead
+  requirement: RequirementRead,
 ): RequirementFormValues => {
   return {
     ...getRequirementFormValues(requirement),

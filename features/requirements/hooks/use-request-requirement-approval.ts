@@ -16,7 +16,7 @@ import type { RequirementApprovalRequestFormValues } from "../types/requirement-
 export function useRequestRequirementApproval(
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) {
   const queryClient = useQueryClient();
   const requestApprovalMutation =
@@ -36,7 +36,7 @@ export function useRequestRequirementApproval(
     });
 
   const requestRequirementApproval = async (
-    values: RequirementApprovalRequestFormValues
+    values: RequirementApprovalRequestFormValues,
   ) => {
     return requestApprovalMutation.mutateAsync({
       projectId,

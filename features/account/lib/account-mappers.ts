@@ -4,7 +4,7 @@ import type { AccountProfileFormValues } from "../types/account-form";
 
 export const toUserProfileUpdate = (
   values: AccountProfileFormValues,
-  version: number
+  version: number,
 ): UserProfileUpdate => {
   return {
     version,

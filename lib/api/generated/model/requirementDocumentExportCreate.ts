@@ -12,4 +12,5 @@ export interface RequirementDocumentExportCreate {
   format?: string;
   include_comments?: boolean;
   include_change_logs?: boolean;
+  section_ids?: number[] | null;
 }

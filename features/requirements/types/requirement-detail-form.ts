@@ -1,8 +1,10 @@
 export type RequirementDetailFormValues = {
   detailType: string;
-  detailJson: string;
+  sourceDetailType?: string;
+  fields: Record<string, string>;
+  rawJson: string;
 };
 
 export type RequirementDetailFormErrors = Partial<
-  Record<keyof RequirementDetailFormValues, string>
+  Record<keyof RequirementDetailFormValues | `field.${string}`, string>
 >;

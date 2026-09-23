@@ -47,7 +47,7 @@ export function RequirementApprovalsSection({
   const { approvals, isLoading } = useRequirementApprovals(
     projectId,
     targetType,
-    targetId
+    targetId,
   );
   const {
     requestRequirementApproval,
@@ -62,7 +62,7 @@ export function RequirementApprovalsSection({
 
   const openDecisionDialog = (
     approval: RequirementApprovalRead,
-    action: ApprovalDecisionAction
+    action: ApprovalDecisionAction,
   ) => {
     setDecisionTarget({ approval, action });
     setDecisionComment("");
@@ -84,10 +84,7 @@ export function RequirementApprovalsSection({
       return;
     }
 
-    if (
-      decisionTarget.action === "reject" &&
-      !decisionComment.trim()
-    ) {
+    if (decisionTarget.action === "reject" && !decisionComment.trim()) {
       setDecisionError("差し戻し理由を入力してください。");
       return;
     }
@@ -97,12 +94,12 @@ export function RequirementApprovalsSection({
     if (decisionTarget.action === "approve") {
       await approveRequirementApproval(
         decisionTarget.approval.id,
-        decisionComment.trim()
+        decisionComment.trim(),
       );
     } else {
       await rejectRequirementApproval(
         decisionTarget.approval.id,
-        decisionComment.trim()
+        decisionComment.trim(),
       );
     }
 
@@ -148,9 +145,9 @@ export function RequirementApprovalsSection({
                       {approval.comment || "コメントはありません。"}
                     </p>
                     <span className="text-xs text-muted-foreground">
-                      申請日時: {formatDateTime(approval.requested_at)} / 承認日時:{" "}
-                      {formatDateTime(approval.approved_at)} / 差し戻し日時:{" "}
-                      {formatDateTime(approval.rejected_at)}
+                      申請日時: {formatDateTime(approval.requested_at)} /
+                      承認日時: {formatDateTime(approval.approved_at)} /
+                      差し戻し日時: {formatDateTime(approval.rejected_at)}
                     </span>
                   </div>
                   {canReview && approval.status === "requested" ? (

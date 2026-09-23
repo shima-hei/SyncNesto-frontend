@@ -5,7 +5,7 @@ import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 export const setCurrentUserCache = (
   queryClient: QueryClient,
-  user: CurrentUserRead | null
+  user: CurrentUserRead | null,
 ) => {
   queryClient.setQueryData(getCurrentUserKey(), user);
 };

@@ -21,7 +21,9 @@ export const requirementDocumentSchema = z.object({
 export const requirementSchema = z.object({
   sectionId: z.string(),
   requirementCode: z.string(),
-  requirementType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("種別")),
+  requirementType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("種別")),
   category: z.string(),
   title: z.string().min(1, VALIDATION_MESSAGES.required("タイトル")),
   description: z.string(),
@@ -42,19 +44,28 @@ export const requirementCommentSchema = z.object({
 });
 
 export const requirementLinkSchema = z.object({
-  linkedType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("リンク種別")),
-  linkedId: z.string().min(1, VALIDATION_MESSAGES.required("リンク先ID")),
+  linkedType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("成果物の種類")),
+  linkedId: z.string().min(1, VALIDATION_MESSAGES.required("参照先")),
+  linkedUrl: z.string(),
+  status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("成果物状態")),
 });
 
 export const requirementRelationSchema = z.object({
-  targetType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("対象種別")),
-  targetId: z.string().min(1, VALIDATION_MESSAGES.required("対象ID")),
-  relationType: z.string().min(1, VALIDATION_MESSAGES.selectRequired("関連種別")),
+  targetType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("関連先の種類")),
+  targetId: z.string().min(1, VALIDATION_MESSAGES.required("関連先")),
+  relationType: z
+    .string()
+    .min(1, VALIDATION_MESSAGES.selectRequired("関連種別")),
   description: z.string(),
 });
 
 export const requirementTargetCommentSchema = z.object({
   body: z.string().min(1, VALIDATION_MESSAGES.required("コメント")),
+  targetAnchor: z.string(),
   reason: z.string(),
 });
 
@@ -92,7 +103,7 @@ export const requirementOpenIssueSchema = z.object({
     .string()
     .refine(
       (value) => !value || Number.isInteger(Number(value)),
-      VALIDATION_MESSAGES.number("関連要件ID")
+      VALIDATION_MESSAGES.number("関連要件ID"),
     ),
   assigneeId: z.string(),
   dueDate: z.string(),

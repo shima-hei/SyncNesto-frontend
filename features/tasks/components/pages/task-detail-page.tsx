@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CopyIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowLeftIcon,
+  CopyIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
@@ -71,7 +78,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
   } = useUpdateTask(projectId, taskId);
   const { deleteTask, isPending: isDeletePending } = useDeleteTask(
     projectId,
-    taskId
+    taskId,
   );
   const {
     createTask,
@@ -99,6 +106,12 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
     <div className="flex flex-col gap-6 p-4 lg:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 flex-col gap-2">
+          <Button asChild variant="outline" className="mb-1 w-fit">
+            <Link href={`/projects/joined/${projectId}/tasks?tab=list`}>
+              <ArrowLeftIcon data-icon="inline-start" />
+              タスク一覧へ戻る
+            </Link>
+          </Button>
           <p className="text-sm text-muted-foreground">{task.task_code}</p>
           <h2 className="truncate text-lg font-semibold">{task.title}</h2>
           <div className="flex flex-wrap gap-2">
@@ -190,7 +203,10 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
                 label="実績終了日"
                 value={formatDate(task.actual_end_date)}
               />
-              <TaskInfo label="進捗率" value={`${task.progress_percent ?? 0}%`} />
+              <TaskInfo
+                label="進捗率"
+                value={`${task.progress_percent ?? 0}%`}
+              />
               <TaskInfo
                 label="見積/実績"
                 value={`${task.estimated_minutes ?? "-"} / ${
@@ -310,7 +326,11 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
                 return Promise.resolve();
               }
 
-              return updateTask(values, conflictCurrent.version, conflictCurrent);
+              return updateTask(
+                values,
+                conflictCurrent.version,
+                conflictCurrent,
+              );
             }}
             onSubmit={(values) => updateTask(values, task.version, task)}
             onSuccess={() => setEditDialogOpen(false)}
@@ -333,13 +353,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
   );
 }
 
-function TaskInfo({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
+function TaskInfo({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -360,7 +374,7 @@ function TaskDetailSkeleton() {
 
 const getTaskReferenceLabel = (
   task: TaskRead | null,
-  fallbackTaskId?: number | null
+  fallbackTaskId?: number | null,
 ) => {
   if (task) {
     return `${task.task_code} ${task.title}`;
@@ -379,6 +393,7 @@ const getChildTaskInitialValues = (task: TaskRead) => {
     requirementId:
       task.requirements?.length === 1 ? String(task.requirements[0].id) : "",
     relationType:
-      task.requirements?.[0]?.relation_type ?? defaultTaskFormValues.relationType,
+      task.requirements?.[0]?.relation_type ??
+      defaultTaskFormValues.relationType,
   };
 };

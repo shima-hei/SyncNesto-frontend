@@ -65,7 +65,7 @@ export function TaskForm({
   const [errors, setErrors] = useState<TaskFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -101,7 +101,7 @@ export function TaskForm({
 
   const updateValue = <TKey extends keyof TaskFormValues>(
     field: TKey,
-    value: TaskFormValues[TKey]
+    value: TaskFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -140,7 +140,9 @@ export function TaskForm({
                   未入力の場合は自動採番されます。
                 </FieldDescription>
               ) : null}
-              {errors.taskCode ? <FieldError>{errors.taskCode}</FieldError> : null}
+              {errors.taskCode ? (
+                <FieldError>{errors.taskCode}</FieldError>
+              ) : null}
             </Field>
             <Field data-invalid={errors.title ? true : undefined}>
               <FieldLabel htmlFor={titleId}>タイトル</FieldLabel>

@@ -69,13 +69,11 @@ export function RequirementOpenIssueForm({
   onSuccess,
 }: RequirementOpenIssueFormProps) {
   const isUpdate = Boolean(initialValues);
-  const [values, setValues] = useState(
-    initialValues ?? defaultOpenIssueValues
-  );
+  const [values, setValues] = useState(initialValues ?? defaultOpenIssueValues);
   const [errors, setErrors] = useState<RequirementOpenIssueFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -151,7 +149,10 @@ export function RequirementOpenIssueForm({
           <Input
             value={values.title}
             onChange={(event) => {
-              setValues((current) => ({ ...current, title: event.target.value }));
+              setValues((current) => ({
+                ...current,
+                title: event.target.value,
+              }));
               setErrors((current) => ({ ...current, title: undefined }));
             }}
             aria-invalid={Boolean(errors.title)}
@@ -208,7 +209,10 @@ export function RequirementOpenIssueForm({
               type="date"
               value={values.dueDate}
               onChange={(event) =>
-                setValues((current) => ({ ...current, dueDate: event.target.value }))
+                setValues((current) => ({
+                  ...current,
+                  dueDate: event.target.value,
+                }))
               }
             />
           </Field>

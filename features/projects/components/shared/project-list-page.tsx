@@ -46,7 +46,7 @@ export function ProjectListPage({
       q: q || undefined,
       status: status === ALL_STATUSES ? undefined : status,
     }),
-    [page, q, status]
+    [page, q, status],
   );
   const { projects, total, isLoading, isFetching } =
     useProjects(projectListParams);

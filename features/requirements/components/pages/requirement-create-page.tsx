@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { RequirementForm } from "../forms/requirement-form";
 import {
@@ -25,7 +26,7 @@ export function RequirementCreatePage({
 }: RequirementCreatePageProps) {
   const { createRequirement, isPending, error } = useCreateRequirement(
     projectId,
-    documentId
+    documentId,
   );
   const {
     requirement: duplicateSource,
@@ -39,7 +40,9 @@ export function RequirementCreatePage({
     : initialRequirementValues;
   const initialValues = {
     ...baseInitialValues,
-    sectionId: initialSectionId ? String(initialSectionId) : baseInitialValues.sectionId,
+    sectionId: initialSectionId
+      ? String(initialSectionId)
+      : baseInitialValues.sectionId,
   };
 
   if (isDuplicateSourceLoading) {
@@ -72,6 +75,13 @@ export function RequirementCreatePage({
         documentId={documentId}
         mode="create"
         initialValues={initialValues}
+        draftScope={createDraftScope(
+          "requirements",
+          "items",
+          "create",
+          projectId,
+          documentId,
+        )}
         isPending={isPending}
         error={error}
         onSubmit={createRequirement}

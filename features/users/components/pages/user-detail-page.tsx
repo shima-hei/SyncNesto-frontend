@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/shared/display/user-avatar";
 
 import { getUserFormValues } from "../../constants/user-form";
+import { getUserTypeLabel } from "../../constants/user-types";
 import { useUpdateUser } from "../../hooks/use-update-user";
 import { useUser } from "../../hooks/use-user";
 import { UserForm } from "../forms/user-form";
@@ -49,6 +50,7 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">{getUserTypeLabel(user.user_type)}</Badge>
           <Badge variant={user.is_active ? "secondary" : "outline"}>
             {user.is_active ? "有効" : "無効"}
           </Badge>

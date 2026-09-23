@@ -10,7 +10,7 @@ import { invalidateRequirementLinksWithSummary } from "../lib/requirement-cache"
 
 export function useDeleteRequirementLink(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const deleteLinkMutation =
@@ -21,7 +21,7 @@ export function useDeleteRequirementLink(
             await invalidateRequirementLinksWithSummary(
               queryClient,
               projectId,
-              requirementId
+              requirementId,
             );
             toast.success(REQUIREMENT_MESSAGES.link.deleteSuccess);
           },
@@ -29,7 +29,7 @@ export function useDeleteRequirementLink(
             toast.error(REQUIREMENT_MESSAGES.link.deleteError);
           },
         },
-      }
+      },
     );
 
   const deleteRequirementLink = async (linkId: number) => {

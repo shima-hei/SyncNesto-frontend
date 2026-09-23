@@ -6,6 +6,6 @@
  */
 
 export type ListTargetCommentsProjectsProjectIdCommentsGetParams = {
-target_type: string;
-target_id: number;
+  target_type: string;
+  target_id: number;
 };

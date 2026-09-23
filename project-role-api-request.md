@@ -8,16 +8,16 @@ Syncnesto Frontend では、メニューやボタンなどの表示制御に rol
 
 要件定義機能では、同じ画面内で以下のように操作可否が分かれます。
 
-| 操作 | 許可したい role |
-|---|---|
-| 閲覧 | `system_admin`, `project_admin`, `manager`, `member`, `viewer` |
-| 作成 | `system_admin`, `project_admin`, `manager`, `member` |
-| 更新 | `system_admin`, `project_admin`, `manager`, `member` |
-| 削除 | `system_admin`, `project_admin` |
-| コメント | `system_admin`, `project_admin`, `manager`, `member` |
-| レビュー | `system_admin`, `project_admin`, `manager` |
-| リンク | `system_admin`, `project_admin`, `manager`, `member` |
-| 承認 | `system_admin`, `project_admin` |
+| 操作     | 許可したい role                                                |
+| -------- | -------------------------------------------------------------- |
+| 閲覧     | `system_admin`, `project_admin`, `manager`, `member`, `viewer` |
+| 作成     | `system_admin`, `project_admin`, `manager`, `member`           |
+| 更新     | `system_admin`, `project_admin`, `manager`, `member`           |
+| 削除     | `system_admin`, `project_admin`                                |
+| コメント | `system_admin`, `project_admin`, `manager`, `member`           |
+| レビュー | `system_admin`, `project_admin`, `manager`                     |
+| リンク   | `system_admin`, `project_admin`, `manager`, `member`           |
+| 承認     | `system_admin`, `project_admin`                                |
 
 バックエンド側で最終認可する前提は変えません。ただし、フロントエンドでもユーザーに不要なボタンやメニューを表示しないため、現在ログイン中のユーザーが対象プロジェクトで持っている project role key が必要です。
 
@@ -109,14 +109,14 @@ GET /projects/{project_id}/me
 要件定義機能では、取得した role key を使って以下を制御します。
 
 ```ts
-canViewRequirement
-canCreateRequirement
-canUpdateRequirement
-canDeleteRequirement
-canCommentRequirement
-canReviewRequirement
-canLinkRequirement
-canApproveRequirement
+canViewRequirement;
+canCreateRequirement;
+canUpdateRequirement;
+canDeleteRequirement;
+canCommentRequirement;
+canReviewRequirement;
+canLinkRequirement;
+canApproveRequirement;
 ```
 
 例:
@@ -133,7 +133,7 @@ const canDeleteRequirement =
 OpenAPIに追加後、フロントエンドでは Orval により以下のような hook が生成される想定です。
 
 ```ts
-useReadCurrentProjectMemberProjectsProjectIdMeGet(projectId)
+useReadCurrentProjectMemberProjectsProjectIdMeGet(projectId);
 ```
 
 名称はバックエンドの operationId に依存するため、実際の名前は問いません。

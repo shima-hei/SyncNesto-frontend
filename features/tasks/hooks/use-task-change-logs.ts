@@ -16,7 +16,7 @@ export function useTaskChangeLogs(taskId: number, page = 1) {
         retry: false,
         placeholderData: (previousData) => previousData,
       },
-    }
+    },
   );
 
   return {

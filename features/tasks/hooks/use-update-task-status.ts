@@ -48,7 +48,7 @@ export function useUpdateTaskStatus(projectId: number) {
   const updateTaskStatus = async (
     task: TaskRead,
     status: string,
-    options: TaskStatusUpdateOptions = {}
+    options: TaskStatusUpdateOptions = {},
   ) => {
     if (options.boardId) {
       return moveTaskMutation.mutateAsync({

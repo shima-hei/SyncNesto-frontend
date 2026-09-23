@@ -12,24 +12,30 @@ import type { RequirementDetailFormValues } from "../types/requirement-detail-fo
 
 export function useCreateRequirementDetail(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const createDetailMutation =
-    useCreateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsPost({
-      mutation: {
-        onSuccess: async () => {
-          await invalidateRequirementSummary(queryClient, projectId, requirementId);
-          toast.success(REQUIREMENT_MESSAGES.detail.createSuccess);
-        },
-        onError: () => {
-          toast.error(REQUIREMENT_MESSAGES.detail.createError);
+    useCreateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsPost(
+      {
+        mutation: {
+          onSuccess: async () => {
+            await invalidateRequirementSummary(
+              queryClient,
+              projectId,
+              requirementId,
+            );
+            toast.success(REQUIREMENT_MESSAGES.detail.createSuccess);
+          },
+          onError: () => {
+            toast.error(REQUIREMENT_MESSAGES.detail.createError);
+          },
         },
       },
-    });
+    );
 
   const createRequirementDetail = async (
-    values: RequirementDetailFormValues
+    values: RequirementDetailFormValues,
   ) => {
     return createDetailMutation.mutateAsync({
       projectId,

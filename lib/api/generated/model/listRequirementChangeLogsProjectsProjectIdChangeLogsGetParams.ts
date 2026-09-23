@@ -6,20 +6,20 @@
  */
 
 export type ListRequirementChangeLogsProjectsProjectIdChangeLogsGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
-document_id?: number | null;
-target_type?: string | null;
-target_id?: number | null;
-action?: string | null;
-changed_by?: number | null;
-changed_at_from?: string | null;
-changed_at_to?: string | null;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  page_size?: number;
+  document_id?: number | null;
+  target_type?: string | null;
+  target_id?: number | null;
+  action?: string | null;
+  changed_by?: number | null;
+  changed_at_from?: string | null;
+  changed_at_to?: string | null;
 };

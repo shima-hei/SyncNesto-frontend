@@ -48,7 +48,10 @@ function SelectedRequirementSummaryContent({
   documentId: number;
   requirementId: number;
 }) {
-  const { summary, isLoading } = useRequirementSummary(projectId, requirementId);
+  const { summary, isLoading } = useRequirementSummary(
+    projectId,
+    requirementId,
+  );
 
   if (isLoading) {
     return (
@@ -124,7 +127,7 @@ function SelectedRequirementSummaryContent({
           />
           <RequirementSummaryInfo
             label="関連情報"
-            value={`詳細 ${summary.details.length}件 / リンク ${summary.links.length}件 / コメント ${summary.comments.length}件 / レビュー ${summary.reviews.length}件`}
+            value={`実現内容 ${summary.details.length}件 / リンク ${summary.links.length}件 / コメント ${summary.comments.length}件 / レビュー ${summary.reviews.length}件`}
           />
         </div>
         <Button asChild variant="outline">

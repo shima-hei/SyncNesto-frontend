@@ -15,20 +15,21 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
-import { mainNavigation, secondaryNavigation } from "../../constants/navigation";
+import {
+  mainNavigation,
+  secondaryNavigation,
+} from "../../constants/navigation";
 import { getVisibleNavigationItems } from "../../utils/navigation";
 import { SidebarNav } from "../navigation/sidebar-nav";
 import { SidebarUserMenu } from "../user/sidebar-user-menu";
 
-export function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { user } = useAuth();
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
   const visibleSecondaryNavigation = getVisibleNavigationItems(
     secondaryNavigation,
-    user
+    user,
   );
 
   return (

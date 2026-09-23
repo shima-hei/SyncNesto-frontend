@@ -29,7 +29,7 @@ export function SearchFilterBar({
 }: SearchFilterBarProps) {
   const searchInputId = useId();
   const handleSubmit = (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
     onSearch();
@@ -39,7 +39,8 @@ export function SearchFilterBar({
     <div
       className={cn(
         "flex flex-col gap-3",
-        variant === "default" && "md:flex-row md:items-center md:justify-between"
+        variant === "default" &&
+          "md:flex-row md:items-center md:justify-between",
       )}
     >
       <form
@@ -47,7 +48,7 @@ export function SearchFilterBar({
           "grid w-full min-w-0 gap-2",
           variant === "default" &&
             "sm:grid-cols-[minmax(0,1fr)_auto] md:max-w-xl",
-          variant === "compact" && "sm:grid-cols-[minmax(0,1fr)_auto]"
+          variant === "compact" && "sm:grid-cols-[minmax(0,1fr)_auto]",
         )}
         onSubmit={handleSubmit}
       >
@@ -69,7 +70,7 @@ export function SearchFilterBar({
           className={cn(
             "shrink-0",
             searchLabel && "sm:self-end",
-            variant === "compact" && "w-full sm:w-auto"
+            variant === "compact" && "w-full sm:w-auto",
           )}
         >
           <SearchIcon data-icon="inline-start" />
@@ -82,7 +83,7 @@ export function SearchFilterBar({
             "grid min-w-0 gap-2 [&>*]:min-w-0",
             variant === "default" && "sm:grid-cols-2 lg:grid-cols-3",
             variant === "compact" &&
-              "[grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))]"
+              "[grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))]",
           )}
         >
           {children}

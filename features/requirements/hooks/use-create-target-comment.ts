@@ -16,7 +16,7 @@ import type { RequirementTargetCommentFormValues } from "../types/requirement-ta
 export function useCreateTargetComment(
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) {
   const queryClient = useQueryClient();
   const createCommentMutation =
@@ -28,7 +28,7 @@ export function useCreateTargetComment(
               queryClient,
               projectId,
               targetType,
-              targetId
+              targetId,
             ),
             invalidateRequirementChangeLogs(queryClient, projectId),
           ]);
@@ -42,7 +42,7 @@ export function useCreateTargetComment(
 
   const createTargetComment = async (
     values: RequirementTargetCommentFormValues,
-    parentCommentId?: number | null
+    parentCommentId?: number | null,
   ) => {
     return createCommentMutation.mutateAsync({
       projectId,
@@ -50,7 +50,7 @@ export function useCreateTargetComment(
         values,
         targetType,
         targetId,
-        parentCommentId
+        parentCommentId,
       ),
     });
   };

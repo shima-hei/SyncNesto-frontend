@@ -31,7 +31,7 @@ export function useCreateTaskComment(taskId: number) {
 
   const createTaskComment = async (
     values: TaskCommentFormValues,
-    parentCommentId?: number | null
+    parentCommentId?: number | null,
   ) => {
     return createCommentMutation.mutateAsync({
       taskId,

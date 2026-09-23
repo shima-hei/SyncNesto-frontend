@@ -5,9 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getConflictCurrent } from "@/lib/api/conflict";
-import type {
-  RequirementDocumentRead,
-} from "@/lib/api/generated/model";
+import type { RequirementDocumentRead } from "@/lib/api/generated/model";
 import { useUpdateRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdPatch } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
@@ -21,7 +19,7 @@ import type { RequirementDocumentFormValues } from "../types/requirement-documen
 
 export function useUpdateRequirementDocument(
   projectId: number,
-  documentId: number
+  documentId: number,
 ) {
   const queryClient = useQueryClient();
   const [conflictCurrent, setConflictCurrent] =
@@ -36,7 +34,7 @@ export function useUpdateRequirementDocument(
               queryClient,
               projectId,
               documentId,
-              document
+              document,
             );
             await Promise.all([
               invalidateRequirementDocumentList(queryClient, projectId),
@@ -56,12 +54,12 @@ export function useUpdateRequirementDocument(
             toast.error(REQUIREMENT_MESSAGES.document.updateError);
           },
         },
-      }
+      },
     );
 
   const updateRequirementDocument = async (
     values: RequirementDocumentFormValues,
-    version: number
+    version: number,
   ) => {
     return updateDocumentMutation.mutateAsync({
       projectId,

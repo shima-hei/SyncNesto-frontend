@@ -2,10 +2,8 @@ import type { NextRequest } from "next/server";
 
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "access_token";
 
-export const CSRF_COOKIE_NAME =
-  process.env.CSRF_COOKIE_NAME ?? "csrf_token";
-export const CSRF_HEADER_NAME =
-  process.env.CSRF_HEADER_NAME ?? "X-CSRF-Token";
+export const CSRF_COOKIE_NAME = process.env.CSRF_COOKIE_NAME ?? "csrf_token";
+export const CSRF_HEADER_NAME = process.env.CSRF_HEADER_NAME ?? "X-CSRF-Token";
 
 export const CSRF_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 

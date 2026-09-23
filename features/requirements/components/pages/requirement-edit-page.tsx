@@ -1,10 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { getRequirementFormValues } from "../../constants/requirement-form";
 import { useRequirement } from "../../hooks/use-requirement";
 import { useUpdateRequirement } from "../../hooks/use-update-requirement";
+import type { RequirementFormValues } from "../../types/requirement-form";
 import { RequirementForm } from "../forms/requirement-form";
 
 type RequirementEditPageProps = {
@@ -18,9 +22,10 @@ export function RequirementEditPage({
   documentId,
   requirementId,
 }: RequirementEditPageProps) {
+  const router = useRouter();
   const { requirement, isLoading, error } = useRequirement(
     projectId,
-    requirementId
+    requirementId,
   );
   const {
     updateRequirement,
@@ -29,6 +34,14 @@ export function RequirementEditPage({
     isPending,
     error: updateError,
   } = useUpdateRequirement(projectId, requirementId);
+  const detailPath = `/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`;
+  const handleUpdate = async (
+    values: RequirementFormValues,
+    version: number,
+  ) => {
+    await updateRequirement(values, version);
+    router.push(detailPath);
+  };
 
   if (isLoading) {
     return <RequirementEditSkeleton />;
@@ -43,7 +56,7 @@ export function RequirementEditPage({
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4 lg:p-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-semibold">要件編集</h2>
         <p className="text-sm text-muted-foreground">{requirement.title}</p>
@@ -53,7 +66,16 @@ export function RequirementEditPage({
         projectId={projectId}
         documentId={documentId}
         mode="update"
+        className="w-full max-w-6xl"
         initialValues={getRequirementFormValues(requirement)}
+        draftScope={createDraftScope(
+          "requirements",
+          "items",
+          "update",
+          projectId,
+          requirementId,
+        )}
+        draftResourceId={requirementId}
         isPending={isPending}
         error={updateError}
         conflictValues={
@@ -65,9 +87,9 @@ export function RequirementEditPage({
             return Promise.resolve();
           }
 
-          return updateRequirement(values, conflictCurrent.version);
+          return handleUpdate(values, conflictCurrent.version);
         }}
-        onSubmit={(values) => updateRequirement(values, requirement.version)}
+        onSubmit={(values) => handleUpdate(values, requirement.version)}
       />
     </div>
   );
@@ -75,7 +97,7 @@ export function RequirementEditPage({
 
 function RequirementEditSkeleton() {
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4 lg:p-6">
       <Skeleton className="h-5 w-48" />
       <Skeleton className="h-96 w-full max-w-4xl" />
     </div>

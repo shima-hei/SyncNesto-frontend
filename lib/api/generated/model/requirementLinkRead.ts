@@ -13,5 +13,7 @@ export interface RequirementLinkRead {
   requirement_id: number;
   linked_type: string;
   linked_id: string;
+  linked_url?: string | null;
+  status: string;
   created_at: string;
 }

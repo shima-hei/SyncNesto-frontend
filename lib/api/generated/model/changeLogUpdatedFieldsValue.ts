@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { ChangeLogUpdatedFieldsValueSnapshot } from './changeLogUpdatedFieldsValueSnapshot';
+import type { ChangeLogUpdatedFieldsValueSnapshot } from "./changeLogUpdatedFieldsValueSnapshot";
 
 /**
  * 複数フィールド更新時の変更項目とスナップショットを返すschema。

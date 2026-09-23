@@ -10,7 +10,7 @@ import { invalidateRequirementReviewsWithSummary } from "../lib/requirement-cach
 
 export function useDeleteRequirementReview(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const deleteReviewMutation =
@@ -21,7 +21,7 @@ export function useDeleteRequirementReview(
             await invalidateRequirementReviewsWithSummary(
               queryClient,
               projectId,
-              requirementId
+              requirementId,
             );
             toast.success(REQUIREMENT_MESSAGES.review.deleteSuccess);
           },
@@ -29,7 +29,7 @@ export function useDeleteRequirementReview(
             toast.error(REQUIREMENT_MESSAGES.review.deleteError);
           },
         },
-      }
+      },
     );
 
   const deleteRequirementReview = async (reviewId: number) => {

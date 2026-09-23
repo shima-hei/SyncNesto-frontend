@@ -5,20 +5,20 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TaskChangeLogReadAction = typeof TaskChangeLogReadAction[keyof typeof TaskChangeLogReadAction];
-
+export type TaskChangeLogReadAction =
+  (typeof TaskChangeLogReadAction)[keyof typeof TaskChangeLogReadAction];
 
 export const TaskChangeLogReadAction = {
-  created: 'created',
-  updated: 'updated',
-  deleted: 'deleted',
-  status_changed: 'status_changed',
-  assignee_changed: 'assignee_changed',
-  schedule_changed: 'schedule_changed',
-  progress_changed: 'progress_changed',
-  comment_created: 'comment_created',
-  comment_updated: 'comment_updated',
-  comment_deleted: 'comment_deleted',
-  comment_resolved: 'comment_resolved',
-  comment_reopened: 'comment_reopened',
+  created: "created",
+  updated: "updated",
+  deleted: "deleted",
+  status_changed: "status_changed",
+  assignee_changed: "assignee_changed",
+  schedule_changed: "schedule_changed",
+  progress_changed: "progress_changed",
+  comment_created: "comment_created",
+  comment_updated: "comment_updated",
+  comment_deleted: "comment_deleted",
+  comment_resolved: "comment_resolved",
+  comment_reopened: "comment_reopened",
 } as const;

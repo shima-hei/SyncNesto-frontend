@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  validateCsrfToken,
-  isCsrfProtectedMethod,
-} from "@/lib/security/csrf";
+import { validateCsrfToken, isCsrfProtectedMethod } from "@/lib/security/csrf";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 
@@ -68,14 +65,14 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   if (!isAllowedOrigin(request)) {
     return NextResponse.json(
       { message: "Forbidden", code: "FORBIDDEN" },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
   if (!validateCsrfToken(request, upstreamPath)) {
     return NextResponse.json(
       { message: "Invalid CSRF token", code: "CSRF_TOKEN_INVALID" },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
@@ -99,7 +96,7 @@ const getUpstreamPath = async (context: RouteContext) => {
 
 const isAllowedPath = (path: string) => {
   return ALLOWED_PREFIXES.some(
-    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );
 };
 

@@ -3,9 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  useUpdateRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdPatch,
-} from "@/lib/api/generated/requirements/requirements";
+import { useUpdateRequirementReviewProjectsProjectIdRequirementsRequirementIdReviewsReviewIdPatch } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
@@ -17,7 +15,7 @@ import type { RequirementReviewFormValues } from "../types/requirement-review-fo
 
 export function useUpdateRequirementReview(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const updateReviewMutation =
@@ -28,7 +26,7 @@ export function useUpdateRequirementReview(
             await invalidateRequirementReviewsWithSummary(
               queryClient,
               projectId,
-              requirementId
+              requirementId,
             );
             await invalidateRequirementChangeLogs(queryClient, projectId);
             toast.success(REQUIREMENT_MESSAGES.review.updateSuccess);
@@ -37,12 +35,12 @@ export function useUpdateRequirementReview(
             toast.error(REQUIREMENT_MESSAGES.review.updateError);
           },
         },
-      }
+      },
     );
 
   const updateRequirementReview = async (
     reviewId: number,
-    values: RequirementReviewFormValues
+    values: RequirementReviewFormValues,
   ) => {
     return updateReviewMutation.mutateAsync({
       projectId,

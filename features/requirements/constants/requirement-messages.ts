@@ -25,6 +25,8 @@ export const REQUIREMENT_MESSAGES = {
   link: {
     createSuccess: "関連成果物を追加しました。",
     createError: "関連成果物の追加に失敗しました。",
+    updateSuccess: "関連成果物を更新しました。",
+    updateError: "関連成果物の更新に失敗しました。",
     deleteSuccess: "関連成果物を削除しました。",
     deleteError: "関連成果物の削除に失敗しました。",
   },

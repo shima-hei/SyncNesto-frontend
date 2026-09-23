@@ -4,11 +4,11 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { ChangeLogUserRead } from './changeLogUserRead';
-import type { TaskChangeLogReadAction } from './taskChangeLogReadAction';
-import type { TaskChangeLogReadNewValue } from './taskChangeLogReadNewValue';
-import type { TaskChangeLogReadOldValue } from './taskChangeLogReadOldValue';
-import type { TaskChangeLogReadTargetType } from './taskChangeLogReadTargetType';
+import type { ChangeLogUserRead } from "./changeLogUserRead";
+import type { TaskChangeLogReadAction } from "./taskChangeLogReadAction";
+import type { TaskChangeLogReadNewValue } from "./taskChangeLogReadNewValue";
+import type { TaskChangeLogReadOldValue } from "./taskChangeLogReadOldValue";
+import type { TaskChangeLogReadTargetType } from "./taskChangeLogReadTargetType";
 
 /**
  * タスク変更履歴読み取り時に返すschema。
@@ -18,7 +18,29 @@ export interface TaskChangeLogRead {
   task_id: number;
   target_type?: TaskChangeLogReadTargetType;
   action: TaskChangeLogReadAction;
-  field_name?: 'task_code' | 'title' | 'description' | 'status' | 'priority' | 'task_type' | 'assignee_id' | 'reporter_id' | 'start_date' | 'due_date' | 'actual_start_date' | 'actual_end_date' | 'estimated_minutes' | 'actual_minutes' | 'progress_percent' | 'parent_task_id' | 'sort_order' | 'tags' | 'requirements' | 'body' | 'is_resolved' | null;
+  field_name?:
+    | "task_code"
+    | "title"
+    | "description"
+    | "status"
+    | "priority"
+    | "task_type"
+    | "assignee_id"
+    | "reporter_id"
+    | "start_date"
+    | "due_date"
+    | "actual_start_date"
+    | "actual_end_date"
+    | "estimated_minutes"
+    | "actual_minutes"
+    | "progress_percent"
+    | "parent_task_id"
+    | "sort_order"
+    | "tags"
+    | "requirements"
+    | "body"
+    | "is_resolved"
+    | null;
   old_value?: TaskChangeLogReadOldValue;
   new_value?: TaskChangeLogReadNewValue;
   reason?: string | null;

@@ -10,21 +10,27 @@ import { invalidateRequirementSummary } from "../lib/requirement-cache";
 
 export function useDeleteRequirementDetail(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const deleteDetailMutation =
-    useDeleteRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdDelete({
-      mutation: {
-        onSuccess: async () => {
-          await invalidateRequirementSummary(queryClient, projectId, requirementId);
-          toast.success(REQUIREMENT_MESSAGES.detail.deleteSuccess);
-        },
-        onError: () => {
-          toast.error(REQUIREMENT_MESSAGES.detail.deleteError);
+    useDeleteRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdDelete(
+      {
+        mutation: {
+          onSuccess: async () => {
+            await invalidateRequirementSummary(
+              queryClient,
+              projectId,
+              requirementId,
+            );
+            toast.success(REQUIREMENT_MESSAGES.detail.deleteSuccess);
+          },
+          onError: () => {
+            toast.error(REQUIREMENT_MESSAGES.detail.deleteError);
+          },
         },
       },
-    });
+    );
 
   const deleteRequirementDetail = async (detailId: number) => {
     return deleteDetailMutation.mutateAsync({

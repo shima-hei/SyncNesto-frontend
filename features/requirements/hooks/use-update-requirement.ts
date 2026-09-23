@@ -6,9 +6,7 @@ import { toast } from "sonner";
 
 import { getConflictCurrent } from "@/lib/api/conflict";
 import type { RequirementRead } from "@/lib/api/generated/model";
-import {
-  useUpdateRequirementProjectsProjectIdRequirementsRequirementIdPatch,
-} from "@/lib/api/generated/requirements/requirements";
+import { useUpdateRequirementProjectsProjectIdRequirementsRequirementIdPatch } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
@@ -33,7 +31,7 @@ export function useUpdateRequirement(projectId: number, requirementId: number) {
             queryClient,
             projectId,
             requirementId,
-            requirement
+            requirement,
           );
           await Promise.all([
             invalidateRequirementList(queryClient, projectId),
@@ -58,7 +56,7 @@ export function useUpdateRequirement(projectId: number, requirementId: number) {
 
   const updateRequirement = async (
     values: RequirementFormValues,
-    version: number
+    version: number,
   ) => {
     return updateRequirementMutation.mutateAsync({
       projectId,

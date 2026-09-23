@@ -20,6 +20,7 @@ import {
   getTaskChangeLogMissingSnapshotFieldLabels,
   getTaskChangeLogSnapshotDiffRows,
   getTaskChangeLogUpdatedFieldLabels,
+  getTaskChangeLogValueDisplayMode,
 } from "../../lib/task-change-log-format";
 
 type TaskChangeLogsSectionProps = {
@@ -28,13 +29,8 @@ type TaskChangeLogsSectionProps = {
 
 export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
   const [page, setPage] = useState(1);
-  const {
-    changeLogs,
-    total,
-    pageSize,
-    isLoading,
-    isFetching,
-  } = useTaskChangeLogs(taskId, page);
+  const { changeLogs, total, pageSize, isLoading, isFetching } =
+    useTaskChangeLogs(taskId, page);
   const visibleChangeLogs = getVisibleChangeLogs(changeLogs);
 
   return (
@@ -57,11 +53,7 @@ export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
   );
 }
 
-function TaskChangeLogItem({
-  changeLog,
-}: {
-  changeLog: TaskChangeLogRead;
-}) {
+function TaskChangeLogItem({ changeLog }: { changeLog: TaskChangeLogRead }) {
   const updatedFieldLabels = getTaskChangeLogUpdatedFieldLabels(changeLog);
   const snapshotDiffRows = getTaskChangeLogSnapshotDiffRows(changeLog);
   const missingSnapshotFieldLabels =
@@ -70,7 +62,7 @@ function TaskChangeLogItem({
     changeLog.field_name,
     updatedFieldLabels,
     snapshotDiffRows.length,
-    formatTaskChangeLogField
+    formatTaskChangeLogField,
   );
 
   return (
@@ -84,6 +76,7 @@ function TaskChangeLogItem({
       reason={changeLog.reason}
       oldValue={changeLog.old_value}
       newValue={changeLog.new_value}
+      valueDisplayMode={getTaskChangeLogValueDisplayMode(changeLog.action)}
       showRawValues={shouldShowChangeValues(changeLog)}
       diffRows={snapshotDiffRows}
       missingFieldLabels={missingSnapshotFieldLabels}

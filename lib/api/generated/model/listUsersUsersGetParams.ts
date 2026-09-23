@@ -6,15 +6,15 @@
  */
 
 export type ListUsersUsersGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
-q?: string | null;
-is_active?: boolean | null;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  page_size?: number;
+  q?: string | null;
+  is_active?: boolean | null;
 };

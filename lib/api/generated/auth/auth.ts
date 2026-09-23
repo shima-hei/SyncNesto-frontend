@@ -4,10 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,8 +17,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
   BodyUpdateCurrentUserAvatarAuthMeAvatarPut,
@@ -29,24 +26,17 @@ import type {
   HTTPValidationError,
   UserLogin,
   UserLoginResponse,
-  UserProfileUpdate
-} from '../model';
+  UserProfileUpdate,
+} from "../model";
 
-import { apiClient } from '../../client';
-import type { ErrorType , BodyType } from '../../client';
-
+import { apiClient } from "../../client";
+import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-
-
 export const getLoginUserAuthLoginPostUrl = () => {
-
-
-
-
-  return `/auth/login`
-}
+  return `/auth/login`;
+};
 
 /**
  * ユーザーログインを行う。
@@ -60,71 +50,94 @@ Returns:
     ログイン成功レスポンス。
  * @summary Login User
  */
-export const loginUserAuthLoginPost = async (userLogin: UserLogin, options?: RequestInit): Promise<UserLoginResponse> => {
-
-  return apiClient<UserLoginResponse>(getLoginUserAuthLoginPostUrl(),
-  {
+export const loginUserAuthLoginPost = async (
+  userLogin: UserLogin,
+  options?: RequestInit,
+): Promise<UserLoginResponse> => {
+  return apiClient<UserLoginResponse>(getLoginUserAuthLoginPostUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(userLogin)
-  }
-);}
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(userLogin),
+  });
+};
 
+export const getLoginUserAuthLoginPostMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof loginUserAuthLoginPost>>,
+    TError,
+    { data: BodyType<UserLogin> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof loginUserAuthLoginPost>>,
+  TError,
+  { data: BodyType<UserLogin> },
+  TContext
+> => {
+  const mutationKey = ["loginUserAuthLoginPost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof loginUserAuthLoginPost>>,
+    { data: BodyType<UserLogin> }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return loginUserAuthLoginPost(data, requestOptions);
+  };
 
-export const getLoginUserAuthLoginPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginUserAuthLoginPost>>, TError,{data: BodyType<UserLogin>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof loginUserAuthLoginPost>>, TError,{data: BodyType<UserLogin>}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['loginUserAuthLoginPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type LoginUserAuthLoginPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof loginUserAuthLoginPost>>
+>;
+export type LoginUserAuthLoginPostMutationBody = BodyType<UserLogin>;
+export type LoginUserAuthLoginPostMutationError =
+  ErrorType<HTTPValidationError>;
 
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginUserAuthLoginPost>>, {data: BodyType<UserLogin>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  loginUserAuthLoginPost(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type LoginUserAuthLoginPostMutationResult = NonNullable<Awaited<ReturnType<typeof loginUserAuthLoginPost>>>
-    export type LoginUserAuthLoginPostMutationBody = BodyType<UserLogin>
-    export type LoginUserAuthLoginPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
+/**
  * @summary Login User
  */
-export const useLoginUserAuthLoginPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginUserAuthLoginPost>>, TError,{data: BodyType<UserLogin>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof loginUserAuthLoginPost>>,
-        TError,
-        {data: BodyType<UserLogin>},
-        TContext
-      > => {
-      return useMutation(getLoginUserAuthLoginPostMutationOptions(options), queryClient);
-    }
-    export const getLogoutUserAuthLogoutPostUrl = () => {
-
-
-
-
-  return `/auth/logout`
-}
+export const useLoginUserAuthLoginPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof loginUserAuthLoginPost>>,
+      TError,
+      { data: BodyType<UserLogin> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof loginUserAuthLoginPost>>,
+  TError,
+  { data: BodyType<UserLogin> },
+  TContext
+> => {
+  return useMutation(
+    getLoginUserAuthLoginPostMutationOptions(options),
+    queryClient,
+  );
+};
+export const getLogoutUserAuthLogoutPostUrl = () => {
+  return `/auth/logout`;
+};
 
 /**
  * ユーザーログアウトを行う。
@@ -135,71 +148,89 @@ Args:
     db: DBセッション。
  * @summary Logout User
  */
-export const logoutUserAuthLogoutPost = async ( options?: RequestInit): Promise<void> => {
-
-  return apiClient<void>(getLogoutUserAuthLogoutPostUrl(),
-  {
+export const logoutUserAuthLogoutPost = async (
+  options?: RequestInit,
+): Promise<void> => {
+  return apiClient<void>(getLogoutUserAuthLogoutPostUrl(), {
     ...options,
-    method: 'POST'
+    method: "POST",
+  });
+};
 
+export const getLogoutUserAuthLogoutPostMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["logoutUserAuthLogoutPost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,
+    void
+  > = () => {
+    return logoutUserAuthLogoutPost(requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type LogoutUserAuthLogoutPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>
+>;
 
+export type LogoutUserAuthLogoutPostMutationError =
+  ErrorType<HTTPValidationError>;
 
-export const getLogoutUserAuthLogoutPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext> => {
-
-const mutationKey = ['logoutUserAuthLogoutPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, void> = () => {
-
-
-          return  logoutUserAuthLogoutPost(requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type LogoutUserAuthLogoutPostMutationResult = NonNullable<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>>
-
-    export type LogoutUserAuthLogoutPostMutationError = ErrorType<HTTPValidationError>
-
-    /**
+/**
  * @summary Logout User
  */
-export const useLogoutUserAuthLogoutPost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,
-        TError,
-        void,
-        TContext
-      > => {
-      return useMutation(getLogoutUserAuthLogoutPostMutationOptions(options), queryClient);
-    }
-    export const getReadCurrentUserAuthMeGetUrl = () => {
-
-
-
-
-  return `/auth/me`
-}
+export const useLogoutUserAuthLogoutPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof logoutUserAuthLogoutPost>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(
+    getLogoutUserAuthLogoutPostMutationOptions(options),
+    queryClient,
+  );
+};
+export const getReadCurrentUserAuthMeGetUrl = () => {
+  return `/auth/me`;
+};
 
 /**
  * 現在のログインユーザーを取得する。
@@ -212,102 +243,158 @@ Returns:
     現在のログインユーザー情報。
  * @summary Read Current User
  */
-export const readCurrentUserAuthMeGet = async ( options?: RequestInit): Promise<CurrentUserRead> => {
-
-  return apiClient<CurrentUserRead>(getReadCurrentUserAuthMeGetUrl(),
-  {
+export const readCurrentUserAuthMeGet = async (
+  options?: RequestInit,
+): Promise<CurrentUserRead> => {
+  return apiClient<CurrentUserRead>(getReadCurrentUserAuthMeGetUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getReadCurrentUserAuthMeGetQueryKey = () => {
-    return [
-    `/auth/me`
-    ] as const;
-    }
+  return [`/auth/me`] as const;
+};
 
+export const getReadCurrentUserAuthMeGetQueryOptions = <
+  TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getReadCurrentUserAuthMeGetQueryOptions = <TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
-) => {
+  const queryKey =
+    queryOptions?.queryKey ?? getReadCurrentUserAuthMeGetQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>
+  > = ({ signal }) => readCurrentUserAuthMeGet({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getReadCurrentUserAuthMeGetQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type ReadCurrentUserAuthMeGetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>
+>;
+export type ReadCurrentUserAuthMeGetQueryError = ErrorType<HTTPValidationError>;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>> = ({ signal }) => readCurrentUserAuthMeGet({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ReadCurrentUserAuthMeGetQueryResult = NonNullable<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>>
-export type ReadCurrentUserAuthMeGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>> & Pick<
+export function useReadCurrentUserAuthMeGet<
+  TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
           TError,
           Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadCurrentUserAuthMeGet<
+  TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
           TError,
           Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadCurrentUserAuthMeGet<
+  TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary Read Current User
  */
 
-export function useReadCurrentUserAuthMeGet<TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError = ErrorType<HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>, TError, TData>>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useReadCurrentUserAuthMeGet<
+  TData = Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof readCurrentUserAuthMeGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getReadCurrentUserAuthMeGetQueryOptions(options);
 
-  const queryOptions = getReadCurrentUserAuthMeGetQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-
-
-
-
-
 export const getUpdateCurrentUserAuthMePatchUrl = () => {
-
-
-
-
-  return `/auth/me`
-}
+  return `/auth/me`;
+};
 
 /**
  * 現在のログインユーザーのプロフィールを更新する。
@@ -321,71 +408,95 @@ Returns:
     更新された現在のログインユーザー情報。
  * @summary Update Current User
  */
-export const updateCurrentUserAuthMePatch = async (userProfileUpdate: UserProfileUpdate, options?: RequestInit): Promise<CurrentUserRead> => {
-
-  return apiClient<CurrentUserRead>(getUpdateCurrentUserAuthMePatchUrl(),
-  {
+export const updateCurrentUserAuthMePatch = async (
+  userProfileUpdate: UserProfileUpdate,
+  options?: RequestInit,
+): Promise<CurrentUserRead> => {
+  return apiClient<CurrentUserRead>(getUpdateCurrentUserAuthMePatchUrl(), {
     ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(userProfileUpdate)
-  }
-);}
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(userProfileUpdate),
+  });
+};
 
+export const getUpdateCurrentUserAuthMePatchMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>,
+    TError,
+    { data: BodyType<UserProfileUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>,
+  TError,
+  { data: BodyType<UserProfileUpdate> },
+  TContext
+> => {
+  const mutationKey = ["updateCurrentUserAuthMePatch"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>,
+    { data: BodyType<UserProfileUpdate> }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return updateCurrentUserAuthMePatch(data, requestOptions);
+  };
 
-export const getUpdateCurrentUserAuthMePatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, TError,{data: BodyType<UserProfileUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, TError,{data: BodyType<UserProfileUpdate>}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['updateCurrentUserAuthMePatch'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type UpdateCurrentUserAuthMePatchMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>
+>;
+export type UpdateCurrentUserAuthMePatchMutationBody =
+  BodyType<UserProfileUpdate>;
+export type UpdateCurrentUserAuthMePatchMutationError =
+  ErrorType<HTTPValidationError>;
 
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, {data: BodyType<UserProfileUpdate>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  updateCurrentUserAuthMePatch(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateCurrentUserAuthMePatchMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>>
-    export type UpdateCurrentUserAuthMePatchMutationBody = BodyType<UserProfileUpdate>
-    export type UpdateCurrentUserAuthMePatchMutationError = ErrorType<HTTPValidationError>
-
-    /**
+/**
  * @summary Update Current User
  */
-export const useUpdateCurrentUserAuthMePatch = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>, TError,{data: BodyType<UserProfileUpdate>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>,
-        TError,
-        {data: BodyType<UserProfileUpdate>},
-        TContext
-      > => {
-      return useMutation(getUpdateCurrentUserAuthMePatchMutationOptions(options), queryClient);
-    }
-    export const getUpdateCurrentUserAvatarAuthMeAvatarPutUrl = () => {
-
-
-
-
-  return `/auth/me/avatar`
-}
+export const useUpdateCurrentUserAuthMePatch = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>,
+      TError,
+      { data: BodyType<UserProfileUpdate> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateCurrentUserAuthMePatch>>,
+  TError,
+  { data: BodyType<UserProfileUpdate> },
+  TContext
+> => {
+  return useMutation(
+    getUpdateCurrentUserAuthMePatchMutationOptions(options),
+    queryClient,
+  );
+};
+export const getUpdateCurrentUserAvatarAuthMeAvatarPutUrl = () => {
+  return `/auth/me/avatar`;
+};
 
 /**
  * 現在のログインユーザーのアイコン画像を更新する。
@@ -399,73 +510,100 @@ Returns:
     更新された現在のログインユーザー情報。
  * @summary Update Current User Avatar
  */
-export const updateCurrentUserAvatarAuthMeAvatarPut = async (bodyUpdateCurrentUserAvatarAuthMeAvatarPut: BodyUpdateCurrentUserAvatarAuthMeAvatarPut, options?: RequestInit): Promise<CurrentUserRead> => {
-    const formData = new FormData();
-formData.append(`file`, bodyUpdateCurrentUserAvatarAuthMeAvatarPut.file);
+export const updateCurrentUserAvatarAuthMeAvatarPut = async (
+  bodyUpdateCurrentUserAvatarAuthMeAvatarPut: BodyUpdateCurrentUserAvatarAuthMeAvatarPut,
+  options?: RequestInit,
+): Promise<CurrentUserRead> => {
+  const formData = new FormData();
+  formData.append(`file`, bodyUpdateCurrentUserAvatarAuthMeAvatarPut.file);
 
-  return apiClient<CurrentUserRead>(getUpdateCurrentUserAvatarAuthMeAvatarPutUrl(),
-  {
-    ...options,
-    method: 'PUT'
-    ,
-    body: formData
-  }
-);}
+  return apiClient<CurrentUserRead>(
+    getUpdateCurrentUserAvatarAuthMeAvatarPutUrl(),
+    {
+      ...options,
+      method: "PUT",
+      body: formData,
+    },
+  );
+};
 
+export const getUpdateCurrentUserAvatarAuthMeAvatarPutMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>,
+    TError,
+    { data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>,
+  TError,
+  { data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut> },
+  TContext
+> => {
+  const mutationKey = ["updateCurrentUserAvatarAuthMeAvatarPut"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>,
+    { data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut> }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return updateCurrentUserAvatarAuthMeAvatarPut(data, requestOptions);
+  };
 
-export const getUpdateCurrentUserAvatarAuthMeAvatarPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, TError,{data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, TError,{data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['updateCurrentUserAvatarAuthMeAvatarPut'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>
+>;
+export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationBody =
+  BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>;
+export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationError =
+  ErrorType<HTTPValidationError>;
 
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, {data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  updateCurrentUserAvatarAuthMeAvatarPut(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>>
-    export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationBody = BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>
-    export type UpdateCurrentUserAvatarAuthMeAvatarPutMutationError = ErrorType<HTTPValidationError>
-
-    /**
+/**
  * @summary Update Current User Avatar
  */
-export const useUpdateCurrentUserAvatarAuthMeAvatarPut = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>, TError,{data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>}, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>,
-        TError,
-        {data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut>},
-        TContext
-      > => {
-      return useMutation(getUpdateCurrentUserAvatarAuthMeAvatarPutMutationOptions(options), queryClient);
-    }
-    export const getDeleteCurrentUserAvatarAuthMeAvatarDeleteUrl = () => {
-
-
-
-
-  return `/auth/me/avatar`
-}
+export const useUpdateCurrentUserAvatarAuthMeAvatarPut = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>,
+      TError,
+      { data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateCurrentUserAvatarAuthMeAvatarPut>>,
+  TError,
+  { data: BodyType<BodyUpdateCurrentUserAvatarAuthMeAvatarPut> },
+  TContext
+> => {
+  return useMutation(
+    getUpdateCurrentUserAvatarAuthMeAvatarPutMutationOptions(options),
+    queryClient,
+  );
+};
+export const getDeleteCurrentUserAvatarAuthMeAvatarDeleteUrl = () => {
+  return `/auth/me/avatar`;
+};
 
 /**
  * 現在のログインユーザーのアイコン画像を削除する。
@@ -478,61 +616,87 @@ Returns:
     更新された現在のログインユーザー情報。
  * @summary Delete Current User Avatar
  */
-export const deleteCurrentUserAvatarAuthMeAvatarDelete = async ( options?: RequestInit): Promise<CurrentUserRead> => {
+export const deleteCurrentUserAvatarAuthMeAvatarDelete = async (
+  options?: RequestInit,
+): Promise<CurrentUserRead> => {
+  return apiClient<CurrentUserRead>(
+    getDeleteCurrentUserAvatarAuthMeAvatarDeleteUrl(),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
 
-  return apiClient<CurrentUserRead>(getDeleteCurrentUserAvatarAuthMeAvatarDeleteUrl(),
-  {
-    ...options,
-    method: 'DELETE'
+export const getDeleteCurrentUserAvatarAuthMeAvatarDeleteMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["deleteCurrentUserAvatarAuthMeAvatarDelete"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>,
+    void
+  > = () => {
+    return deleteCurrentUserAvatarAuthMeAvatarDelete(requestOptions);
+  };
 
-  }
-);}
+  return { mutationFn, ...mutationOptions };
+};
 
+export type DeleteCurrentUserAvatarAuthMeAvatarDeleteMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>
+  >;
 
+export type DeleteCurrentUserAvatarAuthMeAvatarDeleteMutationError =
+  ErrorType<HTTPValidationError>;
 
-
-export const getDeleteCurrentUserAvatarAuthMeAvatarDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, TError,void, TContext> => {
-
-const mutationKey = ['deleteCurrentUserAvatarAuthMeAvatarDelete'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, void> = () => {
-
-
-          return  deleteCurrentUserAvatarAuthMeAvatarDelete(requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteCurrentUserAvatarAuthMeAvatarDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>>
-
-    export type DeleteCurrentUserAvatarAuthMeAvatarDeleteMutationError = ErrorType<HTTPValidationError>
-
-    /**
+/**
  * @summary Delete Current User Avatar
  */
-export const useDeleteCurrentUserAvatarAuthMeAvatarDelete = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>, TError,void, TContext>, request?: SecondParameter<typeof apiClient>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>,
-        TError,
-        void,
-        TContext
-      > => {
-      return useMutation(getDeleteCurrentUserAvatarAuthMeAvatarDeleteMutationOptions(options), queryClient);
-    }
+export const useDeleteCurrentUserAvatarAuthMeAvatarDelete = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCurrentUserAvatarAuthMeAvatarDelete>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(
+    getDeleteCurrentUserAvatarAuthMeAvatarDeleteMutationOptions(options),
+    queryClient,
+  );
+};

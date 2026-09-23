@@ -1,27 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { EditIcon, Trash2Icon, XIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { RequirementDetailRead } from "@/lib/api/generated/model";
-import { formatDateTime } from "@/lib/format/date";
 
+import type { RequirementCommentAnchor } from "../../lib/requirement-comment-anchor";
 import { useCreateRequirementDetail } from "../../hooks/use-create-requirement-detail";
 import { useDeleteRequirementDetail } from "../../hooks/use-delete-requirement-detail";
 import { useUpdateRequirementDetail } from "../../hooks/use-update-requirement-detail";
 import {
+  ALL_REQUIREMENT_DETAIL_TYPES,
   getRequirementDetailFormValues,
-  RequirementDetailForm,
-} from "../forms/requirement-detail-form";
+} from "../../lib/requirement-detail-metadata";
+import type { RequirementDetailFormValues } from "../../types/requirement-detail-form";
+import { RequirementDetailForm } from "../forms/requirement-detail-form";
+import { RequirementDetailTreeView } from "./requirement-detail-tree-view";
 
 type RequirementDetailsSectionProps = {
   projectId: number;
   requirementId: number;
   details: RequirementDetailRead[];
   canUpdate: boolean;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
+};
+
+type CreateDialogState = {
+  title: string;
+  description: string;
+  allowedDetailTypes: readonly string[];
+  initialValues?: RequirementDetailFormValues;
+  fixedFieldKeys?: readonly string[];
 };
 
 export function RequirementDetailsSection({
@@ -29,7 +48,11 @@ export function RequirementDetailsSection({
   requirementId,
   details,
   canUpdate,
+  onSelectCommentAnchor,
 }: RequirementDetailsSectionProps) {
+  const [createDialog, setCreateDialog] = useState<CreateDialogState | null>(
+    null,
+  );
   const [editingTarget, setEditingTarget] =
     useState<RequirementDetailRead | null>(null);
   const [deleteTarget, setDeleteTarget] =
@@ -49,92 +72,95 @@ export function RequirementDetailsSection({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">詳細</CardTitle>
+      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <CardTitle className="text-base">実現内容</CardTitle>
+        {canUpdate ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              setCreateDialog({
+                title: "実現内容を追加",
+                description:
+                  "実現単位、画面・操作、入力項目、業務ルールなどを追加します。",
+                allowedDetailTypes: ALL_REQUIREMENT_DETAIL_TYPES,
+              })
+            }
+          >
+            <PlusIcon data-icon="inline-start" />
+            実現内容を追加
+          </Button>
+        ) : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {canUpdate ? (
-          <RequirementDetailForm
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={createRequirementDetail}
-          />
-        ) : null}
-
-        {details.length ? (
-          <div className="flex flex-col gap-3">
-            {details.map((detail) => (
-              <div key={detail.id} className="rounded-lg border p-3">
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {detail.detail_type} / {formatDateTime(detail.updated_at)}
-                    </span>
-                    {canUpdate ? (
-                      <div className="flex shrink-0 flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingTarget(detail)}
-                        >
-                          <EditIcon data-icon="inline-start" />
-                          編集
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDeleteTarget(detail)}
-                        >
-                          <Trash2Icon data-icon="inline-start" />
-                          削除
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                  <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">
-                    {JSON.stringify(detail.detail_json, null, 2)}
-                  </pre>
-                  {editingTarget?.id === detail.id ? (
-                    <div className="rounded-lg bg-muted p-3">
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <span className="text-sm font-medium">詳細編集</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingTarget(null)}
-                        >
-                          <XIcon data-icon="inline-start" />
-                          閉じる
-                        </Button>
-                      </div>
-                      <RequirementDetailForm
-                        initialValues={getRequirementDetailFormValues(detail)}
-                        submitLabel="詳細更新"
-                        resetOnSuccess={false}
-                        isPending={isUpdatePending}
-                        error={updateError}
-                        onSubmit={(values) =>
-                          updateRequirementDetail(detail.id, values)
-                        }
-                        onSuccess={() => setEditingTarget(null)}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">詳細はありません。</p>
-        )}
+        <RequirementDetailTreeView
+          details={details}
+          canUpdate={canUpdate}
+          onEdit={setEditingTarget}
+          onDelete={setDeleteTarget}
+          onCreate={setCreateDialog}
+          onSelectCommentAnchor={onSelectCommentAnchor}
+        />
+        <Dialog
+          open={Boolean(createDialog)}
+          onOpenChange={(open) => !open && setCreateDialog(null)}
+        >
+          <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,760px)] overflow-y-auto p-6 sm:max-w-none">
+            <DialogHeader>
+              <DialogTitle>
+                {createDialog?.title ?? "実現内容を追加"}
+              </DialogTitle>
+              <DialogDescription>{createDialog?.description}</DialogDescription>
+            </DialogHeader>
+            {createDialog ? (
+              <RequirementDetailForm
+                key={`${createDialog.title}-${createDialog.initialValues?.detailType ?? "default"}-${createDialog.initialValues?.fields.parent_unit_id ?? ""}-${createDialog.initialValues?.fields.parent_screen_id ?? ""}`}
+                details={details}
+                allowedDetailTypes={createDialog.allowedDetailTypes}
+                initialValues={createDialog.initialValues}
+                fixedFieldKeys={createDialog.fixedFieldKeys}
+                isPending={isCreatePending}
+                error={createError}
+                onSubmit={createRequirementDetail}
+                onSuccess={() => setCreateDialog(null)}
+              />
+            ) : null}
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={Boolean(editingTarget)}
+          onOpenChange={(open) => !open && setEditingTarget(null)}
+        >
+          <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,760px)] overflow-y-auto p-6 sm:max-w-none">
+            <DialogHeader>
+              <DialogTitle>実現内容を編集</DialogTitle>
+              <DialogDescription>
+                実現内容の種類と入力内容を更新します。
+              </DialogDescription>
+            </DialogHeader>
+            {editingTarget ? (
+              <RequirementDetailForm
+                key={editingTarget.id}
+                details={details}
+                initialValues={getRequirementDetailFormValues(editingTarget)}
+                submitLabel="実現内容を更新"
+                resetOnSuccess={false}
+                isPending={isUpdatePending}
+                error={updateError}
+                onSubmit={(values) =>
+                  updateRequirementDetail(editingTarget.id, values)
+                }
+                onSuccess={() => setEditingTarget(null)}
+              />
+            ) : null}
+          </DialogContent>
+        </Dialog>
         <ResourceDeleteDialog
           open={Boolean(deleteTarget)}
           onOpenChange={(open) => !open && setDeleteTarget(null)}
-          resourceName="詳細"
-          description="詳細を削除します。削除すると元に戻せません。"
+          resourceName="実現内容"
+          description="実現内容を削除します。削除すると元に戻せません。"
           isPending={isDeletePending}
           onConfirm={async () => {
             if (!deleteTarget) {

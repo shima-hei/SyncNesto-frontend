@@ -4,7 +4,7 @@ import { useListRequirementRevisionsProjectsProjectIdRequirementsRequirementIdRe
 
 export function useRequirementRevisions(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const revisionsQuery =
     useListRequirementRevisionsProjectsProjectIdRequirementsRequirementIdRevisionsGet(
@@ -14,7 +14,7 @@ export function useRequirementRevisions(
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

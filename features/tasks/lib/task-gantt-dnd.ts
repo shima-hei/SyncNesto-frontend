@@ -15,7 +15,7 @@ export const getDraggedUnscheduledTaskId = (dataTransfer: DataTransfer) => {
 
 export const setUnscheduledTaskDragImage = (
   event: React.DragEvent<HTMLElement>,
-  task: TaskRead
+  task: TaskRead,
 ) => {
   const preview = document.createElement("div");
 

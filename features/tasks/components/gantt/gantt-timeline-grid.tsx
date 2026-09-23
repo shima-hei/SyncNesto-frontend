@@ -115,8 +115,9 @@ export function GanttDroppableTimeline({
         event.dataTransfer.dropEffect = "copy";
         onDropDateHover?.(
           toDateInputValue(
-            getClientDate(event.clientX, range, timelineRef.current) ?? range.start
-          )
+            getClientDate(event.clientX, range, timelineRef.current) ??
+              range.start,
+          ),
         );
       }}
       onDrop={(event) => {
@@ -129,7 +130,7 @@ export function GanttDroppableTimeline({
         const dropDate = getClientDate(
           event.clientX,
           range,
-          timelineRef.current
+          timelineRef.current,
         );
 
         if (!task || !dropDate) {
@@ -216,7 +217,7 @@ export function GanttTimelineHeader({
             key={`month-${date.key}`}
             className={cn(
               "min-w-0 border-l border-border/60 px-1 pb-1 text-[11px]",
-              date.isMonthStart && "font-medium text-foreground"
+              date.isMonthStart && "font-medium text-foreground",
             )}
           >
             {date.showMonthLabel ? `${date.date.getMonth() + 1}月` : ""}
@@ -228,7 +229,7 @@ export function GanttTimelineHeader({
             className={cn(
               "min-w-0 border-l border-border/60 px-1 pt-1 text-xs",
               date.isWeekend && "bg-muted/60",
-              date.isToday && "font-semibold text-foreground"
+              date.isToday && "font-semibold text-foreground",
             )}
           >
             {date.date.getDate()}

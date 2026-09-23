@@ -9,7 +9,7 @@ export function useRequirementTasks(requirementId: number) {
       query: {
         retry: false,
       },
-    }
+    },
   );
 
   return {

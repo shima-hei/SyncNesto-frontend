@@ -25,7 +25,7 @@ export const GANTT_TASK_COLUMN_WIDTH = 320;
 export const getDateRange = (
   tasks: TaskRead[],
   milestones: MilestoneRead[],
-  displayUnit: GanttDisplayUnit
+  displayUnit: GanttDisplayUnit,
 ): DateRange | null => {
   const taskTimestamps = tasks
     .flatMap((task) => [
@@ -37,7 +37,7 @@ export const getDateRange = (
     .filter(Boolean)
     .map((value) => new Date(String(value)).getTime());
   const milestoneTimestamps = milestones.map((milestone) =>
-    new Date(milestone.target_date).getTime()
+    new Date(milestone.target_date).getTime(),
   );
   const timestamps = [...taskTimestamps, ...milestoneTimestamps];
 
@@ -53,7 +53,7 @@ export const getDateRange = (
 };
 
 export const getFallbackDateRange = (
-  displayUnit: GanttDisplayUnit
+  displayUnit: GanttDisplayUnit,
 ): DateRange => {
   const start = getLocalToday();
   const end = new Date(start);
@@ -75,7 +75,7 @@ export const getFallbackDateRange = (
 
 export const getTimelineWidth = (
   range: DateRange,
-  displayUnit: GanttDisplayUnit
+  displayUnit: GanttDisplayUnit,
 ) => {
   const days = Math.max(daysBetween(range.start, range.end) + 1, 1);
 
@@ -136,7 +136,7 @@ export const getInclusiveDays = (range: DateRange) => {
 export const getPointerDate = (
   event: React.PointerEvent<HTMLElement>,
   range: DateRange,
-  timeline: HTMLDivElement | null
+  timeline: HTMLDivElement | null,
 ) => {
   if (!timeline) {
     return null;
@@ -148,7 +148,7 @@ export const getPointerDate = (
 export const getClientDate = (
   clientX: number,
   range: DateRange,
-  timeline: HTMLElement | null
+  timeline: HTMLElement | null,
 ) => {
   if (!timeline) {
     return null;
@@ -167,7 +167,7 @@ export const getClientDate = (
 
 export const getDraggedDateRange = (
   state: GanttDragState,
-  pointedDate: Date
+  pointedDate: Date,
 ) => {
   if (state.mode === "start") {
     return {
@@ -194,9 +194,11 @@ export const getDraggedDateRange = (
 export const isScheduleDirty = (
   task: TaskRead,
   startDate: string,
-  dueDate: string
+  dueDate: string,
 ) => {
-  return startDate !== (task.start_date ?? "") || dueDate !== (task.due_date ?? "");
+  return (
+    startDate !== (task.start_date ?? "") || dueDate !== (task.due_date ?? "")
+  );
 };
 
 export const toDateInputValue = (date: Date) => {
@@ -210,7 +212,7 @@ export const toDateInputValue = (date: Date) => {
 export const getTimelineBarStyle = (
   start: Date,
   end: Date,
-  range: DateRange
+  range: DateRange,
 ) => {
   const totalDays = getInclusiveDays(range);
   const offset = Math.max(daysBetween(range.start, start), 0);
@@ -269,7 +271,7 @@ export const getDateColumnStyle = (dateInput: string, range: DateRange) => {
   const date = new Date(dateInput);
   const offset = Math.min(
     Math.max(daysBetween(range.start, date), 0),
-    totalDays - 1
+    totalDays - 1,
   );
 
   return {
@@ -293,7 +295,7 @@ export const getTodayLeft = (range: DateRange) => {
 
 export const getMilestoneLeft = (
   milestone: MilestoneRead,
-  range: DateRange
+  range: DateRange,
 ) => {
   const targetDate = new Date(milestone.target_date);
   const totalDays = getInclusiveDays(range);
@@ -331,7 +333,7 @@ const getLocalToday = () => {
 const getDateLabels = (
   start: Date,
   end: Date,
-  displayUnit: GanttDisplayUnit
+  displayUnit: GanttDisplayUnit,
 ) => {
   const labelCount = getLabelCount(displayUnit);
   const rangeDays = Math.max(daysBetween(start, end), 1);
@@ -339,7 +341,8 @@ const getDateLabels = (
   return Array.from({ length: labelCount }).map((_, index) => {
     const date = new Date(start);
     date.setDate(
-      start.getDate() + Math.round((rangeDays / Math.max(labelCount - 1, 1)) * index)
+      start.getDate() +
+        Math.round((rangeDays / Math.max(labelCount - 1, 1)) * index),
     );
 
     switch (displayUnit) {
@@ -372,7 +375,7 @@ const getLabelCount = (displayUnit: GanttDisplayUnit) => {
 const getWeekNumber = (date: Date) => {
   const firstDay = new Date(date.getFullYear(), 0, 1);
   const days = Math.floor(
-    (date.getTime() - firstDay.getTime()) / (24 * 60 * 60 * 1000)
+    (date.getTime() - firstDay.getTime()) / (24 * 60 * 60 * 1000),
   );
 
   return Math.ceil((days + firstDay.getDay() + 1) / 7);

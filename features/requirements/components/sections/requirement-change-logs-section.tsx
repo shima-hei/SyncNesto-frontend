@@ -19,6 +19,7 @@ import {
   formatRequirementChangeLogTarget,
   formatRequirementChangeLogValue,
   getRequirementChangeLogUpdatedFieldLabels,
+  getRequirementChangeLogValueDisplayMode,
 } from "../../lib/requirement-change-log-format";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
@@ -40,7 +41,7 @@ export function RequirementChangeLogsSection({
   const { changeLogs, isLoading } = useRequirementChangeLogs(
     projectId,
     documentId,
-    { targetType, targetId }
+    { targetType, targetId },
   );
   const visibleChangeLogs = getVisibleChangeLogs(changeLogs);
 
@@ -57,19 +58,17 @@ export function RequirementChangeLogsSection({
   );
 }
 
-function ChangeLogItem({
-  changeLog,
-}: {
-  changeLog: RequirementChangeLogRead;
-}) {
-  const updatedFieldLabels = getRequirementChangeLogUpdatedFieldLabels(changeLog);
+function ChangeLogItem({ changeLog }: { changeLog: RequirementChangeLogRead }) {
+  const updatedFieldLabels =
+    getRequirementChangeLogUpdatedFieldLabels(changeLog);
   const diffRows = getRequirementChangeLogDiffRows(changeLog);
-  const missingFieldLabels = getRequirementChangeLogMissingFieldLabels(changeLog);
+  const missingFieldLabels =
+    getRequirementChangeLogMissingFieldLabels(changeLog);
   const headerFieldLabel = getChangeLogHeaderFieldLabel(
     changeLog.field_name,
     updatedFieldLabels,
     diffRows.length,
-    formatRequirementChangeLogField
+    formatRequirementChangeLogField,
   );
 
   return (
@@ -84,6 +83,9 @@ function ChangeLogItem({
       reason={changeLog.reason}
       oldValue={changeLog.old_value}
       newValue={changeLog.new_value}
+      valueDisplayMode={getRequirementChangeLogValueDisplayMode(
+        changeLog.action,
+      )}
       showRawValues={Boolean(changeLog.field_name)}
       diffRows={diffRows}
       missingFieldLabels={missingFieldLabels}

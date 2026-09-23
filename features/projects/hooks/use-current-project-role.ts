@@ -9,7 +9,7 @@ export function useCurrentProjectRole(projectId: number) {
       query: {
         retry: false,
       },
-    }
+    },
   );
 
   return {

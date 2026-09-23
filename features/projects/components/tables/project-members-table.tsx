@@ -24,11 +24,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type {
-  ProjectMemberRead,
-  UserListItem,
-} from "@/lib/api/generated/model";
+import type { ProjectMemberRead, UserSummary } from "@/lib/api/generated/model";
 
+import { PROJECT_ROLE_KEYS } from "@/features/auth/constants/roles";
 import {
   PROJECT_ROLE_OPTIONS,
   getProjectRoleLabel,
@@ -36,12 +34,18 @@ import {
 
 type ProjectMembersTableProps = {
   members: ProjectMemberRead[];
-  users: UserListItem[];
+  users: UserSummary[];
   isLoading: boolean;
   isUpdatePending: boolean;
   isRemovePending: boolean;
-  onUpdateRole: (member: ProjectMemberRead, roleKey: string) => Promise<unknown>;
-  onRemove: (userId: number) => Promise<void>;
+  canManageMembers?: boolean;
+  currentUserId?: number | null;
+  projectAdminCount?: number;
+  onUpdateRole?: (
+    member: ProjectMemberRead,
+    roleKey: string,
+  ) => Promise<unknown>;
+  onRemove?: (userId: number) => Promise<void>;
 };
 
 export function ProjectMembersTable({
@@ -50,15 +54,25 @@ export function ProjectMembersTable({
   isLoading,
   isUpdatePending,
   isRemovePending,
+  canManageMembers = true,
+  currentUserId = null,
+  projectAdminCount = 0,
   onUpdateRole,
   onRemove,
 }: ProjectMembersTableProps) {
   const [removeTarget, setRemoveTarget] = useState<ProjectMemberRead | null>(
-    null
+    null,
   );
 
   if (isLoading) {
-    return <TableListSkeleton rows={4} widths={["w-40", "w-56", "w-52", "w-20"]} />;
+    return (
+      <TableListSkeleton
+        rows={4}
+        widths={
+          canManageMembers ? ["w-40", "w-56", "w-52", "w-20"] : ["w-40", "w-40"]
+        }
+      />
+    );
   }
 
   return (
@@ -68,7 +82,9 @@ export function ProjectMembersTable({
           <TableRow>
             <TableHead>ユーザー</TableHead>
             <TableHead>権限</TableHead>
-            <TableHead className="w-32">操作</TableHead>
+            {canManageMembers ? (
+              <TableHead className="w-32">操作</TableHead>
+            ) : null}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -78,6 +94,9 @@ export function ProjectMembersTable({
                 key={`${member.id}-${member.role.key}-${member.version}`}
                 member={member}
                 user={users.find((item) => item.id === member.user_id)}
+                canManageMembers={canManageMembers}
+                currentUserId={currentUserId}
+                projectAdminCount={projectAdminCount}
                 isUpdatePending={isUpdatePending}
                 onUpdateRole={onUpdateRole}
                 onRemove={() => setRemoveTarget(member)}
@@ -85,28 +104,30 @@ export function ProjectMembersTable({
             ))
           ) : (
             <TableEmptyRow
-              colSpan={3}
+              colSpan={canManageMembers ? 3 : 2}
               message="プロジェクトメンバーが登録されていません。"
             />
           )}
         </TableBody>
       </Table>
 
-      <ResourceDeleteDialog
-        open={Boolean(removeTarget)}
-        onOpenChange={(open) => !open && setRemoveTarget(null)}
-        resourceName="メンバー"
-        description="削除したメンバーは再度追加できます。"
-        isPending={isRemovePending}
-        onConfirm={async () => {
-          if (!removeTarget) {
-            return;
-          }
+      {canManageMembers ? (
+        <ResourceDeleteDialog
+          open={Boolean(removeTarget)}
+          onOpenChange={(open) => !open && setRemoveTarget(null)}
+          resourceName="メンバー"
+          description="削除したメンバーは再度追加できます。"
+          isPending={isRemovePending}
+          onConfirm={async () => {
+            if (!removeTarget || !onRemove) {
+              return;
+            }
 
-          await onRemove(removeTarget.user_id);
-          setRemoveTarget(null);
-        }}
-      />
+            await onRemove(removeTarget.user_id);
+            setRemoveTarget(null);
+          }}
+        />
+      ) : null}
     </>
   );
 }
@@ -114,18 +135,37 @@ export function ProjectMembersTable({
 function ProjectMemberRow({
   member,
   user,
+  canManageMembers,
+  currentUserId,
+  projectAdminCount,
   isUpdatePending,
   onUpdateRole,
   onRemove,
 }: {
   member: ProjectMemberRead;
-  user?: UserListItem;
+  user?: UserSummary;
+  canManageMembers: boolean;
+  currentUserId: number | null;
+  projectAdminCount: number;
   isUpdatePending: boolean;
-  onUpdateRole: (member: ProjectMemberRead, roleKey: string) => Promise<unknown>;
+  onUpdateRole?: (
+    member: ProjectMemberRead,
+    roleKey: string,
+  ) => Promise<unknown>;
   onRemove: () => void;
 }) {
   const [roleKey, setRoleKey] = useState(member.role.key);
   const isChanged = roleKey !== member.role.key;
+  const isCurrentUser = member.user_id === currentUserId;
+  const isLastProjectAdmin =
+    member.role.key === PROJECT_ROLE_KEYS.projectAdmin &&
+    projectAdminCount <= 1;
+  const isDemotingLastProjectAdmin =
+    isLastProjectAdmin && roleKey !== PROJECT_ROLE_KEYS.projectAdmin;
+  const isRoleSelectDisabled = isLastProjectAdmin;
+  const isUpdateDisabled =
+    !isChanged || isUpdatePending || isDemotingLastProjectAdmin;
+  const isRemoveDisabled = isCurrentUser || isLastProjectAdmin;
 
   return (
     <TableRow>
@@ -140,44 +180,64 @@ function ProjectMemberRow({
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <Select value={roleKey} onValueChange={setRoleKey}>
-            <SelectTrigger className="w-52">
-              <SelectValue placeholder="権限を選択" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {PROJECT_ROLE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+        {canManageMembers ? (
+          <>
+            <div className="flex items-center gap-2">
+              <Select
+                value={roleKey}
+                disabled={isRoleSelectDisabled}
+                onValueChange={setRoleKey}
+              >
+                <SelectTrigger className="w-52">
+                  <SelectValue placeholder="権限を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {PROJECT_ROLE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={isUpdateDisabled}
+                onClick={() => {
+                  onUpdateRole?.(member, roleKey).catch(() => undefined);
+                }}
+              >
+                {isUpdatePending ? <Spinner data-icon="inline-start" /> : null}
+                更新
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              現在: {getProjectRoleLabel(member.role.key)}
+            </p>
+          </>
+        ) : (
+          <span className="text-sm">
+            {getProjectRoleLabel(member.role.key)}
+          </span>
+        )}
+      </TableCell>
+      {canManageMembers ? (
+        <TableCell>
           <Button
             type="button"
-            size="sm"
             variant="outline"
-            disabled={!isChanged || isUpdatePending}
-            onClick={() => {
-              onUpdateRole(member, roleKey).catch(() => undefined);
-            }}
+            size="sm"
+            disabled={isRemoveDisabled}
+            onClick={onRemove}
           >
-            {isUpdatePending ? <Spinner data-icon="inline-start" /> : null}
-            更新
+            <Trash2Icon data-icon="inline-start" />
+            削除
           </Button>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          現在: {getProjectRoleLabel(member.role.key)}
-        </p>
-      </TableCell>
-      <TableCell>
-        <Button type="button" variant="outline" size="sm" onClick={onRemove}>
-          <Trash2Icon data-icon="inline-start" />
-          削除
-        </Button>
-      </TableCell>
+        </TableCell>
+      ) : null}
     </TableRow>
   );
 }

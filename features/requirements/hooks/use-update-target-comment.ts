@@ -16,7 +16,7 @@ import type { RequirementTargetCommentFormValues } from "../types/requirement-ta
 export function useUpdateTargetComment(
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) {
   const queryClient = useQueryClient();
   const updateCommentMutation =
@@ -28,7 +28,7 @@ export function useUpdateTargetComment(
               queryClient,
               projectId,
               targetType,
-              targetId
+              targetId,
             ),
             invalidateRequirementChangeLogs(queryClient, projectId),
           ]);
@@ -43,7 +43,7 @@ export function useUpdateTargetComment(
   const updateTargetComment = async (
     commentId: number,
     version: number,
-    values: RequirementTargetCommentFormValues
+    values: RequirementTargetCommentFormValues,
   ) => {
     return updateCommentMutation.mutateAsync({
       projectId,

@@ -29,7 +29,7 @@ export function JoinedProjectNav({ projectId }: JoinedProjectNavProps) {
   }
 
   const visibleItems = joinedProjectNavigationItems.filter((item) =>
-    item.canShow(currentProjectRole)
+    item.canShow(currentProjectRole),
   );
 
   if (!visibleItems.length) {
@@ -66,7 +66,7 @@ export function JoinedProjectNav({ projectId }: JoinedProjectNavProps) {
 const isNavigationActive = (
   pathname: string,
   href: string,
-  projectId: number
+  projectId: number,
 ) => {
   const overviewHref = `/projects/joined/${projectId}`;
 

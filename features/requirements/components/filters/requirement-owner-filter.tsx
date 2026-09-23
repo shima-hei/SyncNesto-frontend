@@ -34,7 +34,7 @@ export function RequirementOwnerFilter({
   const selectedValue =
     selectedUser?.id === value
       ? selectedUser
-      : users.find((user) => user.id === value) ?? null;
+      : (users.find((user) => user.id === value) ?? null);
 
   const handleSelect = (user: SelectableUser) => {
     setSelectedUser(user);

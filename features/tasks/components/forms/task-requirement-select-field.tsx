@@ -82,7 +82,7 @@ export function TaskRequirementSelectField({
                 aria-invalid={Boolean(error)}
                 className={cn(
                   "w-full justify-between",
-                  !selectedValue && "text-muted-foreground"
+                  !selectedValue && "text-muted-foreground",
                 )}
               >
                 {selectedValue ? (
@@ -145,7 +145,9 @@ export function TaskRequirementSelectField({
   );
 }
 
-const getFallbackSelectedRequirement = (value: string): RequirementRead | null => {
+const getFallbackSelectedRequirement = (
+  value: string,
+): RequirementRead | null => {
   const requirementId = Number(value);
 
   if (!Number.isInteger(requirementId) || requirementId <= 0) {

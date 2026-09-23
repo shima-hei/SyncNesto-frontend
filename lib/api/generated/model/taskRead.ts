@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { TaskRequirementSummary } from './taskRequirementSummary';
+import type { TaskRequirementSummary } from "./taskRequirementSummary";
 
 /**
  * タスク読み取り時に返すschema。
@@ -24,9 +24,9 @@ export interface TaskRead {
   actual_start_date?: string | null;
   actual_end_date?: string | null;
   /**
-     * @minimum 0
-     * @maximum 100
-     */
+   * @minimum 0
+   * @maximum 100
+   */
   progress_percent?: number;
   estimated_minutes?: number | null;
   actual_minutes?: number | null;

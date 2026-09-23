@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/select";
 import { UserSelect } from "@/components/shared/forms/user-select";
 import { useUsers } from "@/features/users/hooks/use-users";
-import type { UserListItem } from "@/lib/api/generated/model";
+import type { UserListItem, UserSummary } from "@/lib/api/generated/model";
 
 import { PROJECT_ROLE_OPTIONS } from "../../constants/project-roles";
+import { useProjectMemberCandidates } from "../../hooks/use-project-member-candidates";
 import { projectMemberSchema } from "../../schemas/project-schema";
 import type {
   ProjectMemberFormErrors,
@@ -30,9 +31,11 @@ import type {
 } from "../../types/project-member-form";
 
 type ProjectMemberFormProps = {
+  projectId: number;
   excludedUserIds: readonly number[];
   isPending: boolean;
   error?: Error | null;
+  userSelectMode?: "directory" | "candidates";
   onSubmit: (values: ProjectMemberFormValues) => Promise<unknown>;
 };
 
@@ -42,25 +45,18 @@ const initialValues: ProjectMemberFormValues = {
 };
 
 export function ProjectMemberForm({
+  projectId,
   excludedUserIds,
   isPending,
   error,
+  userSelectMode = "directory",
   onSubmit,
 }: ProjectMemberFormProps) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<ProjectMemberFormErrors>({});
-  const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
-  const [userSelectOpen, setUserSelectOpen] = useState(false);
-  const [userSearch, setUserSearch] = useState("");
-  const { users, isLoading: isUsersLoading } = useUsers({
-    page: 1,
-    page_size: 20,
-    q: userSearch.trim() || undefined,
-    is_active: true,
-  });
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -80,24 +76,16 @@ export function ProjectMemberForm({
     await onSubmit(result.data)
       .then(() => {
         setValues(initialValues);
-        setSelectedUser(null);
-        setUserSearch("");
       })
       .catch(() => undefined);
   };
 
   const updateValue = <TKey extends keyof ProjectMemberFormValues>(
     field: TKey,
-    value: ProjectMemberFormValues[TKey]
+    value: ProjectMemberFormValues[TKey],
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
-  };
-
-  const handleUserSelect = (user: UserListItem) => {
-    setSelectedUser(user);
-    updateValue("userId", user.id);
-    setUserSelectOpen(false);
   };
 
   return (
@@ -106,17 +94,19 @@ export function ProjectMemberForm({
         <div className="grid gap-4 md:grid-cols-[1fr_220px]">
           <Field data-invalid={errors.userId ? true : undefined}>
             <FieldLabel>ユーザー</FieldLabel>
-            <UserSelect
-              users={users}
-              selectedUser={selectedUser}
-              open={userSelectOpen}
-              search={userSearch}
-              isLoading={isUsersLoading}
-              excludedUserIds={excludedUserIds}
-              onOpenChange={setUserSelectOpen}
-              onSearchChange={setUserSearch}
-              onSelect={handleUserSelect}
-            />
+            {userSelectMode === "directory" ? (
+              <DirectoryUserSelectField
+                excludedUserIds={excludedUserIds}
+                selectedUserId={values.userId}
+                onSelect={(user) => updateValue("userId", user.id)}
+              />
+            ) : (
+              <CandidateUserSelectField
+                projectId={projectId}
+                selectedUserId={values.userId}
+                onSelect={(user) => updateValue("userId", user.id)}
+              />
+            )}
             {errors.userId ? <FieldError>{errors.userId}</FieldError> : null}
           </Field>
 
@@ -148,5 +138,85 @@ export function ProjectMemberForm({
         <FormSubmitButton isPending={isPending}>メンバー追加</FormSubmitButton>
       </FieldGroup>
     </form>
+  );
+}
+
+function DirectoryUserSelectField({
+  excludedUserIds,
+  selectedUserId,
+  onSelect,
+}: {
+  excludedUserIds: readonly number[];
+  selectedUserId: number | null;
+  onSelect: (user: UserListItem) => void;
+}) {
+  const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
+  const [userSelectOpen, setUserSelectOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const { users, isLoading: isUsersLoading } = useUsers({
+    page: 1,
+    page_size: 20,
+    q: userSearch.trim() || undefined,
+    is_active: true,
+  });
+
+  const handleUserSelect = (user: UserListItem) => {
+    setSelectedUser(user);
+    onSelect(user);
+    setUserSelectOpen(false);
+  };
+
+  return (
+    <UserSelect
+      users={users}
+      selectedUser={selectedUserId ? selectedUser : null}
+      open={userSelectOpen}
+      search={userSearch}
+      isLoading={isUsersLoading}
+      excludedUserIds={excludedUserIds}
+      onOpenChange={setUserSelectOpen}
+      onSearchChange={setUserSearch}
+      onSelect={handleUserSelect}
+    />
+  );
+}
+
+function CandidateUserSelectField({
+  projectId,
+  selectedUserId,
+  onSelect,
+}: {
+  projectId: number;
+  selectedUserId: number | null;
+  onSelect: (user: UserSummary) => void;
+}) {
+  const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
+  const [userSelectOpen, setUserSelectOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const { users, isLoading: isUsersLoading } = useProjectMemberCandidates(
+    projectId,
+    {
+      limit: 20,
+      q: userSearch.trim() || undefined,
+    },
+  );
+
+  const handleUserSelect = (user: UserSummary) => {
+    setSelectedUser(user);
+    onSelect(user);
+    setUserSelectOpen(false);
+  };
+
+  return (
+    <UserSelect
+      users={users}
+      selectedUser={selectedUserId ? selectedUser : null}
+      open={userSelectOpen}
+      search={userSearch}
+      isLoading={isUsersLoading}
+      onOpenChange={setUserSelectOpen}
+      onSearchChange={setUserSearch}
+      onSelect={handleUserSelect}
+    />
   );
 }

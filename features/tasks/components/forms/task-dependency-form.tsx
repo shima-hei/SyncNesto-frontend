@@ -44,7 +44,7 @@ export function TaskDependencyForm({
   const [errors, setErrors] = useState<TaskDependencyFormErrors>({});
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -76,7 +76,7 @@ export function TaskDependencyForm({
 
   const updateValue = (
     field: keyof TaskDependencyFormValues,
-    value: string
+    value: string,
   ) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));

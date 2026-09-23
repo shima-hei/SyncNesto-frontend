@@ -8,9 +8,7 @@ import type {
 import type { ProjectMemberFormValues } from "../types/project-member-form";
 import type { ProjectFormValues } from "../types/project-form";
 
-export const toProjectCreate = (
-  values: ProjectFormValues
-): ProjectCreate => {
+export const toProjectCreate = (values: ProjectFormValues): ProjectCreate => {
   return {
     project_code: values.projectCode,
     name: values.name,
@@ -23,7 +21,7 @@ export const toProjectCreate = (
 
 export const toProjectUpdate = (
   values: ProjectFormValues,
-  version: number
+  version: number,
 ): ProjectUpdate => {
   return {
     version,
@@ -32,7 +30,7 @@ export const toProjectUpdate = (
 };
 
 export const toProjectMemberCreate = (
-  values: ProjectMemberFormValues
+  values: ProjectMemberFormValues,
 ): ProjectMemberCreate => {
   return {
     user_id: values.userId ?? 0,
@@ -42,7 +40,7 @@ export const toProjectMemberCreate = (
 
 export const toProjectMemberUpdate = (
   version: number,
-  roleKey: string
+  roleKey: string,
 ): ProjectMemberUpdate => {
   return {
     version,

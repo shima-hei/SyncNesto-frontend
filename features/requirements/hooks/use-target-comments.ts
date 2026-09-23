@@ -5,16 +5,18 @@ import { useListTargetCommentsProjectsProjectIdCommentsGet } from "@/lib/api/gen
 export function useTargetComments(
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
+  options?: { enabled?: boolean },
 ) {
   const commentsQuery = useListTargetCommentsProjectsProjectIdCommentsGet(
     projectId,
     { target_type: targetType, target_id: targetId },
     {
       query: {
+        enabled: options?.enabled ?? true,
         retry: false,
       },
-    }
+    },
   );
 
   return {

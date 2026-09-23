@@ -15,7 +15,7 @@ import type { RequirementRelationFormValues } from "../types/requirement-relatio
 
 export function useCreateRequirementRelation(
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) {
   const queryClient = useQueryClient();
   const createRelationMutation =
@@ -24,7 +24,11 @@ export function useCreateRequirementRelation(
         mutation: {
           onSuccess: async () => {
             await Promise.all([
-              invalidateRequirementRelations(queryClient, projectId, requirementId),
+              invalidateRequirementRelations(
+                queryClient,
+                projectId,
+                requirementId,
+              ),
               invalidateRequirementChangeLogs(queryClient, projectId),
             ]);
             toast.success(REQUIREMENT_MESSAGES.relation.createSuccess);
@@ -33,11 +37,11 @@ export function useCreateRequirementRelation(
             toast.error(REQUIREMENT_MESSAGES.relation.createError);
           },
         },
-      }
+      },
     );
 
   const createRequirementRelation = async (
-    values: RequirementRelationFormValues
+    values: RequirementRelationFormValues,
   ) => {
     return createRelationMutation.mutateAsync({
       projectId,

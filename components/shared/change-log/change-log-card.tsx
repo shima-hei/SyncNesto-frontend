@@ -1,5 +1,7 @@
 import type { ChangeLogDiffRow } from "@/lib/change-log/diff";
 
+export type ChangeLogValueDisplayMode = "created" | "updated" | "deleted";
+
 type ChangeLogCardProps = {
   actionLabel: string;
   actorLabel: string;
@@ -14,6 +16,7 @@ type ChangeLogCardProps = {
   reason?: string | null;
   oldValue?: unknown;
   newValue?: unknown;
+  valueDisplayMode?: ChangeLogValueDisplayMode;
   showRawValues?: boolean;
 };
 
@@ -31,8 +34,11 @@ export function ChangeLogCard({
   reason,
   oldValue,
   newValue,
+  valueDisplayMode = "updated",
   showRawValues = false,
 }: ChangeLogCardProps) {
+  const valueLabels = getChangeLogValueLabels(valueDisplayMode);
+
   return (
     <div className="rounded-lg border p-3">
       <div className="flex flex-col gap-2">
@@ -59,32 +65,20 @@ export function ChangeLogCard({
           </p>
         ) : null}
         {showRawValues ? (
-          <div className="grid gap-2 md:grid-cols-2">
-            <ChangeValue
-              label="変更前"
-              value={oldValue}
-              fieldName={fieldName}
-              formatValue={formatValue}
-            />
-            <ChangeValue
-              label="変更後"
-              value={newValue}
-              fieldName={fieldName}
-              formatValue={formatValue}
-            />
-          </div>
+          <ChangeValuePair
+            oldLabel={valueLabels.oldLabel}
+            newLabel={valueLabels.newLabel}
+            oldValue={oldValue}
+            newValue={newValue}
+            fieldName={fieldName}
+            formatValue={formatValue}
+          />
         ) : diffRows.length ? (
-          <div className="flex flex-col gap-2">
-            {diffRows.map((row) => (
-              <div key={row.field} className="rounded-md bg-muted p-2">
-                <div className="mb-2 text-xs font-medium">{row.label}</div>
-                <div className="grid gap-2 md:grid-cols-2">
-                  <FormattedValue label="変更前" value={row.oldValue} />
-                  <FormattedValue label="変更後" value={row.newValue} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <ChangeLogDiffRows
+            rows={diffRows}
+            oldLabel={valueLabels.oldLabel}
+            newLabel={valueLabels.newLabel}
+          />
         ) : (
           <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
             {missingFieldLabels.length
@@ -97,23 +91,91 @@ export function ChangeLogCard({
   );
 }
 
-function ChangeValue({
-  label,
-  value,
+export function ChangeLogDiffRows({
+  rows,
+  oldLabel = "変更前",
+  newLabel = "変更後",
+}: {
+  rows: ChangeLogDiffRow[];
+  oldLabel?: string | null;
+  newLabel?: string | null;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row) => (
+        <div key={row.field} className="rounded-md bg-muted p-2">
+          <div className="mb-2 text-xs font-medium">{row.label}</div>
+          <FormattedValuePair
+            oldLabel={oldLabel}
+            newLabel={newLabel}
+            oldValue={row.oldValue}
+            newValue={row.newValue}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChangeValuePair({
+  oldLabel,
+  newLabel,
+  oldValue,
+  newValue,
   fieldName,
   formatValue,
 }: {
-  label: string;
-  value: unknown;
+  oldLabel: string | null;
+  newLabel: string | null;
+  oldValue: unknown;
+  newValue: unknown;
   fieldName?: string | null;
   formatValue: (value: unknown, fieldName?: string | null) => string;
 }) {
   return (
-    <FormattedValue
-      label={label}
-      value={formatValue(value, fieldName)}
+    <FormattedValuePair
+      oldLabel={oldLabel}
+      newLabel={newLabel}
+      oldValue={formatValue(oldValue, fieldName)}
+      newValue={formatValue(newValue, fieldName)}
     />
   );
+}
+
+function FormattedValuePair({
+  oldLabel,
+  newLabel,
+  oldValue,
+  newValue,
+}: {
+  oldLabel: string | null;
+  newLabel: string | null;
+  oldValue: string;
+  newValue: string;
+}) {
+  if (!oldLabel && !newLabel) {
+    return null;
+  }
+
+  const isPair = Boolean(oldLabel && newLabel);
+
+  return (
+    <div className={isPair ? "grid gap-2 md:grid-cols-2" : "grid gap-2"}>
+      {oldLabel ? <FormattedValue label={oldLabel} value={oldValue} /> : null}
+      {newLabel ? <FormattedValue label={newLabel} value={newValue} /> : null}
+    </div>
+  );
+}
+
+function getChangeLogValueLabels(mode: ChangeLogValueDisplayMode) {
+  switch (mode) {
+    case "created":
+      return { oldLabel: null, newLabel: "作成時の値" };
+    case "deleted":
+      return { oldLabel: "削除前の値", newLabel: null };
+    case "updated":
+      return { oldLabel: "変更前", newLabel: "変更後" };
+  }
 }
 
 function FormattedValue({ label, value }: { label: string; value: string }) {

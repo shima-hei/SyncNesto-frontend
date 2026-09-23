@@ -40,7 +40,7 @@ export function GanttMilestoneMarker({
       <span
         className={cn(
           "size-3 rotate-45 rounded-[2px]",
-          getMilestoneMarkerClassName(milestone.status)
+          getMilestoneMarkerClassName(milestone.status),
         )}
       />
       {showLabel ? (
@@ -83,7 +83,7 @@ export function GanttMilestoneHeaderMarkers({
             <span
               className={cn(
                 "block size-2.5 rotate-45 rounded-[2px]",
-                getMilestoneMarkerClassName(milestone.status)
+                getMilestoneMarkerClassName(milestone.status),
               )}
             />
           </button>
@@ -107,7 +107,7 @@ export function GanttMilestoneLines({
           key={milestone.id}
           className={cn(
             "pointer-events-none absolute top-0 bottom-0 w-px opacity-35",
-            getMilestoneLineClassName(milestone.status)
+            getMilestoneLineClassName(milestone.status),
           )}
           style={{ left: getMilestoneLeft(milestone, range) }}
           title={getMilestoneTitle(milestone)}
@@ -179,7 +179,7 @@ const getMilestoneMarkerClassName = (status?: string | null) => {
     "bg-[var(--status-warning-fg)]",
     status === "achieved" && "bg-[var(--status-success-fg)]",
     status === "missed" && "bg-[var(--status-danger-fg)]",
-    status === "cancelled" && "bg-[var(--status-neutral-fg)]"
+    status === "cancelled" && "bg-[var(--status-neutral-fg)]",
   );
 };
 
@@ -188,6 +188,6 @@ const getMilestoneLineClassName = (status?: string | null) => {
     "bg-[var(--status-warning-border)]",
     status === "achieved" && "bg-[var(--status-success-border)]",
     status === "missed" && "bg-[var(--status-danger-border)]",
-    status === "cancelled" && "bg-[var(--status-neutral-border)]"
+    status === "cancelled" && "bg-[var(--status-neutral-border)]",
   );
 };

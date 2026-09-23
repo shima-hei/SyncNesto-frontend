@@ -23,7 +23,7 @@ import {
 
 export const invalidateRequirementList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementListKey(projectId),
@@ -32,7 +32,7 @@ export const invalidateRequirementList = (
 
 export const invalidateRequirementDocumentList = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementDocumentListKey(projectId),
@@ -42,7 +42,7 @@ export const invalidateRequirementDocumentList = (
 export const invalidateRequirementSections = (
   queryClient: QueryClient,
   projectId: number,
-  documentId: number
+  documentId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementSectionListKey(projectId, documentId),
@@ -51,7 +51,7 @@ export const invalidateRequirementSections = (
 
 export const invalidateRequirementOpenIssues = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getOpenIssueListKey(projectId),
@@ -60,7 +60,7 @@ export const invalidateRequirementOpenIssues = (
 
 export const invalidateRequirementApprovals = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getApprovalListKey(projectId),
@@ -69,7 +69,7 @@ export const invalidateRequirementApprovals = (
 
 export const invalidateRequirementChangeLogs = (
   queryClient: QueryClient,
-  projectId: number
+  projectId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getChangeLogListKey(projectId),
@@ -79,7 +79,7 @@ export const invalidateRequirementChangeLogs = (
 export const invalidateRequirementSummary = (
   queryClient: QueryClient,
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementSummaryKey(projectId, requirementId),
@@ -89,7 +89,7 @@ export const invalidateRequirementSummary = (
 export const invalidateRequirementCommentsWithSummary = (
   queryClient: QueryClient,
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) => {
   // コメント件数は要件詳細summaryにも表示するため、一覧とsummaryを同時に更新する。
   return Promise.all([
@@ -103,7 +103,7 @@ export const invalidateRequirementCommentsWithSummary = (
 export const invalidateRequirementLinksWithSummary = (
   queryClient: QueryClient,
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) => {
   // 関連成果物件数は要件詳細summaryにも表示するため、一覧とsummaryを同時に更新する。
   return Promise.all([
@@ -117,7 +117,7 @@ export const invalidateRequirementLinksWithSummary = (
 export const invalidateRequirementRelations = (
   queryClient: QueryClient,
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getRequirementRelationListKey(projectId, requirementId),
@@ -128,7 +128,7 @@ export const invalidateRequirementTargetComments = (
   queryClient: QueryClient,
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) => {
   return queryClient.invalidateQueries({
     queryKey: getTargetCommentListKey(projectId, {
@@ -141,7 +141,7 @@ export const invalidateRequirementTargetComments = (
 export const invalidateRequirementReviewsWithSummary = (
   queryClient: QueryClient,
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) => {
   // レビュー情報は要件詳細summaryにも表示するため、一覧とsummaryを同時に更新する。
   return Promise.all([
@@ -156,18 +156,18 @@ export const setRequirementDetailCache = (
   queryClient: QueryClient,
   projectId: number,
   requirementId: number,
-  requirement: RequirementRead
+  requirement: RequirementRead,
 ) => {
   queryClient.setQueryData(
     getRequirementDetailKey(projectId, requirementId),
-    requirement
+    requirement,
   );
 };
 
 export const removeRequirementDetailCache = (
   queryClient: QueryClient,
   projectId: number,
-  requirementId: number
+  requirementId: number,
 ) => {
   queryClient.removeQueries({
     queryKey: getRequirementDetailKey(projectId, requirementId),
@@ -181,18 +181,18 @@ export const setRequirementDocumentDetailCache = (
   queryClient: QueryClient,
   projectId: number,
   documentId: number,
-  document: RequirementDocumentRead
+  document: RequirementDocumentRead,
 ) => {
   queryClient.setQueryData(
     getRequirementDocumentDetailKey(projectId, documentId),
-    document
+    document,
   );
 };
 
 export const removeRequirementDocumentDetailCache = (
   queryClient: QueryClient,
   projectId: number,
-  documentId: number
+  documentId: number,
 ) => {
   queryClient.removeQueries({
     queryKey: getRequirementDocumentDetailKey(projectId, documentId),

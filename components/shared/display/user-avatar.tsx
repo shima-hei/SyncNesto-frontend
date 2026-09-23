@@ -1,8 +1,4 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type UserAvatarProps = {
   name?: string | null;
@@ -10,11 +6,7 @@ type UserAvatarProps = {
   size?: "default" | "sm" | "lg";
 };
 
-export function UserAvatar({
-  name,
-  src,
-  size = "default",
-}: UserAvatarProps) {
+export function UserAvatar({ name, src, size = "default" }: UserAvatarProps) {
   const fallback = getUserFallback(name);
 
   return (

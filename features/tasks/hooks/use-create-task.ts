@@ -32,7 +32,7 @@ export function useCreateTask(projectId: number) {
         if (requirementId) {
           invalidations.push(
             invalidateRequirementTaskList(queryClient, requirementId),
-            invalidateRequirementTaskProgress(queryClient, requirementId)
+            invalidateRequirementTaskProgress(queryClient, requirementId),
           );
         }
 
@@ -50,7 +50,7 @@ export function useCreateTask(projectId: number) {
 
   const createTask = async (
     values: TaskFormValues,
-    options?: { navigateAfterCreate?: boolean }
+    options?: { navigateAfterCreate?: boolean },
   ) => {
     taskFormRequirementIdRef.current = values.requirementId
       ? Number(values.requirementId)

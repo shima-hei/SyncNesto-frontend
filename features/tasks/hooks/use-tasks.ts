@@ -5,7 +5,7 @@ import { useListTasksProjectsProjectIdTasksGet } from "@/lib/api/generated/tasks
 
 export function useTasks(
   projectId: number,
-  params: ListTasksProjectsProjectIdTasksGetParams
+  params: ListTasksProjectsProjectIdTasksGetParams,
 ) {
   const tasksQuery = useListTasksProjectsProjectIdTasksGet(projectId, params, {
     query: {

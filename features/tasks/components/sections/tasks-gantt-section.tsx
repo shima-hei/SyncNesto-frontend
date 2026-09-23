@@ -13,14 +13,16 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import type { GanttResponse, MilestoneRead, TaskRead } from "@/lib/api/generated/model";
+import type {
+  GanttResponse,
+  MilestoneRead,
+  TaskRead,
+} from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
 
 import { useUpdateTaskQuick } from "../../hooks/use-update-task-quick";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
-import {
-  GanttDependenciesSummary,
-} from "../gantt/gantt-dependencies-summary";
+import { GanttDependenciesSummary } from "../gantt/gantt-dependencies-summary";
 import {
   DropDateHighlight,
   GanttMilestoneLines,
@@ -85,10 +87,11 @@ export function TasksGanttSection({
   const [collapsedTaskIds, setCollapsedTaskIds] = useState<number[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [unscheduledPanelOpen, setUnscheduledPanelOpen] = useState(false);
-  const [draggingUnscheduledTaskId, setDraggingUnscheduledTaskId] =
-    useState<number | null>(null);
+  const [draggingUnscheduledTaskId, setDraggingUnscheduledTaskId] = useState<
+    number | null
+  >(null);
   const [highlightedDropDate, setHighlightedDropDate] = useState<string | null>(
-    null
+    null,
   );
   const { updateTaskQuick, isPending } = useUpdateTaskQuick(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
@@ -106,20 +109,22 @@ export function TasksGanttSection({
   const milestones = gantt?.milestones ?? [];
   const visibleTasks = tasks.filter((task) => task.start_date || task.due_date);
   const unscheduledTasks = tasks.filter(
-    (task) => !task.start_date && !task.due_date
+    (task) => !task.start_date && !task.due_date,
   );
-  const visibleMilestones = milestones.filter((milestone) => milestone.target_date);
+  const visibleMilestones = milestones.filter(
+    (milestone) => milestone.target_date,
+  );
   const range =
     getDateRange(visibleTasks, visibleMilestones, displayUnit) ??
     (unscheduledTasks.length ? getFallbackDateRange(displayUnit) : null);
   const parentTaskIds = new Set(
     visibleTasks
       .map((task) => task.parent_task_id)
-      .filter((taskId): taskId is number => Boolean(taskId))
+      .filter((taskId): taskId is number => Boolean(taskId)),
   );
   const displayedTasks = visibleTasks.filter(
     (task) =>
-      !task.parent_task_id || !collapsedTaskIds.includes(task.parent_task_id)
+      !task.parent_task_id || !collapsedTaskIds.includes(task.parent_task_id),
   );
   const timelineWidth = range ? getTimelineWidth(range, displayUnit) : 0;
   const ganttWidth = GANTT_TASK_COLUMN_WIDTH + timelineWidth;
@@ -128,7 +133,7 @@ export function TasksGanttSection({
   };
   const dropUnscheduledTask = (
     task: TaskRead,
-    dropDate: Date
+    dropDate: Date,
   ): Promise<unknown> => {
     const startDate = toDateInputValue(dropDate);
 
@@ -231,7 +236,7 @@ export function TasksGanttSection({
                     setCollapsedTaskIds((current) =>
                       current.includes(task.id)
                         ? current.filter((taskId) => taskId !== task.id)
-                        : [...current, task.id]
+                        : [...current, task.id],
                     )
                   }
                   onScheduleUpdate={(values) => updateTaskQuick(task, values)}
@@ -253,7 +258,9 @@ export function TasksGanttSection({
                     tasks={unscheduledTasks}
                     range={range}
                     highlightedDropDate={highlightedDropDate}
-                    isDropEnabled={canUpdate && Boolean(unscheduledTasks.length)}
+                    isDropEnabled={
+                      canUpdate && Boolean(unscheduledTasks.length)
+                    }
                     onDropTask={dropUnscheduledTask}
                     onDropDateHover={setHighlightedDropDate}
                     onDropDateClear={() => setHighlightedDropDate(null)}
@@ -339,10 +346,7 @@ function GanttTaskRow({
     dueDate?: string;
   }) => Promise<unknown>;
   onOpenDetail: (taskId: number) => void;
-  onDropUnscheduledTask: (
-    task: TaskRead,
-    dropDate: Date
-  ) => Promise<unknown>;
+  onDropUnscheduledTask: (task: TaskRead, dropDate: Date) => Promise<unknown>;
   onDropDateHover: (date: string | null) => void;
   onDropDateClear: () => void;
 }) {
@@ -397,7 +401,7 @@ function GanttTaskRow({
   };
   const startDrag = (
     event: React.PointerEvent<HTMLElement>,
-    mode: GanttDragMode
+    mode: GanttDragMode,
   ) => {
     if (!canUpdate || isPending) {
       return;
@@ -440,7 +444,9 @@ function GanttTaskRow({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label={isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"}
+                aria-label={
+                  isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"
+                }
                 onClick={(event) => {
                   event.stopPropagation();
                   onToggleCollapse();
@@ -457,7 +463,9 @@ function GanttTaskRow({
             )}
             <div className="flex min-w-0 flex-1 items-center gap-2">
               {task.parent_task_id ? (
-                <span className="shrink-0 text-xs text-muted-foreground">└</span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  └
+                </span>
               ) : null}
               <span className="truncate text-sm font-medium">{task.title}</span>
               <span className="shrink-0 text-xs text-muted-foreground">
@@ -509,7 +517,7 @@ function GanttTaskRow({
           const hoverDate = getClientDate(
             event.clientX,
             range,
-            timelineRef.current
+            timelineRef.current,
           );
 
           if (hoverDate) {
@@ -523,12 +531,12 @@ function GanttTaskRow({
 
           const taskId = getDraggedUnscheduledTaskId(event.dataTransfer);
           const droppedTask = unscheduledTasks.find(
-            (candidate) => candidate.id === taskId
+            (candidate) => candidate.id === taskId,
           );
           const dropDate = getClientDate(
             event.clientX,
             range,
-            timelineRef.current
+            timelineRef.current,
           );
 
           if (!droppedTask || !dropDate) {
@@ -540,7 +548,9 @@ function GanttTaskRow({
           onDropUnscheduledTask(droppedTask, dropDate).catch(() => undefined);
         }}
         onDragLeave={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          if (
+            !event.currentTarget.contains(event.relatedTarget as Node | null)
+          ) {
             onDropDateClear();
           }
         }}

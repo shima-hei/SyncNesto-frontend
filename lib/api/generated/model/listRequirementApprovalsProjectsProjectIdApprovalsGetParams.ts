@@ -6,17 +6,17 @@
  */
 
 export type ListRequirementApprovalsProjectsProjectIdApprovalsGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
-target_type?: string | null;
-target_id?: number | null;
-status?: string | null;
-approver_id?: number | null;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  page_size?: number;
+  target_type?: string | null;
+  target_id?: number | null;
+  status?: string | null;
+  approver_id?: number | null;
 };

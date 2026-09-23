@@ -8,6 +8,6 @@ export const accountProfileSchema = z.object({
     .string()
     .refine(
       (value) => value.length === 0 || value.length >= 8,
-      VALIDATION_MESSAGES.optionalMinLength("パスワード", 8)
+      VALIDATION_MESSAGES.optionalMinLength("パスワード", 8),
     ),
 });

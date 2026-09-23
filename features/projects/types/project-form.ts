@@ -7,4 +7,6 @@ export type ProjectFormValues = {
   endDate: string;
 };
 
-export type ProjectFormErrors = Partial<Record<keyof ProjectFormValues, string>>;
+export type ProjectFormErrors = Partial<
+  Record<keyof ProjectFormValues, string>
+>;

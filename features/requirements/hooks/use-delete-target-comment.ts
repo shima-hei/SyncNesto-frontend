@@ -14,7 +14,7 @@ import {
 export function useDeleteTargetComment(
   projectId: number,
   targetType: string,
-  targetId: number
+  targetId: number,
 ) {
   const queryClient = useQueryClient();
   const deleteCommentMutation =
@@ -26,7 +26,7 @@ export function useDeleteTargetComment(
               queryClient,
               projectId,
               targetType,
-              targetId
+              targetId,
             ),
             invalidateRequirementChangeLogs(queryClient, projectId),
           ]);

@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { UserListItem } from './userListItem';
+import type { UserListItem } from "./userListItem";
 
 /**
  * ユーザー一覧レスポンスschema。

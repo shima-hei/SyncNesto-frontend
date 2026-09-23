@@ -7,8 +7,6 @@ type EmptyStateProps = {
 
 export function EmptyState({ message, className }: EmptyStateProps) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)}>
-      {message}
-    </p>
+    <p className={cn("text-sm text-muted-foreground", className)}>{message}</p>
   );
 }

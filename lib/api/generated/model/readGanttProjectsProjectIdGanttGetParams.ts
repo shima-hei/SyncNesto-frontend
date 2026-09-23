@@ -6,8 +6,8 @@
  */
 
 export type ReadGanttProjectsProjectIdGanttGetParams = {
-start_date?: string | null;
-end_date?: string | null;
-requirement_id?: number | null;
-assignee_id?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  requirement_id?: number | null;
+  assignee_id?: number | null;
 };

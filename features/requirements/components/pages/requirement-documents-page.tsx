@@ -43,7 +43,7 @@ export function RequirementDocumentsPage({
       page_size: PAGE_SIZE,
       q: q || undefined,
       status: status === ALL_STATUSES ? undefined : status,
-    }
+    },
   );
 
   const handleSearch = () => {

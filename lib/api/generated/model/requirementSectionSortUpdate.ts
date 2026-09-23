@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequirementSectionSortItem } from './requirementSectionSortItem';
+import type { RequirementSectionSortItem } from "./requirementSectionSortItem";
 
 /**
  * 要件定義セクションの並び順更新リクエストschema。

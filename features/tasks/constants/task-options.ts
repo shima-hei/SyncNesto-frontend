@@ -46,19 +46,35 @@ export const MILESTONE_STATUS_OPTIONS = [
 export type TaskStatus = (typeof TASK_STATUS_OPTIONS)[number]["value"];
 
 export const getTaskTypeLabel = (value?: string | null) => {
-  return TASK_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? "-";
+  return (
+    TASK_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? "-"
+  );
 };
 
 export const getTaskStatusLabel = (value?: string | null) => {
-  return TASK_STATUS_OPTIONS.find((option) => option.value === value)?.label ?? "-";
+  return (
+    TASK_STATUS_OPTIONS.find((option) => option.value === value)?.label ?? "-"
+  );
 };
 
 export const getTaskPriorityLabel = (value?: string | null) => {
-  return TASK_PRIORITY_OPTIONS.find((option) => option.value === value)?.label ?? "-";
+  return (
+    TASK_PRIORITY_OPTIONS.find((option) => option.value === value)?.label ?? "-"
+  );
+};
+
+export const getTaskRelationTypeLabel = (value?: string | null) => {
+  return (
+    TASK_RELATION_TYPE_OPTIONS.find((option) => option.value === value)
+      ?.label ??
+    value ??
+    "-"
+  );
 };
 
 export const getMilestoneStatusLabel = (value?: string | null) => {
   return (
-    MILESTONE_STATUS_OPTIONS.find((option) => option.value === value)?.label ?? "-"
+    MILESTONE_STATUS_OPTIONS.find((option) => option.value === value)?.label ??
+    "-"
   );
 };

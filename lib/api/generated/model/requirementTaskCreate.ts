@@ -23,9 +23,9 @@ export interface RequirementTaskCreate {
   actual_start_date?: string | null;
   actual_end_date?: string | null;
   /**
-     * @minimum 0
-     * @maximum 100
-     */
+   * @minimum 0
+   * @maximum 100
+   */
   progress_percent?: number;
   estimated_minutes?: number | null;
   actual_minutes?: number | null;

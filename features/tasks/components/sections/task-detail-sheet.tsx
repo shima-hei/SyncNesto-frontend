@@ -75,7 +75,9 @@ export function TaskDetailSheet({
           <>
             <SheetHeader className="border-b p-4 pr-14">
               <SheetTitle>タスク詳細</SheetTitle>
-              <SheetDescription>タスクを取得できませんでした。</SheetDescription>
+              <SheetDescription>
+                タスクを取得できませんでした。
+              </SheetDescription>
             </SheetHeader>
             <div className="p-6 text-sm text-muted-foreground">
               タスクを取得できませんでした。
@@ -248,7 +250,7 @@ function TaskSheetQuickEdit({
   task: TaskRead;
 }) {
   const [assigneeId, setAssigneeId] = useState(
-    task.assignee_id ? String(task.assignee_id) : ""
+    task.assignee_id ? String(task.assignee_id) : "",
   );
   const [startDate, setStartDate] = useState(task.start_date ?? "");
   const [dueDate, setDueDate] = useState(task.due_date ?? "");
@@ -285,7 +287,9 @@ function TaskSheetQuickEdit({
           />
         </Field>
         <Field>
-          <FieldLabel htmlFor={`task-${task.id}-sheet-due-date`}>期限</FieldLabel>
+          <FieldLabel htmlFor={`task-${task.id}-sheet-due-date`}>
+            期限
+          </FieldLabel>
           <Input
             id={`task-${task.id}-sheet-due-date`}
             type="date"
@@ -301,7 +305,7 @@ function TaskSheetQuickEdit({
           disabled={!isDirty || isPending}
           onClick={() => {
             updateTaskQuick(task, { assigneeId, startDate, dueDate }).catch(
-              () => undefined
+              () => undefined,
             );
           }}
         >
@@ -312,13 +316,7 @@ function TaskSheetQuickEdit({
   );
 }
 
-function TaskInfo({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
+function TaskInfo({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -339,7 +337,7 @@ function TaskDetailSheetSkeleton() {
 
 const getTaskReferenceLabel = (
   task: TaskRead | null,
-  fallbackTaskId?: number | null
+  fallbackTaskId?: number | null,
 ) => {
   if (task) {
     return `${task.task_code} ${task.title}`;

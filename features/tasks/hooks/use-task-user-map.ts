@@ -12,13 +12,16 @@ export function useTaskUserMap(projectId: number) {
     return new Map(users.map((user) => [user.id, user]));
   }, [users]);
 
-  const getTaskUserLabel = useCallback((userId?: number | null) => {
-    if (!userId) {
-      return "-";
-    }
+  const getTaskUserLabel = useCallback(
+    (userId?: number | null) => {
+      if (!userId) {
+        return "-";
+      }
 
-    return usersById.get(userId)?.name ?? `ユーザーID: ${userId}`;
-  }, [usersById]);
+      return usersById.get(userId)?.name ?? `ユーザーID: ${userId}`;
+    },
+    [usersById],
+  );
 
   return {
     usersById,

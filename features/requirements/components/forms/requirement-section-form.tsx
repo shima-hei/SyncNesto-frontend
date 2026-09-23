@@ -60,12 +60,13 @@ export function RequirementSectionForm({
     sortOrder: String(nextSortOrder),
     status: "draft",
   };
-  const [values, setValues] = useState<RequirementSectionFormValues>(defaultValues);
+  const [values, setValues] =
+    useState<RequirementSectionFormValues>(defaultValues);
   const [errors, setErrors] = useState<RequirementSectionFormErrors>({});
   const [selectedTemplateKey, setSelectedTemplateKey] = useState("");
 
   const handleSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>
+    event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
 
@@ -104,7 +105,7 @@ export function RequirementSectionForm({
 
   const handleTemplateChange = (templateKey: string) => {
     const template = REQUIREMENT_SECTION_TEMPLATES.find(
-      (item) => item.key === templateKey
+      (item) => item.key === templateKey,
     );
 
     setSelectedTemplateKey(templateKey);
@@ -158,7 +159,10 @@ export function RequirementSectionForm({
           <Input
             value={values.title}
             onChange={(event) => {
-              setValues((current) => ({ ...current, title: event.target.value }));
+              setValues((current) => ({
+                ...current,
+                title: event.target.value,
+              }));
               setErrors((current) => ({ ...current, title: undefined }));
             }}
             aria-invalid={Boolean(errors.title)}
@@ -173,7 +177,10 @@ export function RequirementSectionForm({
               value={values.sectionType}
               onValueChange={(value) => {
                 setValues((current) => ({ ...current, sectionType: value }));
-                setErrors((current) => ({ ...current, sectionType: undefined }));
+                setErrors((current) => ({
+                  ...current,
+                  sectionType: undefined,
+                }));
               }}
             >
               <SelectTrigger aria-invalid={Boolean(errors.sectionType)}>
@@ -218,7 +225,6 @@ export function RequirementSectionForm({
             </Select>
             {errors.status ? <FieldError>{errors.status}</FieldError> : null}
           </Field>
-
         </div>
 
         <Field>

@@ -4,9 +4,9 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { MilestoneRead } from './milestoneRead';
-import type { TaskDependencyRead } from './taskDependencyRead';
-import type { TaskRead } from './taskRead';
+import type { MilestoneRead } from "./milestoneRead";
+import type { TaskDependencyRead } from "./taskDependencyRead";
+import type { TaskRead } from "./taskRead";
 
 /**
  * ガントチャート取得レスポンスschema。

@@ -21,7 +21,7 @@ export function useCreateRequirement(projectId: number, documentId: number) {
           await invalidateRequirementList(queryClient, projectId);
           toast.success(REQUIREMENT_MESSAGES.requirement.createSuccess);
           router.push(
-            `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`
+            `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
           );
         },
         onError: () => {

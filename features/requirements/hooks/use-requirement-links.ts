@@ -11,7 +11,7 @@ export function useRequirementLinks(projectId: number, requirementId: number) {
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

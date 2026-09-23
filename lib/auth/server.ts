@@ -105,7 +105,7 @@ export const requireUser = async () => {
     redirect(
       result.failureReason === "session-expired"
         ? SESSION_EXPIRED_LOGIN_PATH
-        : LOGIN_PATH
+        : LOGIN_PATH,
     );
   }
 

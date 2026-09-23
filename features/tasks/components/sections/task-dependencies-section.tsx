@@ -123,7 +123,7 @@ function TaskDependencyItem({
   onUpdate: (
     dependencyId: number,
     version: number,
-    lagDays: string
+    lagDays: string,
   ) => Promise<unknown>;
   onDelete: (dependencyId: number) => Promise<void>;
 }) {
@@ -172,7 +172,7 @@ function TaskDependencyItem({
               disabled={!canSubmit || isUpdatePending}
               onClick={() =>
                 onUpdate(dependency.id, dependency.version, lagDays).catch(
-                  () => undefined
+                  () => undefined,
                 )
               }
             >

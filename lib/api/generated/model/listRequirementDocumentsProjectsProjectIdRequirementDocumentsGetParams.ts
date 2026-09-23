@@ -5,16 +5,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-page_size?: number;
-q?: string | null;
-status?: string | null;
-};
+export type ListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetParams =
+  {
+    /**
+     * @minimum 1
+     */
+    page?: number;
+    /**
+     * @minimum 1
+     * @maximum 100
+     */
+    page_size?: number;
+    q?: string | null;
+    status?: string | null;
+  };

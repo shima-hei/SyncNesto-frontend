@@ -3,4 +3,6 @@ export type TaskCommentFormValues = {
   status: string;
 };
 
-export type TaskCommentFormErrors = Partial<Record<keyof TaskCommentFormValues, string>>;
+export type TaskCommentFormErrors = Partial<
+  Record<keyof TaskCommentFormValues, string>
+>;

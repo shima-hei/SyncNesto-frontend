@@ -4,9 +4,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useAddProjectMemberProjectsProjectIdMembersPost } from "@/lib/api/generated/projects/projects";
+import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { PROJECT_MESSAGES } from "../constants/project-messages";
-import { invalidateProjectMemberList } from "../lib/project-cache";
+import {
+  invalidateProjectMemberCandidateList,
+  invalidateProjectMemberList,
+  invalidateProjectMemberUserList,
+} from "../lib/project-cache";
 import { toProjectMemberCreate } from "../lib/project-mappers";
 import type { ProjectMemberFormValues } from "../types/project-member-form";
 
@@ -17,10 +22,16 @@ export function useAddProjectMember(projectId: number) {
       mutation: {
         onSuccess: async () => {
           toast.success(PROJECT_MESSAGES.member.addSuccess);
-          await invalidateProjectMemberList(queryClient, projectId);
+          await Promise.all([
+            invalidateProjectMemberList(queryClient, projectId),
+            invalidateProjectMemberUserList(queryClient, projectId),
+            invalidateProjectMemberCandidateList(queryClient, projectId),
+          ]);
         },
-        onError: () => {
-          toast.error(PROJECT_MESSAGES.member.addError);
+        onError: (error) => {
+          toast.error(
+            getApiErrorMessage(error, PROJECT_MESSAGES.member.addError),
+          );
         },
       },
     });

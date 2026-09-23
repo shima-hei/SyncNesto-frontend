@@ -12,11 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   Popover,
   PopoverContent,
@@ -33,6 +29,7 @@ type RequirementSelectFieldProps = {
   label: string;
   value: string;
   error?: string;
+  excludedRequirementIds?: number[];
   onChange: (value: string) => void;
 };
 
@@ -42,6 +39,7 @@ export function RequirementSelectField({
   label,
   value,
   error,
+  excludedRequirementIds = [],
   onChange,
 }: RequirementSelectFieldProps) {
   const [open, setOpen] = useState(false);
@@ -54,15 +52,19 @@ export function RequirementSelectField({
     document_id: documentId,
     q: search.trim() || undefined,
   });
+  const excludedIds = new Set(excludedRequirementIds);
+  const selectableRequirements = requirements.filter(
+    (requirement) => !excludedIds.has(requirement.id),
+  );
   const valueAsNumber = value ? Number(value) : null;
   const currentRequirement = useMemo(
     () =>
       valueAsNumber
         ? (requirements.find(
-            (requirement) => requirement.id === valueAsNumber
+            (requirement) => requirement.id === valueAsNumber,
           ) ?? selectedRequirement)
         : null,
-    [requirements, selectedRequirement, valueAsNumber]
+    [requirements, selectedRequirement, valueAsNumber],
   );
   const selectedLabel = currentRequirement
     ? formatRequirementLabel(currentRequirement)
@@ -83,7 +85,7 @@ export function RequirementSelectField({
               aria-invalid={Boolean(error)}
               className={cn(
                 "min-w-0 flex-1 justify-between",
-                !selectedLabel && "text-muted-foreground"
+                !selectedLabel && "text-muted-foreground",
               )}
             >
               <span className="truncate">
@@ -97,6 +99,11 @@ export function RequirementSelectField({
               <CommandInput
                 value={search}
                 onValueChange={setSearch}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
                 placeholder="要件IDまたはタイトルで検索"
               />
               <CommandList>
@@ -104,7 +111,7 @@ export function RequirementSelectField({
                   {isFetching ? "検索中です。" : "候補要件がありません。"}
                 </CommandEmpty>
                 <CommandGroup>
-                  {requirements.map((requirement) => {
+                  {selectableRequirements.map((requirement) => {
                     const isSelected = valueAsNumber === requirement.id;
 
                     return (

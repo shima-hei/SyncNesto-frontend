@@ -40,25 +40,30 @@ export function TasksBoardSection({
   const { defaultBoard } = useProjectBoards(projectId);
   const tasksById = useMemo(
     () => new Map(tasks.map((task) => [task.id, task])),
-    [tasks]
+    [tasks],
   );
   const visibleStatuses = TASK_STATUS_OPTIONS.filter(
     (status) =>
       !isCompletedCollapsed ||
-      (status.value !== "done" && status.value !== "cancelled")
+      (status.value !== "done" && status.value !== "cancelled"),
   );
   const swimlanes = useMemo(() => {
     return getTaskBoardSwimlanes(tasks, swimlane, getTaskUserLabel, tasksById);
   }, [getTaskUserLabel, swimlane, tasks, tasksById]);
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>, status: string) => {
+  const handleDrop = (
+    event: React.DragEvent<HTMLDivElement>,
+    status: string,
+  ) => {
     event.preventDefault();
 
     if (!canUpdate) {
       return;
     }
 
-    const task = tasksById.get(Number(event.dataTransfer.getData("text/plain")));
+    const task = tasksById.get(
+      Number(event.dataTransfer.getData("text/plain")),
+    );
 
     if (!task || task.status === status) {
       return;
@@ -87,7 +92,7 @@ export function TasksBoardSection({
               <div className="grid auto-cols-[minmax(280px,320px)] grid-flow-col gap-3">
                 {visibleStatuses.map((status) => {
                   const columnTasks = lane.tasks.filter(
-                    (task) => task.status === status.value
+                    (task) => task.status === status.value,
                   );
 
                   return (
@@ -95,11 +100,13 @@ export function TasksBoardSection({
                       key={`${lane.key}-${status.value}`}
                       className={cn(
                         "flex h-[clamp(30rem,calc(100vh-14rem),52rem)] min-w-0 flex-col overflow-hidden rounded-lg border",
-                        getBoardStatusClassName(status.value)
+                        getBoardStatusClassName(status.value),
                       )}
                     >
                       <div className="flex items-center justify-between border-b border-current/20 px-3 py-2">
-                        <h4 className="text-sm font-semibold">{status.label}</h4>
+                        <h4 className="text-sm font-semibold">
+                          {status.label}
+                        </h4>
                         <span className="rounded-full border border-current/20 bg-background/70 px-2 py-0.5 text-xs font-medium">
                           {columnTasks.length}
                         </span>
@@ -127,7 +134,7 @@ export function TasksBoardSection({
                                   boardId: defaultBoard?.id,
                                   sortOrder: getNextTaskBoardSortOrder(
                                     tasks,
-                                    targetStatus
+                                    targetStatus,
                                   ),
                                 })
                               }

@@ -23,7 +23,7 @@ export const projectInitialValues: ProjectFormValues = {
 };
 
 export const getProjectFormValues = (
-  project: ProjectRead
+  project: ProjectRead,
 ): ProjectFormValues => {
   return {
     projectCode: project.project_code,

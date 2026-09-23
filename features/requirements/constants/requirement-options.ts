@@ -49,6 +49,14 @@ export const REQUIREMENT_LINK_TYPE_OPTIONS = [
   { value: "project", label: "プロジェクト" },
 ] as const;
 
+export const REQUIREMENT_LINK_STATUS_OPTIONS = [
+  { value: "unknown", label: "未確認" },
+  { value: "not_started", label: "未作成" },
+  { value: "in_progress", label: "作成中" },
+  { value: "completed", label: "完成" },
+  { value: "verified", label: "確認済み" },
+] as const;
+
 export const REQUIREMENT_RELATION_TARGET_TYPE_OPTIONS = [
   { value: "requirement_item", label: "要件" },
   { value: "section", label: "セクション" },
@@ -97,8 +105,9 @@ export const REQUIREMENT_APPROVAL_STATUS_OPTIONS = [
 
 export const getRequirementDocumentStatusLabel = (status?: string | null) => {
   return (
-    REQUIREMENT_DOCUMENT_STATUS_OPTIONS.find((option) => option.value === status)
-      ?.label ??
+    REQUIREMENT_DOCUMENT_STATUS_OPTIONS.find(
+      (option) => option.value === status,
+    )?.label ??
     status ??
     "-"
   );
@@ -139,12 +148,19 @@ export const getRequirementLinkTypeLabel = (type?: string | null) => {
   );
 };
 
-export const getRequirementRelationTargetTypeLabel = (
-  type?: string | null
-) => {
+export const getRequirementLinkStatusLabel = (status?: string | null) => {
+  return (
+    REQUIREMENT_LINK_STATUS_OPTIONS.find((option) => option.value === status)
+      ?.label ??
+    status ??
+    "-"
+  );
+};
+
+export const getRequirementRelationTargetTypeLabel = (type?: string | null) => {
   return (
     REQUIREMENT_RELATION_TARGET_TYPE_OPTIONS.find(
-      (option) => option.value === type
+      (option) => option.value === type,
     )?.label ??
     type ??
     "-"
@@ -181,7 +197,7 @@ export const getRequirementSectionTypeLabel = (type?: string | null) => {
 export const getRequirementOpenIssueStatusLabel = (status?: string | null) => {
   return (
     REQUIREMENT_OPEN_ISSUE_STATUS_OPTIONS.find(
-      (option) => option.value === status
+      (option) => option.value === status,
     )?.label ??
     status ??
     "-"
@@ -190,8 +206,9 @@ export const getRequirementOpenIssueStatusLabel = (status?: string | null) => {
 
 export const getRequirementApprovalStatusLabel = (status?: string | null) => {
   return (
-    REQUIREMENT_APPROVAL_STATUS_OPTIONS.find((option) => option.value === status)
-      ?.label ??
+    REQUIREMENT_APPROVAL_STATUS_OPTIONS.find(
+      (option) => option.value === status,
+    )?.label ??
     status ??
     "-"
   );

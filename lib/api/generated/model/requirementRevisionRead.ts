@@ -4,8 +4,8 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequirementRevisionReadAfterValue } from './requirementRevisionReadAfterValue';
-import type { RequirementRevisionReadBeforeValue } from './requirementRevisionReadBeforeValue';
+import type { RequirementRevisionReadAfterValue } from "./requirementRevisionReadAfterValue";
+import type { RequirementRevisionReadBeforeValue } from "./requirementRevisionReadBeforeValue";
 
 /**
  * 要件改訂履歴読み取り時に返すschema。

@@ -4,7 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { RequirementRead } from './requirementRead';
+import type { RequirementRead } from "./requirementRead";
 
 /**
  * 要件一覧レスポンスschema。

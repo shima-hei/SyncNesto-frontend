@@ -10,7 +10,7 @@ export function useTaskProgress(requirementId: number) {
         query: {
           retry: false,
         },
-      }
+      },
     );
 
   return {

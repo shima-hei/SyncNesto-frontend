@@ -36,11 +36,11 @@ export function ChangeLogListCard<TItem>({
       </CardHeader>
       <CardContent className="flex max-h-[640px] flex-col gap-4 overflow-y-auto">
         {isLoading ? (
-          loadingFallback ?? (
+          (loadingFallback ?? (
             <p className="text-sm text-muted-foreground">
               変更履歴を読み込み中です。
             </p>
-          )
+          ))
         ) : items.length ? (
           <div className="flex flex-col gap-3">{items.map(renderItem)}</div>
         ) : (

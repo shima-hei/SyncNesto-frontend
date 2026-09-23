@@ -27,7 +27,7 @@ export function useBulkUpdateTasks(projectId: number) {
 
   const bulkUpdateTasks = async (
     tasks: TaskRead[],
-    values: TaskBulkUpdateValues
+    values: TaskBulkUpdateValues,
   ) => {
     try {
       await Promise.all(
@@ -37,11 +37,13 @@ export function useBulkUpdateTasks(projectId: number) {
             data: {
               version: task.version,
               status: values.status || undefined,
-              assignee_id: values.assigneeId ? Number(values.assigneeId) : undefined,
+              assignee_id: values.assigneeId
+                ? Number(values.assigneeId)
+                : undefined,
               due_date: values.dueDate || undefined,
             },
-          })
-        )
+          }),
+        ),
       );
       toast.success(TASK_MESSAGES.task.bulkUpdateSuccess);
     } catch (error) {

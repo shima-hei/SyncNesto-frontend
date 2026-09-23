@@ -10,8 +10,15 @@ export const PROJECT_ROLE_KEYS = {
   viewer: "viewer",
 } as const;
 
+export const USER_TYPE_KEYS = {
+  internal: "internal",
+  guest: "guest",
+} as const;
+
 export type SystemRoleKey =
   (typeof SYSTEM_ROLE_KEYS)[keyof typeof SYSTEM_ROLE_KEYS];
 
 export type ProjectRoleKey =
   (typeof PROJECT_ROLE_KEYS)[keyof typeof PROJECT_ROLE_KEYS];
+
+export type UserTypeKey = (typeof USER_TYPE_KEYS)[keyof typeof USER_TYPE_KEYS];

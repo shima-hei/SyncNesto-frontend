@@ -9,7 +9,7 @@ export function useProjectMembers(projectId: number) {
       query: {
         retry: false,
       },
-    }
+    },
   );
 
   return {

@@ -87,7 +87,7 @@ export function useTaskSummary(projectId: number) {
       inProgressQuery,
       inReviewQuery,
       todoQuery,
-    ]
+    ],
   );
   const statusCounts = TASK_STATUS_OPTIONS.map((option, index) => ({
     ...option,
@@ -102,7 +102,9 @@ export function useTaskSummary(projectId: number) {
   return {
     total: allTasksQuery.total,
     incompleteTotal: statusCounts
-      .filter((status) => status.value !== "done" && status.value !== "cancelled")
+      .filter(
+        (status) => status.value !== "done" && status.value !== "cancelled",
+      )
       .reduce((sum, status) => sum + status.total, 0),
     blockedTotal: blockedQuery.total,
     overdueTotal: overdueQuery.total,
