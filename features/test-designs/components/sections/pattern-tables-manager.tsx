@@ -19,6 +19,7 @@ import {
 } from "../../lib/pattern-tables";
 import { PatternMatrix } from "../tables/pattern-matrix";
 import { useConfirmAction } from "../../hooks/use-confirm-action";
+import type { DesignCommentTarget } from "./design-comments-panel";
 
 export function PatternTablesManager({
   design,
@@ -30,6 +31,7 @@ export function PatternTablesManager({
   onOpen,
   onClose,
   onItem,
+  onCommentTarget,
 }: {
   design: Design;
   change: (f: (d: Design) => void) => void;
@@ -40,6 +42,7 @@ export function PatternTablesManager({
   onOpen: (id: string) => void;
   onClose: () => void;
   onItem: (id: string) => void;
+  onCommentTarget?: (target: DesignCommentTarget, label: string) => void;
 }) {
   const { confirm, confirmDialogProps } = useConfirmAction();
   const table = design.pattern_tables?.find((t) => t.id === activeId);
@@ -51,6 +54,21 @@ export function PatternTablesManager({
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" onClick={onClose}>
               パターン管理一覧へ
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                onCommentTarget?.(
+                  {
+                    target_type: "pattern_table",
+                    target_id: table.id,
+                    field: "name",
+                  },
+                  `パターン表 · ${table.name}`,
+                )
+              }
+            >
+              この表のコメント
             </Button>
             <label className="flex items-center gap-2">
               パターン表名
@@ -119,6 +137,7 @@ export function PatternTablesManager({
             readOnly={readOnly}
             onUndo={onUndo}
             onRedo={onRedo}
+            onCommentTarget={onCommentTarget}
           />
         </section>
         <ConfirmDialog {...confirmDialogProps} />

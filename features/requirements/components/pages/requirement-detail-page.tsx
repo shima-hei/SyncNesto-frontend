@@ -53,6 +53,7 @@ import { RequirementRelationsSection } from "../sections/requirement-relations-s
 import { RequirementReviewsSection } from "../sections/requirement-reviews-section";
 import { RequirementRevisionsSection } from "../sections/requirement-revisions-section";
 import { RequirementTargetCommentsSection } from "../sections/requirement-target-comments-section";
+import { RequirementTestItemsSection } from "../sections/requirement-test-items-section";
 
 type RequirementDetailPageProps = {
   projectId: number;
@@ -288,6 +289,12 @@ export function RequirementDetailPage({
 
           <TabsContent value="relations">
             <div className="grid gap-4 xl:grid-cols-2">
+              <div className="xl:col-span-2">
+                <RequirementTestItemsSection
+                  projectId={projectId}
+                  requirementId={requirementId}
+                />
+              </div>
               <div className="xl:col-span-2">
                 <RequirementRelatedTasksSection
                   projectId={projectId}

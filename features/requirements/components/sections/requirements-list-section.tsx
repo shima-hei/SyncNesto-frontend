@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
 import type { RequirementRead } from "@/lib/api/generated/model";
+import { requirementTestCoverageProjectsProjectIdRequirementTestCoverageGet as readCoverage } from "@/lib/api/generated/test-collaboration/test-collaboration";
 
 import {
   ALL_REQUIREMENT_PRIORITIES,
@@ -77,6 +79,16 @@ export function RequirementsListSection({
       owner_id: ownerId ?? undefined,
       sort,
     },
+  );
+  const coverage = useQuery({
+    queryKey: ["requirement-test-coverage", projectId, documentId],
+    queryFn: () => readCoverage(projectId, { document_id: documentId }),
+  });
+  const coverageByRequirement = Object.fromEntries(
+    (coverage.data ?? []).map((row) => [
+      row.requirement_id,
+      row.linked_item_count,
+    ]),
   );
   const selectedSection = sections.find((section) => section.id === sectionId);
   const createHref = sectionId
@@ -151,6 +163,10 @@ export function RequirementsListSection({
         projectId={projectId}
         documentId={documentId}
         requirements={requirements}
+        coverageByRequirement={coverageByRequirement}
+        coverageState={
+          coverage.isPending ? "loading" : coverage.isError ? "error" : "ready"
+        }
         isLoading={isLoading}
         canUpdate={canUpdate}
         selectedRequirementId={selectedRequirementId}

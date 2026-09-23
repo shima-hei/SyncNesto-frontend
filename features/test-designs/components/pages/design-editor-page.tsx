@@ -33,6 +33,11 @@ import {
 import { DesignGrid } from "../tables/design-grid";
 import { CasesSection } from "../sections/cases-section";
 import { PatternTablesManager } from "../sections/pattern-tables-manager";
+import {
+  DesignCommentsPanel,
+  type DesignCommentTarget,
+} from "../sections/design-comments-panel";
+import { RequirementLinksPanel } from "../sections/requirement-links-panel";
 import { caseCounts, createPatternTable } from "../../lib/pattern-tables";
 
 export function DesignEditorPage({
@@ -68,6 +73,14 @@ function Editor({ initial }: { initial: Design }) {
   const [selectedItem, setSelectedItem] = useState(
     params.get("item") ?? initial.items[0]?.id ?? "",
   );
+  const [activeItemId, setActiveItemId] = useState(selectedItem);
+  const [commentTarget, setCommentTarget] =
+    useState<DesignCommentTarget | null>(null);
+  const [commentTargetLabel, setCommentTargetLabel] =
+    useState("テスト設計書全体");
+  const activeItem = design.items.find(
+    (item) => item.id === activeItemId && !item.is_spacer,
+  );
   const [activeTable, setActiveTable] = useState<string | null>(
     params.get("table"),
   );
@@ -95,8 +108,13 @@ function Editor({ initial }: { initial: Design }) {
       }}
       onItem={(id) => {
         setSelectedItem(id);
+        setActiveItemId(id);
         setTableDialog(false);
         setSheet("items");
+      }}
+      onCommentTarget={(target, label) => {
+        setCommentTarget(target);
+        setCommentTargetLabel(label);
       }}
     />
   );
@@ -257,6 +275,27 @@ function Editor({ initial }: { initial: Design }) {
           focusRowId={selectedItem}
           sheet={sheet}
           appendRow={sheet === "items"}
+          onSelection={(rowId, columnKey) => {
+            const item = design.items.find((value) => value.id === rowId);
+            if (!item || item.is_spacer) return;
+            setActiveItemId(item.id);
+            if (columnKey !== "code") {
+              setCommentTarget({
+                target_type: "test_item",
+                target_id: item.id,
+                field: columnKey,
+              });
+              setCommentTargetLabel(
+                `${item.code} · ${grid.columns.find((column) => column.key === columnKey)?.label ?? columnKey}`,
+              );
+            } else {
+              setCommentTarget({
+                target_type: "test_item",
+                target_id: item.id,
+              });
+              setCommentTargetLabel(item.code);
+            }
+          }}
           {...grid}
           renderCell={(row, column) => {
             if (column.key !== "pattern_table_id") return undefined;
@@ -379,6 +418,64 @@ function Editor({ initial }: { initial: Design }) {
               : undefined
           }
         />
+      )}
+      {sheet !== "cases" && (
+        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+          {sheet === "items" && activeItem && (
+            <RequirementLinksPanel
+              projectId={design.project_id}
+              designId={design.id}
+              itemId={activeItem.id}
+              itemCode={activeItem.code}
+              disabled={readOnly || state.dirty}
+            />
+          )}
+          <DesignCommentsPanel
+            projectId={design.project_id}
+            designId={design.id}
+            target={commentTarget}
+            targetLabel={commentTargetLabel}
+            disabled={state.dirty || state.saving}
+            canComment={permissions.edit}
+            onSelectTarget={(target, label) => {
+              if (target.target_type === "test_item" && target.target_id) {
+                if (design.items.some((item) => item.id === target.target_id)) {
+                  setSelectedItem(target.target_id);
+                  setActiveItemId(target.target_id);
+                } else {
+                  setActiveItemId("");
+                }
+                setSheet("items");
+              } else if (target.target_type !== "design") {
+                const factor = design.factors.find(
+                  (value) => value.id === target.target_id,
+                );
+                const tableId =
+                  target.target_type === "pattern_table"
+                    ? target.target_id
+                    : target.target_type === "factor_level"
+                      ? design.factors.find(
+                          (value) =>
+                            value.id ===
+                            design.levels.find(
+                              (level) => level.id === target.target_id,
+                            )?.factor_id,
+                        )?.table_id
+                      : (factor?.table_id ??
+                        design.patterns.find(
+                          (value) => value.id === target.target_id,
+                        )?.table_id ??
+                        design.expected_values?.find(
+                          (value) => value.id === target.target_id,
+                        )?.table_id);
+                setActiveTable(tableId ?? null);
+                setSheet("patterns");
+              }
+              setCommentTarget(target);
+              setCommentTargetLabel(label);
+            }}
+          />
+        </div>
       )}
       <Dialog open={tableDialog} onOpenChange={setTableDialog}>
         <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-[95vw]">

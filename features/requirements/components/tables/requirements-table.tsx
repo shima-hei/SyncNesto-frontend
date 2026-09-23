@@ -51,6 +51,8 @@ type RequirementsTableProps = {
   projectId: number;
   documentId: number;
   requirements: RequirementRead[];
+  coverageByRequirement?: Record<number, number>;
+  coverageState?: "loading" | "error" | "ready";
   isLoading: boolean;
   canUpdate: boolean;
   selectedRequirementId?: number | null;
@@ -67,6 +69,8 @@ export function RequirementsTable({
   projectId,
   documentId,
   requirements,
+  coverageByRequirement = {},
+  coverageState = "ready",
   isLoading,
   canUpdate,
   selectedRequirementId,
@@ -90,6 +94,7 @@ export function RequirementsTable({
           <TableHead>種別</TableHead>
           <TableHead>優先度</TableHead>
           <TableHead>ステータス</TableHead>
+          <TableHead>関連テスト</TableHead>
           <TableHead>担当者</TableHead>
           <TableHead>更新日時</TableHead>
         </TableRow>
@@ -232,6 +237,15 @@ export function RequirementsTable({
                     </ReviewableRequirementText>
                   )}
                 </TableCell>
+                <TableCell>
+                  {coverageState === "loading"
+                    ? "確認中…"
+                    : coverageState === "error"
+                      ? "取得できません"
+                      : (coverageByRequirement[requirement.id] ?? 0) > 0
+                        ? `テストあり（${coverageByRequirement[requirement.id]}件）`
+                        : "テストなし"}
+                </TableCell>
                 <TableCell>{requirement.owner_id ?? "-"}</TableCell>
                 <TableCell>{formatDateTime(requirement.updated_at)}</TableCell>
               </>
@@ -270,7 +284,7 @@ export function RequirementsTable({
           })
         ) : (
           <TableEmptyRow
-            colSpan={6}
+            colSpan={7}
             message="条件に一致する要件がありません。"
           />
         )}

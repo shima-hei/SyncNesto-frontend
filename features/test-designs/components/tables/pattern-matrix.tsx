@@ -19,6 +19,7 @@ import {
   duplicatePattern,
   removeMatrixRows,
 } from "../../lib/matrix";
+import type { DesignCommentTarget } from "../sections/design-comments-panel";
 
 export function PatternMatrix({
   design,
@@ -26,12 +27,14 @@ export function PatternMatrix({
   readOnly,
   onUndo,
   onRedo,
+  onCommentTarget,
 }: {
   design: Design;
   change: (mutate: (d: Design) => void) => void;
   readOnly: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  onCommentTarget?: (target: DesignCommentTarget, label: string) => void;
 }) {
   const [selected, setSelected] = useState({ row: "", col: "" });
   const { confirm, confirmDialogProps } = useConfirmAction();
@@ -44,6 +47,60 @@ export function PatternMatrix({
         ? design.factors[0]?.id
         : undefined);
   const selectedPattern = design.patterns.find((p) => p.id === selected.col);
+  const selectCommentTarget = (row: string, col: string) => {
+    const pattern = design.patterns.find((p) => p.id === col);
+    const level = design.levels.find((value) => value.id === row);
+    const factor = design.factors.find(
+      (value) => value.id === level?.factor_id || row === `factor:${value.id}`,
+    );
+    const expected = design.expected_values?.find(
+      (value) => row === `expected:${value.id}`,
+    );
+    if (pattern && row.startsWith("meta:")) {
+      const field = row.slice(5);
+      onCommentTarget?.(
+        { target_type: "combination", target_id: pattern.id, field },
+        `${pattern.code} · ${field}`,
+      );
+    } else if (pattern && factor) {
+      onCommentTarget?.(
+        {
+          target_type: "combination",
+          target_id: pattern.id,
+          field: `level:${factor.id}`,
+        },
+        `${pattern.code} · ${factor.name}`,
+      );
+    } else if (pattern && expected) {
+      onCommentTarget?.(
+        {
+          target_type: "combination",
+          target_id: pattern.id,
+          field: `expected:${expected.id}`,
+        },
+        `${pattern.code} · ${expected.name}`,
+      );
+    } else if (expected) {
+      onCommentTarget?.(
+        {
+          target_type: "expected_value",
+          target_id: expected.id,
+          field: "name",
+        },
+        `期待値 · ${expected.name}`,
+      );
+    } else if (factor && col === "factor") {
+      onCommentTarget?.(
+        { target_type: "factor", target_id: factor.id, field: "name" },
+        `因子 · ${factor.name}`,
+      );
+    } else if (level) {
+      onCommentTarget?.(
+        { target_type: "factor_level", target_id: level.id, field: "name" },
+        `水準 · ${level.name}`,
+      );
+    }
+  };
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <p className="text-sm text-muted-foreground">
@@ -180,7 +237,10 @@ export function PatternMatrix({
         readOnly={readOnly}
         onUndo={onUndo}
         onRedo={onRedo}
-        onSelection={(row, col) => setSelected({ row, col })}
+        onSelection={(row, col) => {
+          setSelected({ row, col });
+          selectCommentTarget(row, col);
+        }}
         onToggle={(row, key) => {
           if (rows[row] && design.patterns.some((p) => p.id === key))
             change((d) =>

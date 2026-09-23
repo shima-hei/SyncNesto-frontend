@@ -24,6 +24,7 @@ import {
 } from "@/lib/api/generated/test-designs/test-designs";
 import { useDesignPermissions } from "../../hooks/use-design-permissions";
 import { useConfirmAction } from "../../hooks/use-confirm-action";
+import { CaseExecutionHistory } from "./case-execution-history";
 import { itemColumns } from "../../lib/design";
 import {
   getCaseDesignDiff,
@@ -488,6 +489,13 @@ export function CasesSection({
                     ? () => void openReview(selected)
                     : undefined
                 }
+              />
+              <CaseExecutionHistory
+                projectId={projectId}
+                designId={designId}
+                caseId={selected.id}
+                version={selected.version}
+                editable={permissions.execute}
               />
             </>
           )}
