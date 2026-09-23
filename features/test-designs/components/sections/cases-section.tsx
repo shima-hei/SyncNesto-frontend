@@ -179,6 +179,17 @@ export function CasesSection({
       setCaseDirty(false);
     }
   }
+  async function openReview(caseToReview: TestCaseRead) {
+    const latest = await query.refetch();
+    const current = latest.data?.find((row) => row.id === caseToReview.id);
+    if (!current) {
+      toast.error("最新のテストケースを取得できませんでした");
+    } else if (current.active && !current.stale) {
+      toast.info("このテストケースの設計変更は確認済みです");
+    } else {
+      setReviewCase(current);
+    }
+  }
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -321,11 +332,10 @@ export function CasesSection({
                             : "元のテスト設計が変更されています。再確認してください"
                         }
                         onClick={() => {
-                          if (c.active) setReviewCase(c);
-                          else setSelected(c);
+                          void openReview(c);
                         }}
                       >
-                        ⚠ 影響あり
+                        {c.stale ? "⚠ 影響あり" : "生成元なし"}
                       </button>
                     ) : (
                       "－"
@@ -474,8 +484,8 @@ export function CasesSection({
                   })
                 }
                 onRefresh={
-                  permissions.execute && selected.active && selected.stale
-                    ? () => setReviewCase(selected)
+                  selected.stale || !selected.active
+                    ? () => void openReview(selected)
                     : undefined
                 }
               />
@@ -494,14 +504,34 @@ export function CasesSection({
             <DialogTitle>設計変更の確認</DialogTitle>
             <DialogDescription>
               テスト項目 {reviewCase ? sourceOf(reviewCase).item.code : ""}
-              の変更内容を確認してから、確認済みにしてください。
+              {reviewCase?.active
+                ? "について、ケースで前回確認した設計と最新の設計を比較してください。"
+                : "の生成元は現在の設計から削除または無効化されています。"}
             </DialogDescription>
           </DialogHeader>
           {reviewCase && (
             <>
-              {reviewCase.acknowledged_source ? (
+              {!reviewCase.active ? (
+                <div className="flex flex-col gap-3">
+                  <p role="status" className="rounded-md border p-3 text-sm">
+                    最新の設計には、このケースに対応するテスト項目・組み合わせがありません。ケースに保持された直近の内容は以下のとおりです。
+                  </p>
+                  <dl className="grid gap-2 text-sm sm:grid-cols-[10rem_1fr]">
+                    {getCaseDesignSummary(sourceOf(reviewCase)).map((field) => (
+                      <div key={field.key} className="contents">
+                        <dt className="font-medium">{field.label}</dt>
+                        <dd className="whitespace-pre-wrap">{field.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ) : reviewCase.acknowledged_source ? (
                 reviewDiffRows.length ? (
-                  <ChangeLogDiffRows rows={reviewDiffRows} />
+                  <ChangeLogDiffRows
+                    rows={reviewDiffRows}
+                    oldLabel="ケースで前回確認した内容"
+                    newLabel="最新の設計内容"
+                  />
                 ) : (
                   <p className="rounded-md bg-muted p-3 text-sm">
                     表示名の差分はありません。参照先または設計の構造が変更されています。
@@ -522,9 +552,11 @@ export function CasesSection({
                   </dl>
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
-                確認済みにしても、実行状態・実際の結果・備考は変更されません。
-              </p>
+              {reviewCase.active && (
+                <p className="text-xs text-muted-foreground">
+                  確認済みにしても、実行状態・実際の結果・備考は変更されません。
+                </p>
+              )}
               {caseDirty && (
                 <p
                   role="status"
@@ -541,27 +573,31 @@ export function CasesSection({
                 >
                   閉じる
                 </Button>
-                <Button
-                  disabled={busy}
-                  onClick={() => {
-                    if (caseDirty) {
-                      confirm({
-                        title: "未保存の実行情報があります",
-                        description:
-                          "確認済みにすると未保存の入力は失われます。先に結果を保存することもできます。",
-                        confirmLabel: "破棄して確認済みにする",
-                        destructive: true,
-                        onConfirm: () => acknowledge(reviewCase),
-                      });
-                    } else void acknowledge(reviewCase);
-                  }}
-                >
-                  {busy
-                    ? "確認中…"
-                    : reviewCase.acknowledged_source
-                      ? "確認済みにする"
-                      : "現行内容を確認済みにする"}
-                </Button>
+                {reviewCase.active &&
+                  reviewCase.stale &&
+                  permissions.execute && (
+                    <Button
+                      disabled={busy}
+                      onClick={() => {
+                        if (caseDirty) {
+                          confirm({
+                            title: "未保存の実行情報があります",
+                            description:
+                              "確認済みにすると未保存の入力は失われます。先に結果を保存することもできます。",
+                            confirmLabel: "破棄して確認済みにする",
+                            destructive: true,
+                            onConfirm: () => acknowledge(reviewCase),
+                          });
+                        } else void acknowledge(reviewCase);
+                      }}
+                    >
+                      {busy
+                        ? "確認中…"
+                        : reviewCase.acknowledged_source
+                          ? "確認済みにする"
+                          : "現行内容を確認済みにする"}
+                    </Button>
+                  )}
               </div>
             </>
           )}

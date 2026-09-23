@@ -80,6 +80,40 @@ test("設計変更は既存の差分処理で変更フィールドだけを表�
   assert.deepEqual(caseDiff.getCaseDesignDiff(before, before), []);
 });
 
+test("同名の水準・期待値への差し替えも差分として示す", () => {
+  const before = {
+    item: { code: "T001", content: "ログイン" },
+    pattern_table: { id: "table-1", name: "ログインパターン" },
+    pattern: { id: "pattern-1", code: "P001" },
+    values: [
+      {
+        factor_id: "factor-1",
+        factor: "ユーザー種別",
+        level_id: "level-1",
+        level: "管理者",
+      },
+    ],
+    expected_value: { id: "expected-1", name: "成功" },
+  };
+  const after = structuredClone(before);
+  after.pattern_table.id = "table-2";
+  after.pattern.id = "pattern-2";
+  after.values[0].level_id = "level-2";
+  after.expected_value.id = "expected-2";
+  const rows = caseDiff.getCaseDesignDiff(before, after);
+  assert.deepEqual(
+    rows.map((row) => row.label),
+    [
+      "パターン表の参照先",
+      "組み合わせの参照先",
+      "ユーザー種別の水準の参照先",
+      "パターンの期待値の参照先",
+    ],
+  );
+  assert.equal(rows[2].oldValue, "以前の「管理者」");
+  assert.equal(rows[2].newValue, "別の「管理者」に変更");
+});
+
 test("実施順の列を保持しケース数列を表示しない。改行と折り返しで行高を広げる", () => {
   assert.deepEqual(
     sheets

@@ -4,12 +4,18 @@ import { itemColumns } from "./design";
 
 export type CaseSource = {
   item: TestItemInput;
-  pattern: { code: string; description?: string; notes?: string } | null;
+  pattern: {
+    id?: string;
+    code: string;
+    description?: string;
+    notes?: string;
+  } | null;
   pattern_table?: { id: string; name: string };
   values: {
     factor_id?: string;
     factor: string;
     level: string | null;
+    level_id?: string | null;
   }[];
   expected_value?: { id: string; name: string };
   expected_values?: { id: string; name: string }[];
@@ -63,14 +69,85 @@ function designFields(source: CaseSource): DesignFields {
 export function getCaseDesignDiff(before: CaseSource, after: CaseSource) {
   const oldFields = designFields(before);
   const newFields = designFields(after);
-  return getChangeLogDiffRows({
+  const rows = getChangeLogDiffRows({
     oldValue: oldFields.values,
     newValue: newFields.values,
     formatField: (field) =>
       newFields.labels[field] ?? oldFields.labels[field] ?? field,
     formatValue: (value) => String(value ?? "") || "－",
   });
+  const sameNameReferenceChanged = (
+    field: string,
+    label: string,
+    name: string,
+    oldId?: string | null,
+    newId?: string | null,
+  ) => {
+    if (oldId && newId && oldId !== newId) {
+      rows.push({
+        field,
+        label,
+        oldValue: `以前の「${name}」`,
+        newValue: `別の「${name}」に変更`,
+      });
+    }
+  };
+  if (
+    before.pattern_table?.name &&
+    before.pattern_table.name === after.pattern_table?.name
+  ) {
+    sameNameReferenceChanged(
+      "pattern_table_reference",
+      "パターン表の参照先",
+      before.pattern_table.name,
+      before.pattern_table.id,
+      after.pattern_table.id,
+    );
+  }
+  if (before.pattern?.code && before.pattern.code === after.pattern?.code) {
+    sameNameReferenceChanged(
+      "pattern_reference",
+      "組み合わせの参照先",
+      before.pattern.code,
+      before.pattern.id,
+      after.pattern.id,
+    );
+  }
+  for (const oldValue of before.values ?? []) {
+    const newValue = after.values?.find(
+      (value) => value.factor_id === oldValue.factor_id,
+    );
+    if (oldValue.level && oldValue.level === newValue?.level) {
+      sameNameReferenceChanged(
+        `level_reference:${oldValue.factor_id}`,
+        `${oldValue.factor}の水準の参照先`,
+        oldValue.level,
+        oldValue.level_id,
+        newValue?.level_id,
+      );
+    }
+  }
+  const oldExpected = expectedValues(before);
+  const newExpected = expectedValues(after);
+  if (
+    oldExpected.length === newExpected.length &&
+    oldExpected.map((value) => value.name).join("\n") ===
+      newExpected.map((value) => value.name).join("\n") &&
+    oldExpected.some((value, index) => value.id !== newExpected[index].id)
+  ) {
+    rows.push({
+      field: "expected_value_reference",
+      label: "パターンの期待値の参照先",
+      oldValue: "以前の期待値",
+      newValue: "同名の別の期待値に変更",
+    });
+  }
+  return rows;
 }
+
+const expectedValues = (source: CaseSource) =>
+  source.expected_values ??
+  (source.expected_value ? [source.expected_value] : []);
 
 export function getCaseDesignSummary(source: CaseSource) {
   const fields = designFields(source);
