@@ -74,19 +74,11 @@ export function ChangeLogCard({
             formatValue={formatValue}
           />
         ) : diffRows.length ? (
-          <div className="flex flex-col gap-2">
-            {diffRows.map((row) => (
-              <div key={row.field} className="rounded-md bg-muted p-2">
-                <div className="mb-2 text-xs font-medium">{row.label}</div>
-                <FormattedValuePair
-                  oldLabel={valueLabels.oldLabel}
-                  newLabel={valueLabels.newLabel}
-                  oldValue={row.oldValue}
-                  newValue={row.newValue}
-                />
-              </div>
-            ))}
-          </div>
+          <ChangeLogDiffRows
+            rows={diffRows}
+            oldLabel={valueLabels.oldLabel}
+            newLabel={valueLabels.newLabel}
+          />
         ) : (
           <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
             {missingFieldLabels.length
@@ -95,6 +87,32 @@ export function ChangeLogCard({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export function ChangeLogDiffRows({
+  rows,
+  oldLabel = "変更前",
+  newLabel = "変更後",
+}: {
+  rows: ChangeLogDiffRow[];
+  oldLabel?: string | null;
+  newLabel?: string | null;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row) => (
+        <div key={row.field} className="rounded-md bg-muted p-2">
+          <div className="mb-2 text-xs font-medium">{row.label}</div>
+          <FormattedValuePair
+            oldLabel={oldLabel}
+            newLabel={newLabel}
+            oldValue={row.oldValue}
+            newValue={row.newValue}
+          />
+        </div>
+      ))}
     </div>
   );
 }

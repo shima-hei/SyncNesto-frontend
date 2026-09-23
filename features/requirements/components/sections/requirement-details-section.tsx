@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import type { RequirementDetailRead } from "@/lib/api/generated/model";
 
+import type { RequirementCommentAnchor } from "../../lib/requirement-comment-anchor";
 import { useCreateRequirementDetail } from "../../hooks/use-create-requirement-detail";
 import { useDeleteRequirementDetail } from "../../hooks/use-delete-requirement-detail";
 import { useUpdateRequirementDetail } from "../../hooks/use-update-requirement-detail";
@@ -31,6 +32,7 @@ type RequirementDetailsSectionProps = {
   requirementId: number;
   details: RequirementDetailRead[];
   canUpdate: boolean;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 };
 
 type CreateDialogState = {
@@ -46,6 +48,7 @@ export function RequirementDetailsSection({
   requirementId,
   details,
   canUpdate,
+  onSelectCommentAnchor,
 }: RequirementDetailsSectionProps) {
   const [createDialog, setCreateDialog] = useState<CreateDialogState | null>(
     null,
@@ -97,6 +100,7 @@ export function RequirementDetailsSection({
           onEdit={setEditingTarget}
           onDelete={setDeleteTarget}
           onCreate={setCreateDialog}
+          onSelectCommentAnchor={onSelectCommentAnchor}
         />
         <Dialog
           open={Boolean(createDialog)}

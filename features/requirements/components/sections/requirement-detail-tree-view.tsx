@@ -8,6 +8,11 @@ import type { RequirementDetailRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 
 import {
+  createRequirementDetailCommentAnchor,
+  getRequirementCommentAnchorKey,
+  type RequirementCommentAnchor,
+} from "../../lib/requirement-comment-anchor";
+import {
   IMPLEMENTATION_UNIT_CHILD_DETAIL_TYPES,
   INPUT_DETAIL_TYPE,
   PARENT_SCREEN_FIELD,
@@ -23,6 +28,7 @@ import {
 import type { RequirementDetailFormValues } from "../../types/requirement-detail-form";
 import { RequirementDetailItemCard } from "./requirement-detail-item-card";
 import {
+  CommentTargetButton,
   getRequirementDetailDisplayTitle,
   RequirementDetailActionButtons,
   RequirementDetailListRow,
@@ -43,6 +49,7 @@ type RequirementDetailTreeViewProps = {
   onEdit: (detail: RequirementDetailRead) => void;
   onDelete: (detail: RequirementDetailRead) => void;
   onCreate: (state: RequirementDetailCreateDialogState) => void;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 };
 
 export function RequirementDetailTreeView({
@@ -51,6 +58,7 @@ export function RequirementDetailTreeView({
   onEdit,
   onDelete,
   onCreate,
+  onSelectCommentAnchor,
 }: RequirementDetailTreeViewProps) {
   const tree = buildRequirementDetailTree(details);
   const [collapsedUnitIds, setCollapsedUnitIds] = useState<Set<string>>(
@@ -90,6 +98,7 @@ export function RequirementDetailTreeView({
               onEdit={onEdit}
               onDelete={onDelete}
               onCreate={onCreate}
+              onSelectCommentAnchor={onSelectCommentAnchor}
               isCollapsed={collapsedUnitIds.has(unit.id)}
               onToggleCollapse={() => toggleUnit(unit.id)}
             />
@@ -113,6 +122,7 @@ export function RequirementDetailTreeView({
                 canUpdate={canUpdate}
                 onEdit={() => onEdit(detail)}
                 onDelete={() => onDelete(detail)}
+                onSelectCommentAnchor={onSelectCommentAnchor}
               />
             ))}
           </div>
@@ -128,6 +138,7 @@ function ImplementationUnitSection({
   onEdit,
   onDelete,
   onCreate,
+  onSelectCommentAnchor,
   isCollapsed,
   onToggleCollapse,
 }: {
@@ -136,6 +147,7 @@ function ImplementationUnitSection({
   onEdit: (detail: RequirementDetailRead) => void;
   onDelete: (detail: RequirementDetailRead) => void;
   onCreate: (state: RequirementDetailCreateDialogState) => void;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }) {
@@ -190,6 +202,7 @@ function ImplementationUnitSection({
       detail={unit.detail}
       canUpdate={canUpdate}
       variant="unit"
+      onSelectCommentAnchor={onSelectCommentAnchor}
       extraActions={unitActions}
       onEdit={() => onEdit(unit.detail)}
       onDelete={() => onDelete(unit.detail)}
@@ -205,6 +218,7 @@ function ImplementationUnitSection({
               onEdit={onEdit}
               onDelete={onDelete}
               onCreate={onCreate}
+              onSelectCommentAnchor={onSelectCommentAnchor}
             />
           ))}
 
@@ -215,6 +229,7 @@ function ImplementationUnitSection({
               canUpdate={canUpdate}
               onEdit={onEdit}
               onDelete={onDelete}
+              onSelectCommentAnchor={onSelectCommentAnchor}
             />
           ) : null}
         </div>
@@ -230,6 +245,7 @@ function ScreenSection({
   onEdit,
   onDelete,
   onCreate,
+  onSelectCommentAnchor,
 }: {
   unitId: string;
   screen: RequirementDetailScreenNode;
@@ -237,6 +253,7 @@ function ScreenSection({
   onEdit: (detail: RequirementDetailRead) => void;
   onDelete: (detail: RequirementDetailRead) => void;
   onCreate: (state: RequirementDetailCreateDialogState) => void;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 }) {
   const screenActions = canUpdate ? (
     <Button
@@ -267,7 +284,12 @@ function ScreenSection({
   ) : null;
 
   return (
-    <section className="min-w-0 rounded-md border border-sky-100 bg-sky-50/50 p-3">
+    <section
+      className="min-w-0 scroll-mt-24 rounded-md border border-sky-100 bg-sky-50/50 p-3"
+      data-requirement-comment-anchor={getRequirementCommentAnchorKey(
+        createRequirementDetailCommentAnchor(screen.detail),
+      )}
+    >
       <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
@@ -282,8 +304,14 @@ function ScreenSection({
             {formatDateTime(screen.detail.updated_at)}
           </p>
         </div>
-        {canUpdate || screenActions ? (
+        {canUpdate || screenActions || onSelectCommentAnchor ? (
           <div className="flex shrink-0 flex-wrap gap-1 md:justify-end">
+            {onSelectCommentAnchor ? (
+              <CommentTargetButton
+                detail={screen.detail}
+                onSelectCommentAnchor={onSelectCommentAnchor}
+              />
+            ) : null}
             {screenActions}
             {canUpdate ? (
               <RequirementDetailActionButtons
@@ -306,6 +334,7 @@ function ScreenSection({
             canUpdate={canUpdate}
             onEdit={onEdit}
             onDelete={onDelete}
+            onSelectCommentAnchor={onSelectCommentAnchor}
           />
         </div>
       ) : null}
@@ -319,12 +348,14 @@ function DetailGroup({
   canUpdate,
   onEdit,
   onDelete,
+  onSelectCommentAnchor,
 }: {
   title: string;
   details: RequirementDetailRead[];
   canUpdate: boolean;
   onEdit: (detail: RequirementDetailRead) => void;
   onDelete: (detail: RequirementDetailRead) => void;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 }) {
   return (
     <section className="min-w-0">
@@ -343,6 +374,7 @@ function DetailGroup({
             tone={title === "関連する実現内容" ? "related" : "default"}
             onEdit={() => onEdit(detail)}
             onDelete={() => onDelete(detail)}
+            onSelectCommentAnchor={onSelectCommentAnchor}
           />
         ))}
       </div>

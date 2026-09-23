@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { MessageSquarePlusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,11 @@ import {
   getRequirementRelationTargetTypeLabel,
   getRequirementRelationTypeLabel,
 } from "../../constants/requirement-options";
+import {
+  createRequirementRelationCommentAnchor,
+  getRequirementCommentAnchorKey,
+  type RequirementCommentAnchor,
+} from "../../lib/requirement-comment-anchor";
 import { useCreateRequirementRelation } from "../../hooks/use-create-requirement-relation";
 import { useDeleteRequirementRelation } from "../../hooks/use-delete-requirement-relation";
 import { useRequirementRelations } from "../../hooks/use-requirement-relations";
@@ -38,6 +43,7 @@ type RequirementRelationsSectionProps = {
   currentSectionId?: number | null;
   requirementId: number;
   canLink: boolean;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 };
 
 export function RequirementRelationsSection({
@@ -46,6 +52,7 @@ export function RequirementRelationsSection({
   currentSectionId,
   requirementId,
   canLink,
+  onSelectCommentAnchor,
 }: RequirementRelationsSectionProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] =
@@ -121,7 +128,13 @@ export function RequirementRelationsSection({
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             <div className="flex flex-col gap-3">
               {relations.map((relation) => (
-                <div key={relation.id} className="rounded-lg border p-3">
+                <div
+                  key={relation.id}
+                  className="scroll-mt-24 rounded-lg border p-3"
+                  data-requirement-comment-anchor={getRequirementCommentAnchorKey(
+                    createRequirementRelationCommentAnchor(relation),
+                  )}
+                >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -145,16 +158,37 @@ export function RequirementRelationsSection({
                         {formatDateTime(relation.created_at)}
                       </span>
                     </div>
-                    {canLink ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeleteTarget(relation)}
-                      >
-                        <Trash2Icon data-icon="inline-start" />
-                        削除
-                      </Button>
+                    {canLink || onSelectCommentAnchor ? (
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        {onSelectCommentAnchor ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              onSelectCommentAnchor(
+                                createRequirementRelationCommentAnchor(
+                                  relation,
+                                ),
+                              )
+                            }
+                          >
+                            <MessageSquarePlusIcon data-icon="inline-start" />
+                            コメント
+                          </Button>
+                        ) : null}
+                        {canLink ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDeleteTarget(relation)}
+                          >
+                            <Trash2Icon data-icon="inline-start" />
+                            削除
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : null}
                   </div>
                 </div>

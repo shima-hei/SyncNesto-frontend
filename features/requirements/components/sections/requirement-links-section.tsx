@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { EditIcon, ExternalLinkIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import {
+  EditIcon,
+  ExternalLinkIcon,
+  MessageSquarePlusIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +33,11 @@ import {
   getRequirementLinkStatusLabel,
   getRequirementLinkTypeLabel,
 } from "../../constants/requirement-options";
+import {
+  createRequirementLinkCommentAnchor,
+  getRequirementCommentAnchorKey,
+  type RequirementCommentAnchor,
+} from "../../lib/requirement-comment-anchor";
 import { useCreateRequirementLink } from "../../hooks/use-create-requirement-link";
 import { useDeleteRequirementLink } from "../../hooks/use-delete-requirement-link";
 import { useRequirementLinks } from "../../hooks/use-requirement-links";
@@ -38,12 +49,14 @@ type RequirementLinksSectionProps = {
   projectId: number;
   requirementId: number;
   canLink: boolean;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 };
 
 export function RequirementLinksSection({
   projectId,
   requirementId,
   canLink,
+  onSelectCommentAnchor,
 }: RequirementLinksSectionProps) {
   const [deleteTarget, setDeleteTarget] = useState<RequirementLinkRead | null>(
     null,
@@ -96,7 +109,13 @@ export function RequirementLinksSection({
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             <div className="flex flex-col gap-3">
               {links.map((link) => (
-                <div key={link.id} className="rounded-lg border p-3">
+                <div
+                  key={link.id}
+                  className="scroll-mt-24 rounded-lg border p-3"
+                  data-requirement-comment-anchor={getRequirementCommentAnchorKey(
+                    createRequirementLinkCommentAnchor(link),
+                  )}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -111,6 +130,21 @@ export function RequirementLinksSection({
                       </span>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
+                      {onSelectCommentAnchor ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            onSelectCommentAnchor(
+                              createRequirementLinkCommentAnchor(link),
+                            )
+                          }
+                        >
+                          <MessageSquarePlusIcon data-icon="inline-start" />
+                          コメント
+                        </Button>
+                      ) : null}
                       {link.linked_url ? (
                         <Button
                           type="button"

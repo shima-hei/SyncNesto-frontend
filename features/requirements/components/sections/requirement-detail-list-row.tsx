@@ -1,12 +1,17 @@
 "use client";
 
-import { EditIcon, Trash2Icon } from "lucide-react";
+import { EditIcon, MessageSquarePlusIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RequirementDetailRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 
+import {
+  createRequirementDetailCommentAnchor,
+  getRequirementCommentAnchorKey,
+  type RequirementCommentAnchor,
+} from "../../lib/requirement-comment-anchor";
 import {
   DISPLAY_DETAIL_TYPE,
   getRequirementDetailEntries,
@@ -21,6 +26,7 @@ type RequirementDetailListRowProps = {
   detail: RequirementDetailRead;
   canUpdate: boolean;
   tone?: RequirementDetailRowTone;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
   onEdit: () => void;
   onDelete: () => void;
 };
@@ -29,6 +35,7 @@ export function RequirementDetailListRow({
   detail,
   canUpdate,
   tone = "default",
+  onSelectCommentAnchor,
   onEdit,
   onDelete,
 }: RequirementDetailListRowProps) {
@@ -37,8 +44,11 @@ export function RequirementDetailListRow({
   return (
     <div
       className={cn(
-        "grid min-w-0 gap-2 border-t px-2 py-2 first:border-t-0 md:grid-cols-[minmax(12rem,1.1fr)_minmax(0,2fr)_auto] md:items-center",
+        "grid min-w-0 scroll-mt-24 gap-2 border-t px-2 py-2 first:border-t-0 md:grid-cols-[minmax(12rem,1.1fr)_minmax(0,2fr)_auto] md:items-center",
         ROW_TONE_CLASSES[resolvedTone],
+      )}
+      data-requirement-comment-anchor={getRequirementCommentAnchorKey(
+        createRequirementDetailCommentAnchor(detail),
       )}
     >
       <div className="min-w-0">
@@ -60,9 +70,20 @@ export function RequirementDetailListRow({
         </p>
       </div>
       <RequirementDetailSummary detail={detail} />
-      {canUpdate ? (
+      {canUpdate || onSelectCommentAnchor ? (
         <div className="flex shrink-0 flex-wrap gap-1 md:justify-end">
-          <RequirementDetailActionButtons onEdit={onEdit} onDelete={onDelete} />
+          {onSelectCommentAnchor ? (
+            <CommentTargetButton
+              detail={detail}
+              onSelectCommentAnchor={onSelectCommentAnchor}
+            />
+          ) : null}
+          {canUpdate ? (
+            <RequirementDetailActionButtons
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -133,6 +154,29 @@ export function RequirementDetailActionButtons({
         削除
       </Button>
     </>
+  );
+}
+
+export function CommentTargetButton({
+  detail,
+  onSelectCommentAnchor,
+}: {
+  detail: RequirementDetailRead;
+  onSelectCommentAnchor: (targetAnchor: RequirementCommentAnchor) => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="h-7 px-2"
+      onClick={() =>
+        onSelectCommentAnchor(createRequirementDetailCommentAnchor(detail))
+      }
+    >
+      <MessageSquarePlusIcon data-icon="inline-start" />
+      コメント
+    </Button>
   );
 }
 

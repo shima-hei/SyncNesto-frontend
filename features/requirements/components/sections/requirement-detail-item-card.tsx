@@ -4,8 +4,14 @@ import { cn } from "@/lib/utils";
 import type { RequirementDetailRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 
+import {
+  createRequirementDetailCommentAnchor,
+  getRequirementCommentAnchorKey,
+  type RequirementCommentAnchor,
+} from "../../lib/requirement-comment-anchor";
 import { getRequirementDetailTitle } from "../../lib/requirement-detail-metadata";
 import {
+  CommentTargetButton,
   RequirementDetailActionButtons,
   RequirementDetailSummary,
 } from "./requirement-detail-list-row";
@@ -16,6 +22,7 @@ type RequirementDetailItemCardProps = {
   variant?: "unit" | "screen" | "item";
   extraActions?: React.ReactNode;
   children?: React.ReactNode;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
   onEdit: () => void;
   onDelete: () => void;
 };
@@ -26,18 +33,22 @@ export function RequirementDetailItemCard({
   variant = "item",
   extraActions,
   children,
+  onSelectCommentAnchor,
   onEdit,
   onDelete,
 }: RequirementDetailItemCardProps) {
   return (
     <div
       className={cn(
-        "rounded-md border bg-background p-2.5 shadow-sm",
+        "scroll-mt-24 rounded-md border bg-background p-2.5 shadow-sm",
         variant === "unit" &&
           "w-full border-l-4 border-l-primary/50 bg-muted/10 p-3",
         variant === "screen" &&
           "w-full border-l-4 border-l-sky-400 bg-sky-50/40",
         variant === "item" && "min-w-[220px] max-w-full",
+      )}
+      data-requirement-comment-anchor={getRequirementCommentAnchorKey(
+        createRequirementDetailCommentAnchor(detail),
       )}
     >
       <div className="flex flex-col gap-2">
@@ -50,8 +61,14 @@ export function RequirementDetailItemCard({
               {formatDateTime(detail.updated_at)}
             </span>
           </div>
-          {canUpdate || extraActions ? (
+          {canUpdate || extraActions || onSelectCommentAnchor ? (
             <div className="flex shrink-0 flex-wrap justify-end gap-1">
+              {onSelectCommentAnchor ? (
+                <CommentTargetButton
+                  detail={detail}
+                  onSelectCommentAnchor={onSelectCommentAnchor}
+                />
+              ) : null}
               {extraActions}
               {canUpdate ? (
                 <RequirementDetailActionButtons

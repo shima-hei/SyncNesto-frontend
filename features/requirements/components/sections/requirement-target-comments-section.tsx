@@ -18,6 +18,7 @@ import { useDeleteTargetComment } from "../../hooks/use-delete-target-comment";
 import { useTargetComments } from "../../hooks/use-target-comments";
 import { useToggleTargetCommentState } from "../../hooks/use-toggle-target-comment-state";
 import { useUpdateTargetComment } from "../../hooks/use-update-target-comment";
+import { getRequirementCommentAnchorLabel } from "../../lib/requirement-comment-anchor";
 import type { ReviewAnchorStatus } from "../../lib/requirement-review-anchor";
 import { RequirementTargetCommentForm } from "../forms/requirement-target-comment-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
@@ -105,7 +106,9 @@ export function RequirementTargetCommentsSection({
               reason: "",
             }}
             showTargetAnchorInput={showTargetAnchorInput}
-            targetAnchorLabel={getTargetAnchorLabel(selectedTargetAnchor)}
+            targetAnchorLabel={getRequirementCommentAnchorLabel(
+              selectedTargetAnchor,
+            )}
             isPending={isCreatePending}
             error={createError}
             onSubmit={(values) => createTargetComment(values)}
@@ -143,7 +146,9 @@ export function RequirementTargetCommentsSection({
               <RequirementTargetCommentForm
                 initialValues={{
                   body: comment.body,
-                  targetAnchor: getTargetAnchorLabel(comment.target_anchor),
+                  targetAnchor: getRequirementCommentAnchorLabel(
+                    comment.target_anchor,
+                  ),
                   reason: "",
                 }}
                 submitLabel="コメント更新"
@@ -263,7 +268,7 @@ function CommentBody({
               対象
             </span>
             <span className="break-words">
-              {getTargetAnchorLabel(comment.target_anchor)}
+              {getRequirementCommentAnchorLabel(comment.target_anchor)}
             </span>
             {targetAnchorStatus ? (
               <span>{getTargetAnchorStatusLabel(targetAnchorStatus)}</span>
@@ -275,26 +280,6 @@ function CommentBody({
     </div>
   );
 }
-
-const getTargetAnchorLabel = (
-  targetAnchor:
-    RequirementTargetCommentRead["target_anchor"] | null | undefined,
-) => {
-  if (!targetAnchor) {
-    return "";
-  }
-  const label = targetAnchor.label;
-  const quote = targetAnchor.quote;
-  const field = targetAnchor.field;
-
-  if (typeof quote === "string") {
-    return quote;
-  }
-  if (typeof label === "string") {
-    return label;
-  }
-  return typeof field === "string" ? field : JSON.stringify(targetAnchor);
-};
 
 const getTargetAnchorStatusLabel = (status: ReviewAnchorStatus) => {
   switch (status) {

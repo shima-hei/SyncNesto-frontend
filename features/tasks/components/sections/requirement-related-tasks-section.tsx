@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { MessageSquarePlusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
@@ -23,6 +23,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/format/date";
+import {
+  createRequirementTaskCommentAnchor,
+  getRequirementCommentAnchorKey,
+  type RequirementCommentAnchor,
+} from "@/features/requirements/lib/requirement-comment-anchor";
 
 import { getTaskRelationTypeLabel } from "../../constants/task-options";
 import { useDeleteRequirementTaskRelation } from "../../hooks/use-delete-requirement-task-relation";
@@ -37,12 +42,14 @@ type RequirementRelatedTasksSectionProps = {
   projectId: number;
   requirementId: number;
   canCreate: boolean;
+  onSelectCommentAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 };
 
 export function RequirementRelatedTasksSection({
   projectId,
   requirementId,
   canCreate,
+  onSelectCommentAnchor,
 }: RequirementRelatedTasksSectionProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deleteRelationId, setDeleteRelationId] = useState<number | null>(null);
@@ -112,7 +119,18 @@ export function RequirementRelatedTasksSection({
                     );
 
                     return (
-                      <TableRow key={task.id}>
+                      <TableRow
+                        key={task.id}
+                        className="scroll-mt-24"
+                        data-requirement-comment-anchor={getRequirementCommentAnchorKey(
+                          createRequirementTaskCommentAnchor({
+                            id: task.id,
+                            task_code: task.task_code,
+                            title: task.title,
+                            relation_id: relation?.relation_id,
+                          }),
+                        )}
+                      >
                         <TableCell>
                           <div className="flex min-w-52 flex-col">
                             <span className="truncate font-medium">
@@ -142,6 +160,26 @@ export function RequirementRelatedTasksSection({
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-2">
+                            {onSelectCommentAnchor ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  onSelectCommentAnchor(
+                                    createRequirementTaskCommentAnchor({
+                                      id: task.id,
+                                      task_code: task.task_code,
+                                      title: task.title,
+                                      relation_id: relation?.relation_id,
+                                    }),
+                                  )
+                                }
+                              >
+                                <MessageSquarePlusIcon data-icon="inline-start" />
+                                コメント
+                              </Button>
+                            ) : null}
                             <TaskDetailLink projectId={projectId} task={task} />
                             {canCreate && relation ? (
                               <Button
