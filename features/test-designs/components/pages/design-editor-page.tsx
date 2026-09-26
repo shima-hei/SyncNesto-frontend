@@ -73,6 +73,8 @@ function Editor({ initial }: { initial: Design }) {
   const [selectedItem, setSelectedItem] = useState(
     params.get("item") ?? initial.items[0]?.id ?? "",
   );
+  const [focusColumnKey, setFocusColumnKey] = useState<string | undefined>();
+  const [focusRequest, setFocusRequest] = useState(0);
   const [activeItemId, setActiveItemId] = useState(selectedItem);
   const [commentTarget, setCommentTarget] =
     useState<DesignCommentTarget | null>(null);
@@ -108,6 +110,7 @@ function Editor({ initial }: { initial: Design }) {
       }}
       onItem={(id) => {
         setSelectedItem(id);
+        setFocusColumnKey(undefined);
         setActiveItemId(id);
         setTableDialog(false);
         setSheet("items");
@@ -263,6 +266,7 @@ function Editor({ initial }: { initial: Design }) {
           dirty={state.dirty}
           onEditDesign={(itemId, tableId) => {
             setSelectedItem(itemId);
+            setFocusColumnKey(undefined);
             setActiveTable(tableId ?? null);
             setSheet(tableId ? "patterns" : "items");
           }}
@@ -271,8 +275,9 @@ function Editor({ initial }: { initial: Design }) {
         manager
       ) : (
         <DesignGrid
-          key={`${sheet}:${selectedItem}`}
+          key={`${sheet}:${selectedItem}:${focusColumnKey ?? ""}:${focusRequest}`}
           focusRowId={selectedItem}
+          focusColumnKey={focusColumnKey}
           sheet={sheet}
           appendRow={sheet === "items"}
           onSelection={(rowId, columnKey) => {
@@ -437,16 +442,32 @@ function Editor({ initial }: { initial: Design }) {
             targetLabel={commentTargetLabel}
             disabled={state.dirty || state.saving}
             canComment={permissions.edit}
+            customFieldLabels={Object.fromEntries(
+              design.columns.map((column) => [column.key, column.label]),
+            )}
+            itemCodes={Object.fromEntries(
+              design.items.map((item) => [item.id, item.code]),
+            )}
             onSelectTarget={(target, label) => {
               if (target.target_type === "test_item" && target.target_id) {
                 if (design.items.some((item) => item.id === target.target_id)) {
-                  setSelectedItem(target.target_id);
                   setActiveItemId(target.target_id);
+                  const columnKey = target.field ?? "code";
+                  if (
+                    gridData(design, "items").columns.some(
+                      (column) => column.key === columnKey,
+                    )
+                  ) {
+                    setSelectedItem(target.target_id);
+                    setFocusColumnKey(columnKey);
+                    setFocusRequest((value) => value + 1);
+                  }
                 } else {
                   setActiveItemId("");
                 }
                 setSheet("items");
               } else if (target.target_type !== "design") {
+                setFocusColumnKey(undefined);
                 const factor = design.factors.find(
                   (value) => value.id === target.target_id,
                 );

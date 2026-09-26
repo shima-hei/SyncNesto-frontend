@@ -45,6 +45,7 @@ type Point = { row: number; col: number };
 type Props = {
   columnAddLabel?: string;
   focusRowId?: string;
+  focusColumnKey?: string;
   renderCell?: (row: GridRow, column: GridColumn) => ReactNode;
   toggleOnClick?: boolean;
   toggleStartRow?: number;
@@ -91,6 +92,7 @@ export function DesignGrid({
   toggleOnClick = false,
   toggleStartRow = 4,
   focusRowId,
+  focusColumnKey,
   columnAddLabel = "列を追加",
 }: Props) {
   const dataLength = dataRows.length;
@@ -108,7 +110,14 @@ export function DesignGrid({
       0,
       dataRows.findIndex((r) => r.id === focusRowId),
     ),
-    col: focusRowId || appendRow ? 2 : 0,
+    col: focusColumnKey
+      ? Math.max(
+          0,
+          columns.findIndex((column) => column.key === focusColumnKey),
+        )
+      : focusRowId || appendRow
+        ? 2
+        : 0,
   }));
   const [anchorState, setAnchor] = useState<Point>(initialPoint);
   const [activeState, setActive] = useState<Point>(initialPoint);
@@ -118,10 +127,7 @@ export function DesignGrid({
   });
   const anchor = clampPoint(anchorState);
   const active = clampPoint(activeState);
-  useEffect(() => {
-    if (container.current)
-      container.current.scrollTop = Math.max(0, initialPoint.row * 36 - 100);
-  }, [initialPoint]);
+  const focusedOnMount = useRef(false);
   const [editing, setEditing] = useState<{
     point: Point;
     value: string;
@@ -189,6 +195,23 @@ export function DesignGrid({
     rows.forEach((row) => result.push(result.at(-1)! + height(row)));
     return result;
   })();
+  useEffect(() => {
+    const node = container.current;
+    if (!node || focusedOnMount.current) return;
+    focusedOnMount.current = true;
+    node.scrollTop = Math.max(0, (offsets[initialPoint.row] ?? 0) - 100);
+    if (focusColumnKey) {
+      const left = columns
+        .slice(0, initialPoint.col)
+        .reduce(
+          (total, column) =>
+            total + (layout.widths?.[`${sheet}:${column.key}`] ?? 180),
+          48,
+        );
+      node.scrollLeft = Math.max(0, left - node.clientWidth / 3);
+      node.focus({ preventScroll: true });
+    }
+  }, [columns, focusColumnKey, initialPoint, layout.widths, offsets, sheet]);
   let first = 0;
   while (first < rows.length && offsets[first + 1] < scrollTop - 150) first++;
   let last = first;

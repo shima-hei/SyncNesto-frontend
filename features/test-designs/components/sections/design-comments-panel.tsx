@@ -24,6 +24,7 @@ import {
 import { formatDateTime } from "@/lib/format/date";
 
 import { useConfirmAction } from "../../hooks/use-confirm-action";
+import { itemColumns } from "../../lib/design";
 
 export type DesignCommentTarget = Pick<
   TestDesignCommentCreate,
@@ -36,6 +37,35 @@ function targetKey(target: {
   field?: string | null;
 }) {
   return `${target.target_type}:${target.target_id ?? ""}:${target.field ?? ""}`;
+}
+
+const itemFieldLabels: Record<string, string> = {
+  ...Object.fromEntries(itemColumns),
+  pattern_table_id: "パターン",
+};
+
+function targetDisplayLabel(
+  comment: TestDesignCommentRead,
+  customFieldLabels: Record<string, string>,
+  itemCodes: Record<string, string>,
+) {
+  const snapshotLabel = String(comment.target_snapshot.label ?? "コメント対象");
+  if (comment.target_type === "design") return "テスト設計書全体";
+  if (comment.target_type === "test_item") {
+    const code = comment.target_id
+      ? (itemCodes[comment.target_id] ?? snapshotLabel)
+      : snapshotLabel;
+    const fieldLabel = comment.field
+      ? (itemFieldLabels[comment.field] ??
+        customFieldLabels[comment.field] ??
+        (comment.field.startsWith("custom_") ? "削除された列" : "対象セル"))
+      : null;
+    return fieldLabel ? `${code} · ${fieldLabel}` : code;
+  }
+  if (comment.field?.startsWith("level:")) return `${snapshotLabel} · 水準`;
+  if (comment.field?.startsWith("expected:"))
+    return `${snapshotLabel} · 期待値`;
+  return snapshotLabel;
 }
 
 function CommentComposer({
@@ -153,6 +183,8 @@ export function DesignCommentsPanel({
   disabled,
   canComment,
   onSelectTarget,
+  customFieldLabels,
+  itemCodes,
 }: {
   projectId: number;
   designId: number;
@@ -161,6 +193,8 @@ export function DesignCommentsPanel({
   disabled: boolean;
   canComment: boolean;
   onSelectTarget?: (target: DesignCommentTarget, label: string) => void;
+  customFieldLabels: Record<string, string>;
+  itemCodes: Record<string, string>;
 }) {
   const { user } = useAuth();
   const client = useQueryClient();
@@ -266,11 +300,11 @@ export function DesignCommentsPanel({
                     target_id: comment.target_id,
                     field: comment.field,
                   },
-                  String(comment.target_snapshot.label ?? "コメント対象"),
+                  targetDisplayLabel(comment, customFieldLabels, itemCodes),
                 )
               }
             >
-              {comment.target_snapshot.label as string} {comment.field ?? ""} ·{" "}
+              {targetDisplayLabel(comment, customFieldLabels, itemCodes)} ·{" "}
               {comment.target_status === "missing"
                 ? "対象削除済み"
                 : comment.target_status === "changed"
