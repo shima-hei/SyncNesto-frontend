@@ -20,12 +20,14 @@ export function RequirementLinksPanel({
   itemId,
   itemCode,
   disabled,
+  disabledMessage,
 }: {
   projectId: number;
   designId: number;
   itemId: string;
   itemCode: string;
   disabled: boolean;
+  disabledMessage?: string;
 }) {
   const client = useQueryClient();
   const key = ["design-requirement-links", projectId, designId];
@@ -65,10 +67,9 @@ export function RequirementLinksPanel({
   return (
     <section className="rounded-md border p-3">
       <h3 className="font-semibold">{itemCode} の関連要件</h3>
-      <p className="text-xs text-muted-foreground">
-        要件との関連は項目番号ではなく内部IDで維持します。
-        {disabled ? "変更を保存すると紐付けできます。" : ""}
-      </p>
+      {disabledMessage && (
+        <p className="text-xs text-muted-foreground">{disabledMessage}</p>
+      )}
       {links.isLoading ? (
         <p>読み込み中…</p>
       ) : related.length ? (

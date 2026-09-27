@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUrlTabState } from "@/hooks/use-url-tab-state";
+import { cn } from "@/lib/utils";
 import { readTestDesignProjectsProjectIdTestDesignsDesignIdGet as readDesign } from "@/lib/api/generated/test-designs/test-designs";
 import { useDesignEditor } from "../../hooks/use-design-editor";
 import { useConfirmAction } from "../../hooks/use-confirm-action";
@@ -131,30 +134,38 @@ function Editor({ initial }: { initial: Design }) {
         }
       }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link
-            href={`/projects/joined/${design.project_id}/test-designs`}
-            className="text-sm underline"
-          >
-            テスト設計書一覧
-          </Link>
-          <h1 className="text-2xl font-semibold">{design.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            テスト項目：{design.items.filter((item) => !item.is_spacer).length}
-            件 ／ パターン展開後：
-            {expandedCount}テストケース
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm" role="status">
-            {state.saving
-              ? "保存中…"
-              : state.dirty
-                ? "未保存の変更あり"
-                : `保存済み v${design.version}`}
-          </span>
+      <Link
+        href={`/projects/joined/${design.project_id}/test-designs`}
+        className="w-fit text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        ← テスト設計書一覧
+      </Link>
+      <PageHeader
+        title={design.name}
+        description={`テスト項目 ${design.items.filter((item) => !item.is_spacer).length}件 · パターン展開後 ${expandedCount}テストケース`}
+        actions={
           <Button
+            disabled={readOnly || !state.dirty}
+            onClick={() => void state.save()}
+          >
+            保存
+          </Button>
+        }
+      />
+      <div className="flex flex-wrap items-center gap-3 border-y py-2">
+        <span
+          className={`text-sm ${state.dirty ? "text-[var(--status-warning-fg)]" : "text-muted-foreground"}`}
+          role="status"
+        >
+          {state.saving
+            ? "保存中…"
+            : state.dirty
+              ? "未保存の変更あり"
+              : `保存済み v${design.version}`}
+        </span>
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          <Button
+            size="sm"
             variant="outline"
             disabled={readOnly || !state.canUndo}
             onClick={state.undo}
@@ -162,20 +173,15 @@ function Editor({ initial }: { initial: Design }) {
             元に戻す
           </Button>
           <Button
+            size="sm"
             variant="outline"
             disabled={readOnly || !state.canRedo}
             onClick={state.redo}
           >
             やり直す
           </Button>
-          <Button variant="outline" onClick={state.exportDraft}>
+          <Button size="sm" variant="outline" onClick={state.exportDraft}>
             編集内容を退避
-          </Button>
-          <Button
-            disabled={readOnly || !state.dirty}
-            onClick={() => void state.save()}
-          >
-            保存
           </Button>
         </div>
       </div>
@@ -213,39 +219,54 @@ function Editor({ initial }: { initial: Design }) {
           ブラウザへの下書き保存ができません。保存または「編集内容を退避」を使用してください。
         </p>
       )}
-      <FieldGroup className="grid gap-3 md:grid-cols-2">
-        <Field>
-          <FieldLabel htmlFor="design-name">設計書名</FieldLabel>
-          <Input
-            id="design-name"
-            value={design.name}
-            maxLength={200}
-            disabled={readOnly}
-            onChange={(e) =>
-              change((d) => {
-                d.name = e.target.value;
-              })
-            }
+      <details className="group border-b">
+        <summary className="flex cursor-pointer list-none items-center gap-2 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+          <span>設計書情報</span>
+          <span className="text-xs font-normal text-muted-foreground">
+            名前・説明を編集
+          </span>
+          <ChevronDownIcon
+            className="ml-auto size-4 transition-transform group-open:rotate-180"
+            aria-hidden="true"
           />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="design-description">説明</FieldLabel>
-          <Input
-            id="design-description"
-            value={design.description ?? ""}
-            disabled={readOnly}
-            onChange={(e) =>
-              change((d) => {
-                d.description = e.target.value;
-              })
-            }
-          />
-        </Field>
-      </FieldGroup>
+        </summary>
+        <FieldGroup className="grid gap-3 pb-4 md:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="design-name">設計書名</FieldLabel>
+            <Input
+              id="design-name"
+              value={design.name}
+              maxLength={200}
+              disabled={readOnly}
+              onChange={(e) =>
+                change((d) => {
+                  d.name = e.target.value;
+                })
+              }
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="design-description">説明</FieldLabel>
+            <Input
+              id="design-description"
+              value={design.description ?? ""}
+              disabled={readOnly}
+              onChange={(e) =>
+                change((d) => {
+                  d.description = e.target.value;
+                })
+              }
+            />
+          </Field>
+        </FieldGroup>
+      </details>
       <Tabs value={sheet} onValueChange={setSheet}>
-        <TabsList className="h-auto flex-wrap">
+        <TabsList
+          variant="line"
+          className="flex h-auto w-full flex-wrap justify-start border-b"
+        >
           {sheets.map((s) => (
-            <TabsTrigger key={s} value={s}>
+            <TabsTrigger key={s} value={s} className="flex-none px-4 py-2">
               {sheetLabels[s]}
               {s !== "cases" &&
                 ` (${s === "patterns" ? (design.pattern_tables?.length ?? 0) : design.items.filter((item) => !item.is_spacer).length})`}
@@ -253,10 +274,24 @@ function Editor({ initial }: { initial: Design }) {
           ))}
         </TabsList>
       </Tabs>
-      {sheet === "items" && (
-        <p className="text-sm text-muted-foreground">
-          IDは通常行の順に自動で振り直します。行の挿入では通常の項目と区切り行を選べます。空の最終行は保存されません。保存時にケースへ反映します。
-        </p>
+      {sheet !== "cases" && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          {sheet === "items" ? (
+            <p className="text-muted-foreground">
+              IDは自動採番されます。末尾の空行へ入力すると項目を追加できます。
+            </p>
+          ) : (
+            <p className="text-muted-foreground">
+              用途ごとにパターン表を作成・再利用できます。
+            </p>
+          )}
+          <a
+            href="#design-related-information"
+            className="text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            {sheet === "items" ? "関連要件・コメントへ" : "コメントへ"} ↓
+          </a>
+        </div>
       )}
       {sheet === "cases" ? (
         <CasesSection
@@ -425,78 +460,107 @@ function Editor({ initial }: { initial: Design }) {
         />
       )}
       {sheet !== "cases" && (
-        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-          {sheet === "items" && activeItem && (
-            <RequirementLinksPanel
+        <section
+          id="design-related-information"
+          className="min-w-0 scroll-mt-4"
+        >
+          <div className="mb-3 flex flex-col gap-1">
+            <h2 className="text-base font-semibold">関連情報</h2>
+            <p className="text-sm text-muted-foreground">
+              {sheet === "items"
+                ? "選択したテスト項目の要件とコメントを確認できます。"
+                : "パターン表や水準へのコメントを確認できます。"}
+            </p>
+          </div>
+          <div
+            className={cn(
+              "grid min-w-0 gap-4",
+              sheet === "items" && activeItem && "xl:grid-cols-2",
+            )}
+          >
+            {sheet === "items" && activeItem && (
+              <RequirementLinksPanel
+                projectId={design.project_id}
+                designId={design.id}
+                itemId={activeItem.id}
+                itemCode={activeItem.code}
+                disabled={readOnly || state.dirty}
+                disabledMessage={
+                  state.dirty
+                    ? "設計書を保存すると紐付けを変更できます。"
+                    : state.saving
+                      ? "保存完了後に紐付けを変更できます。"
+                      : !permissions.edit
+                        ? "紐付けを変更する権限がありません。"
+                        : undefined
+                }
+              />
+            )}
+            <DesignCommentsPanel
               projectId={design.project_id}
               designId={design.id}
-              itemId={activeItem.id}
-              itemCode={activeItem.code}
-              disabled={readOnly || state.dirty}
-            />
-          )}
-          <DesignCommentsPanel
-            projectId={design.project_id}
-            designId={design.id}
-            target={commentTarget}
-            targetLabel={commentTargetLabel}
-            disabled={state.dirty || state.saving}
-            canComment={permissions.edit}
-            customFieldLabels={Object.fromEntries(
-              design.columns.map((column) => [column.key, column.label]),
-            )}
-            itemCodes={Object.fromEntries(
-              design.items.map((item) => [item.id, item.code]),
-            )}
-            onSelectTarget={(target, label) => {
-              if (target.target_type === "test_item" && target.target_id) {
-                if (design.items.some((item) => item.id === target.target_id)) {
-                  setActiveItemId(target.target_id);
-                  const columnKey = target.field ?? "code";
+              target={commentTarget}
+              targetLabel={commentTargetLabel}
+              disabled={state.dirty || state.saving}
+              canComment={permissions.edit}
+              customFieldLabels={Object.fromEntries(
+                design.columns.map((column) => [column.key, column.label]),
+              )}
+              itemCodes={Object.fromEntries(
+                design.items.map((item) => [item.id, item.code]),
+              )}
+              onSelectTarget={(target, label) => {
+                if (target.target_type === "test_item" && target.target_id) {
                   if (
-                    gridData(design, "items").columns.some(
-                      (column) => column.key === columnKey,
-                    )
+                    design.items.some((item) => item.id === target.target_id)
                   ) {
-                    setSelectedItem(target.target_id);
-                    setFocusColumnKey(columnKey);
-                    setFocusRequest((value) => value + 1);
+                    setActiveItemId(target.target_id);
+                    const columnKey = target.field ?? "code";
+                    if (
+                      gridData(design, "items").columns.some(
+                        (column) => column.key === columnKey,
+                      )
+                    ) {
+                      setSelectedItem(target.target_id);
+                      setFocusColumnKey(columnKey);
+                      setFocusRequest((value) => value + 1);
+                    }
+                  } else {
+                    setActiveItemId("");
                   }
-                } else {
-                  setActiveItemId("");
+                  setSheet("items");
+                } else if (target.target_type !== "design") {
+                  setFocusColumnKey(undefined);
+                  const factor = design.factors.find(
+                    (value) => value.id === target.target_id,
+                  );
+                  const tableId =
+                    target.target_type === "pattern_table"
+                      ? target.target_id
+                      : target.target_type === "factor_level"
+                        ? design.factors.find(
+                            (value) =>
+                              value.id ===
+                              design.levels.find(
+                                (level) => level.id === target.target_id,
+                              )?.factor_id,
+                          )?.table_id
+                        : (factor?.table_id ??
+                          design.patterns.find(
+                            (value) => value.id === target.target_id,
+                          )?.table_id ??
+                          design.expected_values?.find(
+                            (value) => value.id === target.target_id,
+                          )?.table_id);
+                  setActiveTable(tableId ?? null);
+                  setSheet("patterns");
                 }
-                setSheet("items");
-              } else if (target.target_type !== "design") {
-                setFocusColumnKey(undefined);
-                const factor = design.factors.find(
-                  (value) => value.id === target.target_id,
-                );
-                const tableId =
-                  target.target_type === "pattern_table"
-                    ? target.target_id
-                    : target.target_type === "factor_level"
-                      ? design.factors.find(
-                          (value) =>
-                            value.id ===
-                            design.levels.find(
-                              (level) => level.id === target.target_id,
-                            )?.factor_id,
-                        )?.table_id
-                      : (factor?.table_id ??
-                        design.patterns.find(
-                          (value) => value.id === target.target_id,
-                        )?.table_id ??
-                        design.expected_values?.find(
-                          (value) => value.id === target.target_id,
-                        )?.table_id);
-                setActiveTable(tableId ?? null);
-                setSheet("patterns");
-              }
-              setCommentTarget(target);
-              setCommentTargetLabel(label);
-            }}
-          />
-        </div>
+                setCommentTarget(target);
+                setCommentTargetLabel(label);
+              }}
+            />
+          </div>
+        </section>
       )}
       <Dialog open={tableDialog} onOpenChange={setTableDialog}>
         <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-[95vw]">

@@ -166,7 +166,7 @@ export function TestProgressSection({
                   data[key] > 0 && (
                     <div
                       key={key}
-                      className={barClassName}
+                      className={`${barClassName} border-r-2 border-background last:border-r-0`}
                       style={{ width: `${(data[key] / data.total) * 100}%` }}
                     />
                   ),
@@ -181,7 +181,7 @@ export function TestProgressSection({
                   onClick={() => onDrillDown({ status: key, targetFeature })}
                 >
                   <span className="flex items-center gap-2">
-                    <span className={`size-2 rounded-full ${barClassName}`} />
+                    <span className={`size-3 rounded-full ${barClassName}`} />
                     {label}
                   </span>
                   <strong>{data[key]}</strong>
