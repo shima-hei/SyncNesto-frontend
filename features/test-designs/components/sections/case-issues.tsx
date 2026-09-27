@@ -284,7 +284,7 @@ export function CaseIssues({
           if (!open) setCreatedTask(null);
         }}
       >
-        <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-4xl">
+        <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(96vw,1280px)] overflow-y-auto p-6 sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Issueを作成</DialogTitle>
             <DialogDescription>
@@ -301,6 +301,7 @@ export function CaseIssues({
             key={testCase.id}
             mode="create"
             projectId={projectId}
+            fullWidth
             initialValues={initialValues}
             isPending={busy}
             onSubmit={async (values) => {

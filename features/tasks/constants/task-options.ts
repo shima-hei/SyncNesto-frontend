@@ -1,15 +1,15 @@
 export const TASK_TYPE_OPTIONS = [
   { value: "bug", label: "不具合" },
-  { value: "frontend", label: "Frontend" },
-  { value: "backend", label: "Backend" },
-  { value: "database", label: "Database" },
-  { value: "infrastructure", label: "Infrastructure" },
-  { value: "security", label: "Security" },
-  { value: "test", label: "Test" },
-  { value: "review", label: "Review" },
-  { value: "investigation", label: "Investigation" },
-  { value: "documentation", label: "Documentation" },
-  { value: "other", label: "Other" },
+  { value: "frontend", label: "フロントエンド" },
+  { value: "backend", label: "バックエンド" },
+  { value: "database", label: "データベース" },
+  { value: "infrastructure", label: "インフラ" },
+  { value: "security", label: "セキュリティ" },
+  { value: "test", label: "テスト" },
+  { value: "review", label: "レビュー" },
+  { value: "investigation", label: "調査" },
+  { value: "documentation", label: "ドキュメント" },
+  { value: "other", label: "その他" },
 ] as const;
 
 export const TASK_STATUS_OPTIONS = [
