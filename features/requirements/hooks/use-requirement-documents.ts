@@ -27,5 +27,6 @@ export function useRequirementDocuments(
     isLoading: documentsQuery.isLoading,
     isFetching: documentsQuery.isFetching,
     error: documentsQuery.error,
+    refetch: documentsQuery.refetch,
   };
 }

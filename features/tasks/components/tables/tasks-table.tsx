@@ -132,7 +132,12 @@ export function TasksTable({
               ) : null}
               <TableCell>
                 <div className="flex min-w-64 flex-col gap-1">
-                  <span className="truncate font-medium">{task.title}</span>
+                  <Link
+                    href={`/projects/joined/${projectId}/tasks/${task.id}`}
+                    className="min-w-0 truncate rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    {task.title}
+                  </Link>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs text-muted-foreground">
                       {task.task_code}
@@ -161,7 +166,10 @@ export function TasksTable({
                         updateTaskStatus(task, status).catch(() => undefined)
                       }
                     >
-                      <SelectTrigger className="h-8 w-32">
+                      <SelectTrigger
+                        className="h-8 w-32"
+                        aria-label={`${task.title}の状態を変更`}
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -179,9 +187,15 @@ export function TasksTable({
                   <TaskStatusBadge status={task.status} />
                 )}
               </TableCell>
-              <TableCell>{formatDate(task.start_date)}</TableCell>
-              <TableCell>{formatDate(task.due_date)}</TableCell>
-              <TableCell>{task.progress_percent ?? 0}%</TableCell>
+              <TableCell className="tabular-nums">
+                {formatDate(task.start_date)}
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {formatDate(task.due_date)}
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {task.progress_percent ?? 0}%
+              </TableCell>
               <TableCell>
                 <TaskRequirementBadges requirements={task.requirements} />
               </TableCell>

@@ -22,5 +22,6 @@ export function useTasks(
     isLoading: tasksQuery.isLoading,
     isFetching: tasksQuery.isFetching,
     error: tasksQuery.error,
+    refetch: tasksQuery.refetch,
   };
 }

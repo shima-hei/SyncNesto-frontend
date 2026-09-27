@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -29,11 +31,13 @@ export function TaskFilterSelect({
   allLabel,
   onValueChange,
 }: TaskFilterSelectProps) {
+  const triggerId = useId();
+
   return (
     <Field>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel htmlFor={triggerId}>{label}</FieldLabel>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger id={triggerId} className="w-full">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

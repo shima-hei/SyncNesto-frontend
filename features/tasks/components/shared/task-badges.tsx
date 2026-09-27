@@ -1,6 +1,9 @@
 import { Badge } from "@/components/ui/badge";
+import {
+  StatusBadge,
+  type StatusTone,
+} from "@/components/shared/display/status-badge";
 import type { TaskRequirementSummary } from "@/lib/api/generated/model";
-import { cn } from "@/lib/utils";
 
 import {
   getTaskPriorityLabel,
@@ -14,9 +17,9 @@ export function TaskTypeBadge({ type }: { type?: string | null }) {
 
 export function TaskStatusBadge({ status }: { status?: string | null }) {
   return (
-    <Badge variant="outline" className={getTaskStatusClassName(status)}>
+    <StatusBadge tone={getTaskStatusTone(status)}>
       {getTaskStatusLabel(status)}
-    </Badge>
+    </StatusBadge>
   );
 }
 
@@ -40,8 +43,8 @@ export function TaskFlagBadges({
 
   return (
     <div className="flex flex-wrap gap-1">
-      {isOverdue ? <Badge variant="destructive">期限超過</Badge> : null}
-      {isBlocked ? <Badge variant="outline">ブロック中</Badge> : null}
+      {isOverdue ? <StatusBadge tone="warning">期限超過</StatusBadge> : null}
+      {isBlocked ? <StatusBadge tone="danger">ブロック中</StatusBadge> : null}
     </div>
   );
 }
@@ -82,18 +85,13 @@ export function TaskRequirementBadges({
   );
 }
 
-const getTaskStatusClassName = (status?: string | null) => {
-  return cn(
-    "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--status-neutral-fg)]",
-    status === "todo" &&
-      "border-[var(--status-info-border)] bg-[var(--status-info-bg)] text-[var(--status-info-fg)]",
-    status === "in_progress" &&
-      "border-[var(--status-progress-border)] bg-[var(--status-progress-bg)] text-[var(--status-progress-fg)]",
-    status === "in_review" &&
-      "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]",
-    status === "done" &&
-      "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
-    status === "blocked" &&
-      "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]",
-  );
+const taskStatusTones: Record<string, StatusTone> = {
+  todo: "info",
+  in_progress: "progress",
+  in_review: "warning",
+  done: "success",
+  blocked: "danger",
 };
+
+const getTaskStatusTone = (status?: string | null): StatusTone =>
+  status ? (taskStatusTones[status] ?? "neutral") : "neutral";
