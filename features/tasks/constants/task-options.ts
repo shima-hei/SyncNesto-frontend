@@ -1,4 +1,5 @@
 export const TASK_TYPE_OPTIONS = [
+  { value: "bug", label: "不具合" },
   { value: "frontend", label: "Frontend" },
   { value: "backend", label: "Backend" },
   { value: "database", label: "Database" },

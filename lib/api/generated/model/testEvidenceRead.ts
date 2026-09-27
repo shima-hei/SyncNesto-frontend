@@ -15,5 +15,6 @@ export interface TestEvidenceRead {
   content_type: string;
   byte_size: number;
   uploaded_by: number;
+  uploaded_by_name?: string | null;
   uploaded_at: string;
 }

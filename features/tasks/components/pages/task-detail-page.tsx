@@ -47,6 +47,7 @@ import { TaskDependenciesSection } from "../sections/task-dependencies-section";
 import { TaskChangeLogsSection } from "../sections/task-change-logs-section";
 import { TaskCommentsSection } from "../sections/task-comments-section";
 import { TaskHierarchySection } from "../sections/task-hierarchy-section";
+import { TaskTestCasesSection } from "../sections/task-test-cases-section";
 import {
   TaskFlagBadges,
   TaskPriorityBadge,
@@ -249,6 +250,10 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
               </div>
             </CardContent>
           </Card>
+
+          {task.task_type === "bug" && (
+            <TaskTestCasesSection projectId={projectId} taskId={taskId} />
+          )}
 
           <TaskHierarchySection
             projectId={projectId}

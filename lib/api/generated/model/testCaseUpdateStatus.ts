@@ -10,6 +10,7 @@ export type TestCaseUpdateStatus =
 
 export const TestCaseUpdateStatus = {
   not_run: "not_run",
+  in_progress: "in_progress",
   passed: "passed",
   failed: "failed",
   blocked: "blocked",

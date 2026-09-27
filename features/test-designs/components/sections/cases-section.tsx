@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/error";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,13 @@ import {
   listTestCasesProjectsProjectIdTestDesignsDesignIdCasesGet as listCases,
   updateTestCaseProjectsProjectIdTestDesignsDesignIdCasesCaseIdPatch as updateCase,
   refreshTestCaseProjectsProjectIdTestDesignsDesignIdCasesCaseIdRefreshPost as refreshCase,
+  readTestDesignProjectsProjectIdTestDesignsDesignIdGet as readDesign,
 } from "@/lib/api/generated/test-designs/test-designs";
+import { listDesignIssuesProjectsProjectIdTestDesignsDesignIdIssuesGet as listDesignIssues } from "@/lib/api/generated/test-issues/test-issues";
 import { useDesignPermissions } from "../../hooks/use-design-permissions";
 import { useConfirmAction } from "../../hooks/use-confirm-action";
 import { CaseExecutionHistory } from "./case-execution-history";
+import { CaseIssues } from "./case-issues";
 import { itemColumns } from "../../lib/design";
 import {
   getCaseDesignDiff,
@@ -34,6 +37,7 @@ import {
 
 const statuses = {
   not_run: "未実行",
+  in_progress: "実施中",
   passed: "成功",
   failed: "失敗",
   blocked: "保留",
@@ -94,31 +98,54 @@ export function CasesSection({
   version,
   dirty = false,
   onEditDesign,
+  initialStatusFilter = "",
+  initialTargetFeature = "",
+  onlyUnlinkedNg = false,
+  issueTaskId,
+  initialCaseId,
+  initialExecutionId,
 }: {
   projectId: number;
   designId: number;
   version: number;
   dirty?: boolean;
   onEditDesign?: (itemId: string, tableId?: string) => void;
+  initialStatusFilter?: TestCaseRead["status"] | "";
+  initialTargetFeature?: string;
+  onlyUnlinkedNg?: boolean;
+  issueTaskId?: number;
+  initialCaseId?: string;
+  initialExecutionId?: string;
 }) {
   const permissions = useDesignPermissions(projectId);
+  const client = useQueryClient();
   const { confirm, confirmDialogProps } = useConfirmAction();
   const query = useQuery({
     queryKey: ["test-design-cases", projectId, designId, version],
     queryFn: () => listCases(projectId, designId),
     retry: false,
   });
+  const issueLinks = useQuery({
+    queryKey: ["design-issues", projectId, designId],
+    queryFn: () => listDesignIssues(projectId, designId),
+  });
+  const currentDesign = useQuery({
+    queryKey: ["test-design-current", projectId, designId],
+    queryFn: () => readDesign(projectId, designId),
+  });
   const [selected, setSelected] = useState<TestCaseRead | null>(null);
+  const openedInitialCase = useRef(false);
   const [reviewCase, setReviewCase] = useState<TestCaseRead | null>(null);
   const [caseDirty, setCaseDirty] = useState(false);
   const [conflict, setConflict] = useState<TestCaseRead | null>(null);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState("");
-  const [targetFilter, setTargetFilter] = useState("");
+  const [targetFilter, setTargetFilter] = useState(initialTargetFeature);
   const [statusFilter, setStatusFilter] = useState<TestCaseRead["status"] | "">(
-    "",
+    initialStatusFilter,
   );
   const [onlyStale, setOnlyStale] = useState(false);
+  const [unlinkedNg, setUnlinkedNg] = useState(onlyUnlinkedNg);
   const [page, setPage] = useState(0);
   const reviewDiffRows = reviewCase?.acknowledged_source
     ? getCaseDesignDiff(
@@ -127,16 +154,47 @@ export function CasesSection({
       )
     : [];
   const cases = query.data ?? [];
+  useEffect(() => {
+    if (openedInitialCase.current || !initialCaseId || !query.data) return;
+    openedInitialCase.current = true;
+    setSelected(query.data.find((row) => row.id === initialCaseId) ?? null);
+  }, [initialCaseId, query.data]);
+  const issueCountByCase = new Map<string, number>();
+  for (const link of issueLinks.data ?? []) {
+    issueCountByCase.set(
+      link.case_id,
+      (issueCountByCase.get(link.case_id) ?? 0) + 1,
+    );
+  }
+  const targetByItem = new Map(
+    (currentDesign.data?.items ?? []).map((item) => [
+      item.id,
+      item.target_feature,
+    ]),
+  );
+  const currentTarget = (testCase: TestCaseRead) =>
+    targetByItem.get(sourceOf(testCase).item.id) ?? "";
   const targets = [
     ...new Set(
-      cases.map((c) => sourceOf(c).item.target_feature).filter(Boolean),
+      cases
+        .filter((c) => c.active)
+        .map(currentTarget)
+        .filter(Boolean),
     ),
   ].sort();
   const filtered = cases.filter(
     (c) =>
       (!onlyStale || c.stale) &&
+      (!unlinkedNg ||
+        (issueLinks.data !== undefined &&
+          c.status === "failed" &&
+          !issueCountByCase.has(c.id))) &&
+      (!issueTaskId ||
+        issueLinks.data?.some(
+          (link) => link.case_id === c.id && link.task_id === issueTaskId,
+        )) &&
       (!statusFilter || c.status === statusFilter) &&
-      (!targetFilter || sourceOf(c).item.target_feature === targetFilter) &&
+      (!targetFilter || currentTarget(c) === targetFilter) &&
       `${sourceOf(c).item.code} ${sourceOf(c).item.target_feature} ${sourceOf(c).item.content} ${sourceOf(c).pattern_table?.name ?? ""} ${sourceOf(c).pattern?.code ?? ""}`.includes(
         filter,
       ),
@@ -146,6 +204,9 @@ export function CasesSection({
     try {
       await action();
       await query.refetch();
+      await client.invalidateQueries({
+        queryKey: ["test-progress", projectId, designId],
+      });
       toast.success("テストケースを更新しました");
       return true;
     } catch (e) {
@@ -261,9 +322,25 @@ export function CasesSection({
           />
           影響ありのみ
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={unlinkedNg}
+            onChange={(event) => {
+              setUnlinkedNg(event.target.checked);
+              setPage(0);
+            }}
+          />
+          NG / Issue未登録のみ
+        </label>
       </div>
       {query.isPending && <p>テストケースを読み込み中…</p>}
       {query.error && <p role="alert">{query.error.message}</p>}
+      {issueLinks.error && (
+        <p role="alert">
+          関連Issueを読み込めませんでした。Issue未登録の判定はできません。
+        </p>
+      )}
       <div className="overflow-auto rounded-md border">
         <table className="w-full text-sm">
           <thead>
@@ -287,7 +364,7 @@ export function CasesSection({
               return (
                 <tr
                   key={c.id}
-                  className={`border-b align-top ${{ not_run: "", passed: "bg-emerald-50 dark:bg-emerald-950/30", failed: "bg-red-50 dark:bg-red-950/30", blocked: "bg-amber-50 dark:bg-amber-950/30", not_applicable: "bg-slate-100 dark:bg-slate-800/40" }[c.status]}`}
+                  className={`border-b align-top ${{ not_run: "", in_progress: "bg-sky-50 dark:bg-sky-950/30", passed: "bg-emerald-50 dark:bg-emerald-950/30", failed: "bg-red-50 dark:bg-red-950/30", blocked: "bg-amber-50 dark:bg-amber-950/30", not_applicable: "bg-slate-100 dark:bg-slate-800/40" }[c.status]}`}
                 >
                   <td className="whitespace-nowrap p-2">{s.item.code}</td>
                   {itemColumns.slice(1, 7).map(([key]) => (
@@ -367,6 +444,18 @@ export function CasesSection({
                           備考あり
                         </span>
                       )}
+                      {(issueCountByCase.get(c.id) ?? 0) > 0 && (
+                        <span className="rounded bg-muted px-1">
+                          Issue {issueCountByCase.get(c.id)}件
+                        </span>
+                      )}
+                      {issueLinks.data !== undefined &&
+                        c.status === "failed" &&
+                        !issueCountByCase.has(c.id) && (
+                          <span className="rounded bg-amber-100 px-1 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                            Issue未登録
+                          </span>
+                        )}
                     </div>
                   </td>
                 </tr>
@@ -495,6 +584,15 @@ export function CasesSection({
                 designId={designId}
                 caseId={selected.id}
                 version={selected.version}
+                editable={permissions.execute}
+                initialExecutionId={initialExecutionId}
+              />
+              <CaseIssues
+                key={selected.id}
+                projectId={projectId}
+                designId={designId}
+                testCase={selected}
+                source={sourceOf(selected)}
                 editable={permissions.execute}
               />
             </>
