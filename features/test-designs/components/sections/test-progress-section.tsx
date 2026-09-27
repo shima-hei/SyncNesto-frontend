@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import { caseStatusItems } from "../../lib/case-status";
 import { getTaskStatusLabel } from "@/features/tasks/constants/task-options";
 import {
   listTestCasesProjectsProjectIdTestDesignsDesignIdCasesGet as listCases,
@@ -20,15 +22,6 @@ type DrillDown = {
   issueTaskId?: number;
   caseId?: string;
 };
-
-const statusItems = [
-  { key: "not_run", label: "未実行", color: "bg-slate-400" },
-  { key: "in_progress", label: "実施中", color: "bg-sky-500" },
-  { key: "passed", label: "成功", color: "bg-emerald-500" },
-  { key: "failed", label: "失敗", color: "bg-red-500" },
-  { key: "blocked", label: "保留", color: "bg-amber-500" },
-  { key: "not_applicable", label: "対象外", color: "bg-zinc-500" },
-] as const;
 
 function percent(numerator: number, denominator: number) {
   return denominator ? `${Math.round((numerator / denominator) * 100)}%` : "－";
@@ -103,68 +96,92 @@ export function TestProgressSection({
         </select>
       </div>
       {progress.isLoading && <p>集計中…</p>}
-      {progress.error && <p role="alert">集計を読み込めませんでした。</p>}
+      {progress.error && (
+        <DataLoadError
+          resourceName="集計・進捗"
+          isRetrying={progress.isFetching}
+          onRetry={() => void progress.refetch()}
+        />
+      )}
+      {cases.error && (
+        <DataLoadError
+          resourceName="NGケース一覧"
+          isRetrying={cases.isFetching}
+          onRetry={() => void cases.refetch()}
+        />
+      )}
+      {design.error && (
+        <DataLoadError
+          resourceName="対象画面・機能"
+          isRetrying={design.isFetching}
+          onRetry={() => void design.refetch()}
+        />
+      )}
       {data && (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded border p-4">
-              <p className="text-sm text-muted-foreground">全テストケース</p>
-              <p className="text-2xl font-semibold">{data.total}</p>
+          <dl className="grid gap-4 border-y py-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-sm text-muted-foreground">全テストケース</dt>
+              <dd className="text-2xl font-semibold tabular-nums">
+                {data.total}
+              </dd>
             </div>
-            <div className="rounded border p-4">
-              <p className="text-sm text-muted-foreground">進捗率</p>
-              <p className="text-2xl font-semibold">
+            <div>
+              <dt className="text-sm text-muted-foreground">進捗率</dt>
+              <dd className="text-2xl font-semibold tabular-nums">
                 {percent(data.progress_numerator, data.progress_denominator)}
-              </p>
-              <p className="text-xs text-muted-foreground">
+              </dd>
+              <dd className="text-xs text-muted-foreground">
                 成功＋失敗 {data.progress_numerator}件 / 対象外を除く{" "}
                 {data.progress_denominator}件
-              </p>
+              </dd>
             </div>
-            <div className="rounded border p-4">
-              <p className="text-sm text-muted-foreground">NG率</p>
-              <p className="text-2xl font-semibold">
+            <div>
+              <dt className="text-sm text-muted-foreground">NG率</dt>
+              <dd className="text-2xl font-semibold tabular-nums">
                 {percent(data.ng_numerator, data.ng_denominator)}
-              </p>
-              <p className="text-xs text-muted-foreground">
+              </dd>
+              <dd className="text-xs text-muted-foreground">
                 失敗 {data.ng_numerator}件 / 成功＋失敗 {data.ng_denominator}件
-              </p>
+              </dd>
             </div>
-            <div className="rounded border p-4">
-              <p className="text-sm text-muted-foreground">関連Issue</p>
-              <p className="text-2xl font-semibold">{data.issue_count}</p>
-              <p className="text-xs text-muted-foreground">
+            <div>
+              <dt className="text-sm text-muted-foreground">関連Issue</dt>
+              <dd className="text-2xl font-semibold tabular-nums">
+                {data.issue_count}
+              </dd>
+              <dd className="text-xs text-muted-foreground">
                 重複を除いた不具合タスク数
-              </p>
+              </dd>
             </div>
-          </div>
+          </dl>
           <div className="space-y-3 rounded border p-4">
             <h4 className="font-semibold">最新実行結果の内訳</h4>
             <div
               className="flex h-5 overflow-hidden rounded bg-muted"
               aria-hidden="true"
             >
-              {statusItems.map(
-                ({ key, color }) =>
+              {caseStatusItems.map(
+                ({ key, barClassName }) =>
                   data[key] > 0 && (
                     <div
                       key={key}
-                      className={color}
+                      className={barClassName}
                       style={{ width: `${(data[key] / data.total) * 100}%` }}
                     />
                   ),
               )}
             </div>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              {statusItems.map(({ key, label, color }) => (
+              {caseStatusItems.map(({ key, label, barClassName }) => (
                 <button
                   key={key}
                   type="button"
-                  className="flex items-center justify-between rounded border p-2 text-left hover:bg-accent"
+                  className="flex items-center justify-between rounded border p-2 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={() => onDrillDown({ status: key, targetFeature })}
                 >
                   <span className="flex items-center gap-2">
-                    <span className={`size-2 rounded-full ${color}`} />
+                    <span className={`size-2 rounded-full ${barClassName}`} />
                     {label}
                   </span>
                   <strong>{data[key]}</strong>
@@ -178,14 +195,14 @@ export function TestProgressSection({
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              className="rounded border p-3 text-left hover:bg-accent"
+              className="rounded border p-3 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               onClick={() => onDrillDown({ status: "failed", targetFeature })}
             >
               NGテストケース <strong>{data.failed}件</strong>
             </button>
             <button
               type="button"
-              className="rounded border p-3 text-left hover:bg-accent"
+              className="rounded border p-3 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               onClick={() =>
                 onDrillDown({ onlyUnlinkedNg: true, targetFeature })
               }
@@ -231,7 +248,7 @@ export function TestProgressSection({
                     </Link>
                     <button
                       type="button"
-                      className="rounded border px-2 py-1 text-sm hover:bg-accent"
+                      className="rounded border px-2 py-1 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                       onClick={() =>
                         onDrillDown({
                           issueTaskId: issue.task_id,
@@ -245,6 +262,14 @@ export function TestProgressSection({
                   </div>
                 ))}
               </div>
+            ) : cases.error ? (
+              <p className="text-sm text-muted-foreground">
+                NGケース一覧を表示できません。再試行してください。
+              </p>
+            ) : cases.isPending ? (
+              <p className="text-sm text-muted-foreground">
+                NGケースを読み込み中…
+              </p>
             ) : (
               <div className="divide-y rounded border">
                 {failedCases.length === 0 && (
@@ -261,7 +286,7 @@ export function TestProgressSection({
                     <button
                       key={testCase.id}
                       type="button"
-                      className="block w-full p-3 text-left hover:bg-accent"
+                      className="block w-full p-3 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                       onClick={() =>
                         onDrillDown({
                           status: "failed",

@@ -8,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -91,16 +93,14 @@ export function DesignsPage({
   }
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {cases ? "テストケース" : "テスト設計書"}
-        </h1>
-        <p className="text-muted-foreground">
-          {cases
+      <PageHeader
+        title={cases ? "テストケース" : "テスト設計書"}
+        description={
+          cases
             ? "設計書を選択してケースと実行結果を確認します。"
-            : "因子・水準からパターンを設計し、項目に紐付けてテストケースを作成します。"}
-        </p>
-      </div>
+            : "因子・水準からパターンを設計し、項目に紐付けてテストケースを作成します。"
+        }
+      />
       {!cases && permissions.edit && (
         <form
           onSubmit={(e) => {
@@ -130,11 +130,17 @@ export function DesignsPage({
         </form>
       )}
       {query.isPending && <p>読み込み中…</p>}
-      {query.error && <p role="alert">{query.error.message}</p>}
+      {query.error && (
+        <DataLoadError
+          resourceName="テスト設計書"
+          isRetrying={query.isFetching}
+          onRetry={() => void query.refetch()}
+        />
+      )}
       {!query.isPending && !query.error && !query.data?.length && (
         <p>テスト設計書はまだありません。</p>
       )}
-      {cases ? (
+      {query.isPending || query.error ? null : cases ? (
         selected ? (
           <>
             <Button

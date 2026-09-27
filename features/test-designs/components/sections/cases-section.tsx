@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { TriangleAlertIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/error";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { ChangeLogDiffRows } from "@/components/shared/change-log/change-log-card";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
@@ -29,20 +31,13 @@ import { useConfirmAction } from "../../hooks/use-confirm-action";
 import { CaseExecutionHistory } from "./case-execution-history";
 import { CaseIssues } from "./case-issues";
 import { itemColumns } from "../../lib/design";
+import { caseStatusByKey, caseStatusItems } from "../../lib/case-status";
 import {
   getCaseDesignDiff,
   getCaseDesignSummary,
   type CaseSource,
 } from "../../lib/case-diff";
 
-const statuses = {
-  not_run: "未実行",
-  in_progress: "実施中",
-  passed: "成功",
-  failed: "失敗",
-  blocked: "保留",
-  not_applicable: "対象外",
-};
 const sourceOf = (c: TestCaseRead) => c.source as unknown as CaseSource;
 
 function CaseStatusSelect({
@@ -64,7 +59,7 @@ function CaseStatusSelect({
       disabled={disabled}
       onChange={(e) => onChange(e.target.value as TestCaseRead["status"])}
     >
-      {Object.entries(statuses).map(([key, text]) => (
+      {caseStatusItems.map(({ key, label: text }) => (
         <option key={key} value={key}>
           {text}
         </option>
@@ -305,7 +300,7 @@ export function CasesSection({
           }}
         >
           <option value="">すべての状態</option>
-          {Object.entries(statuses).map(([key, label]) => (
+          {caseStatusItems.map(({ key, label }) => (
             <option key={key} value={key}>
               {label}
             </option>
@@ -335,161 +330,190 @@ export function CasesSection({
         </label>
       </div>
       {query.isPending && <p>テストケースを読み込み中…</p>}
-      {query.error && <p role="alert">{query.error.message}</p>}
+      {query.error && (
+        <DataLoadError
+          resourceName="テストケース"
+          isRetrying={query.isFetching}
+          onRetry={() => void query.refetch()}
+        />
+      )}
       {issueLinks.error && (
         <p role="alert">
           関連Issueを読み込めませんでした。Issue未登録の判定はできません。
         </p>
       )}
-      <div className="overflow-auto rounded-md border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted">
-              <th className="p-2 text-left">項目番号</th>
-              {itemColumns.slice(1, 7).map(([key, label]) => (
-                <th key={key} className="min-w-44 p-2 text-left">
-                  {label}
-                </th>
-              ))}
-              <th className="p-2 text-left">パターン</th>
-              <th className="min-w-44 p-2 text-left">期待値</th>
-              <th className="p-2 text-left">状態</th>
-              <th className="p-2 text-left">影響</th>
-              <th className="p-2">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.slice(page * 50, (page + 1) * 50).map((c) => {
-              const s = sourceOf(c);
-              return (
-                <tr
-                  key={c.id}
-                  className={`border-b align-top ${{ not_run: "", in_progress: "bg-sky-50 dark:bg-sky-950/30", passed: "bg-emerald-50 dark:bg-emerald-950/30", failed: "bg-red-50 dark:bg-red-950/30", blocked: "bg-amber-50 dark:bg-amber-950/30", not_applicable: "bg-slate-100 dark:bg-slate-800/40" }[c.status]}`}
-                >
-                  <td className="whitespace-nowrap p-2">{s.item.code}</td>
-                  {itemColumns.slice(1, 7).map(([key]) => (
-                    <td key={key} className="min-w-44 whitespace-pre-wrap p-2">
-                      {s.item[key] || "－"}
-                    </td>
-                  ))}
-                  <td className="p-2">
-                    <PatternDetails source={s} />
-                  </td>
-                  <td className="min-w-44 whitespace-pre-wrap p-2">
-                    {s.item.expected_result ||
-                      (expectations(s).length ? "" : "－")}
-                    {expectations(s).map((v) => (
-                      <div key={v.id}>● {v.name}</div>
-                    ))}
-                  </td>
-                  <td className="p-2">
-                    <CaseStatusSelect
-                      label={`${s.item.code} ${s.pattern?.code ?? ""} 状態`}
-                      value={c.status}
-                      disabled={!permissions.execute || busy}
-                      onChange={(status) =>
-                        void run(() =>
-                          updateCase(projectId, designId, c.id, {
-                            version: c.version,
-                            status,
-                            actual_result: c.actual_result,
-                            notes: c.notes,
-                          }),
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="whitespace-nowrap p-2">
-                    {!c.active || c.stale ? (
-                      <button
-                        type="button"
-                        className="rounded border px-2 py-1 text-xs"
-                        title={
-                          !c.active
-                            ? "生成元が削除・無効になっています"
-                            : "元のテスト設計が変更されています。再確認してください"
-                        }
-                        onClick={() => {
-                          void openReview(c);
-                        }}
+      {!query.isPending && !query.error && (
+        <div className="overflow-auto rounded-md border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted">
+                <th className="p-2 text-left">項目番号</th>
+                {itemColumns.slice(1, 7).map(([key, label]) => (
+                  <th key={key} className="min-w-44 p-2 text-left">
+                    {label}
+                  </th>
+                ))}
+                <th className="p-2 text-left">パターン</th>
+                <th className="min-w-44 p-2 text-left">期待値</th>
+                <th className="p-2 text-left">状態</th>
+                <th className="p-2 text-left">影響</th>
+                <th className="p-2">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.slice(page * 50, (page + 1) * 50).map((c) => {
+                const s = sourceOf(c);
+                return (
+                  <tr
+                    key={c.id}
+                    className={`border-b align-top ${caseStatusByKey[c.status].rowClassName}`}
+                  >
+                    <td className="whitespace-nowrap p-2">{s.item.code}</td>
+                    {itemColumns.slice(1, 7).map(([key]) => (
+                      <td
+                        key={key}
+                        className="min-w-44 whitespace-pre-wrap p-2"
                       >
-                        {c.stale ? "⚠ 影響あり" : "生成元なし"}
-                      </button>
-                    ) : (
-                      "－"
-                    )}
-                  </td>
-                  <td className="p-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelected(c)}
-                    >
-                      詳細・結果
-                    </Button>
-                    <div className="mt-1 flex flex-wrap gap-1 text-xs">
-                      {c.actual_result?.trim() && (
-                        <span
-                          className="rounded bg-muted px-1"
-                          title="実行結果が登録されています"
+                        {s.item[key] || "－"}
+                      </td>
+                    ))}
+                    <td className="p-2">
+                      <PatternDetails source={s} />
+                    </td>
+                    <td className="min-w-44 whitespace-pre-wrap p-2">
+                      {s.item.expected_result ||
+                        (expectations(s).length ? "" : "－")}
+                      {expectations(s).map((v) => (
+                        <div key={v.id}>● {v.name}</div>
+                      ))}
+                    </td>
+                    <td className="p-2">
+                      <CaseStatusSelect
+                        label={`${s.item.code} ${s.pattern?.code ?? ""} 状態`}
+                        value={c.status}
+                        disabled={!permissions.execute || busy}
+                        onChange={(status) =>
+                          void run(() =>
+                            updateCase(projectId, designId, c.id, {
+                              version: c.version,
+                              status,
+                              actual_result: c.actual_result,
+                              notes: c.notes,
+                            }),
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="whitespace-nowrap p-2">
+                      {!c.active || c.stale ? (
+                        <button
+                          type="button"
+                          className={
+                            c.stale
+                              ? "inline-flex items-center gap-1 rounded border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-2 py-1 text-xs text-[var(--status-warning-fg)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              : "rounded border px-2 py-1 text-xs hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                          }
+                          title={
+                            !c.active
+                              ? "生成元が削除・無効になっています"
+                              : "元のテスト設計が変更されています。再確認してください"
+                          }
+                          onClick={() => {
+                            void openReview(c);
+                          }}
                         >
-                          結果あり
-                        </span>
+                          {c.stale ? (
+                            <>
+                              <TriangleAlertIcon
+                                className="size-3"
+                                aria-hidden="true"
+                              />
+                              影響あり
+                            </>
+                          ) : (
+                            "生成元なし"
+                          )}
+                        </button>
+                      ) : (
+                        "－"
                       )}
-                      {c.notes?.trim() && (
-                        <span
-                          className="rounded bg-muted px-1"
-                          title="備考が登録されています"
-                        >
-                          備考あり
-                        </span>
-                      )}
-                      {(issueCountByCase.get(c.id) ?? 0) > 0 && (
-                        <span className="rounded bg-muted px-1">
-                          Issue {issueCountByCase.get(c.id)}件
-                        </span>
-                      )}
-                      {issueLinks.data !== undefined &&
-                        c.status === "failed" &&
-                        !issueCountByCase.has(c.id) && (
-                          <span className="rounded bg-amber-100 px-1 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                            Issue未登録
+                    </td>
+                    <td className="p-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelected(c)}
+                      >
+                        詳細・結果
+                      </Button>
+                      <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                        {c.actual_result?.trim() && (
+                          <span
+                            className="rounded bg-muted px-1"
+                            title="実行結果が登録されています"
+                          >
+                            結果あり
                           </span>
                         )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      {!query.isPending && !filtered.length && (
+                        {c.notes?.trim() && (
+                          <span
+                            className="rounded bg-muted px-1"
+                            title="備考が登録されています"
+                          >
+                            備考あり
+                          </span>
+                        )}
+                        {(issueCountByCase.get(c.id) ?? 0) > 0 && (
+                          <span className="rounded bg-muted px-1">
+                            Issue {issueCountByCase.get(c.id)}件
+                          </span>
+                        )}
+                        {issueLinks.data !== undefined &&
+                          c.status === "failed" &&
+                          !issueCountByCase.has(c.id) && (
+                            <span className="rounded border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-1 text-[var(--status-warning-fg)]">
+                              Issue未登録
+                            </span>
+                          )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {!query.isPending && !query.error && !filtered.length && (
         <p className="text-sm text-muted-foreground">
-          該当するケースはありません。テスト項目を保存すると自動で生成されます。パターン表の紐付けは任意です。
+          {cases.length
+            ? "条件に一致するテストケースはありません。絞り込み条件を確認してください。"
+            : "テストケースはまだありません。テスト項目を保存すると自動で生成されます。パターン表の紐付けは任意です。"}
         </p>
       )}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page === 0}
-          onClick={() => setPage(page - 1)}
-        >
-          前へ
-        </Button>
-        <span>
-          {page + 1} / {Math.max(1, Math.ceil(filtered.length / 50))}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={(page + 1) * 50 >= filtered.length}
-          onClick={() => setPage(page + 1)}
-        >
-          次へ
-        </Button>
-      </div>
+      {!query.isPending && !query.error && filtered.length > 0 && (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage(page - 1)}
+          >
+            前へ
+          </Button>
+          <span>
+            {page + 1} / {Math.max(1, Math.ceil(filtered.length / 50))}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={(page + 1) * 50 >= filtered.length}
+            onClick={() => setPage(page + 1)}
+          >
+            次へ
+          </Button>
+        </div>
+      )}
       <Dialog
         open={!!selected}
         onOpenChange={(open) => {
