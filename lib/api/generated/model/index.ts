@@ -24,6 +24,7 @@ export * from "./changeLogSnapshotValueSnapshot";
 export * from "./changeLogUpdatedFieldsValue";
 export * from "./changeLogUpdatedFieldsValueSnapshot";
 export * from "./changeLogUserRead";
+export * from "./commentMentionOccurrence";
 export * from "./currentProjectRoleRead";
 export * from "./currentUserRead";
 export * from "./deleteTestDesignCommentProjectsProjectIdTestDesignsDesignIdCommentsCommentIdDeleteParams";

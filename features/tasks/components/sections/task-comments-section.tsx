@@ -1,5 +1,6 @@
 "use client";
 
+import { CommentContent } from "@/components/shared/comments/comment-content";
 import { useState } from "react";
 
 import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
@@ -94,6 +95,7 @@ export function TaskCommentsSection({
       >
         {canComment ? (
           <TaskCommentForm
+            projectId={projectId}
             key={task.status ?? TASK_COMMENT_STATUS_UNCHANGED}
             initialValues={{
               body: "",
@@ -135,8 +137,10 @@ export function TaskCommentsSection({
             <>
               <CommentInlineHeader label="コメント編集" onClose={onClose} />
               <TaskCommentForm
+                projectId={projectId}
                 initialValues={{
                   body: comment.body,
+                  mentions: comment.mentions,
                   status: TASK_COMMENT_STATUS_UNCHANGED,
                 }}
                 submitLabel="コメント更新"
@@ -154,6 +158,7 @@ export function TaskCommentsSection({
             <>
               <CommentInlineHeader label="返信" onClose={onClose} />
               <TaskCommentForm
+                projectId={projectId}
                 submitLabel="返信追加"
                 isPending={isCreatePending}
                 error={createError}
@@ -216,7 +221,9 @@ function TaskCommentBody({
           <span className="text-xs text-muted-foreground">解決済み</span>
         ) : null}
       </div>
-      <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
+      <p className="whitespace-pre-wrap text-sm">
+        <CommentContent body={comment.body} mentions={comment.mentions} />
+      </p>
       {canComment ? (
         <CommentThreadActions
           comment={comment}

@@ -4,12 +4,15 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 import type { TestDesignCommentCreateTargetType } from "./testDesignCommentCreateTargetType";
 
 /**
  * 対象を指定した設計コメント投稿。
  */
 export interface TestDesignCommentCreate {
+  /** @maxItems 100 */
+  mentions?: CommentMentionOccurrence[];
   target_type: TestDesignCommentCreateTargetType;
   target_id?: string | null;
   field?: string | null;

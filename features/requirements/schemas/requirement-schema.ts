@@ -1,3 +1,4 @@
+import { commentMentionsSchema } from "@/lib/comments/mentions";
 import { z } from "zod";
 
 import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
@@ -40,6 +41,7 @@ export const requirementSchema = z.object({
 });
 
 export const requirementCommentSchema = z.object({
+  mentions: commentMentionsSchema.optional(),
   comment: z.string().min(1, VALIDATION_MESSAGES.required("コメント")),
 });
 
@@ -64,6 +66,7 @@ export const requirementRelationSchema = z.object({
 });
 
 export const requirementTargetCommentSchema = z.object({
+  mentions: commentMentionsSchema.optional(),
   body: z.string().min(1, VALIDATION_MESSAGES.required("コメント")),
   targetAnchor: z.string(),
   reason: z.string(),

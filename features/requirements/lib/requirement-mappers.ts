@@ -135,6 +135,7 @@ export const toRequirementCommentCreate = (
 ): RequirementCommentCreate => {
   return {
     comment: values.comment,
+    mentions: values.mentions ?? [],
   };
 };
 
@@ -183,6 +184,7 @@ export const toRequirementTargetCommentCreate = (
     target_anchor: toRequirementTargetAnchor(values.targetAnchor),
     parent_comment_id: parentCommentId ?? null,
     body: values.body,
+    mentions: values.mentions ?? [],
   };
 };
 
@@ -215,6 +217,7 @@ export const toRequirementTargetCommentUpdate = (
   return {
     version,
     body: values.body,
+    mentions: values.mentions ?? [],
     reason: values.reason || null,
   };
 };

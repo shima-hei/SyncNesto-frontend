@@ -4,10 +4,13 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 
 /**
  * 要件コメント作成リクエストで受け取るschema。
  */
 export interface RequirementCommentCreate {
+  /** @maxItems 100 */
+  mentions?: CommentMentionOccurrence[];
   comment: string;
 }

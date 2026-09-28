@@ -4,11 +4,14 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 
 /**
  * コメント本文または状態の競合付き更新。
  */
 export interface TestDesignCommentUpdate {
+  /** @maxItems 100 */
+  mentions?: CommentMentionOccurrence[];
   /** @minimum 1 */
   version: number;
   body?: string | null;

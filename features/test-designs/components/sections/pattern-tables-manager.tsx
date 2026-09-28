@@ -32,6 +32,7 @@ export function PatternTablesManager({
   onClose,
   onItem,
   onCommentTarget,
+  onOpenComments,
 }: {
   design: Design;
   change: (f: (d: Design) => void) => void;
@@ -43,6 +44,7 @@ export function PatternTablesManager({
   onClose: () => void;
   onItem: (id: string) => void;
   onCommentTarget?: (target: DesignCommentTarget, label: string) => void;
+  onOpenComments?: () => void;
 }) {
   const { confirm, confirmDialogProps } = useConfirmAction();
   const table = design.pattern_tables?.find((t) => t.id === activeId);
@@ -57,7 +59,7 @@ export function PatternTablesManager({
             </Button>
             <Button
               variant="outline"
-              onClick={() =>
+              onClick={() => {
                 onCommentTarget?.(
                   {
                     target_type: "pattern_table",
@@ -65,8 +67,9 @@ export function PatternTablesManager({
                     field: "name",
                   },
                   `パターン表 · ${table.name}`,
-                )
-              }
+                );
+                onOpenComments?.();
+              }}
             >
               この表のコメント
             </Button>
@@ -138,6 +141,7 @@ export function PatternTablesManager({
             onUndo={onUndo}
             onRedo={onRedo}
             onCommentTarget={onCommentTarget}
+            onOpenComments={onOpenComments}
           />
         </section>
         <ConfirmDialog {...confirmDialogProps} />

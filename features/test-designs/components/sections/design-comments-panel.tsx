@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { CommentContent } from "@/components/shared/comments/comment-content";
+import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
+import type { Mention } from "@/lib/comments/mentions";
 import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
 import { CommentThreadList } from "@/components/shared/comments/comment-thread-list";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
@@ -69,28 +72,34 @@ function targetDisplayLabel(
 }
 
 function CommentComposer({
+  projectId,
+  initialMentions = [],
   initial = "",
   label,
   onSubmit,
   onClose,
 }: {
+  projectId: number;
+  initialMentions?: Mention[];
   initial?: string;
   label: string;
-  onSubmit: (body: string) => Promise<boolean>;
+  onSubmit: (body: string, mentions: Mention[]) => Promise<boolean>;
   onClose?: () => void;
 }) {
   const [body, setBody] = useState(initial);
+  const [mentions, setMentions] = useState(initialMentions);
   const [busy, setBusy] = useState(false);
   return (
     <form
-      className="space-y-2"
+      className="flex flex-col gap-2"
       onSubmit={async (event) => {
         event.preventDefault();
         if (!body.trim()) return;
         setBusy(true);
         try {
-          if (await onSubmit(body.trim())) {
+          if (await onSubmit(body, mentions)) {
             setBody("");
+            setMentions([]);
             onClose?.();
           }
         } finally {
@@ -99,11 +108,17 @@ function CommentComposer({
       }}
     >
       <label className="block text-sm font-medium">{label}</label>
-      <textarea
+      <MentionTextarea
+        projectId={projectId}
+        permission="test_plan:read"
+        mentions={mentions}
         className="min-h-20 w-full rounded-md border p-2 text-sm"
         maxLength={20000}
         value={body}
-        onChange={(event) => setBody(event.target.value)}
+        onChange={(body, mentions) => {
+          setBody(body);
+          setMentions(mentions);
+        }}
       />
       <div className="flex gap-2">
         <Button size="sm" type="submit" disabled={busy || !body.trim()}>
@@ -264,11 +279,16 @@ export function DesignCommentsPanel({
         </p>
       ) : canComment ? (
         <CommentComposer
+          projectId={projectId}
           key={targetKey(currentTarget)}
           label="選択した対象にコメント"
-          onSubmit={(body) =>
+          onSubmit={(body, mentions) =>
             mutate(() =>
-              createComment(projectId, designId, { ...currentTarget, body }),
+              createComment(projectId, designId, {
+                ...currentTarget,
+                body,
+                mentions,
+              }),
             )
           }
         />
@@ -311,7 +331,9 @@ export function DesignCommentsPanel({
                   ? "対象に変更あり"
                   : "現在の対象"}
             </button>
-            <p className="whitespace-pre-wrap break-words">{comment.body}</p>
+            <p className="whitespace-pre-wrap break-words">
+              <CommentContent body={comment.body} mentions={comment.mentions} />
+            </p>
             <CommentHistory
               projectId={projectId}
               designId={designId}
@@ -363,14 +385,17 @@ export function DesignCommentsPanel({
         )}
         renderEditForm={({ comment, onClose }) => (
           <CommentComposer
+            projectId={projectId}
             initial={comment.body}
+            initialMentions={comment.mentions}
             label="コメントを編集"
             onClose={onClose}
-            onSubmit={(body) =>
+            onSubmit={(body, mentions) =>
               mutate(() =>
                 updateComment(projectId, designId, comment.id, {
                   version: comment.version,
                   body,
+                  mentions,
                 }),
               )
             }
@@ -378,9 +403,10 @@ export function DesignCommentsPanel({
         )}
         renderReplyForm={({ comment, onClose }) => (
           <CommentComposer
+            projectId={projectId}
             label="返信"
             onClose={onClose}
-            onSubmit={(body) =>
+            onSubmit={(body, mentions) =>
               mutate(() =>
                 createComment(projectId, designId, {
                   target_type:
@@ -389,6 +415,7 @@ export function DesignCommentsPanel({
                   field: comment.field,
                   parent_comment_id: comment.id,
                   body,
+                  mentions,
                 }),
               )
             }

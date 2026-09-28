@@ -5,11 +5,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ChangeLogUserRead } from "./changeLogUserRead";
+import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 
 /**
  * タスクコメント読み取り時に返すschema。
  */
 export interface TaskCommentRead {
+  /** @maxItems 100 */
+  mentions?: CommentMentionOccurrence[];
   id: number;
   task_id: number;
   parent_comment_id?: number | null;

@@ -12,4 +12,6 @@ export type ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams = {
    * @maximum 100
    */
   limit?: number;
+  mention_permission?:
+    "requirement:read" | "task:read" | "test_plan:read" | null;
 };

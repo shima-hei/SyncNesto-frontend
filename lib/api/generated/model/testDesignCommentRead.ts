@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 import type { TestDesignCommentReadTargetSnapshot } from "./testDesignCommentReadTargetSnapshot";
 import type { TestDesignCommentReadTargetStatus } from "./testDesignCommentReadTargetStatus";
 
@@ -11,6 +12,8 @@ import type { TestDesignCommentReadTargetStatus } from "./testDesignCommentReadT
  * 対象状態を含むコメント表示情報。
  */
 export interface TestDesignCommentRead {
+  /** @maxItems 100 */
+  mentions?: CommentMentionOccurrence[];
   id: number;
   design_id: number;
   target_type: string;

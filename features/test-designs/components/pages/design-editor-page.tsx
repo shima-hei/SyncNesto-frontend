@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -90,12 +90,20 @@ function Editor({ initial }: { initial: Design }) {
     params.get("table"),
   );
   const [tableDialog, setTableDialog] = useState(false);
+  const commentsRef = useRef<HTMLDivElement>(null);
   const expandedCount = [...caseCounts(design).values()].reduce(
     (n, count) => n + count,
     0,
   );
   const openTable = (id: string) => {
     setActiveTable(id);
+    const table = design.pattern_tables?.find((value) => value.id === id);
+    setCommentTarget({
+      target_type: "pattern_table",
+      target_id: id,
+      field: "name",
+    });
+    setCommentTargetLabel(`パターン表 · ${table?.name ?? ""}`);
     if (sheet === "items") setTableDialog(true);
   };
   const manager = (
@@ -122,7 +130,78 @@ function Editor({ initial }: { initial: Design }) {
         setCommentTarget(target);
         setCommentTargetLabel(label);
       }}
+      onOpenComments={() => {
+        requestAnimationFrame(() =>
+          commentsRef.current?.scrollIntoView({ block: "start" }),
+        );
+      }}
     />
+  );
+  const commentsPanel = (
+    <div ref={commentsRef} className="min-w-0 scroll-mt-4">
+      <DesignCommentsPanel
+        projectId={design.project_id}
+        designId={design.id}
+        target={commentTarget}
+        targetLabel={commentTargetLabel}
+        disabled={state.dirty || state.saving}
+        canComment={permissions.edit}
+        customFieldLabels={Object.fromEntries(
+          design.columns.map((column) => [column.key, column.label]),
+        )}
+        itemCodes={Object.fromEntries(
+          design.items.map((item) => [item.id, item.code]),
+        )}
+        onSelectTarget={(target, label) => {
+          if (target.target_type === "test_item" && target.target_id) {
+            if (design.items.some((item) => item.id === target.target_id)) {
+              setActiveItemId(target.target_id);
+              const columnKey = target.field ?? "code";
+              if (
+                gridData(design, "items").columns.some(
+                  (column) => column.key === columnKey,
+                )
+              ) {
+                setSelectedItem(target.target_id);
+                setFocusColumnKey(columnKey);
+                setFocusRequest((value) => value + 1);
+              }
+            } else {
+              setActiveItemId("");
+            }
+            setTableDialog(false);
+            setSheet("items");
+          } else if (target.target_type !== "design") {
+            setFocusColumnKey(undefined);
+            const factor = design.factors.find(
+              (value) => value.id === target.target_id,
+            );
+            const tableId =
+              target.target_type === "pattern_table"
+                ? target.target_id
+                : target.target_type === "factor_level"
+                  ? design.factors.find(
+                      (value) =>
+                        value.id ===
+                        design.levels.find(
+                          (level) => level.id === target.target_id,
+                        )?.factor_id,
+                    )?.table_id
+                  : (factor?.table_id ??
+                    design.patterns.find(
+                      (value) => value.id === target.target_id,
+                    )?.table_id ??
+                    design.expected_values?.find(
+                      (value) => value.id === target.target_id,
+                    )?.table_id);
+            setActiveTable(tableId ?? null);
+            if (!tableDialog) setSheet("patterns");
+          }
+          setCommentTarget(target);
+          setCommentTargetLabel(label);
+        }}
+      />
+    </div>
   );
   return (
     <div
@@ -496,69 +575,7 @@ function Editor({ initial }: { initial: Design }) {
                 }
               />
             )}
-            <DesignCommentsPanel
-              projectId={design.project_id}
-              designId={design.id}
-              target={commentTarget}
-              targetLabel={commentTargetLabel}
-              disabled={state.dirty || state.saving}
-              canComment={permissions.edit}
-              customFieldLabels={Object.fromEntries(
-                design.columns.map((column) => [column.key, column.label]),
-              )}
-              itemCodes={Object.fromEntries(
-                design.items.map((item) => [item.id, item.code]),
-              )}
-              onSelectTarget={(target, label) => {
-                if (target.target_type === "test_item" && target.target_id) {
-                  if (
-                    design.items.some((item) => item.id === target.target_id)
-                  ) {
-                    setActiveItemId(target.target_id);
-                    const columnKey = target.field ?? "code";
-                    if (
-                      gridData(design, "items").columns.some(
-                        (column) => column.key === columnKey,
-                      )
-                    ) {
-                      setSelectedItem(target.target_id);
-                      setFocusColumnKey(columnKey);
-                      setFocusRequest((value) => value + 1);
-                    }
-                  } else {
-                    setActiveItemId("");
-                  }
-                  setSheet("items");
-                } else if (target.target_type !== "design") {
-                  setFocusColumnKey(undefined);
-                  const factor = design.factors.find(
-                    (value) => value.id === target.target_id,
-                  );
-                  const tableId =
-                    target.target_type === "pattern_table"
-                      ? target.target_id
-                      : target.target_type === "factor_level"
-                        ? design.factors.find(
-                            (value) =>
-                              value.id ===
-                              design.levels.find(
-                                (level) => level.id === target.target_id,
-                              )?.factor_id,
-                          )?.table_id
-                        : (factor?.table_id ??
-                          design.patterns.find(
-                            (value) => value.id === target.target_id,
-                          )?.table_id ??
-                          design.expected_values?.find(
-                            (value) => value.id === target.target_id,
-                          )?.table_id);
-                  setActiveTable(tableId ?? null);
-                  setSheet("patterns");
-                }
-                setCommentTarget(target);
-                setCommentTargetLabel(label);
-              }}
-            />
+            {!tableDialog && commentsPanel}
           </div>
         </section>
       )}
@@ -571,7 +588,18 @@ function Editor({ initial }: { initial: Design }) {
             </DialogDescription>
           </DialogHeader>
           {manager}
-          <Button onClick={() => setTableDialog(false)}>項目に戻る</Button>
+          {commentsPanel}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={readOnly || !state.dirty}
+              onClick={() => void state.save()}
+            >
+              保存
+            </Button>
+            <Button variant="outline" onClick={() => setTableDialog(false)}>
+              項目に戻る
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       <Dialog

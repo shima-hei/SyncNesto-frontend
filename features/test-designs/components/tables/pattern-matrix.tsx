@@ -28,6 +28,7 @@ export function PatternMatrix({
   onUndo,
   onRedo,
   onCommentTarget,
+  onOpenComments,
 }: {
   design: Design;
   change: (mutate: (d: Design) => void) => void;
@@ -35,8 +36,13 @@ export function PatternMatrix({
   onUndo: () => void;
   onRedo: () => void;
   onCommentTarget?: (target: DesignCommentTarget, label: string) => void;
+  onOpenComments?: () => void;
 }) {
-  const [selected, setSelected] = useState({ row: "", col: "" });
+  const [selected, setSelected] = useState({
+    row: "",
+    col: "",
+    hasCommentTarget: false,
+  });
   const { confirm, confirmDialogProps } = useConfirmAction();
   const rows = useMemo(() => matrixRows(design).slice(4), [design]);
   const factorId =
@@ -99,13 +105,30 @@ export function PatternMatrix({
         { target_type: "factor_level", target_id: level.id, field: "name" },
         `水準 · ${level.name}`,
       );
+    } else {
+      return false;
     }
+    return true;
   };
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <p className="text-sm text-muted-foreground">
         因子・水準は○（因子ごとに1つ）、期待値は●（複数選択可）で表示します。交点をクリックまたはSpaceで選択・解除できます。因子名・水準名・期待値はダブルクリックかF2で直接編集できます。
       </p>
+      {onOpenComments && (
+        <Button
+          className="self-start"
+          size="sm"
+          variant="outline"
+          disabled={!selected.hasCommentTarget}
+          onClick={() => {
+            selectCommentTarget(selected.row, selected.col);
+            onOpenComments();
+          }}
+        >
+          選択セルのコメント
+        </Button>
+      )}
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
@@ -238,8 +261,8 @@ export function PatternMatrix({
         onUndo={onUndo}
         onRedo={onRedo}
         onSelection={(row, col) => {
-          setSelected({ row, col });
-          selectCommentTarget(row, col);
+          const hasCommentTarget = selectCommentTarget(row, col);
+          setSelected({ row, col, hasCommentTarget });
         }}
         onToggle={(row, key) => {
           if (rows[row] && design.patterns.some((p) => p.id === key))

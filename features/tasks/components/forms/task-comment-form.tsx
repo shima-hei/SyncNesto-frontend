@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
@@ -18,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 
 import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
 import { taskCommentSchema } from "../../schemas/task-schema";
@@ -28,6 +28,7 @@ import type {
 } from "../../types/task-comment-form";
 
 type TaskCommentFormProps = {
+  projectId: number;
   initialValues?: TaskCommentFormValues;
   submitLabel?: string;
   resetOnSuccess?: boolean;
@@ -42,10 +43,12 @@ export const TASK_COMMENT_STATUS_UNCHANGED = "__unchanged";
 
 const defaultValues: TaskCommentFormValues = {
   body: "",
+  mentions: [],
   status: TASK_COMMENT_STATUS_UNCHANGED,
 };
 
 export function TaskCommentForm({
+  projectId,
   initialValues,
   submitLabel = "コメント追加",
   resetOnSuccess = true,
@@ -90,12 +93,16 @@ export function TaskCommentForm({
       <FieldGroup>
         <Field data-invalid={errors.body ? true : undefined}>
           <FieldLabel>コメント</FieldLabel>
-          <Textarea
+          <MentionTextarea
+            projectId={projectId}
+            permission="task:read"
+            mentions={values.mentions}
             value={values.body}
-            onChange={(event) => {
+            onChange={(body, mentions) => {
               setValues((current) => ({
                 ...current,
-                body: event.target.value,
+                body,
+                mentions,
               }));
               setErrors((current) => ({ ...current, body: undefined }));
             }}
