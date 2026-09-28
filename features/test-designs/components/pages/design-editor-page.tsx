@@ -35,7 +35,16 @@ import {
 } from "../../lib/sheets";
 import { DesignGrid } from "../tables/design-grid";
 import { CasesSection } from "../sections/cases-section";
-import { PatternTablesManager } from "../sections/pattern-tables-manager";
+import {
+  PatternTablesManager,
+  type PatternTab,
+} from "../sections/pattern-tables-manager";
+import { useDesignComments } from "../../hooks/use-design-comments";
+import {
+  commentTargetKey,
+  patternCommentIndex,
+  matrixCommentFocus,
+} from "../../lib/pattern-comments";
 import {
   DesignCommentsPanel,
   type DesignCommentTarget,
@@ -90,13 +99,34 @@ function Editor({ initial }: { initial: Design }) {
     params.get("table"),
   );
   const [tableDialog, setTableDialog] = useState(false);
+  const [patternTab, setPatternTab] = useState<PatternTab>("combinations");
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentFocus, setCommentFocus] = useState<{
+    target: DesignCommentTarget;
+    request: number;
+  } | null>(null);
+  const commentsQuery = useDesignComments(design.project_id, design.id);
+  const commentIndex = useMemo(() => patternCommentIndex(design), [design]);
+  const scopeTargets = useMemo(
+    () =>
+      new Set(
+        [...commentIndex.tables]
+          .filter(([, tableId]) => tableId === activeTable)
+          .map(([key]) => key),
+      ),
+    [commentIndex, activeTable],
+  );
   const commentsRef = useRef<HTMLDivElement>(null);
+  const commentOpener = useRef<HTMLElement | null>(null);
   const expandedCount = [...caseCounts(design).values()].reduce(
     (n, count) => n + count,
     0,
   );
-  const openTable = (id: string) => {
+  const openTable = (id: string, tab: PatternTab = "combinations") => {
     setActiveTable(id);
+    setPatternTab(tab);
+    setCommentsOpen(false);
+    setCommentFocus(null);
     const table = design.pattern_tables?.find((value) => value.id === id);
     setCommentTarget({
       target_type: "pattern_table",
@@ -106,37 +136,6 @@ function Editor({ initial }: { initial: Design }) {
     setCommentTargetLabel(`パターン表 · ${table?.name ?? ""}`);
     if (sheet === "items") setTableDialog(true);
   };
-  const manager = (
-    <PatternTablesManager
-      design={design}
-      change={change}
-      readOnly={readOnly}
-      onUndo={state.undo}
-      onRedo={state.redo}
-      activeId={activeTable}
-      onOpen={openTable}
-      onClose={() => {
-        setActiveTable(null);
-        setTableDialog(false);
-      }}
-      onItem={(id) => {
-        setSelectedItem(id);
-        setFocusColumnKey(undefined);
-        setActiveItemId(id);
-        setTableDialog(false);
-        setSheet("items");
-      }}
-      onCommentTarget={(target, label) => {
-        setCommentTarget(target);
-        setCommentTargetLabel(label);
-      }}
-      onOpenComments={() => {
-        requestAnimationFrame(() =>
-          commentsRef.current?.scrollIntoView({ block: "start" }),
-        );
-      }}
-    />
-  );
   const commentsPanel = (
     <div ref={commentsRef} className="min-w-0 scroll-mt-4">
       <DesignCommentsPanel
@@ -152,6 +151,25 @@ function Editor({ initial }: { initial: Design }) {
         itemCodes={Object.fromEntries(
           design.items.map((item) => [item.id, item.code]),
         )}
+        compact={sheet === "patterns" || tableDialog}
+        scopeTargets={
+          sheet === "patterns" || tableDialog ? scopeTargets : undefined
+        }
+        resolveTargetLabel={(target) => {
+          const label = commentIndex.labels.get(commentTargetKey(target));
+          if (label) return label;
+          if (target.target_type === "combination") {
+            const pattern = design.patterns.find(
+              (pattern) => pattern.id === target.target_id,
+            );
+            const name = target.field?.startsWith("level:")
+              ? commentIndex.factors.get(target.field.slice(6))?.name
+              : target.field?.startsWith("expected:")
+                ? commentIndex.expected.get(target.field.slice(9))?.name
+                : undefined;
+            if (pattern && name) return `${pattern.code} · ${name}`;
+          }
+        }}
         onSelectTarget={(target, label) => {
           if (target.target_type === "test_item" && target.target_id) {
             if (design.items.some((item) => item.id === target.target_id)) {
@@ -173,35 +191,88 @@ function Editor({ initial }: { initial: Design }) {
             setSheet("items");
           } else if (target.target_type !== "design") {
             setFocusColumnKey(undefined);
-            const factor = design.factors.find(
-              (value) => value.id === target.target_id,
+            const tableId = commentIndex.tables.get(
+              `${target.target_type}:${target.target_id ?? ""}`,
             );
-            const tableId =
-              target.target_type === "pattern_table"
-                ? target.target_id
-                : target.target_type === "factor_level"
-                  ? design.factors.find(
-                      (value) =>
-                        value.id ===
-                        design.levels.find(
-                          (level) => level.id === target.target_id,
-                        )?.factor_id,
-                    )?.table_id
-                  : (factor?.table_id ??
-                    design.patterns.find(
-                      (value) => value.id === target.target_id,
-                    )?.table_id ??
-                    design.expected_values?.find(
-                      (value) => value.id === target.target_id,
-                    )?.table_id);
-            setActiveTable(tableId ?? null);
-            if (!tableDialog) setSheet("patterns");
+            if (tableId) {
+              setActiveTable(tableId);
+              setPatternTab("combinations");
+              setCommentsOpen(true);
+              if (matrixCommentFocus(design, target))
+                setCommentFocus((previous) => ({
+                  target,
+                  request: (previous?.request ?? 0) + 1,
+                }));
+              if (!tableDialog) setSheet("patterns");
+            }
           }
           setCommentTarget(target);
           setCommentTargetLabel(label);
         }}
       />
     </div>
+  );
+  const manager = (
+    <PatternTablesManager
+      design={design}
+      change={change}
+      readOnly={readOnly}
+      onUndo={state.undo}
+      onRedo={state.redo}
+      activeId={activeTable}
+      onOpen={openTable}
+      onClose={() => {
+        setActiveTable(null);
+        setTableDialog(false);
+        setCommentsOpen(false);
+        setCommentFocus(null);
+      }}
+      onItem={(id) => {
+        setSelectedItem(id);
+        setFocusColumnKey(undefined);
+        setActiveItemId(id);
+        setTableDialog(false);
+        setSheet("items");
+      }}
+      onCommentTarget={(target, label) => {
+        setCommentTarget(target);
+        setCommentTargetLabel(label);
+      }}
+      onOpenComments={() => {
+        commentOpener.current =
+          document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+        setCommentsOpen(true);
+        requestAnimationFrame(() => {
+          const aside = commentsRef.current?.closest("aside");
+          aside?.scrollIntoView({ block: "nearest" });
+          aside
+            ?.querySelector<HTMLButtonElement>(
+              'button[aria-label="コメントパネルを閉じる"]',
+            )
+            ?.focus({ preventScroll: true });
+        });
+      }}
+      onCloseComments={() => {
+        setCommentsOpen(false);
+        requestAnimationFrame(() => {
+          if (commentOpener.current?.isConnected)
+            commentOpener.current.focus({ preventScroll: true });
+          else
+            commentsRef.current
+              ?.closest("aside")
+              ?.parentElement?.querySelector<HTMLElement>('[role="grid"]')
+              ?.focus({ preventScroll: true });
+        });
+      }}
+      commentsOpen={commentsOpen}
+      commentsPanel={commentsPanel}
+      comments={commentsQuery.data ?? []}
+      tab={patternTab}
+      onTabChange={setPatternTab}
+      commentFocus={commentFocus}
+    />
   );
   return (
     <div
@@ -364,12 +435,14 @@ function Editor({ initial }: { initial: Design }) {
               用途ごとにパターン表を作成・再利用できます。
             </p>
           )}
-          <a
-            href="#design-related-information"
-            className="text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            {sheet === "items" ? "関連要件・コメントへ" : "コメントへ"} ↓
-          </a>
+          {sheet === "items" && (
+            <a
+              href="#design-related-information"
+              className="text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              関連要件・コメントへ ↓
+            </a>
+          )}
         </div>
       )}
       {sheet === "cases" ? (
@@ -538,7 +611,7 @@ function Editor({ initial }: { initial: Design }) {
           }
         />
       )}
-      {sheet !== "cases" && (
+      {sheet === "items" && (
         <section
           id="design-related-information"
           className="min-w-0 scroll-mt-4"
@@ -588,7 +661,6 @@ function Editor({ initial }: { initial: Design }) {
             </DialogDescription>
           </DialogHeader>
           {manager}
-          {tableDialog && commentsPanel}
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={readOnly || !state.dirty}
