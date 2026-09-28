@@ -11,7 +11,7 @@ export function CommentContent({
     segment.mention ? (
       <span
         key={index}
-        className="rounded-sm bg-primary/10 text-primary"
+        className="box-decoration-clone rounded-sm bg-[var(--status-info-bg)] text-[var(--status-info-fg)] outline outline-1 -outline-offset-1 outline-[var(--status-info-border)]"
         data-mention-user={segment.mention.user_id}
       >
         {segment.text}
