@@ -40,11 +40,11 @@ export function RequirementDetailItemCard({
   return (
     <div
       className={cn(
-        "scroll-mt-24 rounded-md border bg-background p-2.5 shadow-sm",
+        "@container/detail-card min-w-0 scroll-mt-24 rounded-md border bg-background p-2.5",
         variant === "unit" &&
           "w-full border-l-4 border-l-primary/50 bg-muted/10 p-3",
         variant === "screen" &&
-          "w-full border-l-4 border-l-sky-400 bg-sky-50/40",
+          "w-full border-l-2 border-l-primary/40 bg-muted/20",
         variant === "item" && "min-w-[220px] max-w-full",
       )}
       data-requirement-comment-anchor={getRequirementCommentAnchorKey(
@@ -52,7 +52,7 @@ export function RequirementDetailItemCard({
       )}
     >
       <div className="flex flex-col gap-2">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2 @min-[40rem]/detail-card:flex-row @min-[40rem]/detail-card:items-start @min-[40rem]/detail-card:justify-between">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="break-words text-sm font-medium">
               {getRequirementDetailTitle(detail)}
@@ -62,7 +62,7 @@ export function RequirementDetailItemCard({
             </span>
           </div>
           {canUpdate || extraActions || onSelectCommentAnchor ? (
-            <div className="flex shrink-0 flex-wrap justify-end gap-1">
+            <div className="flex shrink-0 flex-wrap gap-1 @min-[40rem]/detail-card:justify-end">
               {onSelectCommentAnchor ? (
                 <CommentTargetButton
                   detail={detail}
@@ -79,7 +79,10 @@ export function RequirementDetailItemCard({
             </div>
           ) : null}
         </div>
-        <RequirementDetailSummary detail={detail} className="sm:grid-cols-3" />
+        <RequirementDetailSummary
+          detail={detail}
+          className="@min-[28rem]/detail-card:grid-cols-2"
+        />
         {children ? <div className="min-w-0">{children}</div> : null}
       </div>
     </div>

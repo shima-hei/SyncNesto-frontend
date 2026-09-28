@@ -3,6 +3,7 @@
 import { EditIcon, MessageSquarePlusIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { RequirementDetailRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
@@ -44,7 +45,7 @@ export function RequirementDetailListRow({
   return (
     <div
       className={cn(
-        "grid min-w-0 scroll-mt-24 gap-2 border-t px-2 py-2 first:border-t-0 md:grid-cols-[minmax(12rem,1.1fr)_minmax(0,2fr)_auto] md:items-center",
+        "@container/detail-row grid min-w-0 scroll-mt-24 gap-2 border-t px-2 py-2 first:border-t-0 @min-[40rem]/detail-group:grid-cols-[minmax(0,1fr)_auto] @min-[40rem]/detail-group:items-center",
         ROW_TONE_CLASSES[resolvedTone],
       )}
       data-requirement-comment-anchor={getRequirementCommentAnchorKey(
@@ -53,14 +54,9 @@ export function RequirementDetailListRow({
     >
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
-          <span
-            className={cn(
-              "shrink-0 rounded border px-1.5 py-0.5 text-[11px]",
-              BADGE_TONE_CLASSES[resolvedTone],
-            )}
-          >
+          <Badge variant="secondary" className="shrink-0">
             {getRequirementDetailTypeLabel(detail.detail_type)}
-          </span>
+          </Badge>
           <p className="min-w-0 truncate text-sm font-medium">
             {getRequirementDetailDisplayTitle(detail)}
           </p>
@@ -69,9 +65,12 @@ export function RequirementDetailListRow({
           {formatDateTime(detail.updated_at)}
         </p>
       </div>
-      <RequirementDetailSummary detail={detail} />
+      <RequirementDetailSummary
+        detail={detail}
+        className="@min-[28rem]/detail-row:grid-cols-2 @min-[40rem]/detail-group:col-span-2 @min-[40rem]/detail-group:row-start-2"
+      />
       {canUpdate || onSelectCommentAnchor ? (
-        <div className="flex shrink-0 flex-wrap gap-1 md:justify-end">
+        <div className="flex shrink-0 flex-wrap gap-1 @min-[40rem]/detail-group:col-start-2 @min-[40rem]/detail-group:row-start-1 @min-[40rem]/detail-group:justify-end">
           {onSelectCommentAnchor ? (
             <CommentTargetButton
               detail={detail}
@@ -106,12 +105,7 @@ export function RequirementDetailSummary({
   }
 
   return (
-    <dl
-      className={cn(
-        "grid min-w-0 gap-x-4 gap-y-1 text-xs sm:grid-cols-2",
-        className,
-      )}
-    >
+    <dl className={cn("grid min-w-0 gap-x-4 gap-y-1 text-xs", className)}>
       {entries.map((entry) => (
         <div key={entry.key} className="flex min-w-0 items-baseline gap-1.5">
           <dt className="shrink-0 text-muted-foreground">{entry.label}:</dt>
@@ -206,14 +200,7 @@ const getDetailRowTone = (
 
 const ROW_TONE_CLASSES: Record<RequirementDetailRowTone, string> = {
   default: "bg-background",
-  input: "bg-emerald-50/45",
-  display: "bg-cyan-50/50",
-  related: "bg-amber-50/40",
-};
-
-const BADGE_TONE_CLASSES: Record<RequirementDetailRowTone, string> = {
-  default: "border-border bg-muted/60 text-muted-foreground",
-  input: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  display: "border-cyan-200 bg-cyan-50 text-cyan-700",
-  related: "border-amber-200 bg-amber-50 text-amber-700",
+  input: "bg-muted/30",
+  display: "bg-muted/50",
+  related: "bg-muted/20",
 };

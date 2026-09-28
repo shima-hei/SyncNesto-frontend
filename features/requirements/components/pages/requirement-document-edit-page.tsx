@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { getRequirementDocumentFormValues } from "../../constants/requirement-form";
@@ -35,18 +36,15 @@ export function RequirementDocumentEditPage({
 
   if (error || !document) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         要件定義書を取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">要件定義書編集</h2>
-        <p className="text-sm text-muted-foreground">{document.title}</p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader title="要件定義書編集" description={document.title} />
       <RequirementDocumentForm
         key={document.version}
         projectId={projectId}
@@ -90,8 +88,8 @@ export function RequirementDocumentEditPage({
 
 function RequirementDocumentEditSkeleton() {
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <Skeleton className="h-5 w-48" />
+    <div className="flex flex-col gap-6">
+      <Skeleton className="h-8 w-48" />
       <Skeleton className="h-96 w-full max-w-3xl" />
     </div>
   );

@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { UserSummary } from "./userSummary";
 
 /**
  * 要件読み取り時に返すschema。
@@ -30,4 +31,5 @@ export interface RequirementRead {
   updated_by?: number | null;
   created_at: string;
   updated_at: string;
+  owner?: UserSummary | null;
 }

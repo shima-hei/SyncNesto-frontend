@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { RequirementForm } from "../forms/requirement-form";
@@ -51,30 +52,29 @@ export function RequirementCreatePage({
 
   if (duplicateSourceError) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         複製元の要件を取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">
-          {duplicateSource ? "要件複製" : "要件登録"}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {duplicateSource
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title={duplicateSource ? "要件複製" : "要件登録"}
+        description={
+          duplicateSource
             ? "複製元の内容をもとに、新しい要件を登録します。"
-            : "要件定義書に紐づく要件を登録します。"}
-        </p>
-      </div>
+            : "要件定義書に紐づく要件を登録します。"
+        }
+      />
       <RequirementForm
         key={duplicateSource?.id ?? "new"}
         projectId={projectId}
         documentId={documentId}
         mode="create"
         initialValues={initialValues}
+        initialOwner={duplicateSource?.owner ?? null}
         draftScope={createDraftScope(
           "requirements",
           "items",
@@ -92,8 +92,8 @@ export function RequirementCreatePage({
 
 function RequirementCreateSkeleton() {
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <Skeleton className="h-5 w-48" />
+    <div className="flex flex-col gap-6">
+      <Skeleton className="h-8 w-48" />
       <Skeleton className="h-96 w-full max-w-4xl" />
     </div>
   );

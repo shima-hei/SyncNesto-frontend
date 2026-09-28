@@ -242,8 +242,11 @@ export function RequirementDetailPage({
                   onSelectTargetAnchor={setSelectedTargetAnchor}
                 />
                 <RequirementInfo
-                  label="担当者ID"
-                  value={formatOptionalId(requirement.owner_id)}
+                  label="担当者"
+                  value={
+                    requirement.owner?.name ??
+                    (requirement.owner_id ? "担当者情報なし" : "未設定")
+                  }
                 />
                 <RequirementInfo
                   label="更新日時"
@@ -459,10 +462,6 @@ function RequirementDetailSkeleton() {
     </div>
   );
 }
-
-const formatOptionalId = (id?: number | null) => {
-  return id ? String(id) : "-";
-};
 
 const isRequirementTargetAnchor = (
   value: Record<string, unknown> | null | undefined,

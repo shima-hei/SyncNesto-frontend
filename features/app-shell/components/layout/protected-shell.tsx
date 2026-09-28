@@ -24,7 +24,7 @@ export function ProtectedShell({ children }: { children: ReactNode }) {
         本文へ移動
       </a>
       <AppSidebar variant="inset" />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <SiteHeader />
         <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">

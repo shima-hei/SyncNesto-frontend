@@ -119,12 +119,10 @@ export function RequirementDocumentRequirementsTab({
 
   const handleSelectRequirement = (requirement: RequirementRead) => {
     setCommentTargetMode("requirement");
-    setSelectedRequirement((current) => {
-      if (current?.id !== requirement.id) {
-        setSelectedTargetAnchor(null);
-      }
-      return requirement;
-    });
+    if (selectedRequirement?.id !== requirement.id) {
+      setSelectedTargetAnchor(null);
+    }
+    setSelectedRequirement(requirement);
   };
 
   const handleSelectRequirementAnchor = (
