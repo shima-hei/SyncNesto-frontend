@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import type { CellStyle, DesignLayout } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 import { textHeight } from "../../lib/row-height";
+import { getCellColors, getContrastingHexColor } from "../../lib/cell-colors";
 import {
   readClipboard,
   toHtml,
@@ -880,6 +881,7 @@ export function DesignGrid({
                   const selected =
                     r >= minRow && r <= maxRow && c >= minCol && c <= maxCol;
                   const s = layout.cells?.[styleKey(row.id, col.key)];
+                  const colors = getCellColors(s);
                   const isEditing =
                     editing?.point.row === r && editing.point.col === c;
                   return (
@@ -893,48 +895,57 @@ export function DesignGrid({
                         "relative shrink-0 overflow-hidden whitespace-pre-wrap border-b border-r px-2 py-1 text-sm",
                         row.sectionStart && "border-t-2 border-t-foreground/50",
                         row.spacer && "border-b-2 border-b-border/80",
-                        selected && "ring-1 ring-inset ring-primary",
+                        selected &&
+                          "ring-1 ring-inset ring-[var(--grid-selection-color)]",
                         active.row === r && active.col === c && "ring-2",
                       )}
-                      style={{
-                        width: width(col.key),
-                        ...(sheet === "matrix"
-                          ? ({
-                              position: c < 2 ? "sticky" : "absolute",
-                              left,
-                              height: "100%",
-                              zIndex: c < 2 ? 1 : 0,
-                            } as const)
-                          : {}),
-                        fontWeight: s?.bold
-                          ? 700
-                          : sheet === "matrix" && c >= 2 && r >= toggleStartRow
-                            ? 600
-                            : 400,
-                        fontSize:
-                          sheet === "matrix" && c >= 2 && r >= toggleStartRow
-                            ? 20
-                            : undefined,
-                        textAlign:
-                          s?.align ??
-                          (sheet === "matrix" && c >= 2 && r >= toggleStartRow
-                            ? "center"
-                            : undefined),
-                        backgroundColor:
-                          s?.background ??
-                          (selected
-                            ? "var(--accent)"
-                            : sheet === "matrix" && c < 2
-                              ? "var(--background)"
+                      style={
+                        {
+                          "--grid-selection-color": colors.background
+                            ? (getContrastingHexColor(colors.background) ??
+                              "var(--primary)")
+                            : "var(--primary)",
+                          width: width(col.key),
+                          ...(sheet === "matrix"
+                            ? ({
+                                position: c < 2 ? "sticky" : "absolute",
+                                left,
+                                height: "100%",
+                                zIndex: c < 2 ? 1 : 0,
+                              } as const)
+                            : {}),
+                          fontWeight: s?.bold
+                            ? 700
+                            : sheet === "matrix" &&
+                                c >= 2 &&
+                                r >= toggleStartRow
+                              ? 600
+                              : 400,
+                          fontSize:
+                            sheet === "matrix" && c >= 2 && r >= toggleStartRow
+                              ? 20
+                              : undefined,
+                          textAlign:
+                            s?.align ??
+                            (sheet === "matrix" && c >= 2 && r >= toggleStartRow
+                              ? "center"
                               : undefined),
-                        color:
-                          s?.color ??
-                          (r > 0 &&
-                          row.values[col.key] &&
-                          row.values[col.key] === rows[r - 1].values[col.key]
-                            ? "var(--muted-foreground)"
-                            : undefined),
-                      }}
+                          backgroundColor:
+                            colors.background ??
+                            (selected
+                              ? "var(--accent)"
+                              : sheet === "matrix" && c < 2
+                                ? "var(--background)"
+                                : undefined),
+                          color:
+                            colors.color ??
+                            (r > 0 &&
+                            row.values[col.key] &&
+                            row.values[col.key] === rows[r - 1].values[col.key]
+                              ? "var(--muted-foreground)"
+                              : undefined),
+                        } as React.CSSProperties
+                      }
                       onPointerDown={(e) => {
                         if (composing.current) {
                           e.preventDefault();

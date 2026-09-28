@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { ThemeProvider } from "next-themes";
 
 import { AuthProvider } from "@/features/auth/providers/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -21,11 +22,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>{children}</AuthProvider>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      storageKey="syncnesto-theme"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>{children}</AuthProvider>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

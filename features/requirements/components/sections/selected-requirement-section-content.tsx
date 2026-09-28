@@ -292,7 +292,7 @@ function ReviewableSectionContent({
       className={cn(
         "scroll-mt-24 rounded-md transition-colors",
         activeAnchorKey === anchorKey
-          ? "bg-yellow-100/70 ring-2 ring-yellow-300"
+          ? "bg-[var(--status-warning-bg)] ring-2 ring-[var(--status-warning-border)]"
           : "",
       )}
       data-requirement-review-anchor-key={anchorKey}

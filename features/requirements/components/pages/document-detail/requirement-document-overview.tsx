@@ -508,7 +508,7 @@ function ReviewablePreviewBlock({
       className={cn(
         "scroll-mt-24 rounded-md transition-colors",
         activeAnchorKey === anchorKey
-          ? "bg-yellow-100/70 ring-2 ring-yellow-300"
+          ? "bg-[var(--status-warning-bg)] ring-2 ring-[var(--status-warning-border)]"
           : "",
         className,
       )}
@@ -549,7 +549,7 @@ const renderHighlightedText = (value: string, highlightQuotes: string[]) => {
   return (
     <>
       {before}
-      <mark className="rounded-sm bg-yellow-200 px-0.5 text-foreground">
+      <mark className="rounded-sm bg-[var(--status-warning-bg)] px-0.5 text-[var(--status-warning-fg)]">
         {quote}
       </mark>
       {after}

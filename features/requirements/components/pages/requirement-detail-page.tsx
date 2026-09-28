@@ -487,7 +487,7 @@ const renderHighlightedValue = (
   return (
     <>
       {before}
-      <mark className="rounded-sm bg-yellow-200 px-0.5 text-foreground">
+      <mark className="rounded-sm bg-[var(--status-warning-bg)] px-0.5 text-[var(--status-warning-fg)]">
         {quote}
       </mark>
       {after}
