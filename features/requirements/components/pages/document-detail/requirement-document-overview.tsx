@@ -152,7 +152,7 @@ export function RequirementDocumentOverview({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="@container/document-overview flex min-w-0 flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>基本情報</CardTitle>
@@ -182,27 +182,27 @@ export function RequirementDocumentOverview({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] xl:items-start">
+      <div className="grid gap-4 @min-[64rem]/document-overview:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/document-overview:items-start @min-[80rem]/document-overview:grid-cols-[minmax(0,1fr)_24rem]">
         <Card>
           <CardHeader>
             <CardTitle>要件定義書プレビュー</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="@container/document-preview">
             {isSectionsLoading || isRequirementsLoading ? (
               <div className="flex flex-col gap-3">
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
               </div>
             ) : (
-              <article className="mx-auto flex max-w-4xl flex-col gap-8 rounded-lg border bg-background px-6 py-8 md:px-10">
+              <article className="mx-auto flex max-w-4xl flex-col gap-8 rounded-lg border bg-background px-4 py-6 @min-[40rem]/document-preview:px-8">
                 <header className="flex flex-col gap-4 border-b pb-6">
                   <div className="flex flex-col gap-2">
                     <p className="text-sm text-muted-foreground">
                       {document.document_code}
                     </p>
-                    <h1 className="text-2xl font-semibold tracking-normal">
+                    <h2 className="text-2xl font-semibold tracking-normal break-words">
                       {document.title}
-                    </h1>
+                    </h2>
                   </div>
                   <dl className="grid gap-x-6 gap-y-2 text-sm md:grid-cols-2">
                     <DocumentMeta
@@ -303,7 +303,7 @@ export function RequirementDocumentOverview({
           </CardContent>
         </Card>
 
-        <aside className="min-w-0 xl:sticky xl:top-20">
+        <aside className="min-w-0 @min-[64rem]/document-overview:sticky @min-[64rem]/document-overview:top-20">
           <RequirementTargetCommentsSection
             projectId={projectId}
             targetType="document"
@@ -314,8 +314,8 @@ export function RequirementDocumentOverview({
             onTargetAnchorClick={handleTargetAnchorClick}
             getTargetAnchorStatus={getTargetAnchorStatus}
             showTargetAnchorInput={false}
-            className="xl:max-h-[calc(100vh-6rem)] xl:overflow-hidden"
-            contentClassName="xl:min-h-0 xl:overflow-y-auto"
+            className="@min-[64rem]/document-overview:max-h-[calc(100dvh-6rem)] @min-[64rem]/document-overview:overflow-hidden"
+            contentClassName="@min-[64rem]/document-overview:min-h-0 @min-[64rem]/document-overview:overflow-y-auto @min-[64rem]/document-overview:overscroll-contain"
           />
         </aside>
       </div>

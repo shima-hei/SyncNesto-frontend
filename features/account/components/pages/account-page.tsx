@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
@@ -16,20 +17,18 @@ export function AccountPage() {
 
   if (!user) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         アカウント情報を取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">アカウント</h2>
-        <p className="text-sm text-muted-foreground">
-          自分のプロフィール情報を確認・更新します。
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="アカウント"
+        description="自分のプロフィール情報を確認・更新します。"
+      />
 
       <section className="flex flex-col gap-4">
         <AccountAvatarSection user={user} />
@@ -38,7 +37,7 @@ export function AccountPage() {
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h3 className="font-medium">プロフィール編集</h3>
+          <h2 className="text-base font-semibold">プロフィール編集</h2>
           <p className="text-sm text-muted-foreground">
             メールアドレス、状態、権限、部署、役職は管理者のみ変更できます。
           </p>
@@ -51,7 +50,7 @@ export function AccountPage() {
 
 function AccountPageSkeleton() {
   return (
-    <div className="flex flex-col gap-8 p-4 lg:p-6">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-4 w-72" />

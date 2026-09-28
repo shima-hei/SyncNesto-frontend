@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
@@ -48,18 +49,16 @@ export function UsersPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">ユーザー一覧</h2>
-        <p className="text-sm text-muted-foreground">
-          システムに登録されているユーザーを管理します。
-        </p>
-      </div>
-      <div>
-        <Button asChild>
-          <Link href="/system/users/new">ユーザー登録</Link>
-        </Button>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title="ユーザー一覧"
+        description="システムに登録されているユーザーを管理します。"
+        actions={
+          <Button asChild>
+            <Link href="/system/users/new">ユーザー登録</Link>
+          </Button>
+        }
+      />
       <SearchFilterBar
         searchValue={searchInput}
         searchPlaceholder="名前、メール、部署、役職で検索"

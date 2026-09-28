@@ -94,42 +94,49 @@ function SelectedRequirementSummaryContent({
           <span className="text-xs text-muted-foreground">
             {requirement.requirement_code}
           </span>
-          <h3 className="text-base font-semibold">{requirement.title}</h3>
+          <h3 className="text-base font-semibold break-words">
+            {requirement.title}
+          </h3>
         </div>
-        <div className="grid gap-3 text-sm">
-          <RequirementSummaryInfo
-            label="種別"
-            value={getRequirementTypeLabel(requirement.requirement_type)}
-          />
-          <RequirementSummaryInfo
-            label="優先度"
-            value={getRequirementPriorityLabel(requirement.priority)}
-          />
-          <RequirementSummaryInfo
-            label="ステータス"
-            value={getRequirementStatusLabel(requirement.status)}
-          />
-          <RequirementSummaryInfo
-            label="担当者ID"
-            value={requirement.owner_id ? String(requirement.owner_id) : "-"}
-          />
-          <RequirementSummaryInfo
-            label="説明"
-            value={requirement.description ?? "-"}
-          />
-          <RequirementSummaryInfo
-            label="受け入れ条件"
-            value={requirement.acceptance_criteria ?? "-"}
-          />
-          <RequirementSummaryInfo
-            label="更新日時"
-            value={formatDateTime(requirement.updated_at)}
-          />
-          <RequirementSummaryInfo
-            label="関連情報"
-            value={`実現内容 ${summary.details.length}件 / リンク ${summary.links.length}件 / コメント ${summary.comments.length}件 / レビュー ${summary.reviews.length}件`}
-          />
-        </div>
+        <details>
+          <summary className="w-fit cursor-pointer rounded-sm text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+            要件の概要を表示
+          </summary>
+          <div className="mt-3 grid gap-3 text-sm">
+            <RequirementSummaryInfo
+              label="種別"
+              value={getRequirementTypeLabel(requirement.requirement_type)}
+            />
+            <RequirementSummaryInfo
+              label="優先度"
+              value={getRequirementPriorityLabel(requirement.priority)}
+            />
+            <RequirementSummaryInfo
+              label="ステータス"
+              value={getRequirementStatusLabel(requirement.status)}
+            />
+            <RequirementSummaryInfo
+              label="担当者ID"
+              value={requirement.owner_id ? String(requirement.owner_id) : "-"}
+            />
+            <RequirementSummaryInfo
+              label="説明"
+              value={requirement.description ?? "-"}
+            />
+            <RequirementSummaryInfo
+              label="受け入れ条件"
+              value={requirement.acceptance_criteria ?? "-"}
+            />
+            <RequirementSummaryInfo
+              label="更新日時"
+              value={formatDateTime(requirement.updated_at)}
+            />
+            <RequirementSummaryInfo
+              label="関連情報"
+              value={`実現内容 ${summary.details.length}件 / リンク ${summary.links.length}件 / コメント ${summary.comments.length}件 / レビュー ${summary.reviews.length}件`}
+            />
+          </div>
+        </details>
         <Button asChild variant="outline">
           <Link
             href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`}
@@ -151,9 +158,11 @@ function RequirementSummaryInfo({
   value: string;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="whitespace-pre-wrap">{value}</span>
+      <span className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+        {value}
+      </span>
     </div>
   );
 }

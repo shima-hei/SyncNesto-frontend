@@ -10,6 +10,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,7 +96,7 @@ export function RequirementDetailPage({
 
   if (error || !summary) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         要件を取得できませんでした。
       </div>
     );
@@ -135,67 +136,78 @@ export function RequirementDetailPage({
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex min-w-0 flex-col gap-1">
-          <Button asChild variant="outline" className="mb-2 w-fit">
-            <Link
-              href={`/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`}
-            >
-              <ArrowLeftIcon data-icon="inline-start" />
-              要件タブへ戻る
-            </Link>
-          </Button>
-          <h2 className="truncate text-lg font-semibold">
-            {requirement.title}
-          </h2>
-          <p className="truncate text-sm text-muted-foreground">
-            {requirement.requirement_code}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canCreateRequirement(currentProjectRole) ? (
-            <Button asChild variant="outline">
-              <Link
-                href={`/projects/joined/${projectId}/requirements/${documentId}/items/new?duplicateFrom=${requirementId}`}
+    <div className="@container/requirement-detail flex min-w-0 flex-col gap-6">
+      <Button asChild variant="outline" size="sm" className="w-fit">
+        <Link
+          href={`/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`}
+        >
+          <ArrowLeftIcon data-icon="inline-start" />
+          要件タブへ戻る
+        </Link>
+      </Button>
+      <PageHeader
+        title={requirement.title}
+        description={requirement.requirement_code}
+        actions={
+          <>
+            {canCreateRequirement(currentProjectRole) ? (
+              <Button asChild variant="outline">
+                <Link
+                  href={`/projects/joined/${projectId}/requirements/${documentId}/items/new?duplicateFrom=${requirementId}`}
+                >
+                  <CopyIcon data-icon="inline-start" />
+                  複製
+                </Link>
+              </Button>
+            ) : null}
+            {canUpdateRequirement(currentProjectRole) ? (
+              <Button asChild variant="outline">
+                <Link
+                  href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`}
+                >
+                  <EditIcon data-icon="inline-start" />
+                  編集
+                </Link>
+              </Button>
+            ) : null}
+            {canDeleteRequirement(currentProjectRole) ? (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setDeleteDialogOpen(true)}
               >
-                <CopyIcon data-icon="inline-start" />
-                複製
-              </Link>
-            </Button>
-          ) : null}
-          {canUpdateRequirement(currentProjectRole) ? (
-            <Button asChild variant="outline">
-              <Link
-                href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`}
-              >
-                <EditIcon data-icon="inline-start" />
-                編集
-              </Link>
-            </Button>
-          ) : null}
-          {canDeleteRequirement(currentProjectRole) ? (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2Icon data-icon="inline-start" />
-              削除
-            </Button>
-          ) : null}
-        </div>
-      </div>
+                <Trash2Icon data-icon="inline-start" />
+                削除
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] 2xl:grid-cols-[minmax(0,1fr)_28rem]">
+      <div className="grid gap-4 @min-[64rem]/requirement-detail:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/requirement-detail:items-start @min-[80rem]/requirement-detail:grid-cols-[minmax(0,1fr)_24rem]">
         <Tabs defaultValue="overview" className="min-w-0 gap-4">
-          <TabsList className="flex h-auto w-full flex-wrap justify-start">
-            <TabsTrigger value="overview">概要</TabsTrigger>
-            <TabsTrigger value="details">実現内容</TabsTrigger>
-            <TabsTrigger value="relations">関連</TabsTrigger>
-            <TabsTrigger value="reviews">レビュー</TabsTrigger>
-            <TabsTrigger value="approvals">承認</TabsTrigger>
-            <TabsTrigger value="history">履歴</TabsTrigger>
+          <TabsList
+            variant="line"
+            className="w-full justify-start overflow-x-auto border-b"
+          >
+            <TabsTrigger className="flex-none px-4 py-2" value="overview">
+              概要
+            </TabsTrigger>
+            <TabsTrigger className="flex-none px-4 py-2" value="details">
+              実現内容
+            </TabsTrigger>
+            <TabsTrigger className="flex-none px-4 py-2" value="relations">
+              関連
+            </TabsTrigger>
+            <TabsTrigger className="flex-none px-4 py-2" value="reviews">
+              レビュー
+            </TabsTrigger>
+            <TabsTrigger className="flex-none px-4 py-2" value="approvals">
+              承認
+            </TabsTrigger>
+            <TabsTrigger className="flex-none px-4 py-2" value="history">
+              履歴
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="flex flex-col gap-4">
@@ -288,14 +300,14 @@ export function RequirementDetailPage({
           </TabsContent>
 
           <TabsContent value="relations">
-            <div className="grid gap-4 xl:grid-cols-2">
-              <div className="xl:col-span-2">
+            <div className="grid gap-4">
+              <div>
                 <RequirementTestItemsSection
                   projectId={projectId}
                   requirementId={requirementId}
                 />
               </div>
-              <div className="xl:col-span-2">
+              <div>
                 <RequirementRelatedTasksSection
                   projectId={projectId}
                   requirementId={requirementId}
@@ -321,7 +333,7 @@ export function RequirementDetailPage({
           </TabsContent>
 
           <TabsContent value="reviews">
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-4">
               <RequirementReviewsSection
                 projectId={projectId}
                 requirementId={requirementId}
@@ -355,7 +367,7 @@ export function RequirementDetailPage({
           </TabsContent>
         </Tabs>
 
-        <aside className="min-w-0 xl:sticky xl:top-6 xl:self-start">
+        <aside className="min-w-0 @min-[64rem]/requirement-detail:sticky @min-[64rem]/requirement-detail:top-20">
           <RequirementTargetCommentsSection
             projectId={projectId}
             targetType="requirement_item"
@@ -366,8 +378,8 @@ export function RequirementDetailPage({
             onTargetAnchorClick={handleTargetAnchorClick}
             getTargetAnchorStatus={getTargetAnchorStatus}
             showTargetAnchorInput={false}
-            className="xl:max-h-[calc(100vh-3rem)] xl:overflow-hidden"
-            contentClassName="xl:max-h-[calc(100vh-8.5rem)] xl:overflow-y-auto"
+            className="@min-[64rem]/requirement-detail:max-h-[calc(100dvh-6rem)] @min-[64rem]/requirement-detail:overflow-hidden"
+            contentClassName="@min-[64rem]/requirement-detail:min-h-0 @min-[64rem]/requirement-detail:overflow-y-auto @min-[64rem]/requirement-detail:overscroll-contain"
           />
         </aside>
       </div>
@@ -440,7 +452,7 @@ function RequirementInfo({
 
 function RequirementDetailSkeleton() {
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
+    <div className="flex flex-col gap-6">
       <Skeleton className="h-12 w-64" />
       <Skeleton className="h-48 w-full" />
       <Skeleton className="h-64 w-full" />

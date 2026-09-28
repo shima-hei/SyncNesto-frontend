@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/providers/auth-provider";
@@ -92,26 +93,26 @@ export function ProjectMembersPage({
 
   if (!project) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         プロジェクト情報を取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">メンバー管理</h2>
-        <p className="text-sm text-muted-foreground">
-          {canManageMembers
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="メンバー管理"
+        description={
+          canManageMembers
             ? `${project.name} のメンバーと権限を管理します。`
-            : `${project.name} のメンバーと権限を確認します。`}
-        </p>
-      </div>
+            : `${project.name} のメンバーと権限を確認します。`
+        }
+      />
 
       {canManageMembers ? (
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium">メンバー追加</h3>
+          <h2 className="text-base font-semibold">メンバー追加</h2>
           <ProjectMemberForm
             projectId={projectId}
             excludedUserIds={memberUserIds}
@@ -124,7 +125,7 @@ export function ProjectMembersPage({
       ) : null}
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-medium">メンバー一覧</h3>
+        <h2 className="text-base font-semibold">メンバー一覧</h2>
         <ProjectMembersTable
           members={members}
           users={memberUsers}
@@ -177,7 +178,7 @@ export function ProjectMembersPage({
 
 function ProjectMembersSkeleton() {
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-64" />

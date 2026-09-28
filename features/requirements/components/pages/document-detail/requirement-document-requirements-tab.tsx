@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RequirementRead } from "@/lib/api/generated/model";
 
@@ -44,6 +45,7 @@ export function RequirementDocumentRequirementsTab({
   canComment,
   canReview,
 }: RequirementDocumentRequirementsTabProps) {
+  const supportPanelId = useId();
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(
     null,
   );
@@ -185,93 +187,108 @@ export function RequirementDocumentRequirementsTab({
   };
 
   return (
-    <div className="grid gap-4 2xl:grid-cols-[minmax(240px,320px)_minmax(0,1fr)_minmax(280px,360px)] 2xl:items-start">
-      <div className="min-w-0 2xl:sticky 2xl:top-20">
-        <RequirementSectionsSection
-          projectId={projectId}
-          documentId={documentId}
-          canUpdate={canUpdate}
-          selectedSectionId={selectedSectionId}
-          onSelectSection={handleSelectSection}
-        />
-      </div>
+    <div className="@container/requirements flex min-w-0 flex-col gap-4">
+      <RequirementSectionsSection
+        projectId={projectId}
+        documentId={documentId}
+        canUpdate={canUpdate}
+        selectedSectionId={selectedSectionId}
+        onSelectSection={handleSelectSection}
+        layout="compact"
+      />
+      {reviewTarget ? (
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="w-fit @min-[64rem]/requirements:hidden"
+        >
+          <a href={`#${supportPanelId}`}>コメント・承認・履歴へ</a>
+        </Button>
+      ) : null}
 
-      <div className="flex min-w-0 flex-col gap-4">
-        <SelectedRequirementSectionContent
-          projectId={projectId}
-          documentId={documentId}
-          sectionId={selectedSectionId}
-          canUpdate={canUpdate}
-          targetAnchors={sectionTargetAnchors}
-          activeAnchorKey={activeAnchorKey}
-          onSelectTargetAnchor={(targetAnchor) => {
-            setCommentTargetMode("section");
-            setSelectedTargetAnchor(targetAnchor);
-          }}
-          onActivateSectionComments={handleActivateSectionComments}
-          onDeleted={() => {
-            setSelectedSectionId(null);
-            setSelectedRequirement(null);
-            setCommentTargetMode("section");
-            setSelectedTargetAnchor(null);
-          }}
-        />
-        <RequirementsListSection
-          projectId={projectId}
-          documentId={documentId}
-          sectionId={selectedSectionId}
-          canCreate={canCreate}
-          canUpdate={canUpdate}
-          selectedRequirementId={selectedRequirementId}
-          targetAnchors={requirementTargetAnchors}
-          activeAnchorKey={activeAnchorKey}
-          onSelectRequirement={handleSelectRequirement}
-          onSelectReviewAnchor={handleSelectRequirementAnchor}
-        />
-      </div>
+      <div className="grid min-w-0 gap-4 @min-[64rem]/requirements:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/requirements:items-start @min-[80rem]/requirements:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <SelectedRequirementSectionContent
+            projectId={projectId}
+            documentId={documentId}
+            sectionId={selectedSectionId}
+            canUpdate={canUpdate}
+            targetAnchors={sectionTargetAnchors}
+            activeAnchorKey={activeAnchorKey}
+            onSelectTargetAnchor={(targetAnchor) => {
+              setCommentTargetMode("section");
+              setSelectedTargetAnchor(targetAnchor);
+            }}
+            onActivateSectionComments={handleActivateSectionComments}
+            onDeleted={() => {
+              setSelectedSectionId(null);
+              setSelectedRequirement(null);
+              setCommentTargetMode("section");
+              setSelectedTargetAnchor(null);
+            }}
+          />
+          <RequirementsListSection
+            projectId={projectId}
+            documentId={documentId}
+            sectionId={selectedSectionId}
+            canCreate={canCreate}
+            canUpdate={canUpdate}
+            selectedRequirementId={selectedRequirementId}
+            targetAnchors={requirementTargetAnchors}
+            activeAnchorKey={activeAnchorKey}
+            onSelectRequirement={handleSelectRequirement}
+            onSelectReviewAnchor={handleSelectRequirementAnchor}
+          />
+        </div>
 
-      <div className="min-w-0 2xl:sticky 2xl:top-20">
-        {reviewTarget ? (
-          <div className="flex flex-col gap-4">
-            {commentTargetMode === "requirement" && selectedRequirementId ? (
-              <SelectedRequirementSummarySection
+        <aside
+          id={supportPanelId}
+          aria-label="選択対象のコメント・承認・履歴"
+          className="min-w-0 scroll-mt-20 @min-[64rem]/requirements:sticky @min-[64rem]/requirements:top-20 @min-[64rem]/requirements:max-h-[calc(100dvh-6rem)] @min-[64rem]/requirements:overflow-y-auto @min-[64rem]/requirements:overscroll-contain"
+        >
+          {reviewTarget ? (
+            <div className="flex flex-col gap-4">
+              {commentTargetMode === "requirement" && selectedRequirementId ? (
+                <SelectedRequirementSummarySection
+                  projectId={projectId}
+                  documentId={documentId}
+                  requirementId={selectedRequirementId}
+                />
+              ) : null}
+              <SelectedSectionSupportTabs
                 projectId={projectId}
                 documentId={documentId}
-                requirementId={selectedRequirementId}
+                commentTargetType={reviewTarget.targetType}
+                commentTargetId={reviewTarget.targetId}
+                commentTitle={reviewTarget.title}
+                targetLabel={reviewTarget.label}
+                selectedTargetAnchor={selectedTargetAnchor}
+                onTargetAnchorClick={handleTargetAnchorClick}
+                getTargetAnchorStatus={getTargetAnchorStatus}
+                approvalTargetType={reviewTarget.approvalTargetType}
+                approvalTargetId={reviewTarget.approvalTargetId}
+                approvalTitle={reviewTarget.approvalTitle}
+                historyTargetType={reviewTarget.historyTargetType}
+                historyTargetId={reviewTarget.historyTargetId}
+                historyTitle={reviewTarget.historyTitle}
+                canComment={canComment}
+                canReview={canReview}
               />
-            ) : null}
-            <SelectedSectionSupportTabs
-              projectId={projectId}
-              documentId={documentId}
-              commentTargetType={reviewTarget.targetType}
-              commentTargetId={reviewTarget.targetId}
-              commentTitle={reviewTarget.title}
-              targetLabel={reviewTarget.label}
-              selectedTargetAnchor={selectedTargetAnchor}
-              onTargetAnchorClick={handleTargetAnchorClick}
-              getTargetAnchorStatus={getTargetAnchorStatus}
-              approvalTargetType={reviewTarget.approvalTargetType}
-              approvalTargetId={reviewTarget.approvalTargetId}
-              approvalTitle={reviewTarget.approvalTitle}
-              historyTargetType={reviewTarget.historyTargetType}
-              historyTargetId={reviewTarget.historyTargetId}
-              historyTitle={reviewTarget.historyTitle}
-              canComment={canComment}
-              canReview={canReview}
-            />
-          </div>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>選択中の情報</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                セクションまたは要件を選択すると、関連情報を確認できます。
-              </p>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>選択中の情報</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  セクションまたは要件を選択すると、関連情報を確認できます。
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </aside>
       </div>
     </div>
   );

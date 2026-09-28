@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Trash2Icon, UsersIcon } from "lucide-react";
 
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,37 +38,36 @@ export function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
 
   if (error || !project) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         プロジェクト情報を取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="truncate text-sm text-muted-foreground">
-            {project.project_code}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href={`/projects/management/${project.id}/members`}>
-              <UsersIcon data-icon="inline-start" />
-              メンバー管理
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => setDeleteDialogOpen(true)}
-          >
-            <Trash2Icon data-icon="inline-start" />
-            削除
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={project.name}
+        description={project.project_code}
+        actions={
+          <>
+            <Button asChild variant="outline">
+              <Link href={`/projects/management/${project.id}/members`}>
+                <UsersIcon data-icon="inline-start" />
+                メンバー管理
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2Icon data-icon="inline-start" />
+              削除
+            </Button>
+          </>
+        }
+      />
 
       <ProjectForm
         key={project.version}
@@ -103,7 +103,7 @@ export function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
 
 function ProjectDetailSkeleton() {
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-4 w-24" />

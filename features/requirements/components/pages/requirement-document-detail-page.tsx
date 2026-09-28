@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { DownloadIcon, EditIcon, Trash2Icon } from "lucide-react";
 
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -72,70 +73,81 @@ export function RequirementDocumentDetailPage({
 
   if (error || !document) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         要件定義書を取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="truncate text-lg font-semibold">{document.title}</h2>
-          <p className="truncate text-sm text-muted-foreground">
-            {document.document_code}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isExportPending}
-            onClick={() => setExportDialogOpen(true)}
-          >
-            <DownloadIcon data-icon="inline-start" />
-            出力
-          </Button>
-          {canCreateRequirement(currentProjectRole) ? (
-            <Button asChild>
-              <Link
-                href={`/projects/joined/${projectId}/requirements/${documentId}/items/new`}
-              >
-                要件登録
-              </Link>
-            </Button>
-          ) : null}
-          {canUpdateRequirement(currentProjectRole) ? (
-            <Button asChild variant="outline">
-              <Link
-                href={`/projects/joined/${projectId}/requirements/${documentId}/edit`}
-              >
-                <EditIcon data-icon="inline-start" />
-                編集
-              </Link>
-            </Button>
-          ) : null}
-          {canDeleteRequirement(currentProjectRole) ? (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={document.title}
+        description={document.document_code}
+        actions={
+          <>
             <Button
               type="button"
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
+              variant="outline"
+              disabled={isExportPending}
+              onClick={() => setExportDialogOpen(true)}
             >
-              <Trash2Icon data-icon="inline-start" />
-              削除
+              <DownloadIcon data-icon="inline-start" />
+              出力
             </Button>
-          ) : null}
-        </div>
-      </div>
+            {canCreateRequirement(currentProjectRole) ? (
+              <Button asChild>
+                <Link
+                  href={`/projects/joined/${projectId}/requirements/${documentId}/items/new`}
+                >
+                  要件登録
+                </Link>
+              </Button>
+            ) : null}
+            {canUpdateRequirement(currentProjectRole) ? (
+              <Button asChild variant="outline">
+                <Link
+                  href={`/projects/joined/${projectId}/requirements/${documentId}/edit`}
+                >
+                  <EditIcon data-icon="inline-start" />
+                  編集
+                </Link>
+              </Button>
+            ) : null}
+            {canDeleteRequirement(currentProjectRole) ? (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2Icon data-icon="inline-start" />
+                削除
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start">
-          <TabsTrigger value="overview">概要</TabsTrigger>
-          <TabsTrigger value="requirements">要件</TabsTrigger>
-          <TabsTrigger value="issues">未決事項</TabsTrigger>
-          <TabsTrigger value="approvals">承認</TabsTrigger>
-          <TabsTrigger value="history">履歴</TabsTrigger>
+        <TabsList
+          variant="line"
+          className="w-full justify-start overflow-x-auto border-b"
+        >
+          <TabsTrigger className="flex-none px-4 py-2" value="overview">
+            概要
+          </TabsTrigger>
+          <TabsTrigger className="flex-none px-4 py-2" value="requirements">
+            要件
+          </TabsTrigger>
+          <TabsTrigger className="flex-none px-4 py-2" value="issues">
+            未決事項
+          </TabsTrigger>
+          <TabsTrigger className="flex-none px-4 py-2" value="approvals">
+            承認
+          </TabsTrigger>
+          <TabsTrigger className="flex-none px-4 py-2" value="history">
+            履歴
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
