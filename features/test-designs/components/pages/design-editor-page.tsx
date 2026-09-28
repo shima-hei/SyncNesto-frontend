@@ -588,7 +588,7 @@ function Editor({ initial }: { initial: Design }) {
             </DialogDescription>
           </DialogHeader>
           {manager}
-          {commentsPanel}
+          {tableDialog && commentsPanel}
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={readOnly || !state.dirty}
