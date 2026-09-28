@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
 import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
 import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
@@ -49,18 +51,23 @@ export function RequirementDocumentsTable({
               href={`/projects/joined/${projectId}/requirements/${document.id}`}
             >
               <TableCell>
-                <div className="flex min-w-64 flex-col">
+                <Link
+                  href={`/projects/joined/${projectId}/requirements/${document.id}`}
+                  className="flex min-w-64 flex-col rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
                   <span className="truncate font-medium">{document.title}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {document.document_code}
                   </span>
-                </div>
+                </Link>
               </TableCell>
               <TableCell>
                 <RequirementDocumentStatusBadge status={document.status} />
               </TableCell>
               <TableCell>{document.target_system_name ?? "-"}</TableCell>
-              <TableCell>{formatDateTime(document.updated_at)}</TableCell>
+              <TableCell className="tabular-nums">
+                {formatDateTime(document.updated_at)}
+              </TableCell>
             </ClickableTableRow>
           ))
         ) : (

@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { PlusIcon } from "lucide-react";
 
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -99,21 +101,24 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
-  const { tasks, total, isLoading, isFetching } = useTasks(projectId, {
-    page,
-    page_size: PAGE_SIZE,
-    q: q || undefined,
-    status: status === ALL_STATUSES ? undefined : status,
-    task_type: taskType === ALL_TYPES ? undefined : taskType,
-    priority: priority === ALL_PRIORITIES ? undefined : priority,
-    assignee_id: assigneeId ? Number(assigneeId) : undefined,
-    requirement_id: requirementId ? Number(requirementId) : undefined,
-    tag: tag.trim() || undefined,
-    start_date_from: startDateFrom || undefined,
-    due_date_to: dueDateTo || undefined,
-    overdue: overdue === ALL_OVERDUE ? undefined : overdue === "overdue",
-    sort,
-  });
+  const { tasks, total, isLoading, isFetching, error, refetch } = useTasks(
+    projectId,
+    {
+      page,
+      page_size: PAGE_SIZE,
+      q: q || undefined,
+      status: status === ALL_STATUSES ? undefined : status,
+      task_type: taskType === ALL_TYPES ? undefined : taskType,
+      priority: priority === ALL_PRIORITIES ? undefined : priority,
+      assignee_id: assigneeId ? Number(assigneeId) : undefined,
+      requirement_id: requirementId ? Number(requirementId) : undefined,
+      tag: tag.trim() || undefined,
+      start_date_from: startDateFrom || undefined,
+      due_date_to: dueDateTo || undefined,
+      overdue: overdue === ALL_OVERDUE ? undefined : overdue === "overdue",
+      sort,
+    },
+  );
   const { gantt, isLoading: isGanttLoading } = useGantt(projectId, {
     start_date: ganttStartDate || undefined,
     end_date: ganttEndDate || undefined,
@@ -176,24 +181,25 @@ export function TasksPage({ projectId }: TasksPageProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">タスク</h2>
-          <p className="text-sm text-muted-foreground">
-            プロジェクトのタスク、カンバン、ガントチャートを管理します。
-          </p>
-        </div>
-        {canCreate ? (
-          <Button type="button" onClick={() => setCreateDialogOpen(true)}>
-            <PlusIcon data-icon="inline-start" />
-            タスク新規作成
-          </Button>
-        ) : null}
-      </div>
+    <div className="flex min-w-0 flex-col gap-4">
+      <PageHeader
+        title="タスク"
+        description="プロジェクトのタスク、カンバン、ガントチャートを管理します。"
+        actions={
+          canCreate ? (
+            <Button type="button" onClick={() => setCreateDialogOpen(true)}>
+              <PlusIcon data-icon="inline-start" />
+              タスク新規作成
+            </Button>
+          ) : null
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex h-auto w-full flex-wrap justify-start">
+        <TabsList
+          variant="line"
+          className="flex h-auto w-full flex-wrap justify-start border-b"
+        >
           <TabsTrigger value="list">一覧</TabsTrigger>
           <TabsTrigger value="board">ボード</TabsTrigger>
           <TabsTrigger value="gantt">ガント</TabsTrigger>
@@ -269,25 +275,35 @@ export function TasksPage({ projectId }: TasksPageProps) {
               onClearSelection={() => setSelectedTaskIds([])}
             />
           ) : null}
-          <TasksTable
-            projectId={projectId}
-            tasks={tasks}
-            isLoading={isLoading}
-            canCreate={canCreate}
-            canUpdate={canUpdate}
-            selectedTaskIds={selectedTaskIds}
-            onToggleTask={handleToggleTask}
-            onToggleAllTasks={handleToggleAllTasks}
-          />
-          <DataPagination
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={total}
-            currentCount={tasks.length}
-            isFetching={isFetching}
-            isLoading={isLoading}
-            onPageChange={setPage}
-          />
+          {error && !isLoading ? (
+            <DataLoadError
+              resourceName="タスク"
+              isRetrying={isFetching}
+              onRetry={() => void refetch()}
+            />
+          ) : (
+            <>
+              <TasksTable
+                projectId={projectId}
+                tasks={tasks}
+                isLoading={isLoading}
+                canCreate={canCreate}
+                canUpdate={canUpdate}
+                selectedTaskIds={selectedTaskIds}
+                onToggleTask={handleToggleTask}
+                onToggleAllTasks={handleToggleAllTasks}
+              />
+              <DataPagination
+                page={page}
+                pageSize={PAGE_SIZE}
+                total={total}
+                currentCount={tasks.length}
+                isFetching={isFetching}
+                isLoading={isLoading}
+                onPageChange={setPage}
+              />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="board" className="flex flex-col gap-4">

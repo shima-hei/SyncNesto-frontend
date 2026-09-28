@@ -28,6 +28,7 @@ export type SelectableUser = Pick<
 >;
 
 type UserSelectProps = {
+  triggerId?: string;
   users: SelectableUser[];
   selectedUser: SelectableUser | null;
   open: boolean;
@@ -45,6 +46,7 @@ type UserSelectProps = {
 };
 
 export function UserSelect({
+  triggerId,
   users,
   selectedUser,
   open,
@@ -68,6 +70,7 @@ export function UserSelect({
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <Button
+          id={triggerId}
           type="button"
           variant="outline"
           aria-expanded={open}

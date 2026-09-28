@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import type { CellStyle, DesignLayout } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 import { textHeight } from "../../lib/row-height";
+import { getCellColors, getContrastingHexColor } from "../../lib/cell-colors";
 import {
   readClipboard,
   toHtml,
@@ -45,6 +46,7 @@ type Point = { row: number; col: number };
 type Props = {
   columnAddLabel?: string;
   focusRowId?: string;
+  focusColumnKey?: string;
   renderCell?: (row: GridRow, column: GridColumn) => ReactNode;
   toggleOnClick?: boolean;
   toggleStartRow?: number;
@@ -91,6 +93,7 @@ export function DesignGrid({
   toggleOnClick = false,
   toggleStartRow = 4,
   focusRowId,
+  focusColumnKey,
   columnAddLabel = "列を追加",
 }: Props) {
   const dataLength = dataRows.length;
@@ -108,7 +111,14 @@ export function DesignGrid({
       0,
       dataRows.findIndex((r) => r.id === focusRowId),
     ),
-    col: focusRowId || appendRow ? 2 : 0,
+    col: focusColumnKey
+      ? Math.max(
+          0,
+          columns.findIndex((column) => column.key === focusColumnKey),
+        )
+      : focusRowId || appendRow
+        ? 2
+        : 0,
   }));
   const [anchorState, setAnchor] = useState<Point>(initialPoint);
   const [activeState, setActive] = useState<Point>(initialPoint);
@@ -118,10 +128,7 @@ export function DesignGrid({
   });
   const anchor = clampPoint(anchorState);
   const active = clampPoint(activeState);
-  useEffect(() => {
-    if (container.current)
-      container.current.scrollTop = Math.max(0, initialPoint.row * 36 - 100);
-  }, [initialPoint]);
+  const focusedOnMount = useRef(false);
   const [editing, setEditing] = useState<{
     point: Point;
     value: string;
@@ -189,6 +196,23 @@ export function DesignGrid({
     rows.forEach((row) => result.push(result.at(-1)! + height(row)));
     return result;
   })();
+  useEffect(() => {
+    const node = container.current;
+    if (!node || focusedOnMount.current) return;
+    focusedOnMount.current = true;
+    node.scrollTop = Math.max(0, (offsets[initialPoint.row] ?? 0) - 100);
+    if (focusColumnKey) {
+      const left = columns
+        .slice(0, initialPoint.col)
+        .reduce(
+          (total, column) =>
+            total + (layout.widths?.[`${sheet}:${column.key}`] ?? 180),
+          48,
+        );
+      node.scrollLeft = Math.max(0, left - node.clientWidth / 3);
+      node.focus({ preventScroll: true });
+    }
+  }, [columns, focusColumnKey, initialPoint, layout.widths, offsets, sheet]);
   let first = 0;
   while (first < rows.length && offsets[first + 1] < scrollTop - 150) first++;
   let last = first;
@@ -857,6 +881,7 @@ export function DesignGrid({
                   const selected =
                     r >= minRow && r <= maxRow && c >= minCol && c <= maxCol;
                   const s = layout.cells?.[styleKey(row.id, col.key)];
+                  const colors = getCellColors(s);
                   const isEditing =
                     editing?.point.row === r && editing.point.col === c;
                   return (
@@ -870,48 +895,57 @@ export function DesignGrid({
                         "relative shrink-0 overflow-hidden whitespace-pre-wrap border-b border-r px-2 py-1 text-sm",
                         row.sectionStart && "border-t-2 border-t-foreground/50",
                         row.spacer && "border-b-2 border-b-border/80",
-                        selected && "ring-1 ring-inset ring-primary",
+                        selected &&
+                          "ring-1 ring-inset ring-[var(--grid-selection-color)]",
                         active.row === r && active.col === c && "ring-2",
                       )}
-                      style={{
-                        width: width(col.key),
-                        ...(sheet === "matrix"
-                          ? ({
-                              position: c < 2 ? "sticky" : "absolute",
-                              left,
-                              height: "100%",
-                              zIndex: c < 2 ? 1 : 0,
-                            } as const)
-                          : {}),
-                        fontWeight: s?.bold
-                          ? 700
-                          : sheet === "matrix" && c >= 2 && r >= toggleStartRow
-                            ? 600
-                            : 400,
-                        fontSize:
-                          sheet === "matrix" && c >= 2 && r >= toggleStartRow
-                            ? 20
-                            : undefined,
-                        textAlign:
-                          s?.align ??
-                          (sheet === "matrix" && c >= 2 && r >= toggleStartRow
-                            ? "center"
-                            : undefined),
-                        backgroundColor:
-                          s?.background ??
-                          (selected
-                            ? "var(--accent)"
-                            : sheet === "matrix" && c < 2
-                              ? "var(--background)"
+                      style={
+                        {
+                          "--grid-selection-color": colors.background
+                            ? (getContrastingHexColor(colors.background) ??
+                              "var(--primary)")
+                            : "var(--primary)",
+                          width: width(col.key),
+                          ...(sheet === "matrix"
+                            ? ({
+                                position: c < 2 ? "sticky" : "absolute",
+                                left,
+                                height: "100%",
+                                zIndex: c < 2 ? 1 : 0,
+                              } as const)
+                            : {}),
+                          fontWeight: s?.bold
+                            ? 700
+                            : sheet === "matrix" &&
+                                c >= 2 &&
+                                r >= toggleStartRow
+                              ? 600
+                              : 400,
+                          fontSize:
+                            sheet === "matrix" && c >= 2 && r >= toggleStartRow
+                              ? 20
+                              : undefined,
+                          textAlign:
+                            s?.align ??
+                            (sheet === "matrix" && c >= 2 && r >= toggleStartRow
+                              ? "center"
                               : undefined),
-                        color:
-                          s?.color ??
-                          (r > 0 &&
-                          row.values[col.key] &&
-                          row.values[col.key] === rows[r - 1].values[col.key]
-                            ? "var(--muted-foreground)"
-                            : undefined),
-                      }}
+                          backgroundColor:
+                            colors.background ??
+                            (selected
+                              ? "var(--accent)"
+                              : sheet === "matrix" && c < 2
+                                ? "var(--background)"
+                                : undefined),
+                          color:
+                            colors.color ??
+                            (r > 0 &&
+                            row.values[col.key] &&
+                            row.values[col.key] === rows[r - 1].values[col.key]
+                              ? "var(--muted-foreground)"
+                              : undefined),
+                        } as React.CSSProperties
+                      }
                       onPointerDown={(e) => {
                         if (composing.current) {
                           e.preventDefault();

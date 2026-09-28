@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { TriangleAlertIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/error";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { ChangeLogDiffRows } from "@/components/shared/change-log/change-log-card";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
@@ -21,23 +23,21 @@ import {
   listTestCasesProjectsProjectIdTestDesignsDesignIdCasesGet as listCases,
   updateTestCaseProjectsProjectIdTestDesignsDesignIdCasesCaseIdPatch as updateCase,
   refreshTestCaseProjectsProjectIdTestDesignsDesignIdCasesCaseIdRefreshPost as refreshCase,
+  readTestDesignProjectsProjectIdTestDesignsDesignIdGet as readDesign,
 } from "@/lib/api/generated/test-designs/test-designs";
+import { listDesignIssuesProjectsProjectIdTestDesignsDesignIdIssuesGet as listDesignIssues } from "@/lib/api/generated/test-issues/test-issues";
 import { useDesignPermissions } from "../../hooks/use-design-permissions";
 import { useConfirmAction } from "../../hooks/use-confirm-action";
+import { CaseExecutionHistory } from "./case-execution-history";
+import { CaseIssues } from "./case-issues";
 import { itemColumns } from "../../lib/design";
+import { caseStatusByKey, caseStatusItems } from "../../lib/case-status";
 import {
   getCaseDesignDiff,
   getCaseDesignSummary,
   type CaseSource,
 } from "../../lib/case-diff";
 
-const statuses = {
-  not_run: "未実行",
-  passed: "成功",
-  failed: "失敗",
-  blocked: "保留",
-  not_applicable: "対象外",
-};
 const sourceOf = (c: TestCaseRead) => c.source as unknown as CaseSource;
 
 function CaseStatusSelect({
@@ -59,7 +59,7 @@ function CaseStatusSelect({
       disabled={disabled}
       onChange={(e) => onChange(e.target.value as TestCaseRead["status"])}
     >
-      {Object.entries(statuses).map(([key, text]) => (
+      {caseStatusItems.map(({ key, label: text }) => (
         <option key={key} value={key}>
           {text}
         </option>
@@ -93,31 +93,54 @@ export function CasesSection({
   version,
   dirty = false,
   onEditDesign,
+  initialStatusFilter = "",
+  initialTargetFeature = "",
+  onlyUnlinkedNg = false,
+  issueTaskId,
+  initialCaseId,
+  initialExecutionId,
 }: {
   projectId: number;
   designId: number;
   version: number;
   dirty?: boolean;
   onEditDesign?: (itemId: string, tableId?: string) => void;
+  initialStatusFilter?: TestCaseRead["status"] | "";
+  initialTargetFeature?: string;
+  onlyUnlinkedNg?: boolean;
+  issueTaskId?: number;
+  initialCaseId?: string;
+  initialExecutionId?: string;
 }) {
   const permissions = useDesignPermissions(projectId);
+  const client = useQueryClient();
   const { confirm, confirmDialogProps } = useConfirmAction();
   const query = useQuery({
     queryKey: ["test-design-cases", projectId, designId, version],
     queryFn: () => listCases(projectId, designId),
     retry: false,
   });
+  const issueLinks = useQuery({
+    queryKey: ["design-issues", projectId, designId],
+    queryFn: () => listDesignIssues(projectId, designId),
+  });
+  const currentDesign = useQuery({
+    queryKey: ["test-design-current", projectId, designId],
+    queryFn: () => readDesign(projectId, designId),
+  });
   const [selected, setSelected] = useState<TestCaseRead | null>(null);
+  const openedInitialCase = useRef(false);
   const [reviewCase, setReviewCase] = useState<TestCaseRead | null>(null);
   const [caseDirty, setCaseDirty] = useState(false);
   const [conflict, setConflict] = useState<TestCaseRead | null>(null);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState("");
-  const [targetFilter, setTargetFilter] = useState("");
+  const [targetFilter, setTargetFilter] = useState(initialTargetFeature);
   const [statusFilter, setStatusFilter] = useState<TestCaseRead["status"] | "">(
-    "",
+    initialStatusFilter,
   );
   const [onlyStale, setOnlyStale] = useState(false);
+  const [unlinkedNg, setUnlinkedNg] = useState(onlyUnlinkedNg);
   const [page, setPage] = useState(0);
   const reviewDiffRows = reviewCase?.acknowledged_source
     ? getCaseDesignDiff(
@@ -126,16 +149,47 @@ export function CasesSection({
       )
     : [];
   const cases = query.data ?? [];
+  useEffect(() => {
+    if (openedInitialCase.current || !initialCaseId || !query.data) return;
+    openedInitialCase.current = true;
+    setSelected(query.data.find((row) => row.id === initialCaseId) ?? null);
+  }, [initialCaseId, query.data]);
+  const issueCountByCase = new Map<string, number>();
+  for (const link of issueLinks.data ?? []) {
+    issueCountByCase.set(
+      link.case_id,
+      (issueCountByCase.get(link.case_id) ?? 0) + 1,
+    );
+  }
+  const targetByItem = new Map(
+    (currentDesign.data?.items ?? []).map((item) => [
+      item.id,
+      item.target_feature,
+    ]),
+  );
+  const currentTarget = (testCase: TestCaseRead) =>
+    targetByItem.get(sourceOf(testCase).item.id) ?? "";
   const targets = [
     ...new Set(
-      cases.map((c) => sourceOf(c).item.target_feature).filter(Boolean),
+      cases
+        .filter((c) => c.active)
+        .map(currentTarget)
+        .filter(Boolean),
     ),
   ].sort();
   const filtered = cases.filter(
     (c) =>
       (!onlyStale || c.stale) &&
+      (!unlinkedNg ||
+        (issueLinks.data !== undefined &&
+          c.status === "failed" &&
+          !issueCountByCase.has(c.id))) &&
+      (!issueTaskId ||
+        issueLinks.data?.some(
+          (link) => link.case_id === c.id && link.task_id === issueTaskId,
+        )) &&
       (!statusFilter || c.status === statusFilter) &&
-      (!targetFilter || sourceOf(c).item.target_feature === targetFilter) &&
+      (!targetFilter || currentTarget(c) === targetFilter) &&
       `${sourceOf(c).item.code} ${sourceOf(c).item.target_feature} ${sourceOf(c).item.content} ${sourceOf(c).pattern_table?.name ?? ""} ${sourceOf(c).pattern?.code ?? ""}`.includes(
         filter,
       ),
@@ -145,6 +199,9 @@ export function CasesSection({
     try {
       await action();
       await query.refetch();
+      await client.invalidateQueries({
+        queryKey: ["test-progress", projectId, designId],
+      });
       toast.success("テストケースを更新しました");
       return true;
     } catch (e) {
@@ -243,7 +300,7 @@ export function CasesSection({
           }}
         >
           <option value="">すべての状態</option>
-          {Object.entries(statuses).map(([key, label]) => (
+          {caseStatusItems.map(({ key, label }) => (
             <option key={key} value={key}>
               {label}
             </option>
@@ -260,146 +317,203 @@ export function CasesSection({
           />
           影響ありのみ
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={unlinkedNg}
+            onChange={(event) => {
+              setUnlinkedNg(event.target.checked);
+              setPage(0);
+            }}
+          />
+          NG / Issue未登録のみ
+        </label>
       </div>
       {query.isPending && <p>テストケースを読み込み中…</p>}
-      {query.error && <p role="alert">{query.error.message}</p>}
-      <div className="overflow-auto rounded-md border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted">
-              <th className="p-2 text-left">項目番号</th>
-              {itemColumns.slice(1, 7).map(([key, label]) => (
-                <th key={key} className="min-w-44 p-2 text-left">
-                  {label}
-                </th>
-              ))}
-              <th className="p-2 text-left">パターン</th>
-              <th className="min-w-44 p-2 text-left">期待値</th>
-              <th className="p-2 text-left">状態</th>
-              <th className="p-2 text-left">影響</th>
-              <th className="p-2">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.slice(page * 50, (page + 1) * 50).map((c) => {
-              const s = sourceOf(c);
-              return (
-                <tr
-                  key={c.id}
-                  className={`border-b align-top ${{ not_run: "", passed: "bg-emerald-50 dark:bg-emerald-950/30", failed: "bg-red-50 dark:bg-red-950/30", blocked: "bg-amber-50 dark:bg-amber-950/30", not_applicable: "bg-slate-100 dark:bg-slate-800/40" }[c.status]}`}
-                >
-                  <td className="whitespace-nowrap p-2">{s.item.code}</td>
-                  {itemColumns.slice(1, 7).map(([key]) => (
-                    <td key={key} className="min-w-44 whitespace-pre-wrap p-2">
-                      {s.item[key] || "－"}
-                    </td>
-                  ))}
-                  <td className="p-2">
-                    <PatternDetails source={s} />
-                  </td>
-                  <td className="min-w-44 whitespace-pre-wrap p-2">
-                    {s.item.expected_result ||
-                      (expectations(s).length ? "" : "－")}
-                    {expectations(s).map((v) => (
-                      <div key={v.id}>● {v.name}</div>
-                    ))}
-                  </td>
-                  <td className="p-2">
-                    <CaseStatusSelect
-                      label={`${s.item.code} ${s.pattern?.code ?? ""} 状態`}
-                      value={c.status}
-                      disabled={!permissions.execute || busy}
-                      onChange={(status) =>
-                        void run(() =>
-                          updateCase(projectId, designId, c.id, {
-                            version: c.version,
-                            status,
-                            actual_result: c.actual_result,
-                            notes: c.notes,
-                          }),
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="whitespace-nowrap p-2">
-                    {!c.active || c.stale ? (
-                      <button
-                        type="button"
-                        className="rounded border px-2 py-1 text-xs"
-                        title={
-                          !c.active
-                            ? "生成元が削除・無効になっています"
-                            : "元のテスト設計が変更されています。再確認してください"
-                        }
-                        onClick={() => {
-                          void openReview(c);
-                        }}
-                      >
-                        {c.stale ? "⚠ 影響あり" : "生成元なし"}
-                      </button>
-                    ) : (
-                      "－"
-                    )}
-                  </td>
-                  <td className="p-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelected(c)}
-                    >
-                      詳細・結果
-                    </Button>
-                    <div className="mt-1 flex flex-wrap gap-1 text-xs">
-                      {c.actual_result?.trim() && (
-                        <span
-                          className="rounded bg-muted px-1"
-                          title="実行結果が登録されています"
-                        >
-                          結果あり
-                        </span>
-                      )}
-                      {c.notes?.trim() && (
-                        <span
-                          className="rounded bg-muted px-1"
-                          title="備考が登録されています"
-                        >
-                          備考あり
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      {!query.isPending && !filtered.length && (
-        <p className="text-sm text-muted-foreground">
-          該当するケースはありません。テスト項目を保存すると自動で生成されます。パターン表の紐付けは任意です。
+      {query.error && (
+        <DataLoadError
+          resourceName="テストケース"
+          isRetrying={query.isFetching}
+          onRetry={() => void query.refetch()}
+        />
+      )}
+      {issueLinks.error && (
+        <p role="alert">
+          関連Issueを読み込めませんでした。Issue未登録の判定はできません。
         </p>
       )}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page === 0}
-          onClick={() => setPage(page - 1)}
-        >
-          前へ
-        </Button>
-        <span>
-          {page + 1} / {Math.max(1, Math.ceil(filtered.length / 50))}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={(page + 1) * 50 >= filtered.length}
-          onClick={() => setPage(page + 1)}
-        >
-          次へ
-        </Button>
-      </div>
+      {!query.isPending && !query.error && (
+        <div className="overflow-auto rounded-md border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted">
+                <th className="p-2 text-left">項目番号</th>
+                {itemColumns.slice(1, 7).map(([key, label]) => (
+                  <th key={key} className="min-w-44 p-2 text-left">
+                    {label}
+                  </th>
+                ))}
+                <th className="p-2 text-left">パターン</th>
+                <th className="min-w-44 p-2 text-left">期待値</th>
+                <th className="p-2 text-left">状態</th>
+                <th className="p-2 text-left">影響</th>
+                <th className="p-2">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.slice(page * 50, (page + 1) * 50).map((c) => {
+                const s = sourceOf(c);
+                return (
+                  <tr
+                    key={c.id}
+                    className={`border-b align-top ${caseStatusByKey[c.status].rowClassName}`}
+                  >
+                    <td className="whitespace-nowrap p-2">{s.item.code}</td>
+                    {itemColumns.slice(1, 7).map(([key]) => (
+                      <td
+                        key={key}
+                        className="min-w-44 whitespace-pre-wrap p-2"
+                      >
+                        {s.item[key] || "－"}
+                      </td>
+                    ))}
+                    <td className="p-2">
+                      <PatternDetails source={s} />
+                    </td>
+                    <td className="min-w-44 whitespace-pre-wrap p-2">
+                      {s.item.expected_result ||
+                        (expectations(s).length ? "" : "－")}
+                      {expectations(s).map((v) => (
+                        <div key={v.id}>● {v.name}</div>
+                      ))}
+                    </td>
+                    <td className="p-2">
+                      <CaseStatusSelect
+                        label={`${s.item.code} ${s.pattern?.code ?? ""} 状態`}
+                        value={c.status}
+                        disabled={!permissions.execute || busy}
+                        onChange={(status) =>
+                          void run(() =>
+                            updateCase(projectId, designId, c.id, {
+                              version: c.version,
+                              status,
+                              actual_result: c.actual_result,
+                              notes: c.notes,
+                            }),
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="whitespace-nowrap p-2">
+                      {!c.active || c.stale ? (
+                        <button
+                          type="button"
+                          className={
+                            c.stale
+                              ? "inline-flex items-center gap-1 rounded border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-2 py-1 text-xs text-[var(--status-warning-fg)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              : "rounded border px-2 py-1 text-xs hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                          }
+                          title={
+                            !c.active
+                              ? "生成元が削除・無効になっています"
+                              : "元のテスト設計が変更されています。再確認してください"
+                          }
+                          onClick={() => {
+                            void openReview(c);
+                          }}
+                        >
+                          {c.stale ? (
+                            <>
+                              <TriangleAlertIcon
+                                className="size-3"
+                                aria-hidden="true"
+                              />
+                              影響あり
+                            </>
+                          ) : (
+                            "生成元なし"
+                          )}
+                        </button>
+                      ) : (
+                        "－"
+                      )}
+                    </td>
+                    <td className="p-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelected(c)}
+                      >
+                        詳細・結果
+                      </Button>
+                      <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                        {c.actual_result?.trim() && (
+                          <span
+                            className="rounded bg-muted px-1"
+                            title="実行結果が登録されています"
+                          >
+                            結果あり
+                          </span>
+                        )}
+                        {c.notes?.trim() && (
+                          <span
+                            className="rounded bg-muted px-1"
+                            title="備考が登録されています"
+                          >
+                            備考あり
+                          </span>
+                        )}
+                        {(issueCountByCase.get(c.id) ?? 0) > 0 && (
+                          <span className="rounded bg-muted px-1">
+                            Issue {issueCountByCase.get(c.id)}件
+                          </span>
+                        )}
+                        {issueLinks.data !== undefined &&
+                          c.status === "failed" &&
+                          !issueCountByCase.has(c.id) && (
+                            <span className="rounded border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-1 text-[var(--status-warning-fg)]">
+                              Issue未登録
+                            </span>
+                          )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {!query.isPending && !query.error && !filtered.length && (
+        <p className="text-sm text-muted-foreground">
+          {cases.length
+            ? "条件に一致するテストケースはありません。絞り込み条件を確認してください。"
+            : "テストケースはまだありません。テスト項目を保存すると自動で生成されます。パターン表の紐付けは任意です。"}
+        </p>
+      )}
+      {!query.isPending && !query.error && filtered.length > 0 && (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage(page - 1)}
+          >
+            前へ
+          </Button>
+          <span>
+            {page + 1} / {Math.max(1, Math.ceil(filtered.length / 50))}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={(page + 1) * 50 >= filtered.length}
+            onClick={() => setPage(page + 1)}
+          >
+            次へ
+          </Button>
+        </div>
+      )}
       <Dialog
         open={!!selected}
         onOpenChange={(open) => {
@@ -489,6 +603,22 @@ export function CasesSection({
                     : undefined
                 }
               />
+              <CaseExecutionHistory
+                projectId={projectId}
+                designId={designId}
+                caseId={selected.id}
+                version={selected.version}
+                editable={permissions.execute}
+                initialExecutionId={initialExecutionId}
+              />
+              <CaseIssues
+                key={selected.id}
+                projectId={projectId}
+                designId={designId}
+                testCase={selected}
+                source={sourceOf(selected)}
+                editable={permissions.execute}
+              />
             </>
           )}
         </DialogContent>
@@ -560,7 +690,7 @@ export function CasesSection({
               {caseDirty && (
                 <p
                   role="status"
-                  className="text-sm text-amber-700 dark:text-amber-300"
+                  className="text-sm text-[var(--status-warning-fg)]"
                 >
                   実行情報に未保存の入力があります。確認済みにすると、その入力は破棄されます。
                 </p>

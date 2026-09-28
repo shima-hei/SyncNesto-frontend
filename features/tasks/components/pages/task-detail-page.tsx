@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +48,7 @@ import { TaskDependenciesSection } from "../sections/task-dependencies-section";
 import { TaskChangeLogsSection } from "../sections/task-change-logs-section";
 import { TaskCommentsSection } from "../sections/task-comments-section";
 import { TaskHierarchySection } from "../sections/task-hierarchy-section";
+import { TaskTestCasesSection } from "../sections/task-test-cases-section";
 import {
   TaskFlagBadges,
   TaskPriorityBadge,
@@ -96,77 +98,79 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
 
   if (error || !task) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         タスクを取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex min-w-0 flex-col gap-2">
-          <Button asChild variant="outline" className="mb-1 w-fit">
-            <Link href={`/projects/joined/${projectId}/tasks?tab=list`}>
-              <ArrowLeftIcon data-icon="inline-start" />
-              タスク一覧へ戻る
-            </Link>
-          </Button>
-          <p className="text-sm text-muted-foreground">{task.task_code}</p>
-          <h2 className="truncate text-lg font-semibold">{task.title}</h2>
-          <div className="flex flex-wrap gap-2">
-            <TaskTypeBadge type={task.task_type} />
-            <TaskStatusBadge status={task.status} />
-            <TaskPriorityBadge priority={task.priority} />
-            <TaskFlagBadges
-              isOverdue={task.is_overdue}
-              isBlocked={task.is_blocked}
-            />
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canCreate ? (
-            <Button type="button" onClick={() => setChildTaskDialogOpen(true)}>
-              <PlusIcon data-icon="inline-start" />
-              子タスク作成
-            </Button>
-          ) : null}
-          {canUpdate ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setEditDialogOpen(true)}
-            >
-              <PencilIcon data-icon="inline-start" />
-              編集
-            </Button>
-          ) : null}
-          {canCreate ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isDuplicatePending}
-              onClick={() => duplicateTask(task).catch(() => undefined)}
-            >
-              <CopyIcon data-icon="inline-start" />
-              複製
-            </Button>
-          ) : null}
-          {canDeleteTask(currentProjectRole) ? (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2Icon data-icon="inline-start" />
-              削除
-            </Button>
-          ) : null}
-        </div>
+    <div className="@container/task-detail flex min-w-0 flex-col gap-6">
+      <Button asChild variant="outline" size="sm" className="w-fit">
+        <Link href={`/projects/joined/${projectId}/tasks?tab=list`}>
+          <ArrowLeftIcon data-icon="inline-start" />
+          タスク一覧へ戻る
+        </Link>
+      </Button>
+      <PageHeader
+        title={task.title}
+        description={task.task_code}
+        actions={
+          <>
+            {canCreate ? (
+              <Button
+                type="button"
+                onClick={() => setChildTaskDialogOpen(true)}
+              >
+                <PlusIcon data-icon="inline-start" />
+                子タスク作成
+              </Button>
+            ) : null}
+            {canUpdate ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditDialogOpen(true)}
+              >
+                <PencilIcon data-icon="inline-start" />
+                編集
+              </Button>
+            ) : null}
+            {canCreate ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isDuplicatePending}
+                onClick={() => duplicateTask(task).catch(() => undefined)}
+              >
+                <CopyIcon data-icon="inline-start" />
+                複製
+              </Button>
+            ) : null}
+            {canDeleteTask(currentProjectRole) ? (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2Icon data-icon="inline-start" />
+                削除
+              </Button>
+            ) : null}
+          </>
+        }
+      />
+      <div className="flex flex-wrap gap-2">
+        <TaskTypeBadge type={task.task_type} />
+        <TaskStatusBadge status={task.status} />
+        <TaskPriorityBadge priority={task.priority} />
+        <TaskFlagBadges
+          isOverdue={task.is_overdue}
+          isBlocked={task.is_blocked}
+        />
       </div>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] xl:items-start">
-        <div className="flex min-w-0 flex-col gap-4">
+      <div className="grid gap-4 @min-[64rem]/task-detail:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/task-detail:items-start @min-[80rem]/task-detail:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="@container/task-content flex min-w-0 flex-col gap-4">
           <Card>
             <CardHeader>
               <CardTitle>説明</CardTitle>
@@ -184,7 +188,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
             <CardHeader>
               <CardTitle>基本情報</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <CardContent className="grid min-w-0 gap-4 @min-[24rem]/task-content:grid-cols-2 @min-[52rem]/task-content:grid-cols-4">
               <TaskInfo
                 label="担当者"
                 value={getTaskUserLabel(task.assignee_id)}
@@ -228,7 +232,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
             <CardHeader>
               <CardTitle>関連要件・タグ</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
+            <CardContent className="grid gap-4 @min-[32rem]/task-content:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <span className="text-xs text-muted-foreground">関連要件</span>
                 <TaskRequirementBadges requirements={task.requirements} />
@@ -250,6 +254,10 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
             </CardContent>
           </Card>
 
+          {task.task_type === "bug" && (
+            <TaskTestCasesSection projectId={projectId} taskId={taskId} />
+          )}
+
           <TaskHierarchySection
             projectId={projectId}
             task={task}
@@ -265,15 +273,15 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
           <TaskChangeLogsSection taskId={taskId} />
         </div>
 
-        <aside className="min-w-0 xl:sticky xl:top-20">
+        <aside className="min-w-0 @min-[64rem]/task-detail:sticky @min-[64rem]/task-detail:top-20">
           <TaskCommentsSection
             projectId={projectId}
             task={task}
             taskId={taskId}
             canComment={canCommentTask(currentProjectRole)}
             canUpdateStatus={canUpdate}
-            className="xl:max-h-[calc(100vh-6rem)] xl:overflow-hidden"
-            contentClassName="xl:max-h-none xl:min-h-0 xl:overflow-y-auto"
+            className="@min-[64rem]/task-detail:max-h-[calc(100dvh-6rem)] @min-[64rem]/task-detail:overflow-hidden"
+            contentClassName="@min-[64rem]/task-detail:max-h-none @min-[64rem]/task-detail:min-h-0 @min-[64rem]/task-detail:overflow-y-auto @min-[64rem]/task-detail:overscroll-contain"
           />
         </aside>
       </div>
@@ -355,16 +363,18 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
 
 function TaskInfo({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm">{value}</span>
+      <span className="text-sm break-words [overflow-wrap:anywhere]">
+        {value}
+      </span>
     </div>
   );
 }
 
 function TaskDetailSkeleton() {
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
+    <div className="flex flex-col gap-6">
       <Skeleton className="h-16 w-full" />
       <Skeleton className="h-48 w-full" />
       <Skeleton className="h-72 w-full" />

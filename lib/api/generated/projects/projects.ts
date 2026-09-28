@@ -23,14 +23,17 @@ import type {
 import type {
   CurrentProjectRoleRead,
   HTTPValidationError,
+  ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
   ListProjectMemberCandidatesProjectsProjectIdMemberCandidatesGetParams,
   ListProjectMemberUsersProjectsProjectIdMemberUsersGetParams,
   ListProjectsProjectsGetParams,
+  ProjectActivityListRead,
   ProjectCreate,
   ProjectListResponse,
   ProjectMemberCreate,
   ProjectMemberRead,
   ProjectMemberUpdate,
+  ProjectOverviewRead,
   ProjectRead,
   ProjectUpdate,
   UserSummaryListResponse,
@@ -326,6 +329,485 @@ export function useListProjectsProjectsGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getListProjectsProjectsGetQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getReadProjectOverviewProjectsProjectIdOverviewGetUrl = (
+  projectId: number,
+) => {
+  return `/projects/${projectId}/overview`;
+};
+
+/**
+ * プロジェクトの現在値と優先対応、直近の履歴を返す。
+ * @summary Read Project Overview
+ */
+export const readProjectOverviewProjectsProjectIdOverviewGet = async (
+  projectId: number,
+  options?: RequestInit,
+): Promise<ProjectOverviewRead> => {
+  return apiClient<ProjectOverviewRead>(
+    getReadProjectOverviewProjectsProjectIdOverviewGetUrl(projectId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getReadProjectOverviewProjectsProjectIdOverviewGetQueryKey = (
+  projectId: number,
+) => {
+  return [`/projects/${projectId}/overview`] as const;
+};
+
+export const getReadProjectOverviewProjectsProjectIdOverviewGetQueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getReadProjectOverviewProjectsProjectIdOverviewGetQueryKey(projectId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>>
+  > = ({ signal }) =>
+    readProjectOverviewProjectsProjectIdOverviewGet(projectId, {
+      signal,
+      ...requestOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: projectId !== null && projectId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ReadProjectOverviewProjectsProjectIdOverviewGetQueryResult =
+  NonNullable<
+    Awaited<ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>>
+  >;
+export type ReadProjectOverviewProjectsProjectIdOverviewGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function useReadProjectOverviewProjectsProjectIdOverviewGet<
+  TData = Awaited<
+    ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadProjectOverviewProjectsProjectIdOverviewGet<
+  TData = Awaited<
+    ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadProjectOverviewProjectsProjectIdOverviewGet<
+  TData = Awaited<
+    ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Read Project Overview
+ */
+
+export function useReadProjectOverviewProjectsProjectIdOverviewGet<
+  TData = Awaited<
+    ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readProjectOverviewProjectsProjectIdOverviewGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getReadProjectOverviewProjectsProjectIdOverviewGetQueryOptions(
+      projectId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getListProjectActivitiesProjectsProjectIdActivitiesGetUrl = (
+  projectId: number,
+  params?: ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/projects/${projectId}/activities?${stringifiedParams}`
+    : `/projects/${projectId}/activities`;
+};
+
+/**
+ * プロジェクト横断の変更履歴を日時順に返す。
+ * @summary List Project Activities
+ */
+export const listProjectActivitiesProjectsProjectIdActivitiesGet = async (
+  projectId: number,
+  params?: ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+  options?: RequestInit,
+): Promise<ProjectActivityListRead> => {
+  return apiClient<ProjectActivityListRead>(
+    getListProjectActivitiesProjectsProjectIdActivitiesGetUrl(
+      projectId,
+      params,
+    ),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListProjectActivitiesProjectsProjectIdActivitiesGetQueryKey = (
+  projectId: number,
+  params?: ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+) => {
+  return [
+    `/projects/${projectId}/activities`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListProjectActivitiesProjectsProjectIdActivitiesGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    params?: ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof listProjectActivitiesProjectsProjectIdActivitiesGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getListProjectActivitiesProjectsProjectIdActivitiesGetQueryKey(
+        projectId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+      >
+    > = ({ signal }) =>
+      listProjectActivitiesProjectsProjectIdActivitiesGet(projectId, params, {
+        signal,
+        ...requestOptions,
+      });
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type ListProjectActivitiesProjectsProjectIdActivitiesGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+    >
+  >;
+export type ListProjectActivitiesProjectsProjectIdActivitiesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function useListProjectActivitiesProjectsProjectIdActivitiesGet<
+  TData = Awaited<
+    ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params: undefined | ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof listProjectActivitiesProjectsProjectIdActivitiesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof listProjectActivitiesProjectsProjectIdActivitiesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListProjectActivitiesProjectsProjectIdActivitiesGet<
+  TData = Awaited<
+    ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof listProjectActivitiesProjectsProjectIdActivitiesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof listProjectActivitiesProjectsProjectIdActivitiesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListProjectActivitiesProjectsProjectIdActivitiesGet<
+  TData = Awaited<
+    ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Project Activities
+ */
+
+export function useListProjectActivitiesProjectsProjectIdActivitiesGet<
+  TData = Awaited<
+    ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: ListProjectActivitiesProjectsProjectIdActivitiesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listProjectActivitiesProjectsProjectIdActivitiesGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getListProjectActivitiesProjectsProjectIdActivitiesGetQueryOptions(
+      projectId,
+      params,
+      options,
+    );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

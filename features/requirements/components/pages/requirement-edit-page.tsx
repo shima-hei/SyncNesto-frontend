@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { createDraftScope } from "@/lib/draft/draft-key";
 
 import { getRequirementFormValues } from "../../constants/requirement-form";
@@ -49,24 +50,22 @@ export function RequirementEditPage({
 
   if (error || !requirement) {
     return (
-      <div className="p-4 text-sm text-muted-foreground lg:p-6">
+      <div className="text-sm text-muted-foreground">
         要件を取得できませんでした。
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">要件編集</h2>
-        <p className="text-sm text-muted-foreground">{requirement.title}</p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader title="要件編集" description={requirement.title} />
       <RequirementForm
         key={requirement.version}
         projectId={projectId}
         documentId={documentId}
         mode="update"
         className="w-full max-w-6xl"
+        initialOwner={requirement.owner ?? null}
         initialValues={getRequirementFormValues(requirement)}
         draftScope={createDraftScope(
           "requirements",
@@ -97,9 +96,9 @@ export function RequirementEditPage({
 
 function RequirementEditSkeleton() {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4 lg:p-6">
-      <Skeleton className="h-5 w-48" />
-      <Skeleton className="h-96 w-full max-w-4xl" />
+    <div className="flex flex-col gap-6">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-96 w-full max-w-6xl" />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import {
   type SelectableUser,
@@ -31,6 +31,7 @@ export function TaskUserSelectField({
   error,
   onChange,
 }: TaskUserSelectFieldProps) {
+  const triggerId = useId();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<SelectableUser | null>(null);
@@ -57,10 +58,11 @@ export function TaskUserSelectField({
 
   return (
     <Field data-invalid={error ? true : undefined}>
-      {showLabel ? <FieldLabel>{label}</FieldLabel> : null}
+      {showLabel ? <FieldLabel htmlFor={triggerId}>{label}</FieldLabel> : null}
       <div className="flex min-w-0 gap-2">
         <div className="min-w-0 flex-1">
           <UserSelect
+            triggerId={triggerId}
             users={users}
             selectedUser={selectedValue}
             open={open}

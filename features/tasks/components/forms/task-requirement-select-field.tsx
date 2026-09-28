@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ChevronsUpDownIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ export function TaskRequirementSelectField({
   error,
   onChange,
 }: TaskRequirementSelectFieldProps) {
+  const triggerId = useId();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedRequirement, setSelectedRequirement] =
@@ -70,12 +71,13 @@ export function TaskRequirementSelectField({
 
   return (
     <Field data-invalid={error ? true : undefined}>
-      {showLabel ? <FieldLabel>{label}</FieldLabel> : null}
+      {showLabel ? <FieldLabel htmlFor={triggerId}>{label}</FieldLabel> : null}
       <div className="flex min-w-0 gap-2">
         <div className="min-w-0 flex-1">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
+                id={triggerId}
                 type="button"
                 variant="outline"
                 aria-expanded={open}

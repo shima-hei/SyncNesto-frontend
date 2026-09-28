@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -44,20 +43,24 @@ export function TaskBulkActions({
   onApply: () => Promise<void>;
   onClearSelection: () => void;
 }) {
+  if (selectedCount === 0) {
+    return null;
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">一括更新</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-end">
-        <p className="text-sm text-muted-foreground lg:w-28">
-          選択中: {selectedCount}件
-        </p>
+    <section
+      aria-label="選択したタスクの一括更新"
+      className="flex flex-col gap-3 border-y bg-muted/30 px-3 py-3"
+    >
+      <h2 className="text-sm font-semibold">
+        一括更新（{selectedCount}件選択中）
+      </h2>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
         <div className="grid min-w-0 flex-1 gap-3 md:grid-cols-3">
           <div className="flex min-w-0 flex-col gap-2">
-            <Label>ステータス</Label>
+            <Label htmlFor="bulk-task-status">ステータス</Label>
             <Select value={status} onValueChange={onStatusChange}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="bulk-task-status" className="w-full">
                 <SelectValue placeholder="変更しない" />
               </SelectTrigger>
               <SelectContent>
@@ -94,6 +97,7 @@ export function TaskBulkActions({
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
+            size="sm"
             disabled={disabled || isPending}
             onClick={() => void onApply()}
           >
@@ -102,13 +106,14 @@ export function TaskBulkActions({
           <Button
             type="button"
             variant="outline"
+            size="sm"
             disabled={!selectedCount || isPending}
             onClick={onClearSelection}
           >
             選択解除
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

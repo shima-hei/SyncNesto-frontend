@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
+import {
+  StatusBadge,
+  type StatusTone,
+} from "@/components/shared/display/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -268,45 +272,20 @@ export function RequirementLinksSection({
 }
 
 function LinkTypeBadge({ type }: { type?: string | null }) {
-  const toneClass =
-    type === "screen"
-      ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-      : type === "api"
-        ? "border-cyan-200 bg-cyan-50 text-cyan-700"
-        : type === "database"
-          ? "border-violet-200 bg-violet-50 text-violet-700"
-          : type === "task"
-            ? "border-blue-200 bg-blue-50 text-blue-700"
-            : type === "test_case"
-              ? "border-rose-200 bg-rose-50 text-rose-700"
-              : type === "document"
-                ? "border-teal-200 bg-teal-50 text-teal-700"
-                : type === "project"
-                  ? "border-orange-200 bg-orange-50 text-orange-700"
-                  : "border-zinc-200 bg-zinc-50 text-zinc-600";
-
-  return (
-    <Badge variant="outline" className={toneClass}>
-      {getRequirementLinkTypeLabel(type)}
-    </Badge>
-  );
+  return <Badge variant="secondary">{getRequirementLinkTypeLabel(type)}</Badge>;
 }
 
 function LinkStatusBadge({ status }: { status?: string | null }) {
-  const toneClass =
-    status === "verified"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : status === "completed"
-        ? "border-sky-200 bg-sky-50 text-sky-700"
-        : status === "in_progress"
-          ? "border-amber-200 bg-amber-50 text-amber-700"
-          : status === "not_started"
-            ? "border-slate-200 bg-slate-50 text-slate-600"
-            : "border-zinc-200 bg-zinc-50 text-zinc-600";
+  const tone: StatusTone =
+    status === "verified" || status === "completed"
+      ? "success"
+      : status === "in_progress"
+        ? "progress"
+        : "neutral";
 
   return (
-    <Badge variant="outline" className={toneClass}>
+    <StatusBadge tone={tone}>
       {getRequirementLinkStatusLabel(status)}
-    </Badge>
+    </StatusBadge>
   );
 }

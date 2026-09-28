@@ -35,6 +35,7 @@ import { DateField, NumberField, TaskSelectField } from "./task-form-fields";
 type TaskFormProps = {
   mode: "create" | "update";
   projectId: number;
+  fullWidth?: boolean;
   currentTaskId?: number;
   initialValues: TaskFormValues;
   isPending: boolean;
@@ -49,6 +50,7 @@ type TaskFormProps = {
 export function TaskForm({
   mode,
   projectId,
+  fullWidth = false,
   currentTaskId,
   initialValues,
   isPending,
@@ -116,7 +118,10 @@ export function TaskForm({
 
   return (
     <>
-      <form className="mx-auto w-full max-w-4xl" onSubmit={handleSubmit}>
+      <form
+        className={fullWidth ? "w-full" : "mx-auto w-full max-w-4xl"}
+        onSubmit={handleSubmit}
+      >
         <FieldGroup>
           <div className="grid gap-4 md:grid-cols-2">
             <Field data-invalid={errors.taskCode ? true : undefined}>
@@ -196,7 +201,7 @@ export function TaskForm({
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 lg:grid-cols-2">
             <TaskUserSelectField
               projectId={projectId}
               label="担当者"

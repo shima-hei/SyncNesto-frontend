@@ -1,8 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-
-import { TASK_STATUS_OPTIONS } from "../constants/task-options";
 import { useTasks } from "./use-tasks";
 
 const SUMMARY_PAGE_SIZE = 5;
@@ -22,27 +19,7 @@ const getUpcomingDueDate = () => {
 export function useTaskSummary(projectId: number) {
   const allTasksQuery = useTasks(projectId, {
     page: 1,
-    page_size: SUMMARY_PAGE_SIZE,
-  });
-  const backlogQuery = useTasks(projectId, {
-    page: 1,
     page_size: 1,
-    status: "backlog",
-  });
-  const todoQuery = useTasks(projectId, {
-    page: 1,
-    page_size: 1,
-    status: "todo",
-  });
-  const inProgressQuery = useTasks(projectId, {
-    page: 1,
-    page_size: 1,
-    status: "in_progress",
-  });
-  const inReviewQuery = useTasks(projectId, {
-    page: 1,
-    page_size: 1,
-    status: "in_review",
   });
   const doneQuery = useTasks(projectId, {
     page: 1,
@@ -69,48 +46,26 @@ export function useTaskSummary(projectId: number) {
     page_size: SUMMARY_PAGE_SIZE,
     due_date_to: getUpcomingDueDate(),
   });
-  const statusQueries = useMemo(
-    () => [
-      backlogQuery,
-      todoQuery,
-      inProgressQuery,
-      inReviewQuery,
-      doneQuery,
-      blockedQuery,
-      cancelledQuery,
-    ],
-    [
-      backlogQuery,
-      blockedQuery,
-      cancelledQuery,
-      doneQuery,
-      inProgressQuery,
-      inReviewQuery,
-      todoQuery,
-    ],
-  );
-  const statusCounts = TASK_STATUS_OPTIONS.map((option, index) => ({
-    ...option,
-    total: statusQueries[index]?.total ?? 0,
-  }));
-  const isLoading =
-    allTasksQuery.isLoading ||
-    overdueQuery.isLoading ||
-    upcomingDueQuery.isLoading ||
-    statusQueries.some((query) => query.isLoading);
+  const queries = [
+    allTasksQuery,
+    doneQuery,
+    cancelledQuery,
+    blockedQuery,
+    overdueQuery,
+    upcomingDueQuery,
+  ];
 
   return {
     total: allTasksQuery.total,
-    incompleteTotal: statusCounts
-      .filter(
-        (status) => status.value !== "done" && status.value !== "cancelled",
-      )
-      .reduce((sum, status) => sum + status.total, 0),
+    incompleteTotal: Math.max(
+      0,
+      allTasksQuery.total - doneQuery.total - cancelledQuery.total,
+    ),
     blockedTotal: blockedQuery.total,
     overdueTotal: overdueQuery.total,
     overdueTasks: overdueQuery.tasks,
     upcomingDueTasks: upcomingDueQuery.tasks,
-    statusCounts,
-    isLoading,
+    isLoading: queries.some((query) => query.isLoading),
+    hasError: queries.some((query) => query.error !== null),
   };
 }

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -20,9 +19,9 @@ export function JoinedProjectNav({ projectId }: JoinedProjectNavProps) {
 
   if (isLoading) {
     return (
-      <div className="flex gap-2 overflow-x-auto border-b pb-3">
+      <div className="flex gap-2 overflow-x-auto border-b">
         {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton key={index} className="h-9 w-24 shrink-0" />
+          <Skeleton key={index} className="mb-1 h-9 w-24 shrink-0" />
         ))}
       </div>
     );
@@ -39,23 +38,25 @@ export function JoinedProjectNav({ projectId }: JoinedProjectNavProps) {
   return (
     <nav
       aria-label="プロジェクト内ナビゲーション"
-      className="overflow-x-auto border-b pb-3"
+      className="overflow-x-auto border-b"
     >
-      <div className="flex min-w-max gap-1">
+      <div className="flex min-w-max gap-5">
         {visibleItems.map((item) => {
           const href = item.href(projectId);
           const isActive = isNavigationActive(pathname, href, projectId);
 
           return (
-            <Button
+            <Link
               key={href}
-              asChild
-              variant={isActive ? "secondary" : "ghost"}
-              size="sm"
-              className={cn("shrink-0", isActive && "font-medium")}
+              href={href}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "inline-flex min-h-10 shrink-0 items-center border-b-2 border-transparent px-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary",
+                isActive && "border-primary font-medium text-foreground",
+              )}
             >
-              <Link href={href}>{item.label}</Link>
-            </Button>
+              {item.label}
+            </Link>
           );
         })}
       </div>

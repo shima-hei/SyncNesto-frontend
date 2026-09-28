@@ -136,9 +136,12 @@ export function RequirementDocumentForm({
 
   return (
     <>
-      <form className="max-w-3xl" onSubmit={handleSubmit}>
+      <form
+        className="@container/document-form min-w-0 max-w-3xl"
+        onSubmit={handleSubmit}
+      >
         <FieldGroup>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 @min-[24rem]/document-form:grid-cols-2">
             <Field data-invalid={errors.documentCode ? true : undefined}>
               <FieldLabel htmlFor={documentCodeId}>
                 ドキュメントコード
@@ -199,7 +202,7 @@ export function RequirementDocumentForm({
             />
           </Field>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 @min-[24rem]/document-form:grid-cols-2 @min-[42rem]/document-form:grid-cols-3">
             <Field>
               <FieldLabel htmlFor={targetSystemNameId}>対象システム</FieldLabel>
               <Input
@@ -232,7 +235,7 @@ export function RequirementDocumentForm({
             </Field>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 @min-[24rem]/document-form:grid-cols-2">
             <RequirementDocumentUserField
               projectId={projectId}
               label="作成者"

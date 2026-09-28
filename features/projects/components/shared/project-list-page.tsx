@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/shared/layout/page-header";
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
@@ -62,18 +63,18 @@ export function ProjectListPage({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      {createHref ? (
-        <div>
-          <Button asChild>
-            <Link href={createHref}>プロジェクト登録</Link>
-          </Button>
-        </div>
-      ) : null}
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title={title}
+        description={description}
+        actions={
+          createHref ? (
+            <Button asChild>
+              <Link href={createHref}>プロジェクト登録</Link>
+            </Button>
+          ) : null
+        }
+      />
       <SearchFilterBar
         searchValue={searchInput}
         searchPlaceholder="コード、名称、説明で検索"

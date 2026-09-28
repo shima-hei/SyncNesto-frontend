@@ -1,6 +1,7 @@
 "use client";
 
 import { createDraftScope } from "@/lib/draft/draft-key";
+import { PageHeader } from "@/components/shared/layout/page-header";
 
 import { RequirementDocumentForm } from "../forms/requirement-document-form";
 import { initialRequirementDocumentValues } from "../../constants/requirement-form";
@@ -17,13 +18,11 @@ export function RequirementDocumentCreatePage({
     useCreateRequirementDocument(projectId);
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">要件定義書登録</h2>
-        <p className="text-sm text-muted-foreground">
-          要件を束ねる要件定義書の基本情報を登録します。
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="要件定義書登録"
+        description="要件を束ねる要件定義書の基本情報を登録します。"
+      />
       <RequirementDocumentForm
         projectId={projectId}
         mode="create"

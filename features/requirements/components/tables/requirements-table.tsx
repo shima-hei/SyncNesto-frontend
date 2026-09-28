@@ -1,10 +1,12 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { MessageSquarePlusIcon } from "lucide-react";
 
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
 import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
 import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -51,6 +53,8 @@ type RequirementsTableProps = {
   projectId: number;
   documentId: number;
   requirements: RequirementRead[];
+  coverageByRequirement?: Record<number, number>;
+  coverageState?: "loading" | "error" | "ready";
   isLoading: boolean;
   canUpdate: boolean;
   selectedRequirementId?: number | null;
@@ -67,6 +71,8 @@ export function RequirementsTable({
   projectId,
   documentId,
   requirements,
+  coverageByRequirement = {},
+  coverageState = "ready",
   isLoading,
   canUpdate,
   selectedRequirementId,
@@ -90,6 +96,7 @@ export function RequirementsTable({
           <TableHead>種別</TableHead>
           <TableHead>優先度</TableHead>
           <TableHead>ステータス</TableHead>
+          <TableHead>関連テスト</TableHead>
           <TableHead>担当者</TableHead>
           <TableHead>更新日時</TableHead>
         </TableRow>
@@ -146,33 +153,31 @@ export function RequirementsTable({
                 </TableCell>
                 <TableCell>
                   {canUpdate ? (
-                    <div className="flex flex-col gap-1">
+                    <ReviewableRequirementText
+                      documentId={documentId}
+                      requirement={requirement}
+                      field="priority"
+                      label={`${requirement.requirement_code} 優先度`}
+                      value={getRequirementPriorityLabel(requirement.priority)}
+                      showTargetAction
+                      targetAnchors={targetAnchors}
+                      activeAnchorKey={activeAnchorKey}
+                      onSelectRequirement={onSelectRequirement}
+                      onSelectReviewAnchor={onSelectReviewAnchor}
+                    >
                       <RequirementInlineSelect
                         value={requirement.priority ?? "must"}
                         label={getRequirementPriorityLabel(
                           requirement.priority,
                         )}
+                        ariaLabel={`${requirement.requirement_code} 優先度`}
                         disabled={isPending}
                         options={REQUIREMENT_PRIORITY_OPTIONS}
                         onValueChange={(priority) =>
                           updateRequirementListItem(requirement, { priority })
                         }
                       />
-                      <ReviewableRequirementText
-                        documentId={documentId}
-                        requirement={requirement}
-                        field="priority"
-                        label={`${requirement.requirement_code} 優先度`}
-                        value={getRequirementPriorityLabel(
-                          requirement.priority,
-                        )}
-                        className="text-xs text-muted-foreground"
-                        targetAnchors={targetAnchors}
-                        activeAnchorKey={activeAnchorKey}
-                        onSelectRequirement={onSelectRequirement}
-                        onSelectReviewAnchor={onSelectReviewAnchor}
-                      />
-                    </div>
+                    </ReviewableRequirementText>
                   ) : (
                     <ReviewableRequirementText
                       documentId={documentId}
@@ -193,29 +198,29 @@ export function RequirementsTable({
                 </TableCell>
                 <TableCell>
                   {canUpdate ? (
-                    <div className="flex flex-col gap-1">
+                    <ReviewableRequirementText
+                      documentId={documentId}
+                      requirement={requirement}
+                      field="status"
+                      label={`${requirement.requirement_code} ステータス`}
+                      value={getRequirementStatusLabel(requirement.status)}
+                      showTargetAction
+                      targetAnchors={targetAnchors}
+                      activeAnchorKey={activeAnchorKey}
+                      onSelectRequirement={onSelectRequirement}
+                      onSelectReviewAnchor={onSelectReviewAnchor}
+                    >
                       <RequirementInlineSelect
                         value={requirement.status ?? "draft"}
                         label={getRequirementStatusLabel(requirement.status)}
+                        ariaLabel={`${requirement.requirement_code} ステータス`}
                         disabled={isPending}
                         options={REQUIREMENT_STATUS_OPTIONS}
                         onValueChange={(status) =>
                           updateRequirementListItem(requirement, { status })
                         }
                       />
-                      <ReviewableRequirementText
-                        documentId={documentId}
-                        requirement={requirement}
-                        field="status"
-                        label={`${requirement.requirement_code} ステータス`}
-                        value={getRequirementStatusLabel(requirement.status)}
-                        className="text-xs text-muted-foreground"
-                        targetAnchors={targetAnchors}
-                        activeAnchorKey={activeAnchorKey}
-                        onSelectRequirement={onSelectRequirement}
-                        onSelectReviewAnchor={onSelectReviewAnchor}
-                      />
-                    </div>
+                    </ReviewableRequirementText>
                   ) : (
                     <ReviewableRequirementText
                       documentId={documentId}
@@ -232,7 +237,24 @@ export function RequirementsTable({
                     </ReviewableRequirementText>
                   )}
                 </TableCell>
-                <TableCell>{requirement.owner_id ?? "-"}</TableCell>
+                <TableCell>
+                  {coverageState === "loading"
+                    ? "確認中…"
+                    : coverageState === "error"
+                      ? "取得できません"
+                      : (coverageByRequirement[requirement.id] ?? 0) > 0
+                        ? `テストあり（${coverageByRequirement[requirement.id]}件）`
+                        : "テストなし"}
+                </TableCell>
+                <TableCell>
+                  <span
+                    className="block max-w-48 truncate"
+                    title={requirement.owner?.name}
+                  >
+                    {requirement.owner?.name ??
+                      (requirement.owner_id ? "担当者情報なし" : "未設定")}
+                  </span>
+                </TableCell>
                 <TableCell>{formatDateTime(requirement.updated_at)}</TableCell>
               </>
             );
@@ -248,6 +270,7 @@ export function RequirementsTable({
                   className="cursor-pointer data-[state=selected]:bg-muted"
                   onClick={() => onSelectRequirement(requirement)}
                   onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       onSelectRequirement(requirement);
@@ -270,7 +293,7 @@ export function RequirementsTable({
           })
         ) : (
           <TableEmptyRow
-            colSpan={6}
+            colSpan={7}
             message="条件に一致する要件がありません。"
           />
         )}
@@ -287,6 +310,7 @@ type ReviewableRequirementTextProps = {
   value: string;
   className?: string;
   children?: ReactNode;
+  showTargetAction?: boolean;
   targetAnchors: RequirementReviewTargetAnchor[];
   activeAnchorKey: string | null;
   onSelectRequirement?: (requirement: RequirementRead) => void;
@@ -304,6 +328,7 @@ function ReviewableRequirementText({
   value,
   className,
   children,
+  showTargetAction = false,
   targetAnchors,
   activeAnchorKey,
   onSelectRequirement,
@@ -329,7 +354,7 @@ function ReviewableRequirementText({
   });
   const hasHighlight = highlightQuotes.some((quote) => value.includes(quote));
 
-  const handleMouseUp = async (event: React.MouseEvent<HTMLSpanElement>) => {
+  const handleMouseUp = async (event: React.MouseEvent<HTMLDivElement>) => {
     if (!onSelectReviewAnchor) {
       return;
     }
@@ -355,34 +380,62 @@ function ReviewableRequirementText({
   };
 
   return (
-    <span
-      className={className}
+    <div
+      className={cn(className, showTargetAction && "flex items-center gap-1")}
       data-requirement-review-anchor-key={anchorKey}
       onMouseUp={handleMouseUp}
     >
-      <span
+      <div
         className={cn(
+          "min-w-0",
           activeAnchorKey === anchorKey
-            ? "rounded-sm bg-yellow-100 ring-2 ring-yellow-300"
+            ? "rounded-sm bg-[var(--status-warning-bg)] ring-2 ring-[var(--status-warning-border)]"
             : "",
-          hasHighlight && children ? "rounded-sm bg-yellow-200 px-0.5" : "",
+          hasHighlight && children
+            ? "rounded-sm bg-[var(--status-warning-bg)] px-0.5"
+            : "",
         )}
       >
         {children ?? renderHighlightedText(value, highlightQuotes)}
-      </span>
-    </span>
+      </div>
+      {showTargetAction && onSelectReviewAnchor ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`${label}にコメント・レビュー`}
+          title={`${label}にコメント・レビュー`}
+          onMouseUp={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+          onClick={async (event) => {
+            event.stopPropagation();
+            const targetAnchor = await createRequirementReviewAnchor({
+              base: baseAnchor,
+              quote: value,
+              sourceValue: value,
+            });
+            onSelectRequirement?.(requirement);
+            onSelectReviewAnchor(requirement, targetAnchor);
+          }}
+        >
+          <MessageSquarePlusIcon aria-hidden="true" />
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
 function RequirementInlineSelect({
   value,
   label,
+  ariaLabel,
   disabled,
   options,
   onValueChange,
 }: {
   value: string;
   label: string;
+  ariaLabel: string;
   disabled: boolean;
   options: readonly { value: string; label: string }[];
   onValueChange: (value: string) => void;
@@ -393,7 +446,7 @@ function RequirementInlineSelect({
       onKeyDown={(event) => event.stopPropagation()}
     >
       <Select value={value} disabled={disabled} onValueChange={onValueChange}>
-        <SelectTrigger className="h-8 w-32">
+        <SelectTrigger className="h-8 w-32" aria-label={ariaLabel}>
           <SelectValue>{label}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -421,7 +474,7 @@ const renderHighlightedText = (value: string, highlightQuotes: string[]) => {
   return (
     <>
       {before}
-      <mark className="rounded-sm bg-yellow-200 px-0.5 text-foreground">
+      <mark className="rounded-sm bg-[var(--status-warning-bg)] px-0.5 text-foreground">
         {quote}
       </mark>
       {after}

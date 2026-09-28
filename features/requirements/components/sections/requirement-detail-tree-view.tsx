@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { RequirementDetailRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 
@@ -158,6 +159,7 @@ function ImplementationUnitSection({
         variant="ghost"
         size="sm"
         className="h-7 px-2"
+        aria-expanded={!isCollapsed}
         onClick={onToggleCollapse}
       >
         {isCollapsed ? (
@@ -285,17 +287,17 @@ function ScreenSection({
 
   return (
     <section
-      className="min-w-0 scroll-mt-24 rounded-md border border-sky-100 bg-sky-50/50 p-3"
+      className="@container/detail-screen min-w-0 scroll-mt-24 rounded-md border border-l-2 border-l-primary/40 bg-muted/20 p-3"
       data-requirement-comment-anchor={getRequirementCommentAnchorKey(
         createRequirementDetailCommentAnchor(screen.detail),
       )}
     >
-      <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-start md:justify-between">
+      <div className="flex min-w-0 flex-col gap-2 @min-[40rem]/detail-screen:flex-row @min-[40rem]/detail-screen:items-start @min-[40rem]/detail-screen:justify-between">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="shrink-0 rounded border border-sky-200 bg-white/70 px-1.5 py-0.5 text-[11px] text-sky-700">
+            <Badge variant="secondary" className="shrink-0">
               画面・操作
-            </span>
+            </Badge>
             <p className="min-w-0 truncate text-sm font-medium">
               {getRequirementDetailDisplayTitle(screen.detail)}
             </p>
@@ -305,7 +307,7 @@ function ScreenSection({
           </p>
         </div>
         {canUpdate || screenActions || onSelectCommentAnchor ? (
-          <div className="flex shrink-0 flex-wrap gap-1 md:justify-end">
+          <div className="flex shrink-0 flex-wrap gap-1 @min-[40rem]/detail-screen:justify-end">
             {onSelectCommentAnchor ? (
               <CommentTargetButton
                 detail={screen.detail}
@@ -324,10 +326,10 @@ function ScreenSection({
       </div>
       <RequirementDetailSummary
         detail={screen.detail}
-        className="mt-2 rounded border border-sky-100 bg-white/70 px-2 py-1.5 sm:grid-cols-4"
+        className="mt-2 border-t pt-2 @min-[28rem]/detail-screen:grid-cols-2"
       />
       {screen.details.length ? (
-        <div className="mt-3 border-l-2 border-sky-200 pl-3">
+        <div className="mt-3 border-l-2 border-border pl-3">
           <DetailGroup
             title="画面配下の項目"
             details={screen.details}
@@ -365,7 +367,7 @@ function DetailGroup({
           {details.length}件
         </span>
       </div>
-      <div className="overflow-hidden rounded-md border bg-background">
+      <div className="@container/detail-group overflow-hidden rounded-md border bg-background">
         {details.map((detail) => (
           <RequirementDetailListRow
             key={detail.id}

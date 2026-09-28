@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -456,7 +457,7 @@ const renderHighlightedMarkdownText = (
       {before}
       <mark
         key={`highlight-${childIndex}`}
-        className="rounded-sm bg-yellow-200 px-0.5 text-foreground"
+        className="rounded-sm bg-[var(--status-warning-bg)] px-0.5 text-[var(--status-warning-fg)]"
       >
         {quote}
       </mark>
@@ -470,6 +471,7 @@ type MermaidDiagramProps = {
 };
 
 function MermaidDiagram({ chart }: MermaidDiagramProps) {
+  const { resolvedTheme } = useTheme();
   const reactId = useId();
   const diagramId = `mermaid-${reactId.replace(/:/g, "")}`;
   const [svg, setSvg] = useState<string | null>(null);
@@ -487,7 +489,7 @@ function MermaidDiagram({ chart }: MermaidDiagramProps) {
         mermaid.initialize({
           startOnLoad: false,
           securityLevel: "strict",
-          theme: "default",
+          theme: resolvedTheme === "dark" ? "dark" : "default",
         });
 
         const result = await mermaid.render(diagramId, chart);
@@ -507,7 +509,7 @@ function MermaidDiagram({ chart }: MermaidDiagramProps) {
     return () => {
       cancelled = true;
     };
-  }, [chart, diagramId]);
+  }, [chart, diagramId, resolvedTheme]);
 
   if (error) {
     return (
@@ -527,7 +529,7 @@ function MermaidDiagram({ chart }: MermaidDiagramProps) {
 
   return (
     <div
-      className="my-3 overflow-x-auto rounded-md border bg-white p-3 [&_svg]:mx-auto [&_svg]:max-w-full"
+      className="my-3 overflow-x-auto rounded-md border bg-background p-3 [&_svg]:mx-auto [&_svg]:max-w-full"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

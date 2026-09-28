@@ -26,6 +26,7 @@ import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getConflictFields } from "@/lib/api/conflict";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { cn } from "@/lib/utils";
+import type { UserSummary } from "@/lib/api/generated/model";
 
 import { REQUIREMENT_CONFLICT_FIELD_LABELS } from "../../constants/requirement-conflict-fields";
 import {
@@ -46,6 +47,7 @@ type RequirementFormProps = {
   documentId: number;
   mode: "create" | "update";
   initialValues: RequirementFormValues;
+  initialOwner?: UserSummary | null;
   draftScope?: string;
   draftResourceId?: number | null;
   className?: string;
@@ -62,6 +64,7 @@ export function RequirementForm({
   documentId,
   mode,
   initialValues,
+  initialOwner,
   draftScope,
   draftResourceId = null,
   className,
@@ -146,7 +149,13 @@ export function RequirementForm({
 
   return (
     <>
-      <form className={cn("max-w-4xl", className)} onSubmit={handleSubmit}>
+      <form
+        className={cn(
+          "@container/requirement-form min-w-0 max-w-4xl",
+          className,
+        )}
+        onSubmit={handleSubmit}
+      >
         <FieldGroup>
           <FormSection
             title="配置先"
@@ -179,7 +188,7 @@ export function RequirementForm({
           </FormSection>
 
           <FormSection title="基本情報">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <FieldGroup className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2 @min-[52rem]/requirement-form:grid-cols-4">
               {mode === "update" ? (
                 <Field>
                   <FieldLabel>要件コード</FieldLabel>
@@ -260,7 +269,7 @@ export function RequirementForm({
                   <FieldError>{errors.status}</FieldError>
                 ) : null}
               </Field>
-            </div>
+            </FieldGroup>
 
             <Field>
               <FieldLabel htmlFor={categoryId}>カテゴリ</FieldLabel>
@@ -297,7 +306,7 @@ export function RequirementForm({
               />
             </Field>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor={rationaleId}>理由</FieldLabel>
                 <Textarea
@@ -324,7 +333,7 @@ export function RequirementForm({
           </FormSection>
 
           <FormSection title="担当・承認">
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2 @min-[52rem]/requirement-form:grid-cols-4">
               <Field>
                 <FieldLabel htmlFor={sourceId}>情報源</FieldLabel>
                 <Input
@@ -339,6 +348,7 @@ export function RequirementForm({
                 projectId={projectId}
                 label="担当者"
                 value={values.ownerId}
+                initialUser={initialOwner}
                 onChange={(value) => updateValue("ownerId", value)}
               />
               <RequirementUserSelectField
@@ -362,7 +372,7 @@ export function RequirementForm({
           </FormSection>
 
           {mode === "update" ? (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor={changeSummaryId}>変更概要</FieldLabel>
                 <Input
