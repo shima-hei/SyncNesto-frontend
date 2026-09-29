@@ -44,10 +44,7 @@ export function gridData(
         {
           key: "pattern_table_id",
           label: "パターン",
-          options: [
-            "なし",
-            ...(design.pattern_tables ?? []).map((t) => t.name),
-          ],
+          options: ["", ...(design.pattern_tables ?? []).map((t) => t.name)],
         },
         ...itemColumns.slice(8).map(([key, label]) => ({ key, label })),
         ...design.columns.map((c) => ({ key: c.key, label: c.label })),
@@ -67,7 +64,7 @@ export function gridData(
             ? ""
             : (design.pattern_tables?.find(
                 (t) => t.id === item.pattern_table_id,
-              )?.name ?? "なし"),
+              )?.name ?? ""),
         },
       })),
     };

@@ -1,12 +1,11 @@
 "use client";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
   MessageSquareIcon,
   MoreHorizontalIcon,
   PlusIcon,
   Trash2Icon,
-  XIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
@@ -28,7 +27,6 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import type { TestDesignCommentRead } from "@/lib/api/generated/model";
-import { cn } from "@/lib/utils";
 import { type Design } from "../../lib/design";
 import {
   createPatternTable,
@@ -64,7 +62,7 @@ function PatternUsage({
       .includes(term),
   );
   return (
-    <section className="space-y-3">
+    <section className="flex flex-col gap-3">
       <h3 className="font-semibold">このパターンを使用しているテスト項目</h3>
       <Input
         type="search"
@@ -76,16 +74,16 @@ function PatternUsage({
       <p className="text-xs text-muted-foreground">
         {visible.length} / {items.length}件
       </p>
-      <div className="max-h-[560px] overflow-y-auto divide-y rounded-md border">
+      <div className="max-h-[560px] overflow-y-auto divide-y border-y">
         {visible.map((item) => (
           <button
             key={item.id}
             type="button"
-            className="flex w-full items-start gap-4 p-3 text-left text-sm hover:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+            className="flex w-full items-start gap-2 py-2 text-left text-sm hover:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
             onClick={() => onItem(item.id)}
           >
             <span className="shrink-0 font-medium">{item.code}</span>
-            <span className="min-w-0 break-words whitespace-pre-wrap">
+            <span className="min-w-0 line-clamp-2 break-words">
               {item.content || "テスト内容未入力"}
             </span>
           </button>
@@ -114,9 +112,6 @@ export function PatternTablesManager({
   onItem,
   onCommentTarget,
   onOpenComments,
-  onCloseComments,
-  commentsOpen,
-  commentsPanel,
   comments,
   tab,
   onTabChange,
@@ -133,9 +128,6 @@ export function PatternTablesManager({
   onItem: (id: string) => void;
   onCommentTarget: (target: DesignCommentTarget, label: string) => void;
   onOpenComments: () => void;
-  onCloseComments: () => void;
-  commentsOpen: boolean;
-  commentsPanel: ReactNode;
   comments: TestDesignCommentRead[];
   tab: PatternTab;
   onTabChange: (tab: PatternTab) => void;
@@ -237,7 +229,7 @@ export function PatternTablesManager({
               <h2 className="sr-only">{table.name}</h2>
               <Input
                 aria-label="パターン表名"
-                className="h-10 border-transparent px-0 text-xl font-semibold shadow-none hover:border-input focus-visible:border-input md:text-xl"
+                className="h-10 border-transparent px-0 text-base font-semibold shadow-none hover:border-input focus-visible:border-input md:text-base"
                 disabled={readOnly}
                 value={table.name}
                 onChange={(event) =>
@@ -260,7 +252,6 @@ export function PatternTablesManager({
               size="sm"
               variant="outline"
               onClick={() => tableComment(table.id, table.name)}
-              aria-expanded={commentsOpen}
             >
               <MessageSquareIcon data-icon="inline-start" />
               コメント {stats.get(table.id)?.comments ?? 0}件
@@ -276,12 +267,7 @@ export function PatternTablesManager({
               <TabsTrigger value="combinations">組み合わせ</TabsTrigger>
               <TabsTrigger value="usage">使用テスト項目</TabsTrigger>
             </TabsList>
-            <div
-              className={cn(
-                "relative mt-3 grid min-w-0 gap-4",
-                commentsOpen && "@[1100px]:grid-cols-[minmax(0,1fr)_22rem]",
-              )}
-            >
+            <div className="mt-2 min-w-0">
               <div className="min-w-0">
                 <TabsContent value="definitions" className="mt-0">
                   <PatternDefinitions
@@ -322,38 +308,6 @@ export function PatternTablesManager({
                   />
                 </TabsContent>
               </div>
-              {
-                <aside
-                  aria-label="パターンのコメントパネル"
-                  className={cn(
-                    "absolute inset-y-0 right-0 z-30 flex max-h-[680px] w-[min(24rem,100%)] flex-col border bg-background p-3 shadow-lg @[1100px]:static @[1100px]:w-auto @[1100px]:border-0 @[1100px]:border-l @[1100px]:shadow-none",
-                    !commentsOpen && "hidden",
-                  )}
-                  onKeyDown={(event) => {
-                    if (
-                      event.key === "Escape" &&
-                      !event.nativeEvent.isComposing &&
-                      event.keyCode !== 229
-                    ) {
-                      event.stopPropagation();
-                      onCloseComments();
-                    }
-                  }}
-                >
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <h3 className="font-semibold">コメント</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="コメントパネルを閉じる"
-                      onClick={onCloseComments}
-                    >
-                      <XIcon />
-                    </Button>
-                  </div>
-                  <div className="min-h-0 overflow-y-auto">{commentsPanel}</div>
-                </aside>
-              }
             </div>
           </Tabs>
         </section>
@@ -363,7 +317,9 @@ export function PatternTablesManager({
             <h2 className="text-base font-semibold">用途ごとのパターン表</h2>
             <Button
               disabled={readOnly}
-              onClick={() => change((d) => onOpen(createPatternTable(d)))}
+              onClick={() =>
+                change((d) => onOpen(createPatternTable(d), "definitions"))
+              }
             >
               <PlusIcon data-icon="inline-start" />
               新しいパターン表を作成

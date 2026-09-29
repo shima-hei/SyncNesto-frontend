@@ -48,6 +48,7 @@ export function PatternDefinitions({
   const commentButton = (target: DesignCommentTarget, label: string) => (
     <Button
       size="sm"
+      className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
       variant="ghost"
       aria-label={`${label}のコメント`}
       title={`${label}のコメント ${counts.get(commentTargetKey(target)) ?? 0}件`}
@@ -103,7 +104,7 @@ export function PatternDefinitions({
       ]),
     );
   return (
-    <section className="space-y-5">
+    <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-base font-semibold">
           因子・水準{" "}
@@ -121,14 +122,14 @@ export function PatternDefinitions({
           因子を追加
         </Button>
       </div>
-      <div className="max-h-[560px] overflow-y-auto divide-y rounded-md border">
+      <div className="max-h-[560px] overflow-y-auto divide-y border-y">
         {design.factors.map((factor) => {
           const levels = design.levels.filter(
             (level) => level.factor_id === factor.id,
           );
           return (
-            <div key={factor.id} className="p-3">
-              <div className="flex items-center gap-1 font-semibold">
+            <div key={factor.id} className="py-2">
+              <div className="group flex items-center gap-1 font-semibold">
                 <DefinitionName
                   name={factor.name}
                   names={design.factors
@@ -160,7 +161,7 @@ export function PatternDefinitions({
               </div>
               <div className="ml-4 border-l pl-3">
                 {levels.map((level) => (
-                  <div key={level.id} className="flex items-center gap-1">
+                  <div key={level.id} className="group flex items-center gap-1">
                     <DefinitionName
                       name={level.name}
                       names={levels
@@ -219,9 +220,9 @@ export function PatternDefinitions({
           期待値を追加
         </Button>
       </div>
-      <div className="max-h-80 overflow-y-auto divide-y rounded-md border p-2">
+      <div className="max-h-80 overflow-y-auto divide-y border-y p-2">
         {(design.expected_values ?? []).map((value) => (
-          <div key={value.id} className="flex items-center gap-1">
+          <div key={value.id} className="group flex items-center gap-1">
             <DefinitionName
               name={value.name}
               multiline

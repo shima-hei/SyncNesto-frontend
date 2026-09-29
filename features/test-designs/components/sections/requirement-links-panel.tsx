@@ -65,7 +65,7 @@ export function RequirementLinksPanel({
   }
 
   return (
-    <section className="rounded-md border p-3">
+    <section className="flex flex-col gap-2">
       <h3 className="font-semibold">{itemCode} の関連要件</h3>
       {disabledMessage && (
         <p className="text-xs text-muted-foreground">{disabledMessage}</p>
