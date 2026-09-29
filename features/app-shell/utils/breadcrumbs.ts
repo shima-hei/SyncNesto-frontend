@@ -14,6 +14,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   joined: "参加プロジェクト",
   management: "プロジェクト管理",
   members: "メンバー",
+  notifications: "通知",
   projects: "プロジェクト",
   requirements: "要件定義書",
   system: "システム設定",

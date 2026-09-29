@@ -3,6 +3,7 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeSwitcher } from "@/components/shared/display/theme-switcher";
+import { NotificationCenter } from "@/features/notifications/components/notification-center";
 
 import { SiteBreadcrumbs } from "./site-breadcrumbs";
 
@@ -18,6 +19,7 @@ export function SiteHeader() {
         <div className="min-w-0 flex-1">
           <SiteBreadcrumbs />
         </div>
+        <NotificationCenter />
         <ThemeSwitcher />
       </div>
     </header>
