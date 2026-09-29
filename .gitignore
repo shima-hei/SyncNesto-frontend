@@ -46,5 +46,6 @@ next-env.d.ts
 /docs/*
 !/docs/design-system.md
 !/docs/notifications.md
+!/docs/home-workspace.md
 .codex
 AGENTS.md

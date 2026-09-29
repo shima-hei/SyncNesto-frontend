@@ -3,9 +3,10 @@ import { ProjectListPage } from "@/features/projects/components/shared/project-l
 export default function Page() {
   return (
     <ProjectListPage
-      title="参加プロジェクト"
+      title="プロジェクト"
       description="参加しているプロジェクトの作業領域へ移動します。"
       detailBasePath="/projects/joined"
+      memberOnly
     />
   );
 }

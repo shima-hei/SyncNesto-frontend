@@ -10,9 +10,10 @@ import {
 } from "@/lib/api/generated/projects/projects";
 
 export const invalidateProjectList = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({
-    queryKey: getProjectListKey(),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: getProjectListKey() }),
+    queryClient.invalidateQueries({ queryKey: ["home"] }),
+  ]);
 };
 
 export const setProjectDetailCache = (
@@ -36,9 +37,12 @@ export const invalidateProjectMemberList = (
   queryClient: QueryClient,
   projectId: number,
 ) => {
-  return queryClient.invalidateQueries({
-    queryKey: getProjectMemberListKey(projectId),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: getProjectMemberListKey(projectId),
+    }),
+    queryClient.invalidateQueries({ queryKey: ["home"] }),
+  ]);
 };
 
 export const invalidateProjectMemberCandidateList = (

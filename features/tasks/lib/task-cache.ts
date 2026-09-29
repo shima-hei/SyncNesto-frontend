@@ -18,9 +18,10 @@ export const invalidateTaskList = (
   queryClient: QueryClient,
   projectId: number,
 ) => {
-  return queryClient.invalidateQueries({
-    queryKey: getTaskListKey(projectId),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: getTaskListKey(projectId) }),
+    queryClient.invalidateQueries({ queryKey: ["home"] }),
+  ]);
 };
 
 export const invalidateBoardList = (

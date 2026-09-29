@@ -11,17 +11,17 @@ const SEGMENT_LABELS: Record<string, string> = {
   documents: "ドキュメント",
   forbidden: "アクセス権限なし",
   help: "ヘルプ",
-  joined: "参加プロジェクト",
+  joined: "プロジェクト",
   management: "プロジェクト管理",
   members: "メンバー",
   notifications: "通知",
   projects: "プロジェクト",
   requirements: "要件定義書",
-  system: "システム設定",
+  system: "管理",
   tasks: "タスク",
   "test-cases": "テストケース",
   "test-designs": "テスト設計書",
-  users: "ユーザー一覧",
+  users: "ユーザー管理",
 };
 
 const TECHNICAL_SEGMENTS = new Set(["items"]);
@@ -35,6 +35,10 @@ export const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
   const segments = pathname.split("/").filter(Boolean);
   const items = segments.reduce<BreadcrumbItem[]>(
     (currentItems, segment, index) => {
+      if (segment === "projects" && segments[index + 1] === "joined")
+        return currentItems;
+      if (segment === "projects" && segments[index + 1] === "management")
+        return [...currentItems, { label: "管理" }];
       const href = `/${segments.slice(0, index + 1).join("/")}`;
       const previousSegment = segments[index - 1];
       const nextItem = getBreadcrumbItemForSegment({

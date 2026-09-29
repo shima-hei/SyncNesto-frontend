@@ -7,6 +7,7 @@ import { ChevronRightIcon } from "lucide-react";
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -23,10 +24,12 @@ export function SidebarNav({
   items,
   pathname,
   className,
+  label,
 }: {
   items: AppNavigationItem[];
   pathname: string;
   className?: string;
+  label?: string;
 }) {
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 
@@ -39,6 +42,7 @@ export function SidebarNav({
 
   return (
     <SidebarGroup className={className}>
+      {label ? <SidebarGroupLabel>{label}</SidebarGroupLabel> : null}
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => {

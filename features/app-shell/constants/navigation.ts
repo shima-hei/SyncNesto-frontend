@@ -1,10 +1,8 @@
 import {
   CircleHelpIcon,
   FolderKanbanIcon,
-  FolderOpenIcon,
   HomeIcon,
   SettingsIcon,
-  Settings2Icon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -35,33 +33,23 @@ export const mainNavigation: AppNavigationItem[] = [
   },
   {
     title: "プロジェクト",
+    href: "/projects/joined",
     icon: FolderKanbanIcon,
-    children: [
-      {
-        title: "プロジェクト管理",
-        href: "/projects/management",
-        icon: SettingsIcon,
-        requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
-      },
-      {
-        title: "参加プロジェクト",
-        href: "/projects/joined",
-        icon: FolderOpenIcon,
-      },
-    ],
+  },
+];
+
+export const managementNavigation: AppNavigationItem[] = [
+  {
+    title: "プロジェクト管理",
+    href: "/projects/management",
+    icon: SettingsIcon,
+    requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
   },
   {
-    title: "システム設定",
-    icon: Settings2Icon,
+    title: "ユーザー管理",
+    href: "/system/users",
+    icon: UsersIcon,
     requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
-    children: [
-      {
-        title: "ユーザー一覧",
-        href: "/system/users",
-        icon: UsersIcon,
-        requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
-      },
-    ],
   },
 ];
 

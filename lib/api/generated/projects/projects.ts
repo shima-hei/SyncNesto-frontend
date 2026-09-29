@@ -171,6 +171,7 @@ Args:
     page_size: 1ページあたりの件数。
     q: 検索キーワード。
     status: ステータス絞り込み。
+    member_only: system権限を持つ場合も参加案件だけに絞る。
     current_user: 認証済みユーザー。
     db: DBセッション。
 

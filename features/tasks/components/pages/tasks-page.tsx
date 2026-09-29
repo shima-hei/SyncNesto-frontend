@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { PlusIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
@@ -19,6 +20,7 @@ import {
   canCreateTask,
   canUpdateTask,
 } from "@/features/auth/utils/authorization";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { useUrlTabState } from "@/hooks/use-url-tab-state";
 import type { MilestoneRead } from "@/lib/api/generated/model";
@@ -59,6 +61,8 @@ type TasksPageProps = {
 };
 
 export function TasksPage({ projectId }: TasksPageProps) {
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useUrlTabState({
     values: TASK_TABS,
     defaultValue: "list",
@@ -71,7 +75,10 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [priority, setPriority] = useState(ALL_PRIORITIES);
   const [taskType, setTaskType] = useState(ALL_TYPES);
   const [overdue, setOverdue] = useState(ALL_OVERDUE);
-  const [assigneeId, setAssigneeId] = useState("");
+  const [selectedAssigneeId, setAssigneeId] = useState<string | null>(null);
+  const assigneeId =
+    selectedAssigneeId ??
+    (searchParams.get("assignee") === "me" ? String(user?.id ?? "") : "");
   const [requirementId, setRequirementId] = useState("");
   const [tag, setTag] = useState("");
   const [startDateFrom, setStartDateFrom] = useState("");
@@ -118,6 +125,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
       overdue: overdue === ALL_OVERDUE ? undefined : overdue === "overdue",
       sort,
     },
+    searchParams.get("assignee") !== "me" || Boolean(user),
   );
   const { gantt, isLoading: isGanttLoading } = useGantt(projectId, {
     start_date: ganttStartDate || undefined,

@@ -1,11 +1,5 @@
-import { PageHeader } from "@/components/shared/layout/page-header";
-import { NotificationSummary } from "@/components/shared/notifications/notification-summary";
+import { HomePage } from "@/features/home/components/pages/home-page";
 
 export default function Home() {
-  return (
-    <div className="flex max-w-4xl flex-col gap-6">
-      <PageHeader title="ホーム" />
-      <NotificationSummary />
-    </div>
-  );
+  return <HomePage />;
 }
