@@ -33,6 +33,7 @@ export const STATUS_ERROR_MESSAGES: Record<number, string> = {
 };
 
 export const API_ERROR_FALLBACK_MESSAGES = {
+  fileUpload: "ファイルのアップロードに失敗しました。再度お試しください。",
   default: "処理に失敗しました。時間をおいて再度お試しください。",
   request: "APIリクエストに失敗しました。",
   csrfToken: "CSRF token の取得に失敗しました。",

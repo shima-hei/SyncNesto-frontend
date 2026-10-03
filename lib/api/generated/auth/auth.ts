@@ -23,6 +23,9 @@ import type {
 import type {
   BodyUpdateCurrentUserAvatarAuthMeAvatarPut,
   CurrentUserRead,
+  FileUploadComplete,
+  FileUploadPlan,
+  FileUploadRequest,
   HTTPValidationError,
   UserLogin,
   UserLoginResponse,
@@ -700,3 +703,246 @@ export const useDeleteCurrentUserAvatarAuthMeAvatarDelete = <
     queryClient,
   );
 };
+export const getPlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPostUrl =
+  () => {
+    return `/auth/me/avatar/upload-plan`;
+  };
+
+/**
+ * 本人のアイコン送信方式を返す。
+ * @summary Plan Current User Avatar Upload
+ */
+export const planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost = async (
+  fileUploadRequest: FileUploadRequest,
+  options?: RequestInit,
+): Promise<FileUploadPlan> => {
+  return apiClient<FileUploadPlan>(
+    getPlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPostUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(fileUploadRequest),
+    },
+  );
+};
+
+export const getPlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost>
+      >,
+      TError,
+      { data: BodyType<FileUploadRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<typeof planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost>
+    >,
+    TError,
+    { data: BodyType<FileUploadRequest> },
+    TContext
+  > => {
+    const mutationKey = [
+      "planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost",
+    ];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<typeof planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost>
+      >,
+      { data: BodyType<FileUploadRequest> }
+    > = (props) => {
+      const { data } = props ?? {};
+
+      return planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost(
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type PlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost>
+    >
+  >;
+export type PlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPostMutationBody =
+  BodyType<FileUploadRequest>;
+export type PlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPostMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Plan Current User Avatar Upload
+ */
+export const usePlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost>
+      >,
+      TError,
+      { data: BodyType<FileUploadRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<
+    ReturnType<typeof planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost>
+  >,
+  TError,
+  { data: BodyType<FileUploadRequest> },
+  TContext
+> => {
+  return useMutation(
+    getPlanCurrentUserAvatarUploadAuthMeAvatarUploadPlanPostMutationOptions(
+      options,
+    ),
+    queryClient,
+  );
+};
+export const getCompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePostUrl =
+  () => {
+    return `/auth/me/avatar/upload-complete`;
+  };
+
+/**
+ * 本人が直接送信したアイコンを検証して登録する。
+ * @summary Complete Current User Avatar Upload
+ */
+export const completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost =
+  async (
+    fileUploadComplete: FileUploadComplete,
+    options?: RequestInit,
+  ): Promise<CurrentUserRead> => {
+    return apiClient<CurrentUserRead>(
+      getCompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePostUrl(),
+      {
+        ...options,
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...options?.headers },
+        body: JSON.stringify(fileUploadComplete),
+      },
+    );
+  };
+
+export const getCompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost
+        >
+      >,
+      TError,
+      { data: BodyType<FileUploadComplete> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost
+      >
+    >,
+    TError,
+    { data: BodyType<FileUploadComplete> },
+    TContext
+  > => {
+    const mutationKey = [
+      "completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost",
+    ];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost
+        >
+      >,
+      { data: BodyType<FileUploadComplete> }
+    > = (props) => {
+      const { data } = props ?? {};
+
+      return completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost(
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost
+      >
+    >
+  >;
+export type CompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePostMutationBody =
+  BodyType<FileUploadComplete>;
+export type CompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePostMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Complete Current User Avatar Upload
+ */
+export const useCompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost
+          >
+        >,
+        TError,
+        { data: BodyType<FileUploadComplete> },
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost
+      >
+    >,
+    TError,
+    { data: BodyType<FileUploadComplete> },
+    TContext
+  > => {
+    return useMutation(
+      getCompleteCurrentUserAvatarUploadAuthMeAvatarUploadCompletePostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };

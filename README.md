@@ -59,6 +59,8 @@ npm run api:generate
 
 ## API生成
 
+アイコンとエビデンスのアップロード方式はバックエンドの `FILE_UPLOAD_MODE` に従います。直接アップロードでは大きなファイル本体がNext.js BFFを通りません。設定と処理の概要は [ファイル送信方式](docs/file-upload-request.md) を参照してください。
+
 バックエンドのOpenAPI定義からOrvalでAPIクライアントを生成します。
 
 ```bash
