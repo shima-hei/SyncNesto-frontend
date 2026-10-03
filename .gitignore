@@ -44,6 +44,7 @@ next-env.d.ts
 
 # docs
 /docs/*
+!/docs/deployment.md
 !/docs/design-system.md
 !/docs/notifications.md
 !/docs/home-workspace.md
