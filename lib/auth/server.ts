@@ -7,6 +7,7 @@ import { isSystemAdmin } from "@/features/auth/utils/authorization";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 import { AUTH_ERROR_CODES } from "@/lib/auth/session-events";
 import { CSRF_COOKIE_NAME } from "@/lib/security/csrf";
+import { authenticateBackendRequest } from "@/lib/security/backend";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "access_token";
@@ -67,11 +68,13 @@ const getCurrentUserResultOnServer = async (): Promise<CurrentUserResult> => {
 const fetchCurrentUser = async (cookieHeader: string) => {
   try {
     return await fetch(new URL("/auth/me", API_BASE_URL), {
-      headers: {
-        // Server GuardはFastAPIを直接呼ぶため、ブラウザから受け取ったCookieを手動で転送する。
-        Cookie: cookieHeader,
-        Accept: "application/json",
-      },
+      headers: authenticateBackendRequest(
+        new Headers({
+          // Server GuardはFastAPIを直接呼ぶため、ブラウザから受け取ったCookieを手動で転送する。
+          Cookie: cookieHeader,
+          Accept: "application/json",
+        }),
+      ),
       cache: "no-store",
     });
   } catch {
