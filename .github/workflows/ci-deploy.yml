@@ -41,7 +41,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: production
-      url: https://syncnesto-portfolio.vercel.app
+      url: https://syncnesto.vercel.app
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -60,4 +60,4 @@ jobs:
       - run: vercel build --prod --token="$VERCEL_TOKEN"
       - run: vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN"
       - name: Verify public login page
-        run: curl --fail --silent --show-error --retry 3 --retry-all-errors https://syncnesto-portfolio.vercel.app/login --output /dev/null
+        run: curl --fail --silent --show-error --retry 3 --retry-all-errors https://syncnesto.vercel.app/login --output /dev/null
