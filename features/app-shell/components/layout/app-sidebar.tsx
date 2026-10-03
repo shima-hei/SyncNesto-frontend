@@ -12,11 +12,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
 import {
   mainNavigation,
+  managementNavigation,
   secondaryNavigation,
 } from "../../constants/navigation";
 import { getVisibleNavigationItems } from "../../utils/navigation";
@@ -27,6 +29,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { user } = useAuth();
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
+  const visibleManagementNavigation = getVisibleNavigationItems(
+    managementNavigation,
+    user,
+  );
   const visibleSecondaryNavigation = getVisibleNavigationItems(
     secondaryNavigation,
     user,
@@ -51,6 +57,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarNav items={visibleMainNavigation} pathname={pathname} />
+        {visibleManagementNavigation.length ? (
+          <>
+            <SidebarSeparator />
+            <SidebarNav
+              items={visibleManagementNavigation}
+              pathname={pathname}
+              label="管理"
+            />
+          </>
+        ) : null}
         <SidebarNav
           items={visibleSecondaryNavigation}
           pathname={pathname}

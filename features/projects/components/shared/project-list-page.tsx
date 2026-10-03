@@ -28,6 +28,7 @@ type ProjectListPageProps = {
   description: string;
   detailBasePath: string;
   createHref?: string;
+  memberOnly?: boolean;
 };
 
 export function ProjectListPage({
@@ -35,6 +36,7 @@ export function ProjectListPage({
   description,
   detailBasePath,
   createHref,
+  memberOnly = false,
 }: ProjectListPageProps) {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
@@ -46,8 +48,9 @@ export function ProjectListPage({
       page_size: PAGE_SIZE,
       q: q || undefined,
       status: status === ALL_STATUSES ? undefined : status,
+      member_only: memberOnly || undefined,
     }),
-    [page, q, status],
+    [page, q, status, memberOnly],
   );
   const { projects, total, isLoading, isFetching } =
     useProjects(projectListParams);

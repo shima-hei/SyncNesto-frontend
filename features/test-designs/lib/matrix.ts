@@ -32,11 +32,17 @@ export function matrixRows(d: Design): GridRow[] {
     if (!levels.length)
       rows.push({
         id: `factor:${f.id}`,
+        groupLabel: f.name,
+        groupId: f.id,
+        groupStart: true,
         values: { factor: f.name, level: "" },
       });
     levels.forEach((l, i) =>
       rows.push({
         id: l.id,
+        groupLabel: f.name,
+        groupId: f.id,
+        groupStart: i === 0,
         values: {
           factor: i === 0 ? f.name : "",
           level: l.name,
@@ -54,6 +60,8 @@ export function matrixRows(d: Design): GridRow[] {
   (d.expected_values ?? []).forEach((v, i) =>
     rows.push({
       id: `expected:${v.id}`,
+      groupLabel: "期待値",
+      groupId: "expected",
       sectionStart: i === 0,
       values: {
         factor: i === 0 ? "期待値" : "",
@@ -63,6 +71,32 @@ export function matrixRows(d: Design): GridRow[] {
     }),
   );
   return rows;
+}
+
+export function addFactorLevel(d: Design, factorId: string) {
+  d.levels.push({
+    id: uid(),
+    factor_id: factorId,
+    name: nextCode(
+      "水準",
+      d.levels
+        .filter((level) => level.factor_id === factorId)
+        .map((level) => level.name),
+    ),
+    position: d.levels.length,
+  });
+}
+
+export function addExpectedValue(d: Design) {
+  d.expected_values ??= [];
+  d.expected_values.push({
+    id: uid(),
+    name: nextCode(
+      "期待値",
+      d.expected_values.map((value) => value.name),
+    ),
+    position: d.expected_values.length,
+  });
 }
 
 export function editMatrix(d: Design, edits: CellEdit[]) {

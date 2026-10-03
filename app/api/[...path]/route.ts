@@ -7,6 +7,8 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 // BFFでは、フロントエンドから呼び出す想定のAPIグループだけを公開する。
 const ALLOWED_PREFIXES = [
   "/auth",
+  "/home",
+  "/notifications",
   "/users",
   "/projects",
   "/tasks",

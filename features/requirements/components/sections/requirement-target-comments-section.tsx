@@ -1,5 +1,6 @@
 "use client";
 
+import { CommentContent } from "@/components/shared/comments/comment-content";
 import { useState } from "react";
 
 import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
@@ -97,6 +98,7 @@ export function RequirementTargetCommentsSection({
 
         {canComment ? (
           <RequirementTargetCommentForm
+            projectId={projectId}
             key={JSON.stringify(selectedTargetAnchor)}
             initialValues={{
               body: "",
@@ -144,8 +146,10 @@ export function RequirementTargetCommentsSection({
             <>
               <CommentInlineHeader label="コメント編集" onClose={onClose} />
               <RequirementTargetCommentForm
+                projectId={projectId}
                 initialValues={{
                   body: comment.body,
+                  mentions: comment.mentions,
                   targetAnchor: getRequirementCommentAnchorLabel(
                     comment.target_anchor,
                   ),
@@ -167,6 +171,7 @@ export function RequirementTargetCommentsSection({
             <>
               <CommentInlineHeader label="返信" onClose={onClose} />
               <RequirementTargetCommentForm
+                projectId={projectId}
                 initialValues={{ body: "", targetAnchor: "", reason: "" }}
                 submitLabel="返信追加"
                 showTargetAnchorInput={false}
@@ -276,7 +281,9 @@ function CommentBody({
           </span>
         </button>
       ) : null}
-      <p className="whitespace-pre-wrap break-words text-sm">{comment.body}</p>
+      <p className="whitespace-pre-wrap break-words text-sm">
+        <CommentContent body={comment.body} mentions={comment.mentions} />
+      </p>
     </div>
   );
 }

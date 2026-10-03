@@ -4,20 +4,19 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { CommentContent } from "@/components/shared/comments/comment-content";
+import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
+import type { Mention } from "@/lib/comments/mentions";
 import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
 import { CommentThreadList } from "@/components/shared/comments/comment-thread-list";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { isSystemAdmin } from "@/features/auth/utils/authorization";
-import type {
-  TestDesignCommentCreate,
-  TestDesignCommentRead,
-} from "@/lib/api/generated/model";
+import type { TestDesignCommentRead } from "@/lib/api/generated/model";
 import {
   createTestDesignCommentProjectsProjectIdTestDesignsDesignIdCommentsPost as createComment,
   deleteTestDesignCommentProjectsProjectIdTestDesignsDesignIdCommentsCommentIdDelete as deleteComment,
-  listTestDesignCommentsProjectsProjectIdTestDesignsDesignIdCommentsGet as listComments,
   listTestDesignCommentChangesProjectsProjectIdTestDesignsDesignIdCommentsCommentIdChangesGet as listChanges,
   updateTestDesignCommentProjectsProjectIdTestDesignsDesignIdCommentsCommentIdPatch as updateComment,
 } from "@/lib/api/generated/test-collaboration/test-collaboration";
@@ -25,19 +24,14 @@ import { formatDateTime } from "@/lib/format/date";
 
 import { useConfirmAction } from "../../hooks/use-confirm-action";
 import { itemColumns } from "../../lib/design";
+import {
+  commentScopeKey,
+  commentTargetKey as targetKey,
+  type DesignCommentTarget,
+} from "../../lib/pattern-comments";
+import { useDesignComments } from "../../hooks/use-design-comments";
 
-export type DesignCommentTarget = Pick<
-  TestDesignCommentCreate,
-  "target_type" | "target_id" | "field"
->;
-
-function targetKey(target: {
-  target_type: string;
-  target_id?: string | null;
-  field?: string | null;
-}) {
-  return `${target.target_type}:${target.target_id ?? ""}:${target.field ?? ""}`;
-}
+export type { DesignCommentTarget } from "../../lib/pattern-comments";
 
 const itemFieldLabels: Record<string, string> = {
   ...Object.fromEntries(itemColumns),
@@ -69,28 +63,34 @@ function targetDisplayLabel(
 }
 
 function CommentComposer({
+  projectId,
+  initialMentions = [],
   initial = "",
   label,
   onSubmit,
   onClose,
 }: {
+  projectId: number;
+  initialMentions?: Mention[];
   initial?: string;
   label: string;
-  onSubmit: (body: string) => Promise<boolean>;
+  onSubmit: (body: string, mentions: Mention[]) => Promise<boolean>;
   onClose?: () => void;
 }) {
   const [body, setBody] = useState(initial);
+  const [mentions, setMentions] = useState(initialMentions);
   const [busy, setBusy] = useState(false);
   return (
     <form
-      className="space-y-2"
+      className="flex flex-col gap-2"
       onSubmit={async (event) => {
         event.preventDefault();
         if (!body.trim()) return;
         setBusy(true);
         try {
-          if (await onSubmit(body.trim())) {
+          if (await onSubmit(body, mentions)) {
             setBody("");
+            setMentions([]);
             onClose?.();
           }
         } finally {
@@ -99,11 +99,17 @@ function CommentComposer({
       }}
     >
       <label className="block text-sm font-medium">{label}</label>
-      <textarea
+      <MentionTextarea
+        projectId={projectId}
+        permission="test_plan:read"
+        mentions={mentions}
         className="min-h-20 w-full rounded-md border p-2 text-sm"
         maxLength={20000}
         value={body}
-        onChange={(event) => setBody(event.target.value)}
+        onChange={(body, mentions) => {
+          setBody(body);
+          setMentions(mentions);
+        }}
       />
       <div className="flex gap-2">
         <Button size="sm" type="submit" disabled={busy || !body.trim()}>
@@ -185,6 +191,9 @@ export function DesignCommentsPanel({
   onSelectTarget,
   customFieldLabels,
   itemCodes,
+  scopeTargets,
+  resolveTargetLabel,
+  compact = false,
 }: {
   projectId: number;
   designId: number;
@@ -195,26 +204,44 @@ export function DesignCommentsPanel({
   onSelectTarget?: (target: DesignCommentTarget, label: string) => void;
   customFieldLabels: Record<string, string>;
   itemCodes: Record<string, string>;
+  scopeTargets?: Set<string>;
+  resolveTargetLabel?: (target: TestDesignCommentRead) => string | undefined;
+  compact?: boolean;
 }) {
   const { user } = useAuth();
   const client = useQueryClient();
   const { confirm, confirmDialogProps } = useConfirmAction();
   const key = ["test-design-comments", projectId, designId];
-  const [showAll, setShowAll] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const query = useQuery({
-    queryKey: key,
-    queryFn: () => listComments(projectId, designId),
+  const [filter, setFilter] = useState<{ key: string; value: string }>({
+    key: "",
+    value: "selected",
   });
+  const [busy, setBusy] = useState(false);
+  const query = useDesignComments(projectId, designId);
   const currentTarget: DesignCommentTarget = target ?? {
     target_type: "design",
   };
-  const visible = showAll
-    ? (query.data ?? [])
-    : (query.data ?? []).filter(
-        (comment) => targetKey(comment) === targetKey(currentTarget),
-      );
-  const unresolved = (query.data ?? []).filter(
+  const selectedKey = targetKey(currentTarget);
+  const mode =
+    filter.key === selectedKey
+      ? filter.value
+      : scopeTargets && currentTarget.target_type === "pattern_table"
+        ? "table"
+        : "selected";
+  const scoped = scopeTargets
+    ? (query.data ?? []).filter((comment) =>
+        scopeTargets.has(commentScopeKey(comment)),
+      )
+    : (query.data ?? []);
+  const visible =
+    mode === "design"
+      ? (query.data ?? [])
+      : mode === "table"
+        ? scoped
+        : (query.data ?? []).filter(
+            (comment) => targetKey(comment) === selectedKey,
+          );
+  const unresolved = visible.filter(
     (comment) => !comment.is_resolved && !comment.deleted_at,
   ).length;
 
@@ -246,29 +273,51 @@ export function DesignCommentsPanel({
     (isSystemAdmin(user) || comment.author_id === user?.id);
 
   return (
-    <section className="space-y-3 rounded-md border p-3">
+    <section
+      className={
+        compact ? "min-w-0 space-y-3" : "space-y-3 rounded-md border p-3"
+      }
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold">設計コメント · 未解決 {unresolved}件</h3>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setShowAll((value) => !value)}
+        <select
+          aria-label="コメントの表示範囲"
+          className="max-w-full rounded-md border bg-background px-2 py-1 text-xs"
+          value={mode}
+          onChange={(event) =>
+            setFilter({ key: selectedKey, value: event.target.value })
+          }
         >
-          {showAll ? "選択対象のみ" : "全てのコメント"}
-        </Button>
+          <option value="selected">選択対象のみ</option>
+          {scopeTargets && <option value="table">このパターン表すべて</option>}
+          <option value="design">設計書全体（削除済み対象を含む）</option>
+        </select>
       </div>
       <p className="text-xs text-muted-foreground">対象: {targetLabel}</p>
+      {query.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          コメントを取得できませんでした。
+          <Button variant="link" size="sm" onClick={() => void query.refetch()}>
+            再試行
+          </Button>
+        </p>
+      )}
       {disabled ? (
         <p className="text-sm text-muted-foreground">
           コメントするには設計書を保存してください。
         </p>
       ) : canComment ? (
         <CommentComposer
+          projectId={projectId}
           key={targetKey(currentTarget)}
           label="選択した対象にコメント"
-          onSubmit={(body) =>
+          onSubmit={(body, mentions) =>
             mutate(() =>
-              createComment(projectId, designId, { ...currentTarget, body }),
+              createComment(projectId, designId, {
+                ...currentTarget,
+                body,
+                mentions,
+              }),
             )
           }
         />
@@ -300,18 +349,23 @@ export function DesignCommentsPanel({
                     target_id: comment.target_id,
                     field: comment.field,
                   },
-                  targetDisplayLabel(comment, customFieldLabels, itemCodes),
+                  resolveTargetLabel?.(comment) ??
+                    targetDisplayLabel(comment, customFieldLabels, itemCodes),
                 )
               }
             >
-              {targetDisplayLabel(comment, customFieldLabels, itemCodes)} ·{" "}
+              {resolveTargetLabel?.(comment) ??
+                targetDisplayLabel(comment, customFieldLabels, itemCodes)}{" "}
+              ·{" "}
               {comment.target_status === "missing"
                 ? "対象削除済み"
                 : comment.target_status === "changed"
                   ? "対象に変更あり"
                   : "現在の対象"}
             </button>
-            <p className="whitespace-pre-wrap break-words">{comment.body}</p>
+            <p className="whitespace-pre-wrap break-words">
+              <CommentContent body={comment.body} mentions={comment.mentions} />
+            </p>
             <CommentHistory
               projectId={projectId}
               designId={designId}
@@ -363,14 +417,17 @@ export function DesignCommentsPanel({
         )}
         renderEditForm={({ comment, onClose }) => (
           <CommentComposer
+            projectId={projectId}
             initial={comment.body}
+            initialMentions={comment.mentions}
             label="コメントを編集"
             onClose={onClose}
-            onSubmit={(body) =>
+            onSubmit={(body, mentions) =>
               mutate(() =>
                 updateComment(projectId, designId, comment.id, {
                   version: comment.version,
                   body,
+                  mentions,
                 }),
               )
             }
@@ -378,9 +435,10 @@ export function DesignCommentsPanel({
         )}
         renderReplyForm={({ comment, onClose }) => (
           <CommentComposer
+            projectId={projectId}
             label="返信"
             onClose={onClose}
-            onSubmit={(body) =>
+            onSubmit={(body, mentions) =>
               mutate(() =>
                 createComment(projectId, designId, {
                   target_type:
@@ -389,6 +447,7 @@ export function DesignCommentsPanel({
                   field: comment.field,
                   parent_comment_id: comment.id,
                   body,
+                  mentions,
                 }),
               )
             }

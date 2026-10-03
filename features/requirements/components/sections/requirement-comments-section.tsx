@@ -1,5 +1,6 @@
 "use client";
 
+import { CommentContent } from "@/components/shared/comments/comment-content";
 import { useState } from "react";
 import { Trash2Icon } from "lucide-react";
 
@@ -54,6 +55,7 @@ export function RequirementCommentsSection({
       <CardContent className="flex flex-col gap-4">
         {canComment ? (
           <RequirementCommentForm
+            projectId={projectId}
             isPending={isCreatePending}
             error={createError}
             onSubmit={createRequirementComment}
@@ -73,7 +75,10 @@ export function RequirementCommentsSection({
                       {formatDateTime(comment.created_at)}
                     </span>
                     <p className="whitespace-pre-wrap text-sm">
-                      {comment.comment}
+                      <CommentContent
+                        body={comment.comment}
+                        mentions={comment.mentions}
+                      />
                     </p>
                   </div>
                   {canDeleteComment(comment) ? (

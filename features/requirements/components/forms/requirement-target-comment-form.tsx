@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
@@ -19,6 +20,7 @@ import type {
 } from "../../types/requirement-target-comment-form";
 
 type RequirementTargetCommentFormProps = {
+  projectId: number;
   initialValues?: RequirementTargetCommentFormValues;
   submitLabel?: string;
   resetOnSuccess?: boolean;
@@ -33,11 +35,13 @@ type RequirementTargetCommentFormProps = {
 
 const defaultValues: RequirementTargetCommentFormValues = {
   body: "",
+  mentions: [],
   targetAnchor: "",
   reason: "",
 };
 
 export function RequirementTargetCommentForm({
+  projectId,
   initialValues,
   submitLabel = "コメント追加",
   resetOnSuccess = true,
@@ -86,12 +90,16 @@ export function RequirementTargetCommentForm({
       <FieldGroup>
         <Field data-invalid={errors.body ? true : undefined}>
           <FieldLabel>コメント</FieldLabel>
-          <Textarea
+          <MentionTextarea
+            projectId={projectId}
+            permission="requirement:read"
+            mentions={values.mentions}
             value={values.body}
-            onChange={(event) => {
+            onChange={(body, mentions) => {
               setValues((current) => ({
                 ...current,
-                body: event.target.value,
+                body,
+                mentions,
               }));
               setErrors((current) => ({ ...current, body: undefined }));
             }}

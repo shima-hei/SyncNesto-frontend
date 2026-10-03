@@ -5,11 +5,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ChangeLogUserRead } from "./changeLogUserRead";
+import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 
 /**
  * 要件コメント読み取り時に返すschema。
  */
 export interface RequirementCommentRead {
+  /** @maxItems 100 */
+  mentions?: CommentMentionOccurrence[];
   id: number;
   requirement_id: number;
   user_id: number;

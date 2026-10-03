@@ -13,6 +13,27 @@ import {
 import { toast } from "sonner";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
+import {
+  BoldIcon,
+  HelpCircleIcon,
+  MessageSquareIcon,
+  MoreHorizontalIcon,
+  PlusIcon,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import type { CellStyle, DesignLayout } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 import { textHeight } from "../../lib/row-height";
@@ -35,6 +56,9 @@ export type GridRow = {
   values: Record<string, string>;
   sectionStart?: boolean;
   spacer?: boolean;
+  groupId?: string;
+  groupLabel?: string;
+  groupStart?: boolean;
 };
 export type CellEdit = {
   row: number;
@@ -43,11 +67,26 @@ export type CellEdit = {
   style?: CellStyle;
 };
 type Point = { row: number; col: number };
+function defaultColumnWidth(sheet: string, key: string) {
+  if (sheet === "items" && key === "code") return 100;
+  return sheet === "matrix"
+    ? key === "factor"
+      ? 140
+      : key === "level"
+        ? 180
+        : 120
+    : 180;
+}
 type Props = {
   columnAddLabel?: string;
   focusRowId?: string;
   focusColumnKey?: string;
   renderCell?: (row: GridRow, column: GridColumn) => ReactNode;
+  toolbarStart?: ReactNode;
+  structureMenuItems?: ReactNode;
+  structureRowAddLabel?: string;
+  cellCommentCount?: (row: GridRow, column: GridColumn) => number;
+  onCellComment?: (row: GridRow, column: GridColumn) => void;
   toggleOnClick?: boolean;
   toggleStartRow?: number;
   appendRow?: boolean;
@@ -90,6 +129,11 @@ export function DesignGrid({
   onToggle,
   canDeleteColumn = (key) => key.startsWith("custom_"),
   renderCell,
+  toolbarStart,
+  structureMenuItems,
+  structureRowAddLabel = "水準の行を追加",
+  cellCommentCount,
+  onCellComment,
   toggleOnClick = false,
   toggleStartRow = 4,
   focusRowId,
@@ -120,6 +164,10 @@ export function DesignGrid({
         ? 2
         : 0,
   }));
+  const [selectionKind, setSelectionKind] = useState<"cell" | "row" | "column">(
+    "cell",
+  );
+  const [hasSelection, setHasSelection] = useState(!!focusRowId);
   const [anchorState, setAnchor] = useState<Point>(initialPoint);
   const [activeState, setActive] = useState<Point>(initialPoint);
   const clampPoint = (point: Point): Point => ({
@@ -152,6 +200,16 @@ export function DesignGrid({
   }, [editing]);
   const [scrollTop, setScrollTop] = useState(0);
   const [horizontal, setHorizontal] = useState({ left: 0, width: 1600 });
+  const frozenColumns = horizontal.width < 600 ? 1 : 2;
+  useEffect(() => {
+    const node = container.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() =>
+      setHorizontal({ left: node.scrollLeft, width: node.clientWidth }),
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   const [dragSize, setDragSize] = useState<{
     key: string;
     value: number;
@@ -170,7 +228,11 @@ export function DesignGrid({
           Math.max(
             36,
             ...Object.entries(row.values).map(([key, value]) =>
-              textHeight(value, layout.widths?.[`${sheet}:${key}`] ?? 180),
+              textHeight(
+                value,
+                layout.widths?.[`${sheet}:${key}`] ??
+                  defaultColumnWidth(sheet, key),
+              ),
             ),
           ),
         ]),
@@ -179,12 +241,14 @@ export function DesignGrid({
   );
   const height = (row: GridRow) =>
     Math.max(
-      autoHeights.get(row.id) ?? 36,
+      sheet === "items"
+        ? Math.min(autoHeights.get(row.id) ?? 36, 60)
+        : (autoHeights.get(row.id) ?? 36),
       editing && rows[editing.point.row]?.id === row.id
         ? textHeight(
             editing.value,
             layout.widths?.[`${sheet}:${columns[editing.point.col].key}`] ??
-              180,
+              defaultColumnWidth(sheet, columns[editing.point.col].key),
           )
         : 36,
       dragSize?.row && dragSize.key === row.id
@@ -206,21 +270,49 @@ export function DesignGrid({
         .slice(0, initialPoint.col)
         .reduce(
           (total, column) =>
-            total + (layout.widths?.[`${sheet}:${column.key}`] ?? 180),
+            total +
+            (layout.widths?.[`${sheet}:${column.key}`] ??
+              defaultColumnWidth(sheet, column.key)),
           48,
         );
-      node.scrollLeft = Math.max(0, left - node.clientWidth / 3);
+      const frozenWidth =
+        sheet === "matrix" && initialPoint.col >= frozenColumns
+          ? columns
+              .slice(0, frozenColumns)
+              .reduce(
+                (total, column) =>
+                  total +
+                  (layout.widths?.[`${sheet}:${column.key}`] ??
+                    defaultColumnWidth(sheet, column.key)),
+                48,
+              )
+          : 0;
+      node.scrollLeft = Math.max(
+        0,
+        left - Math.max(frozenWidth, node.clientWidth / 3),
+      );
       node.focus({ preventScroll: true });
     }
-  }, [columns, focusColumnKey, initialPoint, layout.widths, offsets, sheet]);
+  }, [
+    columns,
+    focusColumnKey,
+    initialPoint,
+    layout.widths,
+    offsets,
+    sheet,
+    frozenColumns,
+  ]);
   let first = 0;
   while (first < rows.length && offsets[first + 1] < scrollTop - 150) first++;
   let last = first;
   while (last < rows.length && offsets[last] < scrollTop + 850) last++;
+  let contextRow = first;
+  while (contextRow < rows.length - 1 && offsets[contextRow] < scrollTop)
+    contextRow++;
   const width = (key: string) =>
     !dragSize?.row && dragSize?.key === key
       ? dragSize.value
-      : (layout.widths?.[`${sheet}:${key}`] ?? 180);
+      : (layout.widths?.[`${sheet}:${key}`] ?? defaultColumnWidth(sheet, key));
   const totalWidth = columns.reduce((n, c) => n + width(c.key), 48);
   let columnLeft = 48;
   const visibleColumns: { column: GridColumn; c: number; left: number }[] = [];
@@ -238,6 +330,8 @@ export function DesignGrid({
   }
 
   function select(point: Point, extend = false) {
+    setHasSelection(true);
+    setSelectionKind("cell");
     const next = {
       row: Math.max(0, Math.min(rows.length - 1, point.row)),
       col: Math.max(0, Math.min(columns.length - 1, point.col)),
@@ -256,9 +350,12 @@ export function DesignGrid({
         .slice(0, next.col)
         .reduce((n, c) => n + width(c.key), 48);
       const frozenWidth =
-        sheet === "matrix" && next.col >= 2
-          ? columns.slice(0, 2).reduce((n, c) => n + width(c.key), 48)
+        sheet === "matrix" && next.col >= frozenColumns
+          ? columns
+              .slice(0, frozenColumns)
+              .reduce((n, c) => n + width(c.key), 48)
           : 0;
+      if (sheet === "matrix" && next.col < frozenColumns) return;
       if (left < el.scrollLeft + frozenWidth)
         el.scrollLeft = Math.max(0, left - frozenWidth);
       else if (
@@ -384,11 +481,12 @@ export function DesignGrid({
       e.key === "F2"
     ) {
       e.preventDefault();
-      const selector = container.current?.querySelector<HTMLSelectElement>(
-        `[id="${sheet}-${active.row}-${active.col}"] select`,
+      const selector = container.current?.querySelector<HTMLElement>(
+        `[id="${sheet}-${active.row}-${active.col}"] [data-pattern-selector], [id="${sheet}-${active.row}-${active.col}"] select`,
       );
       if (selector) {
         selector.focus({ preventScroll: true });
+        if (selector.matches("button")) selector.click();
         return;
       }
       flushSync(() =>
@@ -402,6 +500,7 @@ export function DesignGrid({
   }
 
   function copy(e: ClipboardEvent, cut: boolean) {
+    if (e.target !== container.current && e.target !== input.current) return;
     if (editing || (cut && readOnly)) return;
     const data: ClipboardCell[][] = [];
     for (let r = minRow; r <= maxRow; r++) {
@@ -419,6 +518,7 @@ export function DesignGrid({
   }
 
   function paste(e: ClipboardEvent) {
+    if (e.target !== container.current && e.target !== input.current) return;
     if (readOnly || editing) return;
     e.preventDefault();
     if (
@@ -499,172 +599,290 @@ export function DesignGrid({
       : undefined;
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <div
-        className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/50 p-2 shadow-sm"
-        aria-label="表編集ツール"
-      >
-        {onInsert && (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={readOnly}
-              onClick={() => onInsert(rows[active.row]?.id ?? "", false)}
-            >
-              この行の上に項目を挿入
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={readOnly}
-              onClick={() => onInsert(rows[active.row]?.id ?? "", true)}
-            >
-              この行の上に区切り行を挿入
-            </Button>
-          </>
-        )}
-        {!appendRow && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={readOnly}
-            onClick={onAdd}
-          >
-            行を追加
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={readOnly || !rows.length}
-          onClick={() =>
-            onDelete(rows.slice(minRow, maxRow + 1).map((r) => r.id))
-          }
+      {sheet === "matrix" && (
+        <div
+          className="flex flex-wrap items-center gap-2"
+          aria-label="組み合わせの構造操作"
         >
-          選択行を削除
-        </Button>
-        {onAddColumn && (
+          {toolbarStart}
           <Button
             size="sm"
             variant="outline"
             disabled={readOnly}
             onClick={onAddColumn}
           >
+            <PlusIcon data-icon="inline-start" />
             {columnAddLabel}
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="組み合わせの操作"
+              >
+                <MoreHorizontalIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuGroup>
+                {structureMenuItems}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled={readOnly} onSelect={onAdd}>
+                  {structureRowAddLabel}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={readOnly || !rows.length}
+                  onSelect={() =>
+                    onDelete(
+                      rows.slice(minRow, maxRow + 1).map((row) => row.id),
+                    )
+                  }
+                >
+                  選択行を削除
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={
+                    readOnly || !canDeleteColumn(columns[active.col]?.key ?? "")
+                  }
+                  onSelect={() => onDeleteColumn?.(columns[active.col].key)}
+                >
+                  選択列を削除
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+      <div
+        className="flex flex-wrap items-center gap-2 border-y py-1"
+        aria-label="セルの書式設定"
+      >
+        {sheet !== "matrix" && (
+          <>
+            {onInsert && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={readOnly}
+                  onClick={() => onInsert(rows[active.row]?.id ?? "", false)}
+                >
+                  <PlusIcon data-icon="inline-start" />行
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={readOnly}
+                  onClick={() => onInsert(rows[active.row]?.id ?? "", true)}
+                >
+                  <PlusIcon data-icon="inline-start" />
+                  区切り
+                </Button>
+              </>
+            )}
+            {!appendRow && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={readOnly}
+                onClick={onAdd}
+              >
+                行を追加
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="行・列の操作"
+                >
+                  <MoreHorizontalIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuGroup>
+                  {onAddColumn && (
+                    <DropdownMenuItem
+                      disabled={readOnly}
+                      onSelect={onAddColumn}
+                    >
+                      {columnAddLabel}
+                    </DropdownMenuItem>
+                  )}
+                  {hasSelection && selectionKind === "row" && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={readOnly || active.row >= dataLength}
+                      onSelect={() =>
+                        onDelete(
+                          rows
+                            .slice(minRow, Math.min(maxRow + 1, dataLength))
+                            .map((r) => r.id),
+                        )
+                      }
+                    >
+                      選択行を削除
+                    </DropdownMenuItem>
+                  )}
+                  {hasSelection &&
+                    selectionKind === "column" &&
+                    onDeleteColumn &&
+                    canDeleteColumn(columns[active.col]?.key ?? "") && (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        disabled={readOnly}
+                        onSelect={() => onDeleteColumn(columns[active.col].key)}
+                      >
+                        選択列を削除
+                      </DropdownMenuItem>
+                    )}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         )}
-        {onDeleteColumn && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={
-              readOnly || !canDeleteColumn(columns[active.col]?.key ?? "")
-            }
-            onClick={() => onDeleteColumn(columns[active.col].key)}
-          >
-            選択列を削除
-          </Button>
+        {hasSelection && (
+          <>
+            <Separator orientation="vertical" className="h-5" />
+            <span className="sr-only">書式</span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={readOnly}
+              aria-label="太字"
+              title="太字"
+              aria-pressed={currentStyle?.bold ?? false}
+              className={cn(
+                currentStyle?.bold && "border-primary bg-primary/10",
+              )}
+              onClick={() => format({ bold: !currentStyle?.bold })}
+            >
+              <BoldIcon />
+            </Button>
+            <label className="flex items-center gap-1 text-sm">
+              配置
+              <select
+                aria-label="文字配置"
+                disabled={readOnly}
+                value={currentStyle?.align ?? "left"}
+                onChange={(e) =>
+                  format({ align: e.target.value as CellStyle["align"] })
+                }
+              >
+                <option value="left">左</option>
+                <option value="center">中央</option>
+                <option value="right">右</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-1 text-sm">
+              背景
+              <input
+                aria-label="背景色"
+                type="color"
+                className="h-7 w-9"
+                disabled={readOnly}
+                value={currentStyle?.background ?? "#ffffff"}
+                onChange={(e) => format({ background: e.target.value })}
+              />
+            </label>
+            <label className="flex items-center gap-1 text-sm">
+              文字
+              <input
+                aria-label="文字色"
+                type="color"
+                className="h-7 w-9"
+                disabled={readOnly}
+                value={currentStyle?.color ?? "#000000"}
+                onChange={(e) => format({ color: e.target.value })}
+              />
+            </label>
+          </>
         )}
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={readOnly}
-          aria-pressed={currentStyle?.bold ?? false}
-          className={cn(currentStyle?.bold && "border-primary bg-primary/10")}
-          onClick={() => format({ bold: !currentStyle?.bold })}
-        >
-          太字
-        </Button>
-        <label className="flex items-center gap-1 text-sm">
-          配置
-          <select
-            aria-label="文字配置"
-            disabled={readOnly}
-            value={currentStyle?.align ?? "left"}
-            onChange={(e) =>
-              format({ align: e.target.value as CellStyle["align"] })
-            }
-          >
-            <option value="left">左</option>
-            <option value="center">中央</option>
-            <option value="right">右</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-1 text-sm">
-          背景
-          <input
-            aria-label="背景色"
-            type="color"
-            className="h-7 w-9"
-            disabled={readOnly}
-            value={currentStyle?.background ?? "#ffffff"}
-            onChange={(e) => format({ background: e.target.value })}
-          />
-        </label>
-        <label className="flex items-center gap-1 text-sm">
-          文字
-          <input
-            aria-label="文字色"
-            type="color"
-            className="h-7 w-9"
-            disabled={readOnly}
-            value={currentStyle?.color ?? "#000000"}
-            onChange={(e) => format({ color: e.target.value })}
-          />
-        </label>
-        <label className="text-sm">
-          列幅
-          <input
-            aria-label="列幅"
-            type="number"
-            min={60}
-            max={1200}
-            className="w-16"
-            disabled={readOnly}
-            value={width(columns[active.col]?.key ?? "")}
-            onChange={(e) => {
-              const n = Number(e.target.value);
-              if (n >= 60 && n <= 1200)
-                onLayout({
-                  ...layout,
-                  widths: {
-                    ...layout.widths,
-                    [`${sheet}:${columns[active.col].key}`]: n,
-                  },
-                });
-            }}
-          />
-        </label>
-        <label className="text-sm">
-          行高
-          <input
-            aria-label="行高"
-            type="number"
-            min={28}
-            max={300}
-            className="w-16"
-            disabled={readOnly || !rows[active.row]}
-            value={rows[active.row] ? height(rows[active.row]) : 36}
-            onChange={(e) => {
-              const n = Number(e.target.value);
-              if (n >= 28 && n <= 300 && rows[active.row])
-                onLayout({
-                  ...layout,
-                  heights: {
-                    ...layout.heights,
-                    [`${sheet}:${rows[active.row].id}`]: n,
-                  },
-                });
-            }}
-          />
-        </label>
+        {hasSelection &&
+          (selectionKind === "column" || selectionKind === "row") && (
+            <>
+              <Separator orientation="vertical" className="h-5" />
+              <span className="text-xs text-muted-foreground">サイズ</span>
+              {selectionKind === "column" && (
+                <label className="text-sm">
+                  列幅
+                  <input
+                    aria-label="列幅"
+                    type="number"
+                    min={60}
+                    max={1200}
+                    className="w-16"
+                    disabled={readOnly}
+                    value={width(columns[active.col]?.key ?? "")}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (n >= 60 && n <= 1200)
+                        onLayout({
+                          ...layout,
+                          widths: {
+                            ...layout.widths,
+                            [`${sheet}:${columns[active.col].key}`]: n,
+                          },
+                        });
+                    }}
+                  />
+                </label>
+              )}
+              {selectionKind === "row" && (
+                <label className="text-sm">
+                  行高
+                  <input
+                    aria-label="行高"
+                    type="number"
+                    min={28}
+                    max={300}
+                    className="w-16"
+                    disabled={readOnly || !rows[active.row]}
+                    value={rows[active.row] ? height(rows[active.row]) : 36}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (n >= 28 && n <= 300 && rows[active.row])
+                        onLayout({
+                          ...layout,
+                          heights: {
+                            ...layout.heights,
+                            [`${sheet}:${rows[active.row].id}`]: n,
+                          },
+                        });
+                    }}
+                  />
+                </label>
+              )}
+            </>
+          )}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="ml-auto"
+              aria-label="キーボード操作・ヘルプ"
+            >
+              <HelpCircleIcon />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 text-xs">
+            {" "}
+            <p className="pt-1">
+              {dataLength}行 {appendRow && "· 末尾の空行へ入力すると項目を作成"}{" "}
+              · ドラッグ / Shift＋矢印で範囲選択 · F2 / ダブルクリックで編集 ·
+              Alt＋Enterでセル内改行 · Enterで下、Tabで右へ移動 ·
+              Ctrl/⌘＋C/X/V/Z · Escで編集取消
+              {sheet === "matrix" &&
+                " · ○ 水準は因子ごとに1つ、● 期待値は複数選択できます。クリック / Spaceで選択・解除。"}
+            </p>
+          </PopoverContent>
+        </Popover>
       </div>
-      <p className="text-xs text-muted-foreground">
-        {dataLength}行 {appendRow && "· 末尾の空行へ入力すると項目を作成"} ·
-        ドラッグ / Shift＋矢印で範囲選択 · F2 / ダブルクリックで編集 ·
-        Alt＋Enterでセル内改行 · Enterで下、Tabで右へ移動 · Ctrl/⌘＋C/X/V/Z ·
-        Escで編集取消
-      </p>
       <div
         ref={container}
         role="grid"
@@ -676,7 +894,17 @@ export function DesignGrid({
           rows[active.row] ? `${sheet}-${active.row}-${active.col}` : undefined
         }
         tabIndex={0}
-        className="relative h-[560px] max-w-full overflow-auto rounded-md border outline-none focus:ring-2 focus:ring-ring"
+        className="relative h-[max(360px,calc(100dvh-340px))] max-w-full overflow-auto border outline-none focus:ring-2 focus:ring-ring"
+        style={
+          sheet === "matrix"
+            ? {
+                height: Math.min(
+                  560,
+                  Math.max(200, (offsets.at(-1) ?? 0) + 40),
+                ),
+              }
+            : undefined
+        }
         onScroll={(e) => {
           setScrollTop(e.currentTarget.scrollTop);
           setHorizontal({
@@ -715,7 +943,9 @@ export function DesignGrid({
               columns
                 .slice(0, active.col)
                 .reduce((n, c) => n + width(c.key), 48) +
-              (sheet === "matrix" && active.col < 2 ? horizontal.left : 0),
+              (sheet === "matrix" && active.col < frozenColumns
+                ? horizontal.left
+                : 0),
             top: 36 + (offsets[active.row] ?? 0),
             width: width(columns[active.col]?.key ?? ""),
             height: rows[active.row] ? height(rows[active.row]) : 36,
@@ -788,31 +1018,53 @@ export function DesignGrid({
           className="sticky top-0 z-10 flex h-9 bg-muted"
           style={{ width: totalWidth }}
         >
-          <div role="columnheader" className="w-12 shrink-0 border-r" />
+          <div
+            role="columnheader"
+            className="sticky left-0 z-20 w-12 shrink-0 border-r bg-muted"
+          />
           {visibleColumns.map(({ column, c, left }) => (
             <div
               role="columnheader"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  event.currentTarget.click();
+                }
+              }}
               key={column.key}
               className="relative shrink-0 truncate border-r px-2 py-2 text-xs font-medium"
               style={{
                 width: width(column.key),
                 ...(sheet === "matrix"
                   ? ({
-                      position: c < 2 ? "sticky" : "absolute",
+                      position: c < frozenColumns ? "sticky" : "absolute",
                       left,
-                      zIndex: c < 2 ? 2 : 0,
+                      zIndex: c < frozenColumns ? 2 : 0,
                       background: "var(--muted)",
                     } as const)
-                  : {}),
+                  : c === 0
+                    ? {
+                        position: "sticky" as const,
+                        left: 48,
+                        zIndex: 2,
+                        background: "var(--muted)",
+                      }
+                    : {}),
               }}
               onClick={() => {
+                setHasSelection(true);
+                setSelectionKind("column");
                 setAnchor({ row: 0, col: c });
                 setActive({ row: rows.length - 1, col: c });
                 onSelection?.(rows[active.row]?.id ?? "", column.key);
                 container.current?.focus({ preventScroll: true });
               }}
             >
-              {column.label}
+              {sheet === "matrix" && c === 0 && scrollTop > 0
+                ? `因子 · ${rows[Math.max(0, contextRow - (offsets[contextRow] === scrollTop ? 0 : 1))]?.groupLabel ?? ""}`
+                : column.label}
               <span
                 role="separator"
                 aria-label={`${column.label}の幅`}
@@ -860,8 +1112,10 @@ export function DesignGrid({
               >
                 <div
                   role="rowheader"
-                  className="relative w-12 shrink-0 border-b border-r bg-muted p-2 text-xs"
+                  className="sticky left-0 z-10 w-12 shrink-0 border-b border-r bg-muted p-2 text-xs"
                   onClick={() => {
+                    setHasSelection(true);
+                    setSelectionKind("row");
                     setAnchor({ row: r, col: 0 });
                     setActive({ row: r, col: columns.length - 1 });
                     onSelection?.(row.id, columns[active.col]?.key ?? "");
@@ -884,16 +1138,22 @@ export function DesignGrid({
                   const colors = getCellColors(s);
                   const isEditing =
                     editing?.point.row === r && editing.point.col === c;
+                  const comments = cellCommentCount?.(row, col) ?? 0;
                   return (
                     <div
                       role="gridcell"
+                      title={row.values[col.key] || undefined}
                       id={`${sheet}-${r}-${c}`}
                       aria-colindex={c + 2}
                       aria-selected={selected}
                       key={col.key}
                       className={cn(
-                        "relative shrink-0 overflow-hidden whitespace-pre-wrap border-b border-r px-2 py-1 text-sm",
+                        "group/cell relative shrink-0 overflow-hidden whitespace-pre-wrap border-b border-r px-2 py-1 text-sm",
                         row.sectionStart && "border-t-2 border-t-foreground/50",
+                        row.groupStart &&
+                          !row.sectionStart &&
+                          "border-t border-t-border",
+                        sheet === "matrix" && c === 1 && "pl-4",
                         row.spacer && "border-b-2 border-b-border/80",
                         selected &&
                           "ring-1 ring-inset ring-[var(--grid-selection-color)]",
@@ -908,19 +1168,28 @@ export function DesignGrid({
                           width: width(col.key),
                           ...(sheet === "matrix"
                             ? ({
-                                position: c < 2 ? "sticky" : "absolute",
+                                position:
+                                  c < frozenColumns ? "sticky" : "absolute",
                                 left,
                                 height: "100%",
-                                zIndex: c < 2 ? 1 : 0,
+                                zIndex: c < frozenColumns ? 1 : 0,
                               } as const)
-                            : {}),
-                          fontWeight: s?.bold
-                            ? 700
-                            : sheet === "matrix" &&
-                                c >= 2 &&
-                                r >= toggleStartRow
-                              ? 600
-                              : 400,
+                            : c === 0
+                              ? {
+                                  position: "sticky" as const,
+                                  left: 48,
+                                  zIndex: 1,
+                                }
+                              : {}),
+                          fontWeight:
+                            s?.bold !== undefined
+                              ? s.bold
+                                ? 700
+                                : 400
+                              : sheet === "matrix" &&
+                                  (c === 0 || (c >= 2 && r >= toggleStartRow))
+                                ? 600
+                                : 400,
                           fontSize:
                             sheet === "matrix" && c >= 2 && r >= toggleStartRow
                               ? 20
@@ -935,16 +1204,23 @@ export function DesignGrid({
                             (selected
                               ? "var(--accent)"
                               : sheet === "matrix" && c < 2
-                                ? "var(--background)"
-                                : undefined),
+                                ? c === 0
+                                  ? "var(--muted)"
+                                  : "var(--background)"
+                                : row.spacer
+                                  ? "var(--muted)"
+                                  : "var(--background)"),
                           color:
                             colors.color ??
-                            (r > 0 &&
+                            (sheet !== "matrix" &&
+                            r > 0 &&
                             row.values[col.key] &&
                             row.values[col.key] === rows[r - 1].values[col.key]
                               ? "var(--muted-foreground)"
                               : undefined),
-                        } as React.CSSProperties
+                        } as React.CSSProperties & {
+                          "--grid-selection-color": string;
+                        }
                       }
                       onPointerDown={(e) => {
                         if (composing.current) {
@@ -1040,7 +1316,31 @@ export function DesignGrid({
                           )}
                         </>
                       ) : (
-                        (renderCell?.(row, col) ?? row.values[col.key])
+                        (renderCell?.(row, col) ??
+                        (sheet === "matrix" && c === 0 && r === contextRow
+                          ? (row.groupLabel ?? row.values[col.key])
+                          : row.values[col.key]))
+                      )}
+                      {comments > 0 && !isEditing && (
+                        <button
+                          type="button"
+                          aria-label={`${col.label}のコメント ${comments}件`}
+                          title={`コメント ${comments}件`}
+                          className="absolute right-0 top-0 opacity-0 group-hover/cell:opacity-100 group-focus-within/cell:opacity-100 group-aria-selected/cell:opacity-100 flex size-5 items-center justify-center rounded-sm bg-background text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-primary"
+                          onPointerDown={(event) => {
+                            event.stopPropagation();
+                            commit();
+                            select({ row: r, col: c });
+                          }}
+                          onKeyDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            select({ row: r, col: c });
+                            onCellComment?.(row, col);
+                          }}
+                        >
+                          <MessageSquareIcon className="size-3" />
+                        </button>
                       )}
                     </div>
                   );

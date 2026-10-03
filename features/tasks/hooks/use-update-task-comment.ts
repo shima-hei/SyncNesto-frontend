@@ -38,7 +38,8 @@ export function useUpdateTaskComment(taskId: number) {
       commentId,
       data: {
         version,
-        body: values.body.trim(),
+        body: values.body,
+        mentions: values.mentions ?? [],
       },
     });
   };

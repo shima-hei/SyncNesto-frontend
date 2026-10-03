@@ -17,4 +17,5 @@ export type ListProjectsProjectsGetParams = {
   page_size?: number;
   q?: string | null;
   status?: string | null;
+  member_only?: boolean;
 };

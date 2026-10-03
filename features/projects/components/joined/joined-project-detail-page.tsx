@@ -5,6 +5,7 @@ import { ArrowUpRightIcon } from "lucide-react";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { PageHeader } from "@/components/shared/layout/page-header";
+import { NotificationSummary } from "@/components/shared/notifications/notification-summary";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectActivity } from "@/lib/api/generated/model";
@@ -63,6 +64,10 @@ export function JoinedProjectDetailPage({
           />
         </dl>
       </section>
+
+      <Separator />
+
+      <NotificationSummary projectId={projectId} />
 
       <Separator />
 

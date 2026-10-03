@@ -37,7 +37,8 @@ export function useCreateTaskComment(taskId: number) {
       taskId,
       data: {
         parent_comment_id: parentCommentId ?? null,
-        body: values.body.trim(),
+        body: values.body,
+        mentions: values.mentions ?? [],
       },
     });
   };

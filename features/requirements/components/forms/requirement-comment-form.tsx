@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
 import {
@@ -10,7 +11,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
 
 import { requirementCommentSchema } from "../../schemas/requirement-schema";
 import type {
@@ -19,6 +19,7 @@ import type {
 } from "../../types/requirement-comment-form";
 
 type RequirementCommentFormProps = {
+  projectId: number;
   isPending: boolean;
   error?: Error | null;
   onSubmit: (values: RequirementCommentFormValues) => Promise<unknown>;
@@ -26,9 +27,11 @@ type RequirementCommentFormProps = {
 
 const initialValues: RequirementCommentFormValues = {
   comment: "",
+  mentions: [],
 };
 
 export function RequirementCommentForm({
+  projectId,
   isPending,
   error,
   onSubmit,
@@ -61,10 +64,13 @@ export function RequirementCommentForm({
       <FieldGroup>
         <Field data-invalid={errors.comment ? true : undefined}>
           <FieldLabel>コメント</FieldLabel>
-          <Textarea
+          <MentionTextarea
+            projectId={projectId}
+            permission="requirement:read"
+            mentions={values.mentions}
             value={values.comment}
-            onChange={(event) => {
-              setValues({ comment: event.target.value });
+            onChange={(body, mentions) => {
+              setValues({ comment: body, mentions });
               setErrors({});
             }}
             aria-invalid={Boolean(errors.comment)}
