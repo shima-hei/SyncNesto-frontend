@@ -12,7 +12,7 @@ import { CommentThreadList } from "@/components/shared/comments/comment-thread-l
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/providers/auth-provider";
-import { isSystemAdmin } from "@/features/auth/utils/authorization";
+import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import type { TestDesignCommentRead } from "@/lib/api/generated/model";
 import {
   createTestDesignCommentProjectsProjectIdTestDesignsDesignIdCommentsPost as createComment,
@@ -218,6 +218,7 @@ export function DesignCommentsPanel({
   });
   const [busy, setBusy] = useState(false);
   const query = useDesignComments(projectId, designId);
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
   const currentTarget: DesignCommentTarget = target ?? {
     target_type: "design",
   };
@@ -270,7 +271,8 @@ export function DesignCommentsPanel({
   const canEdit = (comment: TestDesignCommentRead) =>
     canComment &&
     !comment.deleted_at &&
-    (isSystemAdmin(user) || comment.author_id === user?.id);
+    (currentProjectRole?.role?.key === "project_admin" ||
+      comment.author_id === user?.id);
 
   return (
     <section

@@ -236,7 +236,7 @@ export function UserForm({
                 <FieldDescription>
                   {isGuest
                     ? "ゲストには付与できません。"
-                    : "ユーザー管理や全プロジェクト管理を許可します。"}
+                    : "サービス全体のユーザー・組織運営を許可します。業務内容の閲覧には組織・プロジェクトへの所属が必要です。"}
                 </FieldDescription>
               </FieldContent>
             </Field>

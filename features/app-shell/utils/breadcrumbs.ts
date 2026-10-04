@@ -15,6 +15,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   management: "プロジェクト管理",
   members: "メンバー",
   notifications: "通知",
+  organization: "組織",
+  tenants: "組織の運営管理",
   projects: "プロジェクト",
   requirements: "要件定義書",
   system: "管理",

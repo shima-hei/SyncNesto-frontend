@@ -1,8 +1,8 @@
 import { ProjectCreatePage } from "@/features/projects/components/management/project-create-page";
-import { requireSystemAdmin } from "@/lib/auth/server";
+import { requireUser } from "@/lib/auth/server";
 
 export default async function Page() {
-  await requireSystemAdmin();
+  await requireUser();
 
   return <ProjectCreatePage />;
 }

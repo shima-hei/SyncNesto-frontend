@@ -9,7 +9,7 @@ import { CommentThreadActions } from "@/components/shared/comments/comment-threa
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/providers/auth-provider";
-import { isSystemAdmin } from "@/features/auth/utils/authorization";
+import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import type { RequirementTargetCommentRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -56,7 +56,8 @@ export function RequirementTargetCommentsSection({
   contentClassName,
 }: RequirementTargetCommentsSectionProps) {
   const { user } = useAuth();
-  const canModerateComments = isSystemAdmin(user);
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
+  const canModerateComments = currentProjectRole?.role?.key === "project_admin";
   const canMutateComment = (comment: RequirementTargetCommentRead) =>
     canComment && (canModerateComments || comment.author_id === user?.id);
   const [deleteTarget, setDeleteTarget] =

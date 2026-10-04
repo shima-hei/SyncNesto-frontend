@@ -1,8 +1,8 @@
 import { ProjectListPage } from "@/features/projects/components/shared/project-list-page";
-import { requireSystemAdmin } from "@/lib/auth/server";
+import { requireUser } from "@/lib/auth/server";
 
 export default async function Page() {
-  await requireSystemAdmin();
+  await requireUser();
 
   return (
     <ProjectListPage

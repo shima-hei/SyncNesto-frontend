@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useUpdateCurrentUserAuthMePatch } from "@/lib/api/generated/auth/auth";
@@ -13,9 +12,10 @@ import { getConflictCurrent } from "@/lib/api/conflict";
 
 import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
 import { setCurrentUserCache } from "../lib/current-user-cache";
+import { useAuthQueryClient } from "../providers/auth-provider";
 
 export function useUpdateCurrentUser() {
-  const queryClient = useQueryClient();
+  const queryClient = useAuthQueryClient();
   const [conflictCurrent, setConflictCurrent] =
     useState<CurrentUserRead | null>(null);
   const updateCurrentUserMutation = useUpdateCurrentUserAuthMePatch({

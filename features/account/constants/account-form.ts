@@ -7,6 +7,5 @@ export const getAccountProfileFormValues = (
 ): AccountProfileFormValues => {
   return {
     name: user.name,
-    password: "",
   };
 };

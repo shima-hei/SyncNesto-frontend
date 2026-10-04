@@ -5,6 +5,9 @@ export const VALIDATION_MESSAGES = {
   emailInvalid: "メールアドレスの形式が正しくありません。",
   minLength: (label: string, min: number) =>
     `${label}は${min}文字以上で入力してください。`,
+  maxLength: (label: string, max: number) =>
+    `${label}は${max}文字以下で入力してください。`,
+  passwordConfirmation: "パスワードが一致しません。",
   optionalMinLength: (label: string, min: number) =>
     `${label}を変更する場合は${min}文字以上で入力してください。`,
   number: (label: string) => `${label}は数値で入力してください。`,

@@ -2,7 +2,7 @@
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 export function useDesignPermissions(projectId: number) {
   const { currentProjectRole: role } = useCurrentProjectRole(projectId);
-  const admin = role?.is_system_admin || role?.role?.key === "project_admin";
+  const admin = role?.role?.key === "project_admin";
   const key = role?.role?.key ?? "";
   return {
     edit: !!admin || ["manager", "member"].includes(key),

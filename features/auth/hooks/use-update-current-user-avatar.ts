@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
@@ -13,9 +13,10 @@ import { fileUploadMetadata, uploadWithPlan } from "@/lib/api/file-upload";
 
 import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
 import { setCurrentUserCache } from "../lib/current-user-cache";
+import { useAuthQueryClient } from "../providers/auth-provider";
 
 export function useUpdateCurrentUserAvatar() {
-  const queryClient = useQueryClient();
+  const queryClient = useAuthQueryClient();
   const updateAvatarMutation = useMutation({
     mutationFn: async (file: Blob) => {
       const plan = await planAvatarUpload(

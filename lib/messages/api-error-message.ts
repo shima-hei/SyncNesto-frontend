@@ -17,6 +17,12 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   LAST_PROJECT_ADMIN_REQUIRED:
     "プロジェクト管理者を0人にすることはできません。",
   EMAIL_ALREADY_REGISTERED: "このメールアドレスは既に登録されています。",
+  ACCOUNT_ACTION_INVALID:
+    "リンクが無効、使用済み、または期限切れです。メールを再発行してください。",
+  EMAIL_UNAVAILABLE:
+    "メールを送信できませんでした。時間をおいて再度お試しいただくか、運営者にお問い合わせください。",
+  RATE_LIMIT_EXCEEDED:
+    "送信回数が上限に達しました。時間をおいて再度お試しください。",
   INVALID_CSRF_TOKEN:
     "認証情報の確認に失敗しました。画面を更新して再度お試しください。",
 };
@@ -28,11 +34,14 @@ export const STATUS_ERROR_MESSAGES: Record<number, string> = {
   404: "対象のデータが見つかりません。",
   409: "データの状態が競合しています。内容を確認してください。",
   422: "入力内容を確認してください。",
+  429: "送信回数が上限に達しました。時間をおいて再度お試しください。",
   500: "サーバーでエラーが発生しました。時間をおいて再度お試しください。",
   503: "サービスに接続できません。時間をおいて再度お試しください。",
 };
 
 export const API_ERROR_FALLBACK_MESSAGES = {
+  memberAccountAction:
+    "組織内の権限またはユーザーの有効状態が変わったため送信できません。画面を更新して所属状態を確認してください。",
   fileUpload: "ファイルのアップロードに失敗しました。再度お試しください。",
   default: "処理に失敗しました。時間をおいて再度お試しください。",
   request: "APIリクエストに失敗しました。",

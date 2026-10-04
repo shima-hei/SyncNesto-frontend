@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useId, useState } from "react";
 
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
@@ -130,6 +131,12 @@ export function LoginForm({
               <FormSubmitButton isPending={isPending}>
                 {isPending ? "ログイン中..." : "ログイン"}
               </FormSubmitButton>
+              <Link
+                href="/forgot-password"
+                className="text-center text-sm underline underline-offset-4"
+              >
+                パスワードを忘れた方
+              </Link>
             </FieldGroup>
           </form>
 

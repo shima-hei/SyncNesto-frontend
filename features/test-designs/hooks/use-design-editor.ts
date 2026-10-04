@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { ApiError } from "@/lib/api/error";
 import { updateTestDesignProjectsProjectIdTestDesignsDesignIdPut as updateDesign } from "@/lib/api/generated/test-designs/test-designs";
 import { withOrderedItemCodes, type Design } from "../lib/design";
@@ -14,14 +14,16 @@ import {
   type DesignDraft,
 } from "../lib/draft";
 import { useConfirmAction } from "./use-confirm-action";
+import { useTenant } from "@/features/tenants/providers/tenant-provider";
 
 export function useDesignEditor(initial: Design) {
   const router = useRouter();
   const { confirm, confirmDialogProps } = useConfirmAction();
   const approvedNavigation = useRef(false);
-  const { user } = useCurrentUser();
+  const { user } = useAuth();
+  const { tenant } = useTenant();
   const draftKey = user
-    ? `${user.id}:${initial.project_id}:${initial.id}`
+    ? `${user.id}:tenant:${tenant?.id}:${initial.project_id}:${initial.id}`
     : null;
   const [recovery, setRecovery] = useState<DesignDraft | null>(null);
   const [draftError, setDraftError] = useState(false);
@@ -38,6 +40,22 @@ export function useDesignEditor(initial: Design) {
     if (!draftKey) return;
     let active = true;
     readDraft(draftKey)
+      .then(async (draft) => {
+        if (draft || !user) return draft;
+        // Backendからこの組織の設計書を取得できた後だけ、旧形式の下書きを引き継ぐ。
+        const legacyKey = `${user.id}:${initial.project_id}:${initial.id}`;
+        const legacy = await readDraft(legacyKey);
+        if (
+          legacy &&
+          legacy.design.id === initial.id &&
+          legacy.design.project_id === initial.project_id
+        ) {
+          await writeDraft(draftKey, legacy);
+          await removeDraft(legacyKey);
+          return legacy;
+        }
+        return undefined;
+      })
       .then((draft) => {
         if (active && draft && Date.now() - draft.savedAt < 7 * 86400000)
           setRecovery(draft);
@@ -51,7 +69,7 @@ export function useDesignEditor(initial: Design) {
     return () => {
       active = false;
     };
-  }, [draftKey]);
+  }, [draftKey, user, initial.id, initial.project_id]);
   useEffect(() => {
     if (!draftKey || !dirty || !draftLoaded || recovery) return;
     writeDraft(draftKey, {

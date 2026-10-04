@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 
 import { useLogoutUserAuthLogoutPost } from "@/lib/api/generated/auth/auth";
 
@@ -9,18 +8,20 @@ import {
   cancelCurrentUserQuery,
   setCurrentUserCache,
 } from "../lib/current-user-cache";
+import { useAuthQueryClient } from "../providers/auth-provider";
 
 export function useLogout() {
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const authQueryClient = useAuthQueryClient();
   const logoutMutation = useLogoutUserAuthLogoutPost();
 
   const logout = async () => {
     await logoutMutation.mutateAsync();
-    await cancelCurrentUserQuery(queryClient);
-    setCurrentUserCache(queryClient, null);
-    router.replace("/login");
-    router.refresh();
+    await cancelCurrentUserQuery(authQueryClient);
+    setCurrentUserCache(authQueryClient, null);
+    queryClient.clear();
+    authQueryClient.clear();
+    window.location.replace("/login");
   };
 
   return {

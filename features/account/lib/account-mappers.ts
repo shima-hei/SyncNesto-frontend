@@ -9,6 +9,5 @@ export const toUserProfileUpdate = (
   return {
     version,
     name: values.name,
-    password: values.password || null,
   };
 };

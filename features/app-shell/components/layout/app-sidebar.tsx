@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CommandIcon } from "lucide-react";
+import { CommandIcon, UsersIcon, FolderKanbanIcon } from "lucide-react";
+import { useTenant } from "@/features/tenants/providers/tenant-provider";
 
 import {
   Sidebar,
@@ -28,6 +29,7 @@ import { SidebarUserMenu } from "../user/sidebar-user-menu";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { canManageTenant } = useTenant();
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
   const visibleManagementNavigation = getVisibleNavigationItems(
     managementNavigation,
@@ -57,6 +59,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarNav items={visibleMainNavigation} pathname={pathname} />
+        {canManageTenant ? (
+          <>
+            <SidebarSeparator />
+            <SidebarNav
+              pathname={pathname}
+              label="組織"
+              items={[
+                {
+                  title: "メンバー・組織設定",
+                  href: "/organization",
+                  icon: UsersIcon,
+                },
+                {
+                  title: "プロジェクト管理",
+                  href: "/projects/management",
+                  icon: FolderKanbanIcon,
+                },
+              ]}
+            />
+          </>
+        ) : null}
         {visibleManagementNavigation.length ? (
           <>
             <SidebarSeparator />

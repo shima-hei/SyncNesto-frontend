@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/session-events";
 
 import { ApiError } from "./error";
+import { getApiTenant } from "./tenant-context";
 import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
@@ -30,6 +31,10 @@ export async function apiClient<T>(
   const { method, params, body, headers, signal } = options;
   const requestUrl = buildUrl(url, params);
   const requestHeaders = buildHeaders(headers, body, method);
+  const tenantId = getApiTenant();
+  if (tenantId !== null && !requestHeaders.has("X-Tenant-ID")) {
+    requestHeaders.set("X-Tenant-ID", String(tenantId));
+  }
   const response = await fetch(requestUrl, {
     method,
     credentials: "include",

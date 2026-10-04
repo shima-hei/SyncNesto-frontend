@@ -56,60 +56,47 @@ export const canViewProject = (roleKey: ProjectRoleKey | null | undefined) => {
 };
 
 export const canViewProjectFeature = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true || canViewProject(toProjectRoleKey(role))
-  );
+  return canViewProject(toProjectRoleKey(role));
 };
 
 export const canManageProjectMembers = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true ||
-    hasProjectRole(toProjectRoleKey(role), [PROJECT_ROLE_KEYS.projectAdmin])
-  );
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+  ]);
 };
 
 export const canViewRequirement = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true ||
-    hasProjectRole(toProjectRoleKey(role), [
-      PROJECT_ROLE_KEYS.projectAdmin,
-      PROJECT_ROLE_KEYS.manager,
-      PROJECT_ROLE_KEYS.member,
-      PROJECT_ROLE_KEYS.viewer,
-    ])
-  );
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+    PROJECT_ROLE_KEYS.manager,
+    PROJECT_ROLE_KEYS.member,
+    PROJECT_ROLE_KEYS.viewer,
+  ]);
 };
 
 export const canCreateRequirement = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true ||
-    hasProjectRole(toProjectRoleKey(role), [
-      PROJECT_ROLE_KEYS.projectAdmin,
-      PROJECT_ROLE_KEYS.manager,
-      PROJECT_ROLE_KEYS.member,
-    ])
-  );
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+    PROJECT_ROLE_KEYS.manager,
+    PROJECT_ROLE_KEYS.member,
+  ]);
 };
 
 export const canUpdateRequirement = canCreateRequirement;
 
 export const canDeleteRequirement = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true ||
-    hasProjectRole(toProjectRoleKey(role), [PROJECT_ROLE_KEYS.projectAdmin])
-  );
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+  ]);
 };
 
 export const canCommentRequirement = canCreateRequirement;
 
 export const canReviewRequirement = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true ||
-    hasProjectRole(toProjectRoleKey(role), [
-      PROJECT_ROLE_KEYS.projectAdmin,
-      PROJECT_ROLE_KEYS.manager,
-    ])
-  );
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+    PROJECT_ROLE_KEYS.manager,
+  ]);
 };
 
 export const canLinkRequirement = canCreateRequirement;
@@ -117,20 +104,15 @@ export const canLinkRequirement = canCreateRequirement;
 export const canApproveRequirement = canDeleteRequirement;
 
 export const canViewTask = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true || canViewProject(toProjectRoleKey(role))
-  );
+  return canViewProject(toProjectRoleKey(role));
 };
 
 export const canCreateTask = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true ||
-    hasProjectRole(toProjectRoleKey(role), [
-      PROJECT_ROLE_KEYS.projectAdmin,
-      PROJECT_ROLE_KEYS.manager,
-      PROJECT_ROLE_KEYS.member,
-    ])
-  );
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+    PROJECT_ROLE_KEYS.manager,
+    PROJECT_ROLE_KEYS.member,
+  ]);
 };
 
 export const canUpdateTask = canCreateTask;
@@ -138,13 +120,10 @@ export const canUpdateTask = canCreateTask;
 export const canCommentTask = canCreateTask;
 
 export const canDeleteTask = (role: MaybeCurrentProjectRole) => {
-  return (
-    role?.is_system_admin === true ||
-    hasProjectRole(toProjectRoleKey(role), [
-      PROJECT_ROLE_KEYS.projectAdmin,
-      PROJECT_ROLE_KEYS.manager,
-    ])
-  );
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+    PROJECT_ROLE_KEYS.manager,
+  ]);
 };
 
 const toProjectRoleKey = (

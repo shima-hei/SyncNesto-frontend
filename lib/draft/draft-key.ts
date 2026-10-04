@@ -13,5 +13,6 @@ export const createDraftScope = (
 };
 
 export const createDraftStorageKey = (userId: number, scope: string) => {
-  return `${DRAFT_STORAGE_PREFIX}:user:${userId}:${scope}`;
+  return `${DRAFT_STORAGE_PREFIX}:user:${userId}:tenant:${getApiTenant() ?? "none"}:${scope}`;
 };
+import { getApiTenant } from "@/lib/api/tenant-context";

@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/providers/auth-provider";
 import { AccountAvatarSection } from "../avatar/account-avatar-section";
 import { AccountProfileForm } from "../forms/account-profile-form";
 import { AccountReadonlyInfo } from "../shared/account-readonly-info";
+import { AccountCredentialsSection } from "../sections/account-credentials-section";
 
 export function AccountPage() {
   const { user, isLoading } = useAuth();
@@ -39,11 +40,15 @@ export function AccountPage() {
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-semibold">プロフィール編集</h2>
           <p className="text-sm text-muted-foreground">
-            メールアドレス、状態、権限、部署、役職は管理者のみ変更できます。
+            共通の名前を変更します。組織内の表示名・部署・役職は組織管理者が管理します。
           </p>
         </div>
         <AccountProfileForm key={user.version} user={user} />
       </section>
+      <AccountCredentialsSection
+        key={`credentials:${user.email}`}
+        user={user}
+      />
     </div>
   );
 }
