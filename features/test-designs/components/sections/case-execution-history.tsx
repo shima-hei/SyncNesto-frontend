@@ -19,7 +19,10 @@ import {
   listTestEvidenceProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceGet as listEvidence,
   listTestExecutionsProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsGet as listExecutions,
   uploadTestEvidenceProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidencePost as uploadEvidence,
+  planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost as planEvidenceUpload,
+  completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost as completeEvidenceUpload,
 } from "@/lib/api/generated/test-collaboration/test-collaboration";
+import { fileUploadMetadata, uploadWithPlan } from "@/lib/api/file-upload";
 import { formatDateTime } from "@/lib/format/date";
 
 import { useConfirmAction } from "../../hooks/use-confirm-action";
@@ -199,9 +202,25 @@ function EvidenceFiles({
         ),
       );
       try {
-        await uploadEvidence(projectId, designId, caseId, executionId, {
-          file: item.file,
-        });
+        const plan = await planEvidenceUpload(
+          projectId,
+          designId,
+          caseId,
+          executionId,
+          fileUploadMetadata(item.file, item.file.name),
+        );
+        await uploadWithPlan(
+          item.file,
+          plan,
+          () =>
+            uploadEvidence(projectId, designId, caseId, executionId, {
+              file: item.file,
+            }),
+          (upload_token) =>
+            completeEvidenceUpload(projectId, designId, caseId, executionId, {
+              upload_token,
+            }),
+        );
         setPending((current) =>
           current.filter((entry) => entry.id !== item.id),
         );

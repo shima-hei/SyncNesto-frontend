@@ -23,6 +23,9 @@ import type {
 import type {
   BodyUploadTestEvidenceProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidencePost,
   DeleteTestDesignCommentProjectsProjectIdTestDesignsDesignIdCommentsCommentIdDeleteParams,
+  FileUploadComplete,
+  FileUploadPlan,
+  FileUploadRequest,
   HTTPValidationError,
   RequirementCoverageRead,
   RequirementTestCoverageProjectsProjectIdRequirementTestCoverageGetParams,
@@ -3338,6 +3341,356 @@ export function useDownloadTestEvidenceProjectsProjectIdTestDesignsDesignIdCases
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+export const getPlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPostUrl =
+  (
+    projectId: number,
+    designId: number,
+    caseId: string,
+    executionId: string,
+  ) => {
+    return `/projects/${projectId}/test-designs/${designId}/cases/${caseId}/executions/${executionId}/evidence/upload-plan`;
+  };
+
+/**
+ * 所属と権限を確認して証跡の送信方式を返す。
+ * @summary Plan Test Evidence Upload
+ */
+export const planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost =
+  async (
+    projectId: number,
+    designId: number,
+    caseId: string,
+    executionId: string,
+    fileUploadRequest: FileUploadRequest,
+    options?: RequestInit,
+  ): Promise<FileUploadPlan> => {
+    return apiClient<FileUploadPlan>(
+      getPlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPostUrl(
+        projectId,
+        designId,
+        caseId,
+        executionId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...options?.headers },
+        body: JSON.stringify(fileUploadRequest),
+      },
+    );
+  };
+
+export const getPlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost
+        >
+      >,
+      TError,
+      {
+        projectId: number;
+        designId: number;
+        caseId: string;
+        executionId: string;
+        data: BodyType<FileUploadRequest>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost
+      >
+    >,
+    TError,
+    {
+      projectId: number;
+      designId: number;
+      caseId: string;
+      executionId: string;
+      data: BodyType<FileUploadRequest>;
+    },
+    TContext
+  > => {
+    const mutationKey = [
+      "planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost",
+    ];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost
+        >
+      >,
+      {
+        projectId: number;
+        designId: number;
+        caseId: string;
+        executionId: string;
+        data: BodyType<FileUploadRequest>;
+      }
+    > = (props) => {
+      const { projectId, designId, caseId, executionId, data } = props ?? {};
+
+      return planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost(
+        projectId,
+        designId,
+        caseId,
+        executionId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type PlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost
+      >
+    >
+  >;
+export type PlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPostMutationBody =
+  BodyType<FileUploadRequest>;
+export type PlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPostMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Plan Test Evidence Upload
+ */
+export const usePlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost
+          >
+        >,
+        TError,
+        {
+          projectId: number;
+          designId: number;
+          caseId: string;
+          executionId: string;
+          data: BodyType<FileUploadRequest>;
+        },
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof planTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPost
+      >
+    >,
+    TError,
+    {
+      projectId: number;
+      designId: number;
+      caseId: string;
+      executionId: string;
+      data: BodyType<FileUploadRequest>;
+    },
+    TContext
+  > => {
+    return useMutation(
+      getPlanTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadPlanPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getCompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePostUrl =
+  (
+    projectId: number,
+    designId: number,
+    caseId: string,
+    executionId: string,
+  ) => {
+    return `/projects/${projectId}/test-designs/${designId}/cases/${caseId}/executions/${executionId}/evidence/upload-complete`;
+  };
+
+/**
+ * 権限を再確認して直接送信された証跡を検証・登録する。
+ * @summary Complete Test Evidence Upload
+ */
+export const completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost =
+  async (
+    projectId: number,
+    designId: number,
+    caseId: string,
+    executionId: string,
+    fileUploadComplete: FileUploadComplete,
+    options?: RequestInit,
+  ): Promise<TestEvidenceRead> => {
+    return apiClient<TestEvidenceRead>(
+      getCompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePostUrl(
+        projectId,
+        designId,
+        caseId,
+        executionId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...options?.headers },
+        body: JSON.stringify(fileUploadComplete),
+      },
+    );
+  };
+
+export const getCompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost
+        >
+      >,
+      TError,
+      {
+        projectId: number;
+        designId: number;
+        caseId: string;
+        executionId: string;
+        data: BodyType<FileUploadComplete>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost
+      >
+    >,
+    TError,
+    {
+      projectId: number;
+      designId: number;
+      caseId: string;
+      executionId: string;
+      data: BodyType<FileUploadComplete>;
+    },
+    TContext
+  > => {
+    const mutationKey = [
+      "completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost",
+    ];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost
+        >
+      >,
+      {
+        projectId: number;
+        designId: number;
+        caseId: string;
+        executionId: string;
+        data: BodyType<FileUploadComplete>;
+      }
+    > = (props) => {
+      const { projectId, designId, caseId, executionId, data } = props ?? {};
+
+      return completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost(
+        projectId,
+        designId,
+        caseId,
+        executionId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost
+      >
+    >
+  >;
+export type CompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePostMutationBody =
+  BodyType<FileUploadComplete>;
+export type CompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePostMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Complete Test Evidence Upload
+ */
+export const useCompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost
+          >
+        >,
+        TError,
+        {
+          projectId: number;
+          designId: number;
+          caseId: string;
+          executionId: string;
+          data: BodyType<FileUploadComplete>;
+        },
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof completeTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePost
+      >
+    >,
+    TError,
+    {
+      projectId: number;
+      designId: number;
+      caseId: string;
+      executionId: string;
+      data: BodyType<FileUploadComplete>;
+    },
+    TContext
+  > => {
+    return useMutation(
+      getCompleteTestEvidenceUploadProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceUploadCompletePostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
 export const getDeleteTestEvidenceProjectsProjectIdTestDesignsDesignIdCasesCaseIdExecutionsExecutionIdEvidenceEvidenceIdDeleteUrl =
   (
     projectId: number,

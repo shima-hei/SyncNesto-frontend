@@ -1,27 +1,39 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
   useDeleteCurrentUserAvatarAuthMeAvatarDelete,
-  useUpdateCurrentUserAvatarAuthMeAvatarPut,
+  updateCurrentUserAvatarAuthMeAvatarPut as updateAvatar,
+  planCurrentUserAvatarUploadAuthMeAvatarUploadPlanPost as planAvatarUpload,
+  completeCurrentUserAvatarUploadAuthMeAvatarUploadCompletePost as completeAvatarUpload,
 } from "@/lib/api/generated/auth/auth";
+import { fileUploadMetadata, uploadWithPlan } from "@/lib/api/file-upload";
 
 import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
 import { setCurrentUserCache } from "../lib/current-user-cache";
 
 export function useUpdateCurrentUserAvatar() {
   const queryClient = useQueryClient();
-  const updateAvatarMutation = useUpdateCurrentUserAvatarAuthMeAvatarPut({
-    mutation: {
-      onSuccess: (user) => {
-        setCurrentUserCache(queryClient, user);
-        toast.success(CURRENT_USER_MESSAGES.avatar.updateSuccess);
-      },
-      onError: () => {
-        toast.error(CURRENT_USER_MESSAGES.avatar.updateError);
-      },
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (file: Blob) => {
+      const plan = await planAvatarUpload(
+        fileUploadMetadata(file, "avatar.webp"),
+      );
+      return uploadWithPlan(
+        file,
+        plan,
+        () => updateAvatar({ file }),
+        (upload_token) => completeAvatarUpload({ upload_token }),
+      );
+    },
+    onSuccess: (user) => {
+      setCurrentUserCache(queryClient, user);
+      toast.success(CURRENT_USER_MESSAGES.avatar.updateSuccess);
+    },
+    onError: () => {
+      toast.error(CURRENT_USER_MESSAGES.avatar.updateError);
     },
   });
   const deleteAvatarMutation = useDeleteCurrentUserAvatarAuthMeAvatarDelete({
@@ -37,11 +49,7 @@ export function useUpdateCurrentUserAvatar() {
   });
 
   const updateCurrentUserAvatar = async (file: Blob) => {
-    return updateAvatarMutation.mutateAsync({
-      data: {
-        file,
-      },
-    });
+    return updateAvatarMutation.mutateAsync(file);
   };
 
   const deleteCurrentUserAvatar = async () => {

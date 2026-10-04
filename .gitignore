@@ -44,8 +44,10 @@ next-env.d.ts
 
 # docs
 /docs/*
+!/docs/deployment.md
 !/docs/design-system.md
 !/docs/notifications.md
 !/docs/home-workspace.md
+!/docs/file-upload-request.md
 .codex
 AGENTS.md

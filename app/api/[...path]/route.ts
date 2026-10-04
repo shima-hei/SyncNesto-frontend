@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { authenticateBackendRequest } from "@/lib/security/backend";
 import { validateCsrfToken, isCsrfProtectedMethod } from "@/lib/security/csrf";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
@@ -79,9 +80,18 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   }
 
   const upstreamUrl = getUpstreamUrl(upstreamPath, request.nextUrl.search);
+  let upstreamHeaders: Headers;
+  try {
+    upstreamHeaders = getUpstreamRequestHeaders(request);
+  } catch {
+    return NextResponse.json(
+      { message: "Service unavailable", code: "SERVICE_UNAVAILABLE" },
+      { status: 503 },
+    );
+  }
   const upstreamResponse = await fetch(upstreamUrl, {
     method: request.method,
-    headers: getUpstreamRequestHeaders(request),
+    headers: upstreamHeaders,
     body: await getRequestBody(request),
     cache: "no-store",
     redirect: "manual",
@@ -151,7 +161,7 @@ const getUpstreamRequestHeaders = (request: NextRequest) => {
     headers.set(key, value);
   });
 
-  return headers;
+  return authenticateBackendRequest(headers, request.headers);
 };
 
 const getRequestBody = async (request: NextRequest) => {
@@ -188,6 +198,10 @@ const getProxyResponseHeaders = (upstreamResponse: Response) => {
     }
 
     if (lowerKey === "set-cookie") {
+      return;
+    }
+
+    if (["x-syncnesto-bff-key", "x-syncnesto-client-ip"].includes(lowerKey)) {
       return;
     }
 

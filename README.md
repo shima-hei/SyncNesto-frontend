@@ -43,6 +43,11 @@ API_BASE_URL=http://localhost:8000
 AUTH_COOKIE_NAME=access_token
 ```
 
+公開環境は [syncnesto.vercel.app](https://syncnesto.vercel.app/login) です。
+Vercelの登録名は `syncnesto`、サーバー専用の `API_BASE_URL` は
+`https://syncnesto-api.vercel.app` を使います。環境変数と公開ドメインは
+infraの `terraform/vercel/` で管理し、Actionsは既存のプロジェクトIDを使ってデプロイします。
+
 ## よく使うコマンド
 
 ```bash
@@ -58,6 +63,8 @@ npm run api:generate
 変更後は必要に応じて `npm run format` を実行し、少なくとも `npm run format:check`、`npm run typecheck`、`npm run lint` を確認します。本番ビルドに影響する変更では `npm run build` も確認します。
 
 ## API生成
+
+アイコンとエビデンスのアップロード方式はバックエンドの `FILE_UPLOAD_MODE` に従います。直接アップロードでは大きなファイル本体がNext.js BFFを通りません。設定と処理の概要は [ファイル送信方式](docs/file-upload-request.md) を参照してください。
 
 バックエンドのOpenAPI定義からOrvalでAPIクライアントを生成します。
 
