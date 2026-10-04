@@ -43,6 +43,11 @@ API_BASE_URL=http://localhost:8000
 AUTH_COOKIE_NAME=access_token
 ```
 
+公開環境は [syncnesto.vercel.app](https://syncnesto.vercel.app/login) です。
+Vercelの登録名は `syncnesto`、サーバー専用の `API_BASE_URL` は
+`https://syncnesto-api.vercel.app` を使います。環境変数と公開ドメインは
+infraの `terraform/vercel/` で管理し、Actionsは既存のプロジェクトIDを使ってデプロイします。
+
 ## よく使うコマンド
 
 ```bash
