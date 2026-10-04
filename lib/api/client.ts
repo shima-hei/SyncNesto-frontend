@@ -48,6 +48,14 @@ export async function apiClient<T>(
   if (!response.ok) {
     const code = getErrorCode(data);
 
+    if (
+      code === "PASSWORD_CHANGE_REQUIRED" &&
+      typeof window !== "undefined" &&
+      window.location.pathname !== "/initial-password"
+    ) {
+      window.location.replace("/initial-password");
+    }
+
     if (isAuthSessionInvalidCode(code)) {
       emitAuthSessionInvalid({ code });
     }

@@ -13,7 +13,7 @@ export function UserCreatePage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="ユーザー登録"
-        description="システムへ新しいユーザーを登録します。"
+        description="新しいユーザーを登録します。初回パスワードは7日間有効で、ログイン後に本人によるパスワード設定が必要です。"
       />
       <UserForm
         mode="create"

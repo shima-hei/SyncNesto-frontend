@@ -46,6 +46,7 @@ next-env.d.ts
 /docs/*
 !/docs/deployment.md
 !/docs/auth-email-actions.md
+!/docs/account-issuance.md
 !/docs/design-system.md
 !/docs/notifications.md
 !/docs/home-workspace.md

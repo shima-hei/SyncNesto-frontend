@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -350,10 +350,10 @@ function MemberForm({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm">
-          本人へ初期パスワードを渡してください。この画面を閉じると再表示できません。
+          本人へ初回パスワードを渡してください。7日間有効で、ログイン後に本人によるパスワード設定が必要です。この画面を閉じると再表示できません。
         </p>
         <Field>
-          <FieldLabel htmlFor="initial-password">初期パスワード</FieldLabel>
+          <FieldLabel htmlFor="initial-password">初回パスワード</FieldLabel>
           <Input
             id="initial-password"
             value={password}
@@ -453,12 +453,15 @@ function MemberForm({
 export function TextField({
   name,
   label,
+  id,
   ...props
 }: { name: string; label: string } & React.ComponentProps<typeof Input>) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
   return (
     <Field>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
-      <Input id={name} name={name} maxLength={255} {...props} />
+      <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
+      <Input id={inputId} name={name} maxLength={255} {...props} />
     </Field>
   );
 }

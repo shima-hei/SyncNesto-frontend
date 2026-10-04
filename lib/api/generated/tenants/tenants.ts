@@ -27,6 +27,8 @@ import type {
   RemoveMemberTenantsCurrentMembersUserIdDeleteParams,
   TenantChoice,
   TenantCreate,
+  TenantIssue,
+  TenantIssued,
   TenantMemberAdd,
   TenantMemberRead,
   TenantMemberUpdate,
@@ -34,6 +36,7 @@ import type {
   TenantUpdate,
   TenantUserCreate,
   TenantUserCreated,
+  TenantWelcomeRequest,
 } from "../model";
 
 import { apiClient } from "../../client";
@@ -455,6 +458,216 @@ export function useListManagedTenantsTenantsManagementGet<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+export const getIssueTenantTenantsIssuancePostUrl = () => {
+  return `/tenants/issuance`;
+};
+
+/**
+ * 運営承認後に組織と初期Ownerを発行し、案内メールを送る。
+ * @summary Issue Tenant
+ */
+export const issueTenantTenantsIssuancePost = async (
+  tenantIssue: TenantIssue,
+  options?: RequestInit,
+): Promise<TenantIssued> => {
+  return apiClient<TenantIssued>(getIssueTenantTenantsIssuancePostUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(tenantIssue),
+  });
+};
+
+export const getIssueTenantTenantsIssuancePostMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof issueTenantTenantsIssuancePost>>,
+    TError,
+    { data: BodyType<TenantIssue> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof issueTenantTenantsIssuancePost>>,
+  TError,
+  { data: BodyType<TenantIssue> },
+  TContext
+> => {
+  const mutationKey = ["issueTenantTenantsIssuancePost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof issueTenantTenantsIssuancePost>>,
+    { data: BodyType<TenantIssue> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return issueTenantTenantsIssuancePost(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type IssueTenantTenantsIssuancePostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof issueTenantTenantsIssuancePost>>
+>;
+export type IssueTenantTenantsIssuancePostMutationBody = BodyType<TenantIssue>;
+export type IssueTenantTenantsIssuancePostMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Issue Tenant
+ */
+export const useIssueTenantTenantsIssuancePost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof issueTenantTenantsIssuancePost>>,
+      TError,
+      { data: BodyType<TenantIssue> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof issueTenantTenantsIssuancePost>>,
+  TError,
+  { data: BodyType<TenantIssue> },
+  TContext
+> => {
+  return useMutation(
+    getIssueTenantTenantsIssuancePostMutationOptions(options),
+    queryClient,
+  );
+};
+export const getResendTenantWelcomeTenantsTenantIdWelcomeEmailPostUrl = (
+  tenantId: number,
+) => {
+  return `/tenants/${tenantId}/welcome-email`;
+};
+
+/**
+ * 有効なOwnerへ案内を再送し、初回設定待ちの場合だけパスワードを再発行する。
+ * @summary Resend Tenant Welcome
+ */
+export const resendTenantWelcomeTenantsTenantIdWelcomeEmailPost = async (
+  tenantId: number,
+  tenantWelcomeRequest: TenantWelcomeRequest,
+  options?: RequestInit,
+): Promise<TenantIssued> => {
+  return apiClient<TenantIssued>(
+    getResendTenantWelcomeTenantsTenantIdWelcomeEmailPostUrl(tenantId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(tenantWelcomeRequest),
+    },
+  );
+};
+
+export const getResendTenantWelcomeTenantsTenantIdWelcomeEmailPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof resendTenantWelcomeTenantsTenantIdWelcomeEmailPost>
+      >,
+      TError,
+      { tenantId: number; data: BodyType<TenantWelcomeRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<typeof resendTenantWelcomeTenantsTenantIdWelcomeEmailPost>
+    >,
+    TError,
+    { tenantId: number; data: BodyType<TenantWelcomeRequest> },
+    TContext
+  > => {
+    const mutationKey = ["resendTenantWelcomeTenantsTenantIdWelcomeEmailPost"];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<typeof resendTenantWelcomeTenantsTenantIdWelcomeEmailPost>
+      >,
+      { tenantId: number; data: BodyType<TenantWelcomeRequest> }
+    > = (props) => {
+      const { tenantId, data } = props ?? {};
+
+      return resendTenantWelcomeTenantsTenantIdWelcomeEmailPost(
+        tenantId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type ResendTenantWelcomeTenantsTenantIdWelcomeEmailPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof resendTenantWelcomeTenantsTenantIdWelcomeEmailPost>
+    >
+  >;
+export type ResendTenantWelcomeTenantsTenantIdWelcomeEmailPostMutationBody =
+  BodyType<TenantWelcomeRequest>;
+export type ResendTenantWelcomeTenantsTenantIdWelcomeEmailPostMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Resend Tenant Welcome
+ */
+export const useResendTenantWelcomeTenantsTenantIdWelcomeEmailPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof resendTenantWelcomeTenantsTenantIdWelcomeEmailPost>
+      >,
+      TError,
+      { tenantId: number; data: BodyType<TenantWelcomeRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<
+    ReturnType<typeof resendTenantWelcomeTenantsTenantIdWelcomeEmailPost>
+  >,
+  TError,
+  { tenantId: number; data: BodyType<TenantWelcomeRequest> },
+  TContext
+> => {
+  return useMutation(
+    getResendTenantWelcomeTenantsTenantIdWelcomeEmailPostMutationOptions(
+      options,
+    ),
+    queryClient,
+  );
+};
 export const getGetTenantTenantsCurrentGetUrl = () => {
   return `/tenants/current`;
 };

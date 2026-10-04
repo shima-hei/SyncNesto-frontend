@@ -8,6 +8,12 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   TOKEN_EXPIRED: "セッションの有効期限が切れました。再度ログインしてください。",
   INVALID_TOKEN: "認証情報が正しくありません。再度ログインしてください。",
   FORBIDDEN: "この操作を行う権限がありません。",
+  PASSWORD_CHANGE_REQUIRED:
+    "利用を開始する前に、ご自身のパスワードを設定してください。",
+  INITIAL_PASSWORD_EXPIRED:
+    "初回パスワードの有効期限が切れています。「パスワードを忘れた方」からメールで再設定してください。",
+  INITIAL_PASSWORD_REUSE:
+    "初回パスワードとは異なるパスワードを設定してください。",
   CSRF_TOKEN_INVALID:
     "認証情報の確認に失敗しました。画面を更新して再度お試しください。",
   NOT_FOUND: "対象のデータが見つかりません。",

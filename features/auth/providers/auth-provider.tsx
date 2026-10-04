@@ -35,6 +35,7 @@ const PUBLIC_AUTH_PATHS = new Set([
   "/forgot-password",
   "/reset-password",
   "/confirm-email-change",
+  "/initial-password",
 ]);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -59,6 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.location.replace("/login?reason=session-expired");
     })();
   }, [pathname, queryClient]);
+
+  useEffect(() => {
+    if (user?.password_change_required && !PUBLIC_AUTH_PATHS.has(pathname)) {
+      window.location.replace("/initial-password");
+    }
+  }, [user?.password_change_required, pathname]);
 
   useEffect(() => {
     const revalidateRestoredPage = (event: PageTransitionEvent) => {

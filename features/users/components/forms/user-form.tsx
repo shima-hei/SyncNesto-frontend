@@ -140,7 +140,9 @@ export function UserForm({
           </Field>
 
           <Field data-invalid={errors.password ? true : undefined}>
-            <FieldLabel htmlFor={passwordId}>パスワード</FieldLabel>
+            <FieldLabel htmlFor={passwordId}>
+              {mode === "create" ? "初回パスワード" : "パスワード"}
+            </FieldLabel>
             <Input
               id={passwordId}
               type="password"
