@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { DocumentsPage } from "@/features/documents/components/pages/documents-page";
+import { DocumentEditorPage } from "@/features/documents/components/pages/document-editor-page";
 
 export default async function Page({
   params,
@@ -8,5 +8,5 @@ export default async function Page({
 }) {
   const projectId = Number((await params).projectId);
   if (!Number.isSafeInteger(projectId) || projectId < 1) notFound();
-  return <DocumentsPage projectId={projectId} />;
+  return <DocumentEditorPage projectId={projectId} />;
 }

@@ -29,7 +29,7 @@ export function DemoStart() {
       <div className="flex flex-col gap-1">
         <h2 className="font-semibold">登録せずに体験</h2>
         <p className="text-sm text-muted-foreground">
-          要件・タスク・テスト、組織の管理を試せます。
+          要件・タスク・テスト・ドキュメント、組織の管理を試せます。
         </p>
         <p className="text-sm text-muted-foreground">
           入力内容はログアウト・有効期限切れで破棄されます。個人情報や機密情報は入力しないでください。

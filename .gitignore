@@ -51,5 +51,6 @@ next-env.d.ts
 !/docs/notifications.md
 !/docs/home-workspace.md
 !/docs/file-upload-request.md
+!/docs/documents.md
 .codex
 AGENTS.md

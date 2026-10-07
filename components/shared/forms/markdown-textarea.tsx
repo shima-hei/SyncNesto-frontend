@@ -43,12 +43,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 type MarkdownTextareaProps = {
+  id?: string;
+  disabled?: boolean;
   value: string;
   placeholder?: string;
   onChange: (value: string) => void;
 };
 
 export function MarkdownTextarea({
+  id,
+  disabled,
   value,
   placeholder,
   onChange,
@@ -57,6 +61,7 @@ export function MarkdownTextarea({
   const [mode, setMode] = useState<"edit" | "preview">("edit");
 
   const insertTemplate = (template: string, cursorOffset = template.length) => {
+    if (disabled) return;
     const textarea = textareaRef.current;
 
     if (!textarea) {
@@ -78,7 +83,7 @@ export function MarkdownTextarea({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-2">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2">
           <MarkdownToolbarMenu
@@ -202,6 +207,8 @@ export function MarkdownTextarea({
       {mode === "edit" ? (
         <Textarea
           ref={textareaRef}
+          id={id}
+          disabled={disabled}
           value={value}
           placeholder={placeholder}
           className="min-h-48 font-mono"
@@ -210,7 +217,7 @@ export function MarkdownTextarea({
       ) : (
         <MarkdownPreview value={value} />
       )}
-    </div>
+    </fieldset>
   );
 }
 
