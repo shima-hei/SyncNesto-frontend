@@ -44,6 +44,7 @@ next-env.d.ts
 
 # docs
 /docs/*
+!/docs/audit-logs.md
 !/docs/deployment.md
 !/docs/auth-email-actions.md
 !/docs/account-issuance.md

@@ -103,9 +103,14 @@ function OrganizationContent() {
         title={tenant.name}
         description="組織内の所属・権限・プロフィールを管理します。"
         actions={
-          <Button asChild variant="outline">
-            <Link href="/projects/management">プロジェクト管理</Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href="/organization/audit-logs">監査ログ</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/projects/management">プロジェクト管理</Link>
+            </Button>
+          </>
         }
       />
       <Tabs value={tab} onValueChange={setTab}>

@@ -8,6 +8,7 @@ export type BreadcrumbItem = {
 const SEGMENT_LABELS: Record<string, string> = {
   account: "アカウント",
   activities: "最近の動き",
+  "audit-logs": "監査ログ",
   documents: "ドキュメント",
   forbidden: "アクセス権限なし",
   help: "ヘルプ",
