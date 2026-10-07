@@ -256,7 +256,7 @@ export function DesignsPage({
                     confirm({
                       title: `「${d.name}」を削除しますか？`,
                       description:
-                        "設計書と全ケースを削除します。この操作は取り消せません。",
+                        "設計書と全ケースが利用できなくなります。保持期限内はごみ箱から復元できます。",
                       confirmLabel: "削除",
                       destructive: true,
                       onConfirm: async () => {

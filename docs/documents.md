@@ -22,4 +22,4 @@ APIはBackend OpenAPIからOrvalで生成し、既存BFF・Cookie・CSRF・組�
 版の対象はタイトル・本文のみ。添付と関連は現在の内容。
 
 Backend契約は`docs/frontend-documents-api.md`を参照する。
-削除データの復元UI・保持期間、全文横断検索、監査ログの閲覧UIは後続課題。
+横断検索、ごみ箱での文書・添付の復元、通常データの保持期限（標準30日）に対応する。監査ログの閲覧UIは後続課題。

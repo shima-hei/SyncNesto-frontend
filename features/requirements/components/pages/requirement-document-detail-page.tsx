@@ -205,7 +205,7 @@ export function RequirementDocumentDetailPage({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         resourceName="要件定義書"
-        description="削除すると配下の要件も利用できなくなります。内容を確認してから実行してください。"
+        description="削除すると配下の要件も利用できなくなります。保持期限内はごみ箱から復元できます。"
         isPending={isDeletePending}
         onConfirm={deleteRequirementDocument}
       />

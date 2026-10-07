@@ -350,7 +350,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
         open={deleteDialogOpen}
         onOpenChange={(open) => !open && setDeleteDialogOpen(false)}
         resourceName="タスク"
-        description="タスクを削除します。削除すると元に戻せません。"
+        description="タスクを削除します。保持期限内はごみ箱から復元できます。"
         isPending={isDeletePending}
         onConfirm={async () => {
           await deleteTask();
