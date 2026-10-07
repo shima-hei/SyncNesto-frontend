@@ -13,6 +13,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { DemoStart } from "./demo-start";
 import { cn } from "@/lib/utils";
 
 import { useLogin } from "../../hooks/use-login";
@@ -21,8 +23,9 @@ import type { LoginFormErrors } from "../../types/login";
 
 export function LoginForm({
   className,
+  demoEnabled = false,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { demoEnabled?: boolean }) {
   const emailId = useId();
   const passwordId = useId();
   const { login, isPending, error } = useLogin();
@@ -138,6 +141,12 @@ export function LoginForm({
                 パスワードを忘れた方
               </Link>
             </FieldGroup>
+            {demoEnabled && (
+              <div className="mt-6 flex flex-col gap-6">
+                <Separator />
+                <DemoStart />
+              </div>
+            )}
           </form>
 
           <div className="relative hidden bg-muted md:block">

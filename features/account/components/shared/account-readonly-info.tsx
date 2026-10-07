@@ -38,9 +38,9 @@ export function AccountReadonlyInfo({ user }: AccountReadonlyInfoProps) {
 
 function ReadonlyItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-medium">{value}</dd>
+      <dd className="font-medium break-all">{value}</dd>
     </div>
   );
 }

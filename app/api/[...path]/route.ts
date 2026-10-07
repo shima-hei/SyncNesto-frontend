@@ -7,6 +7,7 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 
 // BFFでは、フロントエンドから呼び出す想定のAPIグループだけを公開する。
 const ALLOWED_PREFIXES = [
+  "/demo",
   "/auth",
   "/tenants",
   "/drafts",
@@ -67,7 +68,12 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
     return NextResponse.json({ message: "Not found" }, { status: 404 });
   }
 
-  if (!isAllowedOrigin(request)) {
+  if (
+    !isAllowedOrigin(request) ||
+    (upstreamPath.startsWith("/demo/") &&
+      BODY_METHODS.has(request.method) &&
+      request.headers.get("origin") !== request.nextUrl.origin)
+  ) {
     return NextResponse.json(
       { message: "Forbidden", code: "FORBIDDEN" },
       { status: 403 },

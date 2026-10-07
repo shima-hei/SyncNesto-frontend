@@ -19,6 +19,7 @@ export const shouldValidateCsrfToken = (request: NextRequest, path: string) => {
   if (path === "/auth/login") {
     return false;
   }
+  if (path === "/demo/start") return true;
 
   // 認証Cookieがない場合は、CSRFではなく通常の未認証エラーとしてバックエンドに判定させる。
   return request.cookies.has(AUTH_COOKIE_NAME);

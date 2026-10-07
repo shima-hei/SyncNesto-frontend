@@ -23,7 +23,7 @@ export function useDesignEditor(initial: Design) {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const draftKey = user
-    ? `${user.id}:tenant:${tenant?.id}:${initial.project_id}:${initial.id}`
+    ? `${user.demo ? `demo:${user.demo.id}:` : ""}${user.id}:tenant:${tenant?.id}:${initial.project_id}:${initial.id}`
     : null;
   const [recovery, setRecovery] = useState<DesignDraft | null>(null);
   const [draftError, setDraftError] = useState(false);
@@ -41,7 +41,7 @@ export function useDesignEditor(initial: Design) {
     let active = true;
     readDraft(draftKey)
       .then(async (draft) => {
-        if (draft || !user) return draft;
+        if (draft || !user || user.demo) return draft;
         // Backendからこの組織の設計書を取得できた後だけ、旧形式の下書きを引き継ぐ。
         const legacyKey = `${user.id}:${initial.project_id}:${initial.id}`;
         const legacy = await readDraft(legacyKey);

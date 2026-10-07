@@ -13,5 +13,10 @@ export default async function Page({ searchParams }: PageProps) {
   const { reason } = await searchParams;
   const showSessionExpiredToast = reason === "session-expired";
 
-  return <LoginPage showSessionExpiredToast={showSessionExpiredToast} />;
+  return (
+    <LoginPage
+      showSessionExpiredToast={showSessionExpiredToast}
+      demoEnabled={process.env.APP_ENV === "demo"}
+    />
+  );
 }
