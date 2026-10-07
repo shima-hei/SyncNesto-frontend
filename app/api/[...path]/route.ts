@@ -12,6 +12,7 @@ const ALLOWED_PREFIXES = [
   "/tenants",
   "/drafts",
   "/home",
+  "/search",
   "/notifications",
   "/users",
   "/projects",

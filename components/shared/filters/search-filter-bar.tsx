@@ -12,6 +12,7 @@ type SearchFilterBarProps = {
   searchValue: string;
   searchLabel?: string;
   searchPlaceholder: string;
+  searchMaxLength?: number;
   children?: ReactNode;
   variant?: "default" | "compact";
   onSearchValueChange: (value: string) => void;
@@ -22,6 +23,7 @@ export function SearchFilterBar({
   searchValue,
   searchLabel,
   searchPlaceholder,
+  searchMaxLength,
   children,
   variant = "default",
   onSearchValueChange,
@@ -62,6 +64,7 @@ export function SearchFilterBar({
             value={searchValue}
             onChange={(event) => onSearchValueChange(event.target.value)}
             placeholder={searchPlaceholder}
+            maxLength={searchMaxLength}
           />
         </Field>
         <Button

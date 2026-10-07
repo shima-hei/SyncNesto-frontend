@@ -23,6 +23,7 @@ function load(path) {
       return Object.fromEntries(
         [
           "HomeIcon",
+          "SearchIcon",
           "FolderKanbanIcon",
           "SettingsIcon",
           "UsersIcon",
@@ -55,18 +56,18 @@ const { getBreadcrumbItems } = load(
 test("daily navigation is direct and keeps existing routes", () => {
   assert.equal(
     mainNavigation.map((item) => `${item.title}:${item.href}`).join(","),
-    "ホーム:/,プロジェクト:/projects/joined",
+    "ホーム:/,横断検索:/search,プロジェクト:/projects/joined",
   );
   assert.equal(
     mainNavigation.some((item) => item.children?.length),
     false,
   );
   assert.equal(
-    isNavigationItemActive(mainNavigation[1], "/projects/joined/7/tasks/12"),
+    isNavigationItemActive(mainNavigation[2], "/projects/joined/7/tasks/12"),
     true,
   );
   assert.equal(
-    isNavigationItemActive(mainNavigation[1], "/projects/management"),
+    isNavigationItemActive(mainNavigation[2], "/projects/management"),
     false,
   );
 });
@@ -83,13 +84,13 @@ test("project roles do not expose system management navigation", () => {
   assert.equal(getVisibleNavigationItems(managementNavigation, null).length, 0);
 });
 
-test("system admin sees both existing management destinations", () => {
+test("system admin sees system management destinations", () => {
   const items = getVisibleNavigationItems(managementNavigation, {
     system_roles: [{ key: "system_admin" }],
   });
   assert.equal(
     items.map((item) => `${item.title}:${item.href}`).join(","),
-    "プロジェクト管理:/projects/management,ユーザー管理:/system/users",
+    "組織の運営管理:/system/tenants,ユーザー管理:/system/users",
   );
 });
 

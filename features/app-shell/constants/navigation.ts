@@ -2,6 +2,7 @@ import {
   CircleHelpIcon,
   FolderKanbanIcon,
   HomeIcon,
+  SearchIcon,
   SettingsIcon,
   UsersIcon,
   type LucideIcon,
@@ -30,6 +31,11 @@ export const mainNavigation: AppNavigationItem[] = [
     title: "ホーム",
     href: "/",
     icon: HomeIcon,
+  },
+  {
+    title: "横断検索",
+    href: "/search",
+    icon: SearchIcon,
   },
   {
     title: "プロジェクト",
