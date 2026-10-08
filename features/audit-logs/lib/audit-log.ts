@@ -43,6 +43,14 @@ export const EVENT_LABELS: Record<string, string> = {
   "tenant.user_created": "組織ユーザー作成",
   "tenant.updated": "組織設定更新",
   "trash.purged": "保持期限後の完全削除",
+  "trash.cleanup": "保持期限後の回収ジョブ",
+  "requirement_document.purged": "要件定義書の完全削除",
+  "requirement_section.purged": "要件セクションの完全削除",
+  "requirement.purged": "要件の完全削除",
+  "task.purged": "タスクの完全削除",
+  "test_design.purged": "テスト設計書の完全削除",
+  "document.purged": "文書の完全削除",
+  "document_attachment.purged": "添付ファイルの完全削除",
 };
 
 export const eventLabel = (value: string) =>
@@ -59,6 +67,8 @@ const DETAIL_LABELS: Record<string, string> = {
   retention_days: "保持日数",
   count: "件数",
   purged_count: "完全削除件数",
+  failed_count: "失敗件数",
+  mode: "実行方式",
 };
 const VALUE_LABELS: Record<string, string> = {
   title: "タイトル",
@@ -91,6 +101,8 @@ const VALUE_LABELS: Record<string, string> = {
   manager: "マネージャー",
   member: "メンバー",
   viewer: "閲覧者",
+  dry_run: "対象確認",
+  execute: "完全削除",
 };
 export const detailLabel = (key: string) =>
   Object.hasOwn(DETAIL_LABELS, key) ? DETAIL_LABELS[key] : key;

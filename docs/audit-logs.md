@@ -14,6 +14,10 @@ API契約: Backend `docs/frontend-audit-logs-api.md`。
 モデル/APIクライアントはBackend OpenAPIからOrvalで再生成する。
 MCPは後続課題。要件定義とテスト設計の作成までを提供する方針。
 
+通常データの定期回収は `trash.cleanup` で検索し、詳細の実行方式（対象確認・完全削除）、
+候補件数・完全削除件数・失敗件数を確認する。個別の完全削除も対象の種類とIDを表示する。
+回収対象や有効化はBackend専用の運用設定で行い、この画面からジョブを実行しない。
+
 ## テスト
 
 `npm test` で `tests` / `features` / `lib` の `.test.mjs` を再帰的に収集する。
