@@ -8,6 +8,7 @@ export * from "./home/home";
 export * from "./notifications/notifications";
 export * from "./projects/projects";
 export * from "./requirements/requirements";
+export * from "./search/search";
 export * from "./tasks/tasks";
 export * from "./tenants/tenants";
 export * from "./test-collaboration/test-collaboration";
