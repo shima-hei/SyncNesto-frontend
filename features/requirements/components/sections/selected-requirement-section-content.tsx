@@ -163,7 +163,12 @@ export function SelectedRequirementSectionContent({
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <h3 className="text-base font-semibold">{section.title}</h3>
+          <h3
+            data-requirement-section-field="title"
+            className="scroll-mt-24 text-base font-semibold"
+          >
+            {section.title}
+          </h3>
           <ReviewableSectionContent
             documentId={documentId}
             sectionId={section.id}
@@ -296,6 +301,7 @@ function ReviewableSectionContent({
           : "",
       )}
       data-requirement-review-anchor-key={anchorKey}
+      data-requirement-section-field="content"
       onMouseUp={handleMouseUp}
       onClick={handleClick}
     >

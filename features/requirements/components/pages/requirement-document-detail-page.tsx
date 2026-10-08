@@ -172,6 +172,7 @@ export function RequirementDocumentDetailPage({
 
         <TabsContent value="issues">
           <RequirementOpenIssuesSection
+            canComment={canCommentRequirement(currentProjectRole)}
             projectId={projectId}
             documentId={documentId}
             canCreate={canCreateRequirement(currentProjectRole)}

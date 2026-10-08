@@ -89,9 +89,13 @@ export function RequirementDocumentOverview({
       return;
     }
     const anchorKey = getRequirementReviewAnchorKey(targetAnchor);
-    const element = window.document.querySelector(
-      `[data-document-preview-anchor-key="${anchorKey}"]`,
-    );
+    const element =
+      window.document.querySelector(
+        `[data-document-preview-anchor-key="${CSS.escape(anchorKey)}"]`,
+      ) ??
+      window.document.querySelector(
+        `[data-document-field="${CSS.escape(targetAnchor.field)}"]`,
+      );
 
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
     setActivePreviewAnchorKey(anchorKey);
@@ -107,13 +111,12 @@ export function RequirementDocumentOverview({
       return null;
     }
 
-    if (
-      targetAnchor.preview_target_type === "document" &&
-      targetAnchor.field === "purpose"
-    ) {
+    if (targetAnchor.preview_target_type === "document") {
+      const value =
+        document[targetAnchor.field as keyof RequirementDocumentRead];
       return evaluateRequirementReviewAnchor(
         targetAnchor,
-        document.purpose ?? "",
+        typeof value === "string" ? value : "",
         document.version,
       );
     }
@@ -200,7 +203,10 @@ export function RequirementDocumentOverview({
                     <p className="text-sm text-muted-foreground">
                       {document.document_code}
                     </p>
-                    <h2 className="text-2xl font-semibold tracking-normal break-words">
+                    <h2
+                      data-document-field="title"
+                      className="scroll-mt-24 text-2xl font-semibold tracking-normal break-words"
+                    >
                       {document.title}
                     </h2>
                   </div>
@@ -215,14 +221,17 @@ export function RequirementDocumentOverview({
                     />
                     <DocumentMeta
                       label="対象システム"
+                      field="target_system_name"
                       value={document.target_system_name ?? "-"}
                     />
                     <DocumentMeta
                       label="クライアント"
+                      field="client_name"
                       value={document.client_name ?? "-"}
                     />
                     <DocumentMeta
                       label="ベンダー"
+                      field="vendor_name"
                       value={document.vendor_name ?? "-"}
                     />
                     <DocumentMeta
@@ -520,9 +529,20 @@ function ReviewablePreviewBlock({
   );
 }
 
-function DocumentMeta({ label, value }: { label: string; value: string }) {
+function DocumentMeta({
+  label,
+  value,
+  field,
+}: {
+  label: string;
+  value: string;
+  field?: string;
+}) {
   return (
-    <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
+    <div
+      data-document-field={field}
+      className="grid scroll-mt-24 grid-cols-[7rem_minmax(0,1fr)] gap-2"
+    >
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0 break-words">{value}</dd>
     </div>

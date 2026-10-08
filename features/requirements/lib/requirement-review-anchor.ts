@@ -25,6 +25,9 @@ export type RequirementReviewTargetAnchor = {
   preview_target_type?: "document" | "section" | "unassigned_requirements";
   preview_target_id?: number | null;
   label?: string;
+  quote_start?: number;
+  offset_unit?: "unicode_code_point";
+  target_version?: number;
 };
 
 export const createRequirementReviewAnchor = async ({
@@ -62,6 +65,22 @@ export const evaluateRequirementReviewAnchor = (
   currentValue: string,
   currentVersion?: number | null,
 ): ReviewAnchorStatus => {
+  if (
+    targetAnchor.offset_unit === "unicode_code_point" &&
+    typeof targetAnchor.quote_start === "number"
+  ) {
+    const atOffset = Array.from(currentValue)
+      .slice(
+        targetAnchor.quote_start,
+        targetAnchor.quote_start + Array.from(targetAnchor.quote).length,
+      )
+      .join("");
+    if (atOffset === targetAnchor.quote)
+      return currentVersion === targetAnchor.target_version
+        ? "current"
+        : "changed";
+    return currentValue.includes(targetAnchor.quote) ? "moved" : "missing";
+  }
   const value = normalizeReviewText(currentValue);
   const quote = normalizeReviewText(targetAnchor.quote);
   const expectedAtOffset =

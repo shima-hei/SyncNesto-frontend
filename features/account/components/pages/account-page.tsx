@@ -8,8 +8,9 @@ import { AccountAvatarSection } from "../avatar/account-avatar-section";
 import { AccountProfileForm } from "../forms/account-profile-form";
 import { AccountReadonlyInfo } from "../shared/account-readonly-info";
 import { AccountCredentialsSection } from "../sections/account-credentials-section";
+import { McpConnections } from "@/features/mcp/components/mcp-connections";
 
-export function AccountPage() {
+export function AccountPage({ mcpEnabled = false }: { mcpEnabled?: boolean }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -49,6 +50,7 @@ export function AccountPage() {
         key={`credentials:${user.email}`}
         user={user}
       />
+      {mcpEnabled && !user.demo ? <McpConnections /> : null}
     </div>
   );
 }

@@ -26,6 +26,7 @@ import { useConfirmAction } from "../../hooks/use-confirm-action";
 import { itemColumns } from "../../lib/design";
 import {
   commentScopeKey,
+  commentMatchesTarget,
   commentTargetKey as targetKey,
   type DesignCommentTarget,
 } from "../../lib/pattern-comments";
@@ -239,8 +240,8 @@ export function DesignCommentsPanel({
       ? (query.data ?? [])
       : mode === "table"
         ? scoped
-        : (query.data ?? []).filter(
-            (comment) => targetKey(comment) === selectedKey,
+        : (query.data ?? []).filter((comment) =>
+            commentMatchesTarget(comment, currentTarget),
           );
   const unresolved = visible.filter(
     (comment) => !comment.is_resolved && !comment.deleted_at,

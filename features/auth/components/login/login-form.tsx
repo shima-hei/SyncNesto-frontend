@@ -24,11 +24,12 @@ import type { LoginFormErrors } from "../../types/login";
 export function LoginForm({
   className,
   demoEnabled = false,
+  returnTo,
   ...props
-}: React.ComponentProps<"div"> & { demoEnabled?: boolean }) {
+}: React.ComponentProps<"div"> & { demoEnabled?: boolean; returnTo?: string }) {
   const emailId = useId();
   const passwordId = useId();
-  const { login, isPending, error } = useLogin();
+  const { login, isPending, error } = useLogin(returnTo);
   const [errors, setErrors] = useState<LoginFormErrors>({});
 
   const handleSubmit = async (

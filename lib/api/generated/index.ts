@@ -6,6 +6,7 @@ export * from "./documents/documents";
 export * from "./drafts/drafts";
 export * from "./health/health";
 export * from "./home/home";
+export * from "./mcp/mcp";
 export * from "./notifications/notifications";
 export * from "./projects/projects";
 export * from "./requirements/requirements";

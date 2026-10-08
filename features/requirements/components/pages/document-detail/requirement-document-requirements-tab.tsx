@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,7 @@ export function RequirementDocumentRequirementsTab({
   canComment,
   canReview,
 }: RequirementDocumentRequirementsTabProps) {
+  const router = useRouter();
   const supportPanelId = useId();
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(
     null,
@@ -147,9 +149,26 @@ export function RequirementDocumentRequirementsTab({
       return;
     }
     const anchorKey = getRequirementReviewAnchorKey(targetAnchor);
-    const element = window.document.querySelector(
-      `[data-requirement-review-anchor-key="${anchorKey}"]`,
-    );
+    const element =
+      window.document.querySelector(
+        `[data-requirement-review-anchor-key="${CSS.escape(anchorKey)}"]`,
+      ) ??
+      (targetAnchor.scope === "section_review"
+        ? window.document.querySelector(
+            `[data-requirement-section-field="${CSS.escape(targetAnchor.field)}"]`,
+          )
+        : null);
+
+    if (
+      !element &&
+      selectedRequirement &&
+      targetAnchor.scope === "section_requirements_review"
+    ) {
+      router.push(
+        `/projects/joined/${projectId}/requirements/${documentId}/items/${selectedRequirement.id}#requirement-field-${encodeURIComponent(targetAnchor.field)}`,
+      );
+      return;
+    }
 
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
     setActiveAnchorKey(anchorKey);
@@ -166,7 +185,9 @@ export function RequirementDocumentRequirementsTab({
     if (targetAnchor.scope === "section_review" && selectedSection) {
       return evaluateRequirementReviewAnchor(
         targetAnchor,
-        selectedSection.content ?? "",
+        targetAnchor.field === "title"
+          ? selectedSection.title
+          : (selectedSection.content ?? ""),
         selectedSection.version,
       );
     }
@@ -303,6 +324,14 @@ const getRequirementAnchorFieldValue = (
       return requirement.title;
     case "description":
       return requirement.description ?? "";
+    case "rationale":
+      return requirement.rationale ?? "";
+    case "acceptance_criteria":
+      return requirement.acceptance_criteria ?? "";
+    case "category":
+      return requirement.category ?? "";
+    case "source":
+      return requirement.source ?? "";
     case "requirement_type":
       return getRequirementTypeLabel(requirement.requirement_type);
     case "priority":

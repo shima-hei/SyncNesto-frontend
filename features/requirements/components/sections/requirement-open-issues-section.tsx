@@ -17,6 +17,11 @@ import { usePromoteOpenIssue } from "../../hooks/use-promote-open-issue";
 import { useUpdateOpenIssue } from "../../hooks/use-update-open-issue";
 import { RequirementOpenIssueForm } from "../forms/requirement-open-issue-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
+import { RequirementTargetCommentsSection } from "./requirement-target-comments-section";
+import {
+  evaluateRequirementReviewAnchor,
+  isRequirementReviewTargetAnchor,
+} from "../../lib/requirement-review-anchor";
 import type { RequirementOpenIssueFormValues } from "../../types/requirement-open-issue-form";
 
 type RequirementOpenIssuesSectionProps = {
@@ -25,6 +30,7 @@ type RequirementOpenIssuesSectionProps = {
   canCreate: boolean;
   canUpdate: boolean;
   canDelete: boolean;
+  canComment: boolean;
 };
 
 export function RequirementOpenIssuesSection({
@@ -33,7 +39,9 @@ export function RequirementOpenIssuesSection({
   canCreate,
   canUpdate,
   canDelete,
+  canComment,
 }: RequirementOpenIssuesSectionProps) {
+  const [commentTargets, setCommentTargets] = useState<number[]>([]);
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementOpenIssueRead | null>(null);
   const [editingTarget, setEditingTarget] =
@@ -75,17 +83,29 @@ export function RequirementOpenIssuesSection({
         ) : openIssues.length ? (
           <div className="flex flex-col gap-3">
             {openIssues.map((issue) => (
-              <div key={issue.id} className="rounded-lg border p-3">
+              <div
+                key={issue.id}
+                data-open-issue-id={issue.id}
+                className="rounded-lg border p-3"
+              >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="flex min-w-0 flex-col gap-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{issue.issue_code}</span>
-                      <span className="text-sm">{issue.title}</span>
+                      <span
+                        data-open-issue-field="title"
+                        className="scroll-mt-24 text-sm"
+                      >
+                        {issue.title}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {getRequirementOpenIssueStatusLabel(issue.status)}
                       </span>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                    <p
+                      data-open-issue-field="description"
+                      className="scroll-mt-24 whitespace-pre-wrap text-sm text-muted-foreground"
+                    >
                       {issue.description || "説明はありません。"}
                     </p>
                     <span className="text-xs text-muted-foreground">
@@ -97,12 +117,31 @@ export function RequirementOpenIssuesSection({
                       関連要件ID: {issue.related_requirement_id ?? "-"}
                     </span>
                     {issue.resolution ? (
-                      <p className="whitespace-pre-wrap text-xs text-muted-foreground">
+                      <p
+                        data-open-issue-field="resolution"
+                        className="scroll-mt-24 whitespace-pre-wrap text-xs text-muted-foreground"
+                      >
                         解決内容: {issue.resolution}
                       </p>
                     ) : null}
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-expanded={commentTargets.includes(issue.id)}
+                      aria-controls={`open-issue-comments-${issue.id}`}
+                      onClick={() =>
+                        setCommentTargets((previous) =>
+                          previous.includes(issue.id)
+                            ? previous.filter((id) => id !== issue.id)
+                            : [...previous, issue.id],
+                        )
+                      }
+                    >
+                      コメント・指摘
+                    </Button>
                     {canUpdate && issue.status !== "resolved" ? (
                       <Button
                         type="button"
@@ -139,6 +178,39 @@ export function RequirementOpenIssuesSection({
                     ) : null}
                   </div>
                 </div>
+                {commentTargets.includes(issue.id) ? (
+                  <div id={`open-issue-comments-${issue.id}`} className="mt-4">
+                    <RequirementTargetCommentsSection
+                      projectId={projectId}
+                      targetType="open_issue"
+                      targetId={issue.id}
+                      canComment={canComment}
+                      showTargetAnchorInput={false}
+                      onTargetAnchorClick={(anchor) => {
+                        if (typeof anchor.field !== "string") return;
+                        document
+                          .querySelector(
+                            `[data-open-issue-id="${issue.id}"] [data-open-issue-field="${CSS.escape(anchor.field)}"]`,
+                          )
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                      }}
+                      getTargetAnchorStatus={(anchor) => {
+                        if (!isRequirementReviewTargetAnchor(anchor))
+                          return null;
+                        const value =
+                          issue[anchor.field as keyof RequirementOpenIssueRead];
+                        return evaluateRequirementReviewAnchor(
+                          anchor,
+                          typeof value === "string" ? value : "",
+                          issue.version,
+                        );
+                      }}
+                    />
+                  </div>
+                ) : null}
                 {editingTarget?.id === issue.id ? (
                   <div className="mt-4 rounded-lg bg-muted p-3">
                     <div className="mb-3 flex items-center justify-between gap-3">

@@ -145,44 +145,50 @@ export function RequirementDetailPage({
           要件タブへ戻る
         </Link>
       </Button>
-      <PageHeader
-        title={requirement.title}
-        description={requirement.requirement_code}
-        actions={
-          <>
-            {canCreateRequirement(currentProjectRole) ? (
-              <Button asChild variant="outline">
-                <Link
-                  href={`/projects/joined/${projectId}/requirements/${documentId}/items/new?duplicateFrom=${requirementId}`}
+      <div
+        id="requirement-field-title"
+        data-requirement-anchor-field="title"
+        className="scroll-mt-24"
+      >
+        <PageHeader
+          title={requirement.title}
+          description={requirement.requirement_code}
+          actions={
+            <>
+              {canCreateRequirement(currentProjectRole) ? (
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/projects/joined/${projectId}/requirements/${documentId}/items/new?duplicateFrom=${requirementId}`}
+                  >
+                    <CopyIcon data-icon="inline-start" />
+                    複製
+                  </Link>
+                </Button>
+              ) : null}
+              {canUpdateRequirement(currentProjectRole) ? (
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`}
+                  >
+                    <EditIcon data-icon="inline-start" />
+                    編集
+                  </Link>
+                </Button>
+              ) : null}
+              {canDeleteRequirement(currentProjectRole) ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setDeleteDialogOpen(true)}
                 >
-                  <CopyIcon data-icon="inline-start" />
-                  複製
-                </Link>
-              </Button>
-            ) : null}
-            {canUpdateRequirement(currentProjectRole) ? (
-              <Button asChild variant="outline">
-                <Link
-                  href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`}
-                >
-                  <EditIcon data-icon="inline-start" />
-                  編集
-                </Link>
-              </Button>
-            ) : null}
-            {canDeleteRequirement(currentProjectRole) ? (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2Icon data-icon="inline-start" />
-                削除
-              </Button>
-            ) : null}
-          </>
-        }
-      />
+                  <Trash2Icon data-icon="inline-start" />
+                  削除
+                </Button>
+              ) : null}
+            </>
+          }
+        />
+      </div>
 
       <div className="grid gap-4 @min-[64rem]/requirement-detail:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/requirement-detail:items-start @min-[80rem]/requirement-detail:grid-cols-[minmax(0,1fr)_24rem]">
         <Tabs defaultValue="overview" className="min-w-0 gap-4">
@@ -226,6 +232,9 @@ export function RequirementDetailPage({
                 <RequirementInfo
                   label="カテゴリ"
                   value={requirement.category ?? "-"}
+                  field="category"
+                  targetAnchors={fieldTargetAnchors}
+                  onSelectTargetAnchor={setSelectedTargetAnchor}
                 />
                 <RequirementInfo
                   label="優先度"
@@ -425,6 +434,7 @@ function RequirementInfo({
     <div
       className="flex flex-col gap-1 scroll-mt-24"
       data-requirement-anchor-field={field}
+      id={field ? `requirement-field-${field}` : undefined}
       data-requirement-comment-anchor={anchorKey ?? undefined}
     >
       <div className="flex items-center justify-between gap-2">
@@ -506,6 +516,7 @@ const getRequirementAnchorFieldValue = (
     priority?: string | null;
     status?: string | null;
     source?: string | null;
+    category?: string | null;
   },
   field: string,
 ) => {
@@ -522,6 +533,8 @@ const getRequirementAnchorFieldValue = (
       return requirement.acceptance_criteria ?? "";
     case "source":
       return requirement.source ?? "";
+    case "category":
+      return requirement.category ?? "";
     case "requirement_type":
       return getRequirementTypeLabel(requirement.requirement_type);
     case "priority":
