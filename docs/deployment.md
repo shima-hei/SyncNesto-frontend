@@ -17,7 +17,7 @@ CSP検証も更新する。
 依存更新は `.github/dependabot.yml`、コード変更がない間の既知脆弱性確認は
 `.github/workflows/dependency-audit.yml` の週次実行で行う。
 週次workflowはデプロイを行わない。本番依存はlow以上を検出すると失敗し、開発依存はhigh以上で失敗する。
-2026-10-07時点で開発用 `braces` の
+2026-10-08の再確認でも、開発用 `braces` の
 [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) は修正版が未公開。
 9件の依存エントリーとして監査に残るため、開発依存の週次監査はこの残件でも失敗する。
 利用者入力をglob patternとしてCLIやlintへ渡さず、サードパーティの設定・OpenAPIを
@@ -62,6 +62,17 @@ Backendには専用DB・非公開バケット・回収用秘密が必要。
 Backendの`docs/portfolio-demo.md`にAPI・回収・公開切り替え条件を記載する。
 
 ### 決定記録（2026-10-08）
+
+以下の公開未実施の記述は承認前の履歴。2026-10-08にユーザーがマージ・適用・公開環境変更を承認し、
+Backendを先に公開した。最新のデプロイID・公開画面/BFF/通常DB/専用DB/Storageの検証結果は、
+Backendの`docs/decisions/2026-10-08-demo-mode.md`の公開記録を参照する。
+
+Frontend PR #21をmain `4b63146`へマージし、Actions run `37755924544`のchecks/deployが成功した。
+Production `dpl_4UKD8aThEQkWsMBt2uEyB3EHwuw9`はREADY。66件・format/型/lint/build/本番依存監査/CSPを確認済み。
+公開画面でデモ開始・文書の版2と添付表示・リセット・期限切れ後のログイン遷移を確認した。
+通常セッションと専用デモの共存、署名PUT/GET、旧Cookie拒否は公開BFFでも検証した。
+Chrome拡張のfile URL権限がないため、ファイル選択からの自動送信は未確認。
+権限を変更せず、本人のデモsessionで添付APIを検証し、画面の添付表示と区別して記録した。
 
 当初の`APP_ENV=production` + `DEMO_MODE=true`という提案に対し、実装・手順が`APP_ENV=demo`にずれていたため修正した。
 環境と機能を分離する決定・作業・検証記録はBackendの`docs/decisions/2026-10-08-demo-mode.md`を正とする。
