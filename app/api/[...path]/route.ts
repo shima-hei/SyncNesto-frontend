@@ -116,6 +116,12 @@ const getUpstreamPath = async (context: RouteContext) => {
 };
 
 const isAllowedPath = (path: string) => {
+  if (
+    /^\/integrations\/mcp\/(?:connections(?:\/[a-f0-9-]+)?|authorization-requests\/[a-f0-9-]+(?:\/(?:approve|deny))?)$/i.test(
+      path,
+    )
+  )
+    return true;
   return ALLOWED_PREFIXES.some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );

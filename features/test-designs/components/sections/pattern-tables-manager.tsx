@@ -139,7 +139,10 @@ export function PatternTablesManager({
     () => (table ? tableDesign(design, table.id) : null),
     [design, table],
   );
-  const counts = useMemo(() => commentCounts(comments), [comments]);
+  const counts = useMemo(
+    () => commentCounts(comments, design),
+    [comments, design],
+  );
   const index = useMemo(() => patternCommentIndex(design), [design]);
   const stats = useMemo(() => {
     const result = new Map(

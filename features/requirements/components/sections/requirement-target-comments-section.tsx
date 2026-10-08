@@ -276,6 +276,11 @@ function CommentBody({
             <span className="break-words">
               {getRequirementCommentAnchorLabel(comment.target_anchor)}
             </span>
+            {typeof comment.target_anchor.quote === "string" ? (
+              <blockquote className="border-l-2 pl-2 whitespace-pre-wrap break-words">
+                {comment.target_anchor.quote}
+              </blockquote>
+            ) : null}
             {targetAnchorStatus ? (
               <span>{getTargetAnchorStatusLabel(targetAnchorStatus)}</span>
             ) : null}

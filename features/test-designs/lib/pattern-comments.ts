@@ -93,9 +93,9 @@ export function createMatrixCommentTarget(design: Design) {
       target = {
         target_type: "combination",
         target_id: pattern.id,
-        field: `level:${factor.id}`,
+        field: level ? `level:${factor.id}:${level.id}` : `level:${factor.id}`,
       };
-      label = `${pattern.code} · ${factor.name}`;
+      label = `${pattern.code} · ${factor.name}${level ? ` · ${level.name}` : ""}`;
     } else if (pattern && expected) {
       target = {
         target_type: "combination",
@@ -178,8 +178,14 @@ export function matrixCommentFocus(
     target.target_type === "combination" &&
     target.field?.startsWith("level:")
   ) {
-    const factorId = target.field.slice(6);
+    const [, factorId, levelId] = target.field.split(":");
     if (!design.factors.some((factor) => factor.id === factorId)) return null;
+    if (levelId)
+      return design.levels.some(
+        (level) => level.id === levelId && level.factor_id === factorId,
+      )
+        ? { rowId: levelId, columnKey: id }
+        : null;
     const value = design.values.find(
       (value) => value.pattern_id === id && value.factor_id === factorId,
     );
@@ -205,12 +211,46 @@ export function matrixCommentFocus(
   return null;
 }
 
-export function commentCounts(comments: TestDesignCommentRead[]) {
+export function commentMatchesTarget(
+  comment: Pick<TestDesignCommentRead, "target_type" | "target_id" | "field">,
+  target: DesignCommentTarget,
+) {
+  if (commentTargetKey(comment) === commentTargetKey(target)) return true;
+  return (
+    comment.target_type === "combination" &&
+    target.target_type === "combination" &&
+    comment.target_id === target.target_id &&
+    !!target.field?.startsWith("level:") &&
+    target.field.split(":").length === 3 &&
+    comment.field === target.field.split(":").slice(0, 2).join(":")
+  );
+}
+
+export function commentCounts(
+  comments: TestDesignCommentRead[],
+  design?: Design,
+) {
   const counts = new Map<string, number>();
+  const levels = new Map<string, string[]>();
+  for (const level of design?.levels ?? [])
+    levels.set(level.factor_id, [
+      ...(levels.get(level.factor_id) ?? []),
+      level.id,
+    ]);
   for (const comment of comments) {
     if (comment.deleted_at) continue;
     const key = commentTargetKey(comment);
     counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (
+      comment.target_type === "combination" &&
+      comment.field?.startsWith("level:") &&
+      comment.field.split(":").length === 2
+    ) {
+      for (const levelId of levels.get(comment.field.slice(6)) ?? []) {
+        const cellKey = `${key}:${levelId}`;
+        counts.set(cellKey, (counts.get(cellKey) ?? 0) + 1);
+      }
+    }
   }
   return counts;
 }

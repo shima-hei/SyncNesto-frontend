@@ -8,8 +8,9 @@ import { getLoginApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { invalidateCurrentUser } from "../lib/current-user-cache";
 import type { LoginFormValues } from "../types/login";
+import { mcpReturnPath } from "@/features/mcp/lib/navigation";
 
-export function useLogin() {
+export function useLogin(returnTo?: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const loginMutation = useLoginUserAuthLoginPost();
@@ -18,7 +19,9 @@ export function useLogin() {
     const response = await loginMutation.mutateAsync({ data: values });
     await invalidateCurrentUser(queryClient);
     router.replace(
-      response.password_change_required ? "/initial-password" : "/",
+      response.password_change_required
+        ? "/initial-password"
+        : (mcpReturnPath(returnTo) ?? "/"),
     );
   };
 

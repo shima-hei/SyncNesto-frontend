@@ -15,6 +15,7 @@ const { outputText } = ts.transpileModule(source, {
 });
 const {
   commentCounts,
+  commentMatchesTarget,
   commentScopeKey,
   commentTargetKey,
   createMatrixCommentTarget,
@@ -51,22 +52,41 @@ test("表・因子・水準・期待値・組み合わせを同じ表に集計�
   assert.equal(index.tables.get("factor:factor-b"), "table-b");
   assert.equal(index.tables.get("factor_level:deleted-level"), undefined);
 });
-test("水準セルと因子セルのコメント先を区別し、組み合わせは因子の選択を対象にする", () => {
+test("水準セルと因子セルを区別し、未選択の水準セルも個別に指定する", () => {
   const target = createMatrixCommentTarget(design);
   assert.equal(target("level-a", "factor").target.target_type, "factor");
   assert.equal(target("level-a", "level").target.target_type, "factor_level");
   assert.deepEqual(target("level-a", "pattern-a").target, {
     target_type: "combination",
     target_id: "pattern-a",
-    field: "level:factor-a",
+    field: "level:factor-a:level-a",
   });
-  assert.equal(target("level-b", "pattern-a").target.field, "level:factor-a");
+  assert.equal(
+    target("level-b", "pattern-a").target.field,
+    "level:factor-a:level-b",
+  );
   assert.equal(
     target("expected:expected-a", "pattern-a").target.field,
     "expected:expected-a",
   );
 });
 test("コメントから現在選択されている水準と正しい組み合わせ列に戻る", () => {
+  assert.deepEqual(
+    matrixCommentFocus(design, {
+      target_type: "combination",
+      target_id: "pattern-a",
+      field: "level:factor-a:level-a",
+    }),
+    { rowId: "level-a", columnKey: "pattern-a" },
+  );
+  assert.equal(
+    matrixCommentFocus(design, {
+      target_type: "combination",
+      target_id: "pattern-a",
+      field: "level:factor-b:level-a",
+    }),
+    null,
+  );
   assert.deepEqual(
     matrixCommentFocus(design, {
       target_type: "combination",
@@ -149,4 +169,21 @@ test("対象のフィールドごとに返信を含めて数え、削除本文�
   assert.equal(counts.get(commentTargetKey(comment)), 2);
   assert.equal(counts.get("combination:pattern-a:notes"), 1);
   assert.equal(commentScopeKey(comment), "combination:pattern-a");
+  const legacy = commentCounts([comment], design);
+  assert.equal(legacy.get("combination:pattern-a:level:factor-a:level-a"), 1);
+  assert.equal(legacy.get("combination:pattern-a:level:factor-a:level-b"), 1);
+  assert.equal(
+    commentMatchesTarget(comment, {
+      ...comment,
+      field: "level:factor-a:level-a",
+    }),
+    true,
+  );
+  assert.equal(
+    commentMatchesTarget(
+      { ...comment, field: "level:factor-a:level-a" },
+      { ...comment, field: "level:factor-a:level-b" },
+    ),
+    false,
+  );
 });

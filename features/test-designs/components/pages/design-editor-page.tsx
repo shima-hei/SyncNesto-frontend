@@ -113,8 +113,8 @@ function Editor({ initial }: { initial: Design }) {
   } | null>(null);
   const commentsQuery = useDesignComments(design.project_id, design.id);
   const counts = useMemo(
-    () => commentCounts(commentsQuery.data ?? []),
-    [commentsQuery.data],
+    () => commentCounts(commentsQuery.data ?? [], design),
+    [commentsQuery.data, design],
   );
   const commentIndex = useMemo(() => patternCommentIndex(design), [design]);
   const scopeTargets = useMemo(
@@ -175,7 +175,7 @@ function Editor({ initial }: { initial: Design }) {
               (pattern) => pattern.id === target.target_id,
             );
             const name = target.field?.startsWith("level:")
-              ? commentIndex.factors.get(target.field.slice(6))?.name
+              ? commentIndex.factors.get(target.field.split(":")[1])?.name
               : target.field?.startsWith("expected:")
                 ? commentIndex.expected.get(target.field.slice(9))?.name
                 : undefined;
