@@ -203,7 +203,7 @@ export function SelectedRequirementSectionContent({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         resourceName="セクション"
-        description="セクションを削除します。削除すると元に戻せません。"
+        description="セクションを削除します。保持期限内はごみ箱から復元できます。"
         isPending={isDeletePending}
         onConfirm={async () => {
           await deleteRequirementSection(section.id);

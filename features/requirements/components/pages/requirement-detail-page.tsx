@@ -391,7 +391,7 @@ export function RequirementDetailPage({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         resourceName="要件"
-        description="削除すると元に戻せません。関連する実現内容、コメント、レビューも利用できなくなります。"
+        description="関連する実現内容、コメント、レビューも利用できなくなります。保持期限内はごみ箱から復元できます。"
         isPending={isDeletePending}
         onConfirm={deleteRequirement}
       />

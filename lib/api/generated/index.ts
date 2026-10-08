@@ -14,4 +14,5 @@ export * from "./tenants/tenants";
 export * from "./test-collaboration/test-collaboration";
 export * from "./test-designs/test-designs";
 export * from "./test-issues/test-issues";
+export * from "./trash/trash";
 export * from "./users/users";

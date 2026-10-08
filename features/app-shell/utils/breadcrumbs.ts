@@ -22,6 +22,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   search: "横断検索",
   system: "管理",
   tasks: "タスク",
+  trash: "ごみ箱",
   "test-cases": "テストケース",
   "test-designs": "テスト設計書",
   users: "ユーザー管理",

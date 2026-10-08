@@ -136,7 +136,7 @@ export function DocumentDetailPage({
         open={deleting}
         onOpenChange={setDeleting}
         title="ドキュメントを削除しますか"
-        description="本文・添付・版履歴が閲覧できなくなり、一覧からも除かれます。"
+        description="本文・添付・版履歴が閲覧できなくなり、一覧からも除かれます。保持期限内はごみ箱から復元できます。"
         confirmLabel="削除"
         destructive
         isPending={remove.isPending}

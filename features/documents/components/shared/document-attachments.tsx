@@ -181,7 +181,7 @@ export function DocumentAttachments({
           if (!open) setDeleting(null);
         }}
         title="添付を削除しますか"
-        description={`${deleting?.filename ?? "ファイル"}がダウンロードできなくなります。`}
+        description={`${deleting?.filename ?? "ファイル"}がダウンロードできなくなります。保持期限内はごみ箱から復元できます。`}
         confirmLabel="削除"
         destructive
         isPending={remove.isPending}

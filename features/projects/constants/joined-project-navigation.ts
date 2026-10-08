@@ -1,5 +1,8 @@
 import type { CurrentProjectRoleRead } from "@/lib/api/generated/model";
-import { canViewProjectFeature } from "@/features/auth/utils/authorization";
+import {
+  canViewProjectFeature,
+  canUpdateDocument,
+} from "@/features/auth/utils/authorization";
 
 export type JoinedProjectNavigationItem = {
   label: string;
@@ -42,5 +45,10 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
     label: "ドキュメント",
     href: (projectId) => `/projects/joined/${projectId}/documents`,
     canShow: canViewProjectFeature,
+  },
+  {
+    label: "ごみ箱",
+    href: (projectId) => `/projects/joined/${projectId}/trash`,
+    canShow: canUpdateDocument,
   },
 ];
