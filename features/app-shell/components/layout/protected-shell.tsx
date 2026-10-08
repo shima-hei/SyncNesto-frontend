@@ -12,6 +12,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 import { AppSidebar } from "./app-sidebar";
 import { SiteHeader } from "../header/site-header";
+import { DemoBanner } from "@/features/auth/components/shared/demo-banner";
 
 export function ProtectedShell({ children }: { children: ReactNode }) {
   return (
@@ -46,6 +47,7 @@ function ScopedShell({ children }: { children: ReactNode }) {
       <AppSidebar variant="inset" />
       <SidebarInset className="min-w-0">
         <SiteHeader />
+        <DemoBanner />
         <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
             {tenant || tenantIndependent ? (

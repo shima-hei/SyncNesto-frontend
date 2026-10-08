@@ -1,6 +1,8 @@
 import { ApiError } from "@/lib/api/error";
 
 export const API_ERROR_MESSAGES: Record<string, string> = {
+  DEMO_LIMIT_REACHED:
+    "デモの利用上限に達しました。しばらく待って再度お試しください。",
   APP_ERROR: "処理中にエラーが発生しました。",
   BAD_REQUEST: "リクエスト内容を確認してください。",
   UNAUTHORIZED: "ログインが必要です。",

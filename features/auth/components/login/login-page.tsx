@@ -5,9 +5,13 @@ import { LoginSessionToast } from "./login-session-toast";
 
 type LoginPageProps = {
   showSessionExpiredToast?: boolean;
+  demoEnabled?: boolean;
 };
 
-export function LoginPage({ showSessionExpiredToast = false }: LoginPageProps) {
+export function LoginPage({
+  showSessionExpiredToast = false,
+  demoEnabled = false,
+}: LoginPageProps) {
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center bg-muted px-6 py-16 md:p-10">
       <div className="absolute top-4 right-4">
@@ -15,7 +19,7 @@ export function LoginPage({ showSessionExpiredToast = false }: LoginPageProps) {
       </div>
       <LoginSessionToast showSessionExpiredToast={showSessionExpiredToast} />
       <div className="w-full max-w-sm md:max-w-4xl">
-        <LoginForm />
+        <LoginForm demoEnabled={demoEnabled} />
       </div>
     </main>
   );

@@ -10,7 +10,14 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
+    "security:check": "node scripts/check-csp.mjs",
     "api:generate": "orval --config orval.config.ts"
+  },
+  "overrides": {
+    "source-map-js": "^1.2.2",
+    "mermaid": {
+      "katex": "0.18.2"
+    }
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.9",
@@ -41,7 +48,7 @@
     "baseline-browser-mapping": "2.11.27",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
-    "orval": "^8.9.1",
+    "orval": "^8.40.0",
     "prettier": "^3.9.4",
     "shadcn": "^4.6.0",
     "tailwindcss": "^4.2.4",

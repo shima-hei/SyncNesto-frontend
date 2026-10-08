@@ -1,4 +1,9 @@
 import type { Design } from "./design";
+import {
+  readDemoDraft,
+  writeDemoDraft,
+  removeDemoDraft,
+} from "@/lib/demo/session";
 
 export type DesignDraft = {
   design: Design;
@@ -43,8 +48,14 @@ function transaction<T>(
 }
 
 export const readDraft = (key: string) =>
-  transaction<DesignDraft | undefined>((store) => store.get(key));
+  key.startsWith("demo:")
+    ? Promise.resolve(readDemoDraft<DesignDraft>(key) ?? undefined)
+    : transaction<DesignDraft | undefined>((store) => store.get(key));
 export const writeDraft = (key: string, draft: DesignDraft) =>
-  transaction((store) => store.put(draft, key));
+  key.startsWith("demo:")
+    ? Promise.resolve(writeDemoDraft(key, draft))
+    : transaction((store) => store.put(draft, key));
 export const removeDraft = (key: string) =>
-  transaction((store) => store.delete(key));
+  key.startsWith("demo:")
+    ? Promise.resolve(removeDemoDraft(key))
+    : transaction((store) => store.delete(key));

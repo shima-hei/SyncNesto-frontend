@@ -6,6 +6,8 @@ import {
 } from "@/lib/auth/session-events";
 
 import { ApiError } from "./error";
+import { registerDemoStatus, registerDemoUser } from "@/lib/demo/session";
+import type { CurrentUserRead, DemoStatus } from "./generated/model";
 import { getApiTenant } from "./tenant-context";
 import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
 
@@ -16,7 +18,7 @@ const CSRF_HEADER_NAME = "X-CSRF-Token";
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | string;
 
 type ApiClientOptions = Omit<RequestInit, "body" | "method"> & {
-  method: HttpMethod;
+  method?: HttpMethod;
   params?: Record<string, unknown>;
   body?: BodyInit | null;
 };
@@ -28,7 +30,7 @@ export async function apiClient<T>(
   url: string,
   options: ApiClientOptions,
 ): Promise<T> {
-  const { method, params, body, headers, signal } = options;
+  const { method = "GET", params, body, headers, signal } = options;
   const requestUrl = buildUrl(url, params);
   const requestHeaders = buildHeaders(headers, body, method);
   const tenantId = getApiTenant();
@@ -68,6 +70,8 @@ export async function apiClient<T>(
     });
   }
 
+  if (url === "/auth/me" && data) registerDemoUser(data as CurrentUserRead);
+  if (url === "/demo/status" && data) registerDemoStatus(data as DemoStatus);
   return data as T;
 }
 

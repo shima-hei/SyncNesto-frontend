@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 import { ApiError } from "@/lib/api/error";
+import { clearDemoData, subscribeDemoEnded } from "@/lib/demo/session";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 import {
   isAuthSessionInvalidCode,
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSessionInvalid = useCallback(() => {
     isHandlingSessionInvalid.current = true;
+    clearDemoData();
 
     void (async () => {
       await cancelCurrentUserQuery(queryClient);
@@ -66,6 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.location.replace("/initial-password");
     }
   }, [user?.password_change_required, pathname]);
+
+  useEffect(() => {
+    return subscribeDemoEnded(() => {
+      queryClient.clear();
+      window.location.replace("/login");
+    });
+  }, [queryClient]);
 
   useEffect(() => {
     const revalidateRestoredPage = (event: PageTransitionEvent) => {

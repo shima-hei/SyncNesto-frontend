@@ -25,14 +25,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npx next typegen
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm run lint
       - run: node --test tests/*.test.mjs
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --omit=dev --audit-level=low
       - run: npm run build
+      - run: npm run security:check
 
   deploy:
     needs: checks

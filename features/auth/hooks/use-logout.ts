@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useLogoutUserAuthLogoutPost } from "@/lib/api/generated/auth/auth";
+import { clearDemoData } from "@/lib/demo/session";
 
 import {
   cancelCurrentUserQuery,
@@ -17,6 +18,7 @@ export function useLogout() {
 
   const logout = async () => {
     await logoutMutation.mutateAsync();
+    clearDemoData();
     await cancelCurrentUserQuery(authQueryClient);
     setCurrentUserCache(authQueryClient, null);
     queryClient.clear();
