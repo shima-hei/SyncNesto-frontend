@@ -95,14 +95,13 @@ test("event text uses immutable snapshots and distinguishes requirement ownershi
 });
 
 test("relative times and groups handle the previous day and year boundary", () => {
-  const now = new Date("2026-01-01T12:00:00+09:00");
-  assert.equal(formatRelativeDate("2026-01-01T11:55:00+09:00", now), "5分前");
-  assert.equal(formatRelativeDate("2026-01-01T10:00:00+09:00", now), "2時間前");
-  assert.equal(formatRelativeDate("2025-12-31T00:00:00+09:00", now), "昨日");
-  assert.equal(
-    formatRelativeDate("2026-01-01T13:00:00+09:00", now),
-    "たった今",
-  );
-  assert.equal(notificationDateGroup("2026-01-01T10:00:00+09:00", now), "今日");
-  assert.equal(notificationDateGroup("2025-12-31T10:00:00+09:00", now), "昨日");
+  const now = new Date(2026, 0, 1, 12);
+  const localTime = (year, month, day, hour, minute = 0) =>
+    new Date(year, month - 1, day, hour, minute).toISOString();
+  assert.equal(formatRelativeDate(localTime(2026, 1, 1, 11, 55), now), "5分前");
+  assert.equal(formatRelativeDate(localTime(2026, 1, 1, 10), now), "2時間前");
+  assert.equal(formatRelativeDate(localTime(2025, 12, 31, 0), now), "昨日");
+  assert.equal(formatRelativeDate(localTime(2026, 1, 1, 13), now), "たった今");
+  assert.equal(notificationDateGroup(localTime(2026, 1, 1, 10), now), "今日");
+  assert.equal(notificationDateGroup(localTime(2025, 12, 31, 10), now), "昨日");
 });
