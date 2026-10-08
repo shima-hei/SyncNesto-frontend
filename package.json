@@ -53,6 +53,6 @@
     "prettier": "^3.9.4",
     "shadcn": "^4.6.0",
     "tailwindcss": "^4.2.4",
-    "typescript": "^5"
+    "typescript": "^7"
   }
 }
