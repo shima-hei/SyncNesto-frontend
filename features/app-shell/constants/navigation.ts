@@ -1,5 +1,4 @@
 import {
-  CircleHelpIcon,
   FolderKanbanIcon,
   HomeIcon,
   SearchIcon,
@@ -59,10 +58,4 @@ export const managementNavigation: AppNavigationItem[] = [
   },
 ];
 
-export const secondaryNavigation: AppNavigationItem[] = [
-  {
-    title: "ヘルプ",
-    href: "/help",
-    icon: CircleHelpIcon,
-  },
-];
+export const secondaryNavigation: AppNavigationItem[] = [];
