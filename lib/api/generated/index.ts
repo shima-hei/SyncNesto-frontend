@@ -1,6 +1,7 @@
 export * from "./account-actions/account-actions";
 export * from "./auth/auth";
 export * from "./demo/demo";
+export * from "./documents/documents";
 export * from "./drafts/drafts";
 export * from "./health/health";
 export * from "./home/home";

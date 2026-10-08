@@ -103,6 +103,22 @@ export const canLinkRequirement = canCreateRequirement;
 
 export const canApproveRequirement = canDeleteRequirement;
 
+export const canCreateDocument = (role: MaybeCurrentProjectRole) => {
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+    PROJECT_ROLE_KEYS.manager,
+    PROJECT_ROLE_KEYS.member,
+  ]);
+};
+
+export const canUpdateDocument = canCreateDocument;
+
+export const canDeleteDocument = (role: MaybeCurrentProjectRole) => {
+  return hasProjectRole(toProjectRoleKey(role), [
+    PROJECT_ROLE_KEYS.projectAdmin,
+  ]);
+};
+
 export const canViewTask = (role: MaybeCurrentProjectRole) => {
   return canViewProject(toProjectRoleKey(role));
 };
