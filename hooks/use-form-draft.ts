@@ -14,6 +14,7 @@ import {
   type StoredDraft,
   writeStoredDraft,
 } from "@/lib/draft/draft-storage";
+import { getDraftSession, isCurrentDraftSession } from "@/lib/demo/session";
 
 type UseFormDraftOptions<TValues> = {
   userId: number | null | undefined;
@@ -47,7 +48,8 @@ export const useFormDraft = <TValues>({
     () => JSON.stringify(initialValues),
     [initialValues],
   );
-  const draftKey = `${userId ?? "anonymous"}:${scope}:${schemaVersion}`;
+  const draftSession = userId ? getDraftSession(userId) : null;
+  const draftKey = `${draftSession ?? "anonymous"}:${scope}:${schemaVersion}`;
   const serverDraftEnabled = Boolean(userId && serverDraft?.enabled);
   const serverDraftsQuery = useListDraftsDraftsGet(
     {
@@ -73,12 +75,13 @@ export const useFormDraft = <TValues>({
       return null;
     }
     return (
-      readStoredDraft<TValues>(userId, scope, schemaVersion) ??
+      readStoredDraft<TValues>(userId, scope, schemaVersion, draftSession) ??
       toStoredDraft<TValues>(currentServerDraft)
     );
   }, [
     currentServerDraft,
     draftKey,
+    draftSession,
     handledDraftKey,
     schemaVersion,
     scope,
@@ -90,7 +93,8 @@ export const useFormDraft = <TValues>({
       return;
     }
     const timeoutId = window.setTimeout(() => {
-      writeStoredDraft(userId, scope, values, schemaVersion);
+      if (!isCurrentDraftSession(userId, draftSession)) return;
+      writeStoredDraft(userId, scope, values, schemaVersion, draftSession);
       setHandledDraftKey(draftKey);
       if (serverDraftEnabled && serverDraft) {
         upsertServerDraft.mutate({
@@ -112,6 +116,7 @@ export const useFormDraft = <TValues>({
     debounceMs,
     currentServerDraft?.version,
     draftKey,
+    draftSession,
     schemaVersion,
     scope,
     serializedInitialValues,
@@ -132,17 +137,25 @@ export const useFormDraft = <TValues>({
   }, [draftKey, onRestore, pendingDraft]);
 
   const discardDraft = useCallback(() => {
-    removeStoredDraft(userId, scope);
+    removeStoredDraft(userId, scope, draftSession);
     setHandledDraftKey(draftKey);
-  }, [draftKey, scope, userId]);
+  }, [draftKey, draftSession, scope, userId]);
 
   const clearDraft = useCallback(() => {
-    removeStoredDraft(userId, scope);
+    if (!userId || !isCurrentDraftSession(userId, draftSession)) return;
+    removeStoredDraft(userId, scope, draftSession);
     if (currentServerDraft) {
       deleteServerDraft.mutate({ draftId: currentServerDraft.id });
     }
     setHandledDraftKey(draftKey);
-  }, [currentServerDraft, deleteServerDraft, draftKey, scope, userId]);
+  }, [
+    currentServerDraft,
+    deleteServerDraft,
+    draftKey,
+    draftSession,
+    scope,
+    userId,
+  ]);
 
   return {
     pendingDraft,
