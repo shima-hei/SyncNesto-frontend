@@ -11,5 +11,4 @@
 export interface UserProfileUpdate {
   version: number;
   name?: string | null;
-  password?: string | null;
 }

@@ -8,6 +8,12 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   TOKEN_EXPIRED: "セッションの有効期限が切れました。再度ログインしてください。",
   INVALID_TOKEN: "認証情報が正しくありません。再度ログインしてください。",
   FORBIDDEN: "この操作を行う権限がありません。",
+  PASSWORD_CHANGE_REQUIRED:
+    "利用を開始する前に、ご自身のパスワードを設定してください。",
+  INITIAL_PASSWORD_EXPIRED:
+    "初回パスワードの有効期限が切れています。「パスワードを忘れた方」からメールで再設定してください。",
+  INITIAL_PASSWORD_REUSE:
+    "初回パスワードとは異なるパスワードを設定してください。",
   CSRF_TOKEN_INVALID:
     "認証情報の確認に失敗しました。画面を更新して再度お試しください。",
   NOT_FOUND: "対象のデータが見つかりません。",
@@ -17,6 +23,12 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   LAST_PROJECT_ADMIN_REQUIRED:
     "プロジェクト管理者を0人にすることはできません。",
   EMAIL_ALREADY_REGISTERED: "このメールアドレスは既に登録されています。",
+  ACCOUNT_ACTION_INVALID:
+    "リンクが無効、使用済み、または期限切れです。メールを再発行してください。",
+  EMAIL_UNAVAILABLE:
+    "メールを送信できませんでした。時間をおいて再度お試しいただくか、運営者にお問い合わせください。",
+  RATE_LIMIT_EXCEEDED:
+    "送信回数が上限に達しました。時間をおいて再度お試しください。",
   INVALID_CSRF_TOKEN:
     "認証情報の確認に失敗しました。画面を更新して再度お試しください。",
 };
@@ -28,11 +40,14 @@ export const STATUS_ERROR_MESSAGES: Record<number, string> = {
   404: "対象のデータが見つかりません。",
   409: "データの状態が競合しています。内容を確認してください。",
   422: "入力内容を確認してください。",
+  429: "送信回数が上限に達しました。時間をおいて再度お試しください。",
   500: "サーバーでエラーが発生しました。時間をおいて再度お試しください。",
   503: "サービスに接続できません。時間をおいて再度お試しください。",
 };
 
 export const API_ERROR_FALLBACK_MESSAGES = {
+  memberAccountAction:
+    "組織内の権限またはユーザーの有効状態が変わったため送信できません。画面を更新して所属状態を確認してください。",
   fileUpload: "ファイルのアップロードに失敗しました。再度お試しください。",
   default: "処理に失敗しました。時間をおいて再度お試しください。",
   request: "APIリクエストに失敗しました。",

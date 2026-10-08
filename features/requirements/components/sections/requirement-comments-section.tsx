@@ -8,7 +8,7 @@ import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delet
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/providers/auth-provider";
-import { isSystemAdmin } from "@/features/auth/utils/authorization";
+import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { formatDateTime } from "@/lib/format/date";
 import type { RequirementCommentRead } from "@/lib/api/generated/model";
 
@@ -30,7 +30,8 @@ export function RequirementCommentsSection({
   canComment,
 }: RequirementCommentsSectionProps) {
   const { user } = useAuth();
-  const canModerateComments = isSystemAdmin(user);
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
+  const canModerateComments = currentProjectRole?.role?.key === "project_admin";
   const canDeleteComment = (comment: RequirementCommentRead) =>
     canComment && (canModerateComments || comment.user_id === user?.id);
   const [deleteTarget, setDeleteTarget] =

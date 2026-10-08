@@ -40,8 +40,8 @@ export const mainNavigation: AppNavigationItem[] = [
 
 export const managementNavigation: AppNavigationItem[] = [
   {
-    title: "プロジェクト管理",
-    href: "/projects/management",
+    title: "組織の運営管理",
+    href: "/system/tenants",
     icon: SettingsIcon,
     requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
   },

@@ -10,6 +10,7 @@
  */
 export interface UserLoginResponse {
   message: string;
+  password_change_required?: boolean;
   access_token?: string | null;
   token_type?: string | null;
 }

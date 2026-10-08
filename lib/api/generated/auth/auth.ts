@@ -21,12 +21,14 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AccountActionMessage,
   BodyUpdateCurrentUserAvatarAuthMeAvatarPut,
   CurrentUserRead,
   FileUploadComplete,
   FileUploadPlan,
   FileUploadRequest,
   HTTPValidationError,
+  InitialPasswordConfirm,
   UserLogin,
   UserLoginResponse,
   UserProfileUpdate,
@@ -494,6 +496,111 @@ export const useUpdateCurrentUserAuthMePatch = <
 > => {
   return useMutation(
     getUpdateCurrentUserAuthMePatchMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCompleteInitialPasswordAuthInitialPasswordPostUrl = () => {
+  return `/auth/initial-password`;
+};
+
+/**
+ * 初回ログインの本人が設定を完了し、全セッションを失効する。
+ * @summary Complete Initial Password
+ */
+export const completeInitialPasswordAuthInitialPasswordPost = async (
+  initialPasswordConfirm: InitialPasswordConfirm,
+  options?: RequestInit,
+): Promise<AccountActionMessage> => {
+  return apiClient<AccountActionMessage>(
+    getCompleteInitialPasswordAuthInitialPasswordPostUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(initialPasswordConfirm),
+    },
+  );
+};
+
+export const getCompleteInitialPasswordAuthInitialPasswordPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof completeInitialPasswordAuthInitialPasswordPost>
+      >,
+      TError,
+      { data: BodyType<InitialPasswordConfirm> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<ReturnType<typeof completeInitialPasswordAuthInitialPasswordPost>>,
+    TError,
+    { data: BodyType<InitialPasswordConfirm> },
+    TContext
+  > => {
+    const mutationKey = ["completeInitialPasswordAuthInitialPasswordPost"];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<typeof completeInitialPasswordAuthInitialPasswordPost>
+      >,
+      { data: BodyType<InitialPasswordConfirm> }
+    > = (props) => {
+      const { data } = props ?? {};
+
+      return completeInitialPasswordAuthInitialPasswordPost(
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CompleteInitialPasswordAuthInitialPasswordPostMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof completeInitialPasswordAuthInitialPasswordPost>>
+  >;
+export type CompleteInitialPasswordAuthInitialPasswordPostMutationBody =
+  BodyType<InitialPasswordConfirm>;
+export type CompleteInitialPasswordAuthInitialPasswordPostMutationError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * @summary Complete Initial Password
+ */
+export const useCompleteInitialPasswordAuthInitialPasswordPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof completeInitialPasswordAuthInitialPasswordPost>
+      >,
+      TError,
+      { data: BodyType<InitialPasswordConfirm> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof completeInitialPasswordAuthInitialPasswordPost>>,
+  TError,
+  { data: BodyType<InitialPasswordConfirm> },
+  TContext
+> => {
+  return useMutation(
+    getCompleteInitialPasswordAuthInitialPasswordPostMutationOptions(options),
     queryClient,
   );
 };

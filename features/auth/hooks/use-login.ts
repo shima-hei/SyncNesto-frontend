@@ -15,9 +15,11 @@ export function useLogin() {
   const loginMutation = useLoginUserAuthLoginPost();
 
   const login = async (values: LoginFormValues) => {
-    await loginMutation.mutateAsync({ data: values });
+    const response = await loginMutation.mutateAsync({ data: values });
     await invalidateCurrentUser(queryClient);
-    router.push("/");
+    router.replace(
+      response.password_change_required ? "/initial-password" : "/",
+    );
   };
 
   return {

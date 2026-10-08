@@ -101,7 +101,9 @@ const isSessionExpiredCode = (code: string | undefined) => {
   );
 };
 
-export const requireUser = async () => {
+export const requireUser = async (options?: {
+  allowInitialPassword?: boolean;
+}) => {
   const result = await getCurrentUserResultOnServer();
 
   if (!result.user) {
@@ -110,6 +112,10 @@ export const requireUser = async () => {
         ? SESSION_EXPIRED_LOGIN_PATH
         : LOGIN_PATH,
     );
+  }
+
+  if (result.user.password_change_required && !options?.allowInitialPassword) {
+    redirect("/initial-password");
   }
 
   return result.user;
@@ -129,6 +135,6 @@ export const redirectIfAuthenticated = async (redirectTo = "/") => {
   const user = await getCurrentUserOnServer();
 
   if (user) {
-    redirect(redirectTo);
+    redirect(user.password_change_required ? "/initial-password" : redirectTo);
   }
 };

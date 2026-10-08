@@ -2,8 +2,8 @@
 
 import { createContext, useCallback, useContext } from "react";
 import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 import { ApiError } from "@/lib/api/error";
@@ -21,6 +21,7 @@ import {
 import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
 
 type AuthContextValue = {
+  authQueryClient: QueryClient;
   user: CurrentUserRead | null;
   isLoading: boolean;
   isFetching: boolean;
@@ -29,9 +30,15 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const PUBLIC_AUTH_PATHS = new Set([
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/confirm-email-change",
+  "/initial-password",
+]);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const isHandlingSessionInvalid = useRef(false);
@@ -45,14 +52,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await cancelCurrentUserQuery(queryClient);
       setCurrentUserCache(queryClient, null);
 
-      if (pathname !== "/login") {
-        toast.error(CURRENT_USER_MESSAGES.sessionExpired);
-      }
+      if (PUBLIC_AUTH_PATHS.has(pathname)) return;
 
-      router.replace("/login");
-      router.refresh();
+      toast.error(CURRENT_USER_MESSAGES.sessionExpired);
+
+      queryClient.clear();
+      window.location.replace("/login?reason=session-expired");
     })();
-  }, [pathname, queryClient, router]);
+  }, [pathname, queryClient]);
+
+  useEffect(() => {
+    if (user?.password_change_required && !PUBLIC_AUTH_PATHS.has(pathname)) {
+      window.location.replace("/initial-password");
+    }
+  }, [user?.password_change_required, pathname]);
+
+  useEffect(() => {
+    const revalidateRestoredPage = (event: PageTransitionEvent) => {
+      if (event.persisted && !PUBLIC_AUTH_PATHS.has(window.location.pathname))
+        window.location.reload();
+    };
+    window.addEventListener("pageshow", revalidateRestoredPage);
+    return () => window.removeEventListener("pageshow", revalidateRestoredPage);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -83,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
+        authQueryClient: queryClient,
         user,
         isLoading,
         isFetching,
@@ -103,4 +126,9 @@ export function useAuth() {
   }
 
   return context;
+}
+
+/** Identityのキャッシュは組織ごとの業務キャッシュから独立して共有する。 */
+export function useAuthQueryClient() {
+  return useAuth().authQueryClient;
 }
