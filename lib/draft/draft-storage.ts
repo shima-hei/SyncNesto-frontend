@@ -5,6 +5,8 @@ import {
   readDemoDraft,
   writeDemoDraft,
   removeDemoDraft,
+  getDraftSession,
+  isCurrentDraftSession,
 } from "@/lib/demo/session";
 
 const DEFAULT_DRAFT_TTL_DAYS = 30;
@@ -20,8 +22,13 @@ export const readStoredDraft = <TValues>(
   userId: number | null | undefined,
   scope: string,
   schemaVersion = 1,
+  session = userId ? getDraftSession(userId) : null,
 ) => {
-  if (!userId || typeof window === "undefined") {
+  if (
+    !userId ||
+    typeof window === "undefined" ||
+    !isCurrentDraftSession(userId, session)
+  ) {
     return null;
   }
   const key = createDraftStorageKey(userId, scope);
@@ -57,8 +64,13 @@ export const writeStoredDraft = <TValues>(
   scope: string,
   values: TValues,
   schemaVersion = 1,
+  session = userId ? getDraftSession(userId) : null,
 ) => {
-  if (!userId || typeof window === "undefined") {
+  if (
+    !userId ||
+    typeof window === "undefined" ||
+    !isCurrentDraftSession(userId, session)
+  ) {
     return;
   }
   const now = new Date();
@@ -89,8 +101,13 @@ export const writeStoredDraft = <TValues>(
 export const removeStoredDraft = (
   userId: number | null | undefined,
   scope: string,
+  session = userId ? getDraftSession(userId) : null,
 ) => {
-  if (!userId || typeof window === "undefined") {
+  if (
+    !userId ||
+    typeof window === "undefined" ||
+    !isCurrentDraftSession(userId, session)
+  ) {
     return;
   }
   const key = createDraftStorageKey(userId, scope);

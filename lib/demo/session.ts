@@ -2,14 +2,19 @@ import type { CurrentUserRead, DemoStatus } from "@/lib/api/generated/model";
 
 let active: DemoStatus | null = null;
 let activeUserId: number | null = null;
-const demoUsers = new Set<number>();
+let generation = 0;
+let identity: string | null = null;
 const drafts = new Map<string, unknown>();
 const CHANNEL = "syncnesto:demo-ended";
 
 /** デモの下書きはメモリにだけ保持し、ブラウザの永続領域へ書かない。 */
 export function registerDemoUser(user: CurrentUserRead) {
+  const nextIdentity = user.demo
+    ? `demo:${user.demo.id}:${user.id}`
+    : `normal:${user.id}`;
+  if (identity !== nextIdentity) generation++;
+  identity = nextIdentity;
   if (user.demo) {
-    demoUsers.add(user.id);
     registerDemoStatus(user.demo);
     activeUserId = user.id;
   } else {
@@ -27,7 +32,24 @@ export function registerDemoStatus(demo: DemoStatus) {
   active = demo;
 }
 
-export const isDemoUser = (userId: number) => demoUsers.has(userId);
+export const getDraftSession = (userId: number) => {
+  if (!identity?.endsWith(`:${userId}`)) return null;
+  if (
+    identity.startsWith("demo:") &&
+    (!active ||
+      activeUserId !== userId ||
+      identity !== `demo:${active.id}:${userId}` ||
+      Date.parse(active.expires_at) <= Date.now())
+  )
+    return null;
+  return `${identity}:${generation}`;
+};
+export const getClientDataRealm = () =>
+  identity ? (identity.startsWith("demo:") ? "demo" : "normal") : null;
+export const isCurrentDraftSession = (userId: number, session: string | null) =>
+  session !== null && session === getDraftSession(userId);
+export const isDemoUser = (userId: number) =>
+  identity?.startsWith("demo:") === true && identity.endsWith(`:${userId}`);
 export const isActiveDemoUser = (userId: number) =>
   activeUserId === userId && Boolean(active);
 const acceptsKey = (key: string) =>
@@ -49,6 +71,8 @@ export function clearDemoData(broadcast = true) {
   const demoId = active?.id;
   active = null;
   activeUserId = null;
+  identity = null;
+  generation++;
   drafts.clear();
   if (demoId && broadcast && typeof BroadcastChannel !== "undefined") {
     const channel = new BroadcastChannel(CHANNEL);

@@ -37,7 +37,7 @@ const selectionKey = (userId: number) => `syncnesto:tenant:user:${userId}`;
 export function TenantProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const choices = useQuery({
-    queryKey: ["tenant-choices", user?.id],
+    queryKey: ["tenant-choices", user?.demo?.id ?? "normal", user?.id],
     queryFn: ({ signal }) => listMyTenantsTenantsGet({ signal }),
     enabled: Boolean(user),
     retry: false,
@@ -55,7 +55,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     );
   return (
     <SelectedTenant
-      key={user.id}
+      key={`${user.demo?.id ?? "normal"}:${user.id}`}
       user={user}
       choices={choices.data}
       refreshChoices={() => void choices.refetch()}
@@ -85,7 +85,7 @@ function SelectedTenant({
   useEffect(() => {
     let saved: string | null = null;
     try {
-      saved = sessionStorage.getItem(selectionKey(user.id));
+      if (!user.demo) saved = sessionStorage.getItem(selectionKey(user.id));
     } catch {
       /* 保存できない場合も本人の所属から選ぶ。 */
     }
@@ -95,7 +95,7 @@ function SelectedTenant({
       choices.find((choice) => String(choice.id) === (requested ?? saved)) ??
       choices[0] ??
       null;
-    if (selected) {
+    if (selected && !user.demo) {
       try {
         sessionStorage.setItem(selectionKey(user.id), String(selected.id));
       } catch {
@@ -108,12 +108,12 @@ function SelectedTenant({
     }
     setApiTenant(selected?.id ?? null);
     return () => setApiTenant(null);
-  }, [choices, user.id]);
+  }, [choices, user.id, user.demo]);
   if (selectedId === undefined || (selectedId !== null && !tenant))
     return <Skeleton className="m-6 h-32" />;
   return (
     <TenantCache
-      key={`${user.id}:${tenant?.id ?? "system"}:${tenant?.role_key ?? "none"}`}
+      key={`${user.demo?.id ?? "normal"}:${user.id}:${tenant?.id ?? "system"}:${tenant?.role_key ?? "none"}`}
     >
       <TenantContext.Provider
         value={{

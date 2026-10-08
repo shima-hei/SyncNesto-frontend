@@ -6,7 +6,11 @@ import {
 } from "@/lib/auth/session-events";
 
 import { ApiError } from "./error";
-import { registerDemoStatus, registerDemoUser } from "@/lib/demo/session";
+import {
+  getClientDataRealm,
+  registerDemoStatus,
+  registerDemoUser,
+} from "@/lib/demo/session";
 import type { CurrentUserRead, DemoStatus } from "./generated/model";
 import { getApiTenant } from "./tenant-context";
 import type { ApiErrorResponse, ApiValidationErrorResponse } from "./types";
@@ -33,6 +37,10 @@ export async function apiClient<T>(
   const { method = "GET", params, body, headers, signal } = options;
   const requestUrl = buildUrl(url, params);
   const requestHeaders = buildHeaders(headers, body, method);
+  const realm = getClientDataRealm();
+  // /auth/meは新しいCookieの状態を取得し、画面側の認証状態を更新する。
+  if (realm && !(url === "/auth/me" && method.toUpperCase() === "GET"))
+    requestHeaders.set("X-Syncnesto-Data-Realm", realm);
   const tenantId = getApiTenant();
   if (tenantId !== null && !requestHeaders.has("X-Tenant-ID")) {
     requestHeaders.set("X-Tenant-ID", String(tenantId));

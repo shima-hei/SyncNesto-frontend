@@ -16,7 +16,9 @@ export default async function Page({ searchParams }: PageProps) {
   return (
     <LoginPage
       showSessionExpiredToast={showSessionExpiredToast}
-      demoEnabled={process.env.APP_ENV === "demo"}
+      demoEnabled={["1", "true", "yes", "on"].includes(
+        process.env.DEMO_MODE?.toLowerCase() ?? "",
+      )}
     />
   );
 }

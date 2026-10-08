@@ -114,6 +114,7 @@ test("BFFは内部ヘッダーを応答へ漏らさず、キー未設定では�
     headers: new Headers({
       "X-Syncnesto-BFF-Key": "spoofed",
       Cookie: "access_token=jwt",
+      "X-Syncnesto-Data-Realm": "demo",
     }),
   };
   const context = { params: Promise.resolve({ path: ["auth", "me"] }) };
@@ -123,6 +124,7 @@ test("BFFは内部ヘッダーを応答へ漏らさず、キー未設定では�
     globalThis.fetch = async (_url, options) => {
       assert.equal(options.headers.get("X-Syncnesto-BFF-Key"), "s".repeat(48));
       assert.equal(options.headers.get("Cookie"), "access_token=jwt");
+      assert.equal(options.headers.get("X-Syncnesto-Data-Realm"), "demo");
       return new Response(JSON.stringify({ ok: true }), {
         headers: {
           "X-Syncnesto-BFF-Key": "s".repeat(48),

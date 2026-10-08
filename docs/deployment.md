@@ -49,8 +49,26 @@ Vercel CLIは62.2.0、Node.jsは22。`vercel pull` → `vercel build --prod` →
 
 ## デモ環境
 
-BackendとFrontendのserver専用`APP_ENV=demo`を合わせると、登録不要のデモ開始操作を表示する。
-Backendには専用DB・非公開バケット・回収用秘密が必要。通常環境は`APP_ENV=production`のまま使う。
+BackendとFrontendはともに`APP_ENV=production`を維持し、server専用`DEMO_MODE=true`でデモを有効にする。
+FrontendのServer Componentがフラグを読み、登録不要のデモ開始操作を表示する。
+`DEMO_MODE`は未設定時false。`NEXT_PUBLIC_*`にはせず、BackendがAPIの可否を最終判定する。
+Backendには専用DB・非公開バケット・回収用秘密が必要。
+通常アカウントは既存DB・Storageを維持する。`API_BASE_URL`は同じBackendを向けたままとし、
+専用DB・Storage・署名鍵の設定はBackendだけへ追加する。
+別DBで同じ数値IDでも、デモUUIDと画面の認証状態により下書き・組織選択・Queryキャッシュを分離する。
+デモの組織選択はsessionStorageに保存しない。通常利用の選択と永続下書きは維持する。
 デモ下書きはメモリだけに保持し、ログアウト・リセット・失効で破棄する。
 更新の完了前にページを再読み込みした場合も未保存下書きは消える。
 Backendの`docs/portfolio-demo.md`にAPI・回収・公開切り替え条件を記載する。
+
+### 決定記録（2026-10-08）
+
+当初の`APP_ENV=production` + `DEMO_MODE=true`という提案に対し、実装・手順が`APP_ENV=demo`にずれていたため修正した。
+環境と機能を分離する決定・作業・検証記録はBackendの`docs/decisions/2026-10-08-demo-mode.md`を正とする。
+今回の修正はAPIの入出力や生成クライアントを変更しない。公開設定変更とデモ有効化は別作業として記録する。
+ローカルでは既存63件・format・型・lint・本番buildが成功し、未設定／false／trueでの表示切り替えと通常・デモ両方のCSPを確認した。公開反映・GitHub CIは未実施。
+
+通常・デモの共存修正では66件のテストとformat:check / typecheck / lint / production buildが成功した。
+同じ数値ユーザーIDの通常下書きをデモが上書き・削除しないこと、リセット前の遅延保存を拒否すること、
+通常/デモの画面状態をBFF経由でBackendへ伝えることを確認した。
+公開Cookie / BFF / 画面を通した両接続先の確認は、push・公開反映の承認後に行う。
