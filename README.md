@@ -43,6 +43,15 @@ API_BASE_URL=http://localhost:8000
 AUTH_COOKIE_NAME=access_token
 ```
 
+Codex連携の入口は「アカウント → 外部サービス連携 → Codex」です。
+サーバー環境変数 `MCP_ENABLED=true` で表示します。`MCP_PLUGIN_INSTALL_URL` は
+OpenAIで審査・公開されたプラグインの実際の紹介URLを設定します。未設定・不正なURLでは
+「公開準備中」と表示し、開始ボタンを無効にします。プラグインは2026-10-10時点で未登録です。
+追加・OAuth同意は別タブで行い、接続状態の更新・解除をこの画面で行います。
+Backendの現在のProject権限で利用資格を判定し、閲覧専用・テスト実行専用・デモは利用できません。
+既存の接続は維持します。通常DBとデモDBの接続先は変更しません。
+Backendのplugin client・availability API・同意レスポンスを先に配布し、Frontendを後に配布します。
+
 公開環境は [syncnesto.vercel.app](https://syncnesto.vercel.app/login) です。
 Vercelの登録名は `syncnesto`、サーバー専用の `API_BASE_URL` は
 `https://syncnesto-api.vercel.app` を使います。環境変数と公開ドメインは

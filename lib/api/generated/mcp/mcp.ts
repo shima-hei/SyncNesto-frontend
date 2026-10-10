@@ -22,6 +22,7 @@ import type {
 
 import type {
   HTTPValidationError,
+  McpAvailabilityRead,
   McpConnectionRead,
   McpConsentCreate,
   McpConsentRead,
@@ -587,6 +588,184 @@ export const useDenyIntegrationsMcpAuthorizationRequestsRequestIdDenyPost = <
     queryClient,
   );
 };
+export const getAvailabilityIntegrationsMcpAvailabilityGetUrl = () => {
+  return `/integrations/mcp/availability`;
+};
+
+/**
+ * 連携開始前に本人の現在の利用資格だけを返す。
+ * @summary Availability
+ */
+export const availabilityIntegrationsMcpAvailabilityGet = async (
+  options?: Parameters<typeof apiClient>[1],
+): Promise<McpAvailabilityRead> => {
+  return apiClient<McpAvailabilityRead>(
+    getAvailabilityIntegrationsMcpAvailabilityGetUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAvailabilityIntegrationsMcpAvailabilityGetQueryKey = () => {
+  return [`/integrations/mcp/availability`] as const;
+};
+
+export const getAvailabilityIntegrationsMcpAvailabilityGetQueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAvailabilityIntegrationsMcpAvailabilityGetQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>
+  > = ({ signal }) =>
+    availabilityIntegrationsMcpAvailabilityGet({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AvailabilityIntegrationsMcpAvailabilityGetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>
+>;
+export type AvailabilityIntegrationsMcpAvailabilityGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function useAvailabilityIntegrationsMcpAvailabilityGet<
+  TData = Awaited<
+    ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>
+          >,
+          TError,
+          Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAvailabilityIntegrationsMcpAvailabilityGet<
+  TData = Awaited<
+    ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>
+          >,
+          TError,
+          Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAvailabilityIntegrationsMcpAvailabilityGet<
+  TData = Awaited<
+    ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Availability
+ */
+
+export function useAvailabilityIntegrationsMcpAvailabilityGet<
+  TData = Awaited<
+    ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof availabilityIntegrationsMcpAvailabilityGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getAvailabilityIntegrationsMcpAvailabilityGetQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getConnectionsIntegrationsMcpConnectionsGetUrl = () => {
   return `/integrations/mcp/connections`;
 };

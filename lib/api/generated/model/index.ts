@@ -103,6 +103,7 @@ export * from "./listTasksProjectsProjectIdTasksGetParams";
 export * from "./listTrashProjectsProjectIdTrashGetParams";
 export * from "./listUsersUsersGetParams";
 export * from "./markAllReadNotificationsReadAllPostParams";
+export * from "./mcpAvailabilityRead";
 export * from "./mcpConnectionRead";
 export * from "./mcpConsentCreate";
 export * from "./mcpConsentRead";

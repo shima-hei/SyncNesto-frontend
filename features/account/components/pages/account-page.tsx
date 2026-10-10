@@ -10,7 +10,13 @@ import { AccountReadonlyInfo } from "../shared/account-readonly-info";
 import { AccountCredentialsSection } from "../sections/account-credentials-section";
 import { McpConnections } from "@/features/mcp/components/mcp-connections";
 
-export function AccountPage({ mcpEnabled = false }: { mcpEnabled?: boolean }) {
+export function AccountPage({
+  mcpEnabled = false,
+  mcpInstallUrl,
+}: {
+  mcpEnabled?: boolean;
+  mcpInstallUrl?: string;
+}) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -29,7 +35,7 @@ export function AccountPage({ mcpEnabled = false }: { mcpEnabled?: boolean }) {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="アカウント"
-        description="自分のプロフィール情報を確認・更新します。"
+        description="プロフィール、ログイン情報、外部サービスとの連携を管理します。"
       />
 
       <section className="flex flex-col gap-4">
@@ -50,7 +56,9 @@ export function AccountPage({ mcpEnabled = false }: { mcpEnabled?: boolean }) {
         key={`credentials:${user.email}`}
         user={user}
       />
-      {mcpEnabled && !user.demo ? <McpConnections /> : null}
+      {mcpEnabled && !user.demo ? (
+        <McpConnections installUrl={mcpInstallUrl} />
+      ) : null}
     </div>
   );
 }

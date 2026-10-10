@@ -6,7 +6,7 @@
  */
 
 /**
- * 検証済みのループバックcallback。
+ * 同意したclientに登録済みのcallback。
  */
 export interface McpRedirectRead {
   redirect_url: string;
