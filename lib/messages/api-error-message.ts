@@ -1,6 +1,12 @@
 import { ApiError } from "@/lib/api/error";
 
 export const API_ERROR_MESSAGES: Record<string, string> = {
+  MFA_REQUIRED:
+    "追加認証が必要です。再ログイン、またはアカウント画面で再認証してください。",
+  MFA_INVALID:
+    "認証情報を確認してください。期限切れ・試行回数超過の場合は、ログインからやり直してください。",
+  MFA_UNAVAILABLE:
+    "追加認証の設定を確認できません。運営者にお問い合わせください。",
   DEMO_LIMIT_REACHED:
     "デモの利用上限に達しました。しばらく待って再度お試しください。",
   APP_ERROR: "処理中にエラーが発生しました。",

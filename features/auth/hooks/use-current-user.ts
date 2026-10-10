@@ -4,10 +4,11 @@ import { useReadCurrentUserAuthMeGet } from "@/lib/api/generated/auth/auth";
 import { ApiError } from "@/lib/api/error";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 
-export function useCurrentUser() {
+export function useCurrentUser(enabled = true) {
   const currentUserQuery = useReadCurrentUserAuthMeGet<CurrentUserRead | null>({
     query: {
       retry: false,
+      enabled,
       staleTime: 5 * 60 * 1000,
       select: (user) => user,
       throwOnError: false,
@@ -15,7 +16,8 @@ export function useCurrentUser() {
   });
 
   const isUnauthorized = isUnauthorizedError(currentUserQuery.error);
-  const user = isUnauthorized ? null : (currentUserQuery.data ?? null);
+  const user =
+    !enabled || isUnauthorized ? null : (currentUserQuery.data ?? null);
 
   return {
     user,
@@ -28,5 +30,8 @@ export function useCurrentUser() {
 }
 
 const isUnauthorizedError = (error: unknown) => {
-  return error instanceof ApiError && error.status === 401;
+  return (
+    error instanceof ApiError &&
+    (error.status === 401 || error.code === "MFA_REQUIRED")
+  );
 };

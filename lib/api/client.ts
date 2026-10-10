@@ -57,6 +57,14 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     const code = getErrorCode(data);
+    if (
+      code === "MFA_REQUIRED" &&
+      !url.startsWith("/auth/mfa") &&
+      typeof window !== "undefined" &&
+      !["/login", "/mfa", "/mfa/recover"].includes(window.location.pathname)
+    ) {
+      window.location.replace("/login?reason=mfa-required");
+    }
 
     if (
       code === "PASSWORD_CHANGE_REQUIRED" &&

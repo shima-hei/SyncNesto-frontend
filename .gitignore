@@ -47,6 +47,7 @@ next-env.d.ts
 !/docs/audit-logs.md
 !/docs/deployment.md
 !/docs/auth-email-actions.md
+!/docs/mfa.md
 !/docs/account-issuance.md
 !/docs/design-system.md
 !/docs/notifications.md
