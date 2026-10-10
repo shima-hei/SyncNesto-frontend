@@ -38,7 +38,9 @@ export function McpConsent({
             data: { project_ids: selected },
           })
         : await deny.mutateAsync({ requestId });
-      window.location.assign(mcpCallbackUrl(result.redirect_url));
+      window.location.assign(
+        mcpCallbackUrl(result.redirect_url, consent.data?.redirect_uri ?? ""),
+      );
     } catch (error) {
       if (error instanceof Error) setNavigationError(error);
     }
@@ -133,7 +135,7 @@ export function McpConsent({
           <div className="flex flex-wrap justify-end gap-3">
             <Button
               variant="outline"
-              disabled={pending}
+              disabled={pending || !consent.data}
               onClick={() => void finish(false)}
             >
               許可しない

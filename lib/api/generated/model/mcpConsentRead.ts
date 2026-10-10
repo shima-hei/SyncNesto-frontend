@@ -12,6 +12,7 @@ import type { McpProjectChoice } from "./mcpProjectChoice";
 export interface McpConsentRead {
   request_id: string;
   client_name: string;
+  redirect_uri: string;
   scopes: string[];
   projects: McpProjectChoice[];
   expires_at: string;
