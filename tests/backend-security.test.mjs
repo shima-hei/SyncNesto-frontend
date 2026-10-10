@@ -45,6 +45,80 @@ new Function("require", "module", "exports", routeSource)(
   route.exports,
 );
 
+test("MCP利用資格APIをCookie付きで中継し、資格と未認証の応答を維持する", async () => {
+  const oldFetch = globalThis.fetch;
+  const oldVercel = process.env.VERCEL;
+  const oldSecret = process.env.BFF_SHARED_SECRET;
+  const path = ["integrations", "mcp", "availability"];
+  const request = {
+    method: "GET",
+    nextUrl: new URL(`https://front.example/api/${path.join("/")}`),
+    headers: new Headers({ Cookie: "access_token=jwt" }),
+  };
+  try {
+    process.env.VERCEL = "1";
+    process.env.BFF_SHARED_SECRET = "s".repeat(48);
+    for (const [status, body] of [
+      [200, { can_connect: true }],
+      [200, { can_connect: false }],
+      [401, { code: "AUTHENTICATION_REQUIRED" }],
+    ]) {
+      let calls = 0;
+      globalThis.fetch = async (url, options) => {
+        calls += 1;
+        assert.equal(url.pathname, "/integrations/mcp/availability");
+        assert.equal(options.method, "GET");
+        assert.equal(options.headers.get("Cookie"), "access_token=jwt");
+        assert.equal(
+          options.headers.get("X-Syncnesto-BFF-Key"),
+          "s".repeat(48),
+        );
+        assert.equal(options.cache, "no-store");
+        return Response.json(body, { status });
+      };
+      const response = await route.exports.GET(request, {
+        params: Promise.resolve({ path }),
+      });
+      assert.equal(calls, 1);
+      assert.equal(response.status, status);
+      assert.deepEqual(await response.json(), body);
+    }
+  } finally {
+    globalThis.fetch = oldFetch;
+    if (oldVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = oldVercel;
+    if (oldSecret === undefined) delete process.env.BFF_SHARED_SECRET;
+    else process.env.BFF_SHARED_SECRET = oldSecret;
+  }
+});
+
+test("MCP利用資格APIの追加でOAuthや他の連携パスを公開しない", async () => {
+  const oldFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = () => {
+      throw new Error("unexpected upstream call");
+    };
+    for (const path of [
+      ["integrations", "mcp", "availability", "extra"],
+      ["integrations", "other"],
+      ["oauth", "token"],
+      ["mcp"],
+    ]) {
+      const response = await route.exports.GET(
+        {
+          method: "GET",
+          nextUrl: new URL(`https://front.example/api/${path.join("/")}`),
+          headers: new Headers(),
+        },
+        { params: Promise.resolve({ path }) },
+      );
+      assert.equal(response.status, 404);
+    }
+  } finally {
+    globalThis.fetch = oldFetch;
+  }
+});
+
 test("共有キーとクライアントIPの偽装を上書きしCookieを維持する", () => {
   const oldEnv = {
     VERCEL: process.env.VERCEL,

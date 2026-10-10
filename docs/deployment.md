@@ -83,3 +83,19 @@ Chrome拡張のfile URL権限がないため、ファイル選択からの自動
 同じ数値ユーザーIDの通常下書きをデモが上書き・削除しないこと、リセット前の遅延保存を拒否すること、
 通常/デモの画面状態をBFF経由でBackendへ伝えることを確認した。
 公開Cookie / BFF / 画面を通した両接続先の確認は、push・公開反映の承認後に行う。
+
+## Codex連携（2026-10-10）
+
+公開MCPを利用し、アカウント画面の「外部サービス連携」へ開始・状態更新・解除を集約する。
+Backend PR #17、Frontend PR #23をBackend先行でマージ・公開した。
+利用資格は `/api/integrations/mcp/availability` をBFF経由で確認する。
+BFFではこの完全一致パスだけを追加し、OAuthや他の連携APIを一括公開しない。
+
+`MCP_ENABLED=true` で同意画面を有効にする。一般利用者向けの開始リンクは、審査・公開後の
+実紹介URLをserver専用 `MCP_PLUGIN_INSTALL_URL` へ設定してから有効になる。
+現在はOpenAI未登録で公開準備中。存在しない紹介URLを設定しない。
+callbackはBackendの `MCP_PLUGIN_REDIRECT_URIS` でOpenAI管理画面の正確なURLを許可する。
+通常/デモのDB・Storage分離と `APP_ENV=production` + `DEMO_MODE=true` は維持する。
+
+申請資材、規約の草案、公開検証と残作業はBackendの
+`docs/decisions/2026-10-10-codex-plugin.md` と `plugins/README.md` を正とする。
