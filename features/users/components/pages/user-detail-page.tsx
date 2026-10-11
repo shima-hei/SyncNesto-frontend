@@ -10,6 +10,7 @@ import { useUpdateUser } from "../../hooks/use-update-user";
 import { useUser } from "../../hooks/use-user";
 import { UserForm } from "../forms/user-form";
 import { UserSystemRoles } from "../shared/user-system-roles";
+import { UserMfaRecovery } from "../shared/user-mfa-recovery";
 
 type UserDetailPageProps = {
   userId: number;
@@ -79,6 +80,7 @@ export function UserDetailPage({ userId }: UserDetailPageProps) {
         }}
         onSubmit={(values) => updateUser(values, user.version)}
       />
+      <UserMfaRecovery userId={userId} email={user.email} />
     </div>
   );
 }

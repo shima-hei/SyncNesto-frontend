@@ -9,6 +9,7 @@ import { AccountProfileForm } from "../forms/account-profile-form";
 import { AccountReadonlyInfo } from "../shared/account-readonly-info";
 import { AccountCredentialsSection } from "../sections/account-credentials-section";
 import { McpConnections } from "@/features/mcp/components/mcp-connections";
+import { MfaSecuritySection } from "../sections/mfa-security-section";
 
 export function AccountPage({
   mcpEnabled = false,
@@ -56,6 +57,7 @@ export function AccountPage({
         key={`credentials:${user.email}`}
         user={user}
       />
+      {!user.demo && <MfaSecuritySection />}
       {mcpEnabled && !user.demo ? (
         <McpConnections installUrl={mcpInstallUrl} />
       ) : null}

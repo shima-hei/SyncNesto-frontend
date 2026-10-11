@@ -25,7 +25,8 @@ type CurrentUserResult =
     }
   | {
       user: null;
-      failureReason: "unauthenticated" | "session-expired";
+      failureReason:
+        "unauthenticated" | "session-expired" | "mfa-pending" | "mfa-required";
     };
 
 export const getCurrentUserOnServer = async () => {
@@ -40,9 +41,11 @@ const getCurrentUserResultOnServer = async (): Promise<CurrentUserResult> => {
   if (!cookieStore.has(AUTH_COOKIE_NAME)) {
     return {
       user: null,
-      failureReason: cookieStore.has(CSRF_COOKIE_NAME)
-        ? "session-expired"
-        : "unauthenticated",
+      failureReason: cookieStore.has("mfa_flow")
+        ? "mfa-pending"
+        : cookieStore.has(CSRF_COOKIE_NAME)
+          ? "session-expired"
+          : "unauthenticated",
     };
   }
 
@@ -53,9 +56,12 @@ const getCurrentUserResultOnServer = async (): Promise<CurrentUserResult> => {
 
     return {
       user: null,
-      failureReason: isSessionExpiredCode(errorCode)
-        ? "session-expired"
-        : "unauthenticated",
+      failureReason:
+        errorCode === "MFA_REQUIRED"
+          ? "mfa-required"
+          : isSessionExpiredCode(errorCode)
+            ? "session-expired"
+            : "unauthenticated",
     };
   }
 
@@ -107,6 +113,9 @@ export const requireUser = async (options?: {
   const result = await getCurrentUserResultOnServer();
 
   if (!result.user) {
+    if (result.failureReason === "mfa-pending") redirect("/mfa");
+    if (result.failureReason === "mfa-required")
+      redirect("/login?reason=mfa-required");
     redirect(
       result.failureReason === "session-expired"
         ? SESSION_EXPIRED_LOGIN_PATH

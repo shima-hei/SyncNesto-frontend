@@ -37,6 +37,8 @@ const PUBLIC_AUTH_PATHS = new Set([
   "/reset-password",
   "/confirm-email-change",
   "/initial-password",
+  "/mfa",
+  "/mfa/recover",
 ]);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -44,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const isHandlingSessionInvalid = useRef(false);
   const { user, isLoading, isFetching, isAuthenticated, error, refetchUser } =
-    useCurrentUser();
+    useCurrentUser(!pathname.startsWith("/mfa"));
 
   const handleSessionInvalid = useCallback(() => {
     isHandlingSessionInvalid.current = true;

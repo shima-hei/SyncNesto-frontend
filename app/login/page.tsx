@@ -16,12 +16,19 @@ export default async function Page({ searchParams }: PageProps) {
   const showSessionExpiredToast = reason === "session-expired";
 
   return (
-    <LoginPage
-      returnTo={returnTo}
-      showSessionExpiredToast={showSessionExpiredToast}
-      demoEnabled={["1", "true", "yes", "on"].includes(
-        process.env.DEMO_MODE?.toLowerCase() ?? "",
+    <>
+      {(reason === "mfa-required" || reason === "mfa-expired") && (
+        <p role="status" className="bg-muted px-4 pt-4 text-center text-sm">
+          追加認証を開始するため、ログインしてください。有効期限が切れた場合も、ここからやり直せます。
+        </p>
       )}
-    />
+      <LoginPage
+        returnTo={returnTo}
+        showSessionExpiredToast={showSessionExpiredToast}
+        demoEnabled={["1", "true", "yes", "on"].includes(
+          process.env.DEMO_MODE?.toLowerCase() ?? "",
+        )}
+      />
+    </>
   );
 }
