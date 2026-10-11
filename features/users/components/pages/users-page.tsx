@@ -51,7 +51,7 @@ export function UsersPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="ユーザー一覧"
+        title="全体のユーザー管理"
         description="システムに登録されているユーザーを管理します。"
         actions={
           <Button asChild>

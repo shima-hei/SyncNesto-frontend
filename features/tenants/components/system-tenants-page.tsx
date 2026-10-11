@@ -82,7 +82,7 @@ export function SystemTenantsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="組織の運営管理"
+        title="全体の組織管理"
         description="申し込みを確認した後、組織と初期Ownerを発行して案内メールを送信します。"
       />
       {query.isPending ? (

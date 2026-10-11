@@ -17,16 +17,16 @@ const SEGMENT_LABELS: Record<string, string> = {
   members: "メンバー",
   notifications: "通知",
   organization: "組織",
-  tenants: "組織の運営管理",
+  tenants: "全体の組織管理",
   projects: "プロジェクト",
   requirements: "要件定義書",
   search: "横断検索",
-  system: "管理",
+  system: "システム運営",
   tasks: "タスク",
   trash: "ごみ箱",
   "test-cases": "テストケース",
   "test-designs": "テスト設計書",
-  users: "ユーザー管理",
+  users: "全体のユーザー管理",
 };
 
 const TECHNICAL_SEGMENTS = new Set(["items"]);
@@ -43,7 +43,7 @@ export const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
       if (segment === "projects" && segments[index + 1] === "joined")
         return currentItems;
       if (segment === "projects" && segments[index + 1] === "management")
-        return [...currentItems, { label: "管理" }];
+        return [...currentItems, { label: "現在の組織" }];
       const href = `/${segments.slice(0, index + 1).join("/")}`;
       const previousSegment = segments[index - 1];
       const nextItem = getBreadcrumbItemForSegment({

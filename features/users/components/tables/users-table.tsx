@@ -34,7 +34,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
           <TableHead>区分</TableHead>
           <TableHead>部署</TableHead>
           <TableHead>役職</TableHead>
-          <TableHead>権限</TableHead>
+          <TableHead>システム運営の役割</TableHead>
           <TableHead>状態</TableHead>
           <TableHead>最終ログイン</TableHead>
         </TableRow>
