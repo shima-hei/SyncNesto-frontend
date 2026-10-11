@@ -1,6 +1,6 @@
 # 通常アカウントの追加認証
 
-2026-10-11実装。公開環境への適用・実機Passkey確認は未実施。
+2026-10-11実装・公開適用済み。実機Passkey・個人の認証アプリ登録は未確認。
 方針・API・移行の正は隣接Backendの `docs/mfa.md`、`docs/frontend-authorization.md`、
 `docs/decisions/2026-10-10-mfa-authorization.md` を参照する。
 
@@ -32,6 +32,9 @@
 - format、typecheck、lint、本番buildを通過。
 - CIと同じNode 22.23.3/npm 10.9.9のLinux環境で、依存関係を空から `npm ci --ignore-scripts` できることを確認。既存lockに欠落していたWASM用 `@emnapi/core` / `@emnapi/runtime` の記録だけを補完し、既存依存のバージョンは維持した。
 - 専用の使い捨てローカルDBで、初回登録案内・キャンセル・既存テスト用TOTPによるログイン・ホーム・アカウント設定をブラウザ確認。
-- 実機Passkeyの登録/生体認証、個人の認証アプリへの登録、公開環境での確認は未実施。
+- [PR #25](https://github.com/shima-hei/SyncNesto-frontend/pull/25)をマージし、[main CI/deploy](https://github.com/shima-hei/SyncNesto-frontend/actions/runs/38148137846)が成功。公開aliasのcommit `b3516a5`とREADY状態を確認した。
+- 公開BFFで通常ユーザーのパスワード成功後のMFA要求・限定Cookie・業務API拒否・CSRF・cancel後の失効を確認。個人の認証器は変更していない。
+- 匿名デモのMFA除外・業務参照・通常DBとの分離、ログアウト後の旧Cookie拒否・専用DBの所有データ削除を確認。期限切れ経路は今回の公開確認に含まない。
+- 実機Passkeyの登録/生体認証、個人の認証アプリへの登録、公開メール配送、MFA後の本人によるMCP再接続は未確認。
 
 次の開発は運営・組織管理・Project業務の画面表示と名称の整理。公開への適用はBackendの移行手順に従う。
