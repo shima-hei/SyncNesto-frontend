@@ -30,6 +30,7 @@
 
 - 追加したCSRF・Server Guard・BFF Cookie中継の4件を含む79件のFrontendテストを通過。
 - format、typecheck、lint、本番buildを通過。
+- CIと同じNode 22.23.3/npm 10.9.9のLinux環境で、依存関係を空から `npm ci --ignore-scripts` できることを確認。既存lockに欠落していたWASM用 `@emnapi/core` / `@emnapi/runtime` の記録だけを補完し、既存依存のバージョンは維持した。
 - 専用の使い捨てローカルDBで、初回登録案内・キャンセル・既存テスト用TOTPによるログイン・ホーム・アカウント設定をブラウザ確認。
 - 実機Passkeyの登録/生体認証、個人の認証アプリへの登録、公開環境での確認は未実施。
 
