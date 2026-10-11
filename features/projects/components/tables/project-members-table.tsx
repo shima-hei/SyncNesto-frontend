@@ -81,7 +81,7 @@ export function ProjectMembersTable({
         <TableHeader>
           <TableRow>
             <TableHead>ユーザー</TableHead>
-            <TableHead>権限</TableHead>
+            <TableHead>プロジェクト内の役割</TableHead>
             {canManageMembers ? (
               <TableHead className="w-32">操作</TableHead>
             ) : null}
@@ -189,7 +189,7 @@ function ProjectMemberRow({
                 onValueChange={setRoleKey}
               >
                 <SelectTrigger className="w-52">
-                  <SelectValue placeholder="権限を選択" />
+                  <SelectValue placeholder="役割を選択" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

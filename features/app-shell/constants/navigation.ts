@@ -45,13 +45,13 @@ export const mainNavigation: AppNavigationItem[] = [
 
 export const managementNavigation: AppNavigationItem[] = [
   {
-    title: "組織の運営管理",
+    title: "全体の組織管理",
     href: "/system/tenants",
     icon: SettingsIcon,
     requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
   },
   {
-    title: "ユーザー管理",
+    title: "全体のユーザー管理",
     href: "/system/users",
     icon: UsersIcon,
     requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],

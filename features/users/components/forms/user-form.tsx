@@ -183,7 +183,7 @@ export function UserForm({
           </div>
 
           <FieldSet>
-            <FieldLabel>区分・状態・権限</FieldLabel>
+            <FieldLabel>区分・状態・システム運営の役割</FieldLabel>
             <Field data-invalid={errors.userType ? true : undefined}>
               <FieldLabel>ユーザー区分</FieldLabel>
               <Select

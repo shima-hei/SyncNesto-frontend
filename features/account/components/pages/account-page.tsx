@@ -3,6 +3,7 @@
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { useTenant } from "@/features/tenants/providers/tenant-provider";
 
 import { AccountAvatarSection } from "../avatar/account-avatar-section";
 import { AccountProfileForm } from "../forms/account-profile-form";
@@ -19,6 +20,7 @@ export function AccountPage({
   mcpInstallUrl?: string;
 }) {
   const { user, isLoading } = useAuth();
+  const { tenant } = useTenant();
 
   if (isLoading) {
     return <AccountPageSkeleton />;
@@ -41,7 +43,7 @@ export function AccountPage({
 
       <section className="flex flex-col gap-4">
         <AccountAvatarSection user={user} />
-        <AccountReadonlyInfo user={user} />
+        <AccountReadonlyInfo user={user} tenant={tenant} />
       </section>
 
       <section className="flex flex-col gap-4">
