@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTenant } from "@/features/tenants/providers/tenant-provider";
+import { formatDateTime } from "@/lib/format/date";
 
 import { AccountAvatarSection } from "../avatar/account-avatar-section";
 import { AccountProfileForm } from "../forms/account-profile-form";
@@ -41,25 +42,38 @@ export function AccountPage({
         description="プロフィール、ログイン情報、外部サービスとの連携を管理します。"
       />
 
+      {user.review_access_expires_at ? (
+        <p className="rounded-md border bg-muted p-4 text-sm">
+          公開審査用アカウントです。サンプル組織内で利用できます。 利用期限：
+          {formatDateTime(user.review_access_expires_at)}。
+          このアカウントはMFAの対象外で、プロフィール・認証情報は変更できません。
+        </p>
+      ) : null}
       <section className="flex flex-col gap-4">
-        <AccountAvatarSection user={user} />
+        {!user.review_access_expires_at ? (
+          <AccountAvatarSection user={user} />
+        ) : null}
         <AccountReadonlyInfo user={user} tenant={tenant} />
       </section>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold">プロフィール編集</h2>
-          <p className="text-sm text-muted-foreground">
-            共通の名前を変更します。組織内の表示名・部署・役職は組織管理者が管理します。
-          </p>
-        </div>
-        <AccountProfileForm key={user.version} user={user} />
-      </section>
-      <AccountCredentialsSection
-        key={`credentials:${user.email}`}
-        user={user}
-      />
-      {!user.demo && <MfaSecuritySection />}
+      {!user.review_access_expires_at ? (
+        <>
+          <section className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-base font-semibold">プロフィール編集</h2>
+              <p className="text-sm text-muted-foreground">
+                共通の名前を変更します。組織内の表示名・部署・役職は組織管理者が管理します。
+              </p>
+            </div>
+            <AccountProfileForm key={user.version} user={user} />
+          </section>
+          <AccountCredentialsSection
+            key={`credentials:${user.email}`}
+            user={user}
+          />
+          {!user.demo ? <MfaSecuritySection /> : null}
+        </>
+      ) : null}
       {mcpEnabled && !user.demo ? (
         <McpConnections installUrl={mcpInstallUrl} />
       ) : null}
