@@ -28,6 +28,7 @@ type AuthContextValue = {
   isFetching: boolean;
   isAuthenticated: boolean;
   refetchUser: ReturnType<typeof useCurrentUser>["refetchUser"];
+  runLogout: (completeLogout: () => Promise<void>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -45,15 +46,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const isHandlingSessionInvalid = useRef(false);
+  const isLoggingOut = useRef(false);
   const { user, isLoading, isFetching, isAuthenticated, error, refetchUser } =
     useCurrentUser(!pathname.startsWith("/mfa"));
 
   const handleSessionInvalid = useCallback(() => {
+    if (isLoggingOut.current) return;
     isHandlingSessionInvalid.current = true;
     clearDemoData();
 
     void (async () => {
       await cancelCurrentUserQuery(queryClient);
+      if (isLoggingOut.current) {
+        isHandlingSessionInvalid.current = false;
+        return;
+      }
       setCurrentUserCache(queryClient, null);
 
       if (PUBLIC_AUTH_PATHS.has(pathname)) return;
@@ -65,6 +72,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [pathname, queryClient]);
 
+  const runLogout = useCallback(
+    async (completeLogout: () => Promise<void>) => {
+      // API応答とキャッシュ破棄に遅れて届く認証エラーを、手動終了と区別する。
+      isLoggingOut.current = true;
+      try {
+        await completeLogout();
+      } catch (error) {
+        isLoggingOut.current = false;
+        isHandlingSessionInvalid.current = false;
+        if (error instanceof ApiError && isAuthSessionInvalidCode(error.code)) {
+          handleSessionInvalid();
+        } else {
+          void refetchUser();
+        }
+        throw error;
+      }
+    },
+    [handleSessionInvalid, refetchUser],
+  );
+
   useEffect(() => {
     if (user?.password_change_required && !PUBLIC_AUTH_PATHS.has(pathname)) {
       window.location.replace("/initial-password");
@@ -73,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     return subscribeDemoEnded(() => {
+      isLoggingOut.current = true;
       queryClient.clear();
       window.location.replace("/login");
     });
@@ -122,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isFetching,
         isAuthenticated,
         refetchUser,
+        runLogout,
       }}
     >
       {children}
