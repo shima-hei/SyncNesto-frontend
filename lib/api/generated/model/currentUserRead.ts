@@ -26,6 +26,7 @@ export interface CurrentUserRead {
   updated_by?: number | null;
   system_roles?: RoleRead[];
   demo?: DemoStatus | null;
+  review_access_expires_at?: string | null;
   password_change_required?: boolean;
   initial_password_expires_at?: string | null;
 }
