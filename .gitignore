@@ -56,5 +56,6 @@ next-env.d.ts
 !/docs/documents.md
 !/docs/cross-resource-search.md
 !/docs/trash.md
+!/docs/public-information-pages.md
 .codex
 AGENTS.md

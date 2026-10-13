@@ -32,7 +32,9 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const PUBLIC_INFORMATION_PATHS = new Set(["/support", "/privacy", "/terms"]);
 const PUBLIC_AUTH_PATHS = new Set([
+  ...PUBLIC_INFORMATION_PATHS,
   "/login",
   "/forgot-password",
   "/reset-password",
@@ -48,7 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isHandlingSessionInvalid = useRef(false);
   const isLoggingOut = useRef(false);
   const { user, isLoading, isFetching, isAuthenticated, error, refetchUser } =
-    useCurrentUser(!pathname.startsWith("/mfa"));
+    useCurrentUser(
+      !pathname.startsWith("/mfa") && !PUBLIC_INFORMATION_PATHS.has(pathname),
+    );
 
   const handleSessionInvalid = useCallback(() => {
     if (isLoggingOut.current) return;
@@ -102,9 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return subscribeDemoEnded(() => {
       isLoggingOut.current = true;
       queryClient.clear();
-      window.location.replace("/login");
+      if (!PUBLIC_INFORMATION_PATHS.has(pathname)) {
+        window.location.replace("/login");
+      }
     });
-  }, [queryClient]);
+  }, [pathname, queryClient]);
 
   useEffect(() => {
     const revalidateRestoredPage = (event: PageTransitionEvent) => {
