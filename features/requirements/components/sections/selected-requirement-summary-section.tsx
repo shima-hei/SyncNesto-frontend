@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLinkIcon } from "lucide-react";
+import { EditIcon, ExternalLinkIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,12 +19,14 @@ type SelectedRequirementSummarySectionProps = {
   projectId: number;
   documentId: number;
   requirementId: number | null;
+  canUpdate: boolean;
 };
 
 export function SelectedRequirementSummarySection({
   projectId,
   documentId,
   requirementId,
+  canUpdate,
 }: SelectedRequirementSummarySectionProps) {
   if (!requirementId) {
     return null;
@@ -35,6 +37,7 @@ export function SelectedRequirementSummarySection({
       projectId={projectId}
       documentId={documentId}
       requirementId={requirementId}
+      canUpdate={canUpdate}
     />
   );
 }
@@ -43,10 +46,12 @@ function SelectedRequirementSummaryContent({
   projectId,
   documentId,
   requirementId,
+  canUpdate,
 }: {
   projectId: number;
   documentId: number;
   requirementId: number;
+  canUpdate: boolean;
 }) {
   const { summary, isLoading } = useRequirementSummary(
     projectId,
@@ -137,14 +142,26 @@ function SelectedRequirementSummaryContent({
             />
           </div>
         </details>
-        <Button asChild variant="outline">
-          <Link
-            href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`}
-          >
-            <ExternalLinkIcon data-icon="inline-start" />
-            詳細を開く
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {canUpdate ? (
+            <Button asChild size="sm">
+              <Link
+                href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`}
+              >
+                <EditIcon data-icon="inline-start" />
+                要件を編集
+              </Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`}
+            >
+              <ExternalLinkIcon data-icon="inline-start" />
+              詳細を開く
+            </Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

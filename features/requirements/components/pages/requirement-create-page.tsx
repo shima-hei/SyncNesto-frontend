@@ -61,11 +61,11 @@ export function RequirementCreatePage({
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <PageHeader
-        title={duplicateSource ? "要件複製" : "要件登録"}
+        title={duplicateSource ? "要件を複製" : "要件を作成"}
         description={
           duplicateSource
             ? "複製元の内容をもとに、新しい要件を登録します。"
-            : "要件定義書に紐づく要件を登録します。"
+            : "まず要件名と内容を記入し、分類や担当者は後から設定できます。"
         }
       />
       <RequirementForm

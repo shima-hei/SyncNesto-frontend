@@ -58,7 +58,7 @@ export function RequirementEditPage({
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <PageHeader title="要件編集" description={requirement.title} />
+      <PageHeader title="要件を編集" description={requirement.title} />
       <RequirementForm
         key={requirement.version}
         projectId={projectId}

@@ -32,6 +32,8 @@ type CommentTargetMode = "section" | "requirement";
 type RequirementDocumentRequirementsTabProps = {
   projectId: number;
   documentId: number;
+  selectedSectionId: number | null;
+  onSelectSection: (sectionId: number | null) => void;
   canCreate: boolean;
   canUpdate: boolean;
   canComment: boolean;
@@ -41,6 +43,8 @@ type RequirementDocumentRequirementsTabProps = {
 export function RequirementDocumentRequirementsTab({
   projectId,
   documentId,
+  selectedSectionId,
+  onSelectSection,
   canCreate,
   canUpdate,
   canComment,
@@ -48,9 +52,6 @@ export function RequirementDocumentRequirementsTab({
 }: RequirementDocumentRequirementsTabProps) {
   const router = useRouter();
   const supportPanelId = useId();
-  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(
-    null,
-  );
   const [selectedRequirement, setSelectedRequirement] =
     useState<RequirementRead | null>(null);
   const [commentTargetMode, setCommentTargetMode] =
@@ -113,7 +114,7 @@ export function RequirementDocumentRequirementsTab({
         : null;
 
   const handleSelectSection = (sectionId: number | null) => {
-    setSelectedSectionId(sectionId);
+    onSelectSection(sectionId);
     setSelectedRequirement(null);
     setCommentTargetMode("section");
     setSelectedTargetAnchor(null);
@@ -241,7 +242,7 @@ export function RequirementDocumentRequirementsTab({
             }}
             onActivateSectionComments={handleActivateSectionComments}
             onDeleted={() => {
-              setSelectedSectionId(null);
+              onSelectSection(null);
               setSelectedRequirement(null);
               setCommentTargetMode("section");
               setSelectedTargetAnchor(null);
@@ -273,6 +274,7 @@ export function RequirementDocumentRequirementsTab({
                   projectId={projectId}
                   documentId={documentId}
                   requirementId={selectedRequirementId}
+                  canUpdate={canUpdate}
                 />
               ) : null}
               <SelectedSectionSupportTabs

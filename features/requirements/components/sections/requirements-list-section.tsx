@@ -131,14 +131,16 @@ export function RequirementsListSection({
         <div className="flex flex-col gap-1">
           <h3 className="text-base font-semibold">要件一覧</h3>
           <p className="text-sm text-muted-foreground">
-            配置先: {selectedSection?.title ?? "セクション未設定"}
+            {selectedSection
+              ? `追加先: ${selectedSection.title}`
+              : "全セクションの要件を表示しています。追加した要件はセクション未設定になります。"}
           </p>
         </div>
         {canCreate ? (
           <Button asChild>
             <Link href={createHref}>
               <PlusIcon data-icon="inline-start" />
-              この配置先に要件を追加
+              要件を追加
             </Link>
           </Button>
         ) : null}

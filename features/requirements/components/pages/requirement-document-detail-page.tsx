@@ -61,7 +61,20 @@ export function RequirementDocumentDetailPage({
     projectId,
     documentId,
   );
-  const { sections } = useRequirementSections(projectId, documentId);
+  const { sections, isLoading: isSectionsLoading } = useRequirementSections(
+    projectId,
+    documentId,
+  );
+  const [selectedSectionValue, setSelectedSectionValue] = useUrlTabState({
+    values: ["all", ...sections.map((section) => String(section.id))],
+    defaultValue: "all",
+    paramName: "sectionId",
+  });
+  const selectedSectionId =
+    selectedSectionValue === "all" ? null : Number(selectedSectionValue);
+  const createRequirementPath = selectedSectionId
+    ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${selectedSectionId}`
+    : `/projects/joined/${projectId}/requirements/${documentId}/items/new`;
   const { deleteRequirementDocument, isPending: isDeletePending } =
     useDeleteRequirementDocument(projectId, documentId);
   const { exportRequirementDocument, isPending: isExportPending } =
@@ -95,13 +108,9 @@ export function RequirementDocumentDetailPage({
               <DownloadIcon data-icon="inline-start" />
               出力
             </Button>
-            {canCreateRequirement(currentProjectRole) ? (
+            {canCreateRequirement(currentProjectRole) && !isSectionsLoading ? (
               <Button asChild>
-                <Link
-                  href={`/projects/joined/${projectId}/requirements/${documentId}/items/new`}
-                >
-                  要件登録
-                </Link>
+                <Link href={createRequirementPath}>要件を追加</Link>
               </Button>
             ) : null}
             {canUpdateRequirement(currentProjectRole) ? (
@@ -110,7 +119,7 @@ export function RequirementDocumentDetailPage({
                   href={`/projects/joined/${projectId}/requirements/${documentId}/edit`}
                 >
                   <EditIcon data-icon="inline-start" />
-                  編集
+                  定義書の情報を編集
                 </Link>
               </Button>
             ) : null}
@@ -161,8 +170,13 @@ export function RequirementDocumentDetailPage({
 
         <TabsContent value="requirements">
           <RequirementDocumentRequirementsTab
+            key={selectedSectionValue}
             projectId={projectId}
             documentId={documentId}
+            selectedSectionId={selectedSectionId}
+            onSelectSection={(sectionId) =>
+              setSelectedSectionValue(sectionId ? String(sectionId) : "all")
+            }
             canCreate={canCreateRequirement(currentProjectRole)}
             canUpdate={canUpdateRequirement(currentProjectRole)}
             canComment={canCommentRequirement(currentProjectRole)}

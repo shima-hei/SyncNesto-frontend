@@ -139,10 +139,10 @@ export function RequirementDetailPage({
     <div className="@container/requirement-detail flex min-w-0 flex-col gap-6">
       <Button asChild variant="outline" size="sm" className="w-fit">
         <Link
-          href={`/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`}
+          href={`/projects/joined/${projectId}/requirements/${documentId}?tab=requirements${requirement.section_id ? `&sectionId=${requirement.section_id}` : ""}`}
         >
           <ArrowLeftIcon data-icon="inline-start" />
-          要件タブへ戻る
+          要件一覧へ戻る
         </Link>
       </Button>
       <div

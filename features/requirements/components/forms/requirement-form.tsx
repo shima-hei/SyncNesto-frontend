@@ -1,16 +1,20 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+import Link from "next/link";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { DraftRestoreDialog } from "@/components/shared/dialogs/draft-restore-dialog";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
-import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
+import { Button } from "@/components/ui/button";
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getConflictFields } from "@/lib/api/conflict";
 import { useFormDraft } from "@/hooks/use-form-draft";
@@ -35,6 +40,7 @@ import {
   REQUIREMENT_TYPE_OPTIONS,
 } from "../../constants/requirement-options";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
+import { useRequirementDocument } from "../../hooks/use-requirement-document";
 import { requirementSchema } from "../../schemas/requirement-schema";
 import type {
   RequirementFormErrors,
@@ -79,6 +85,12 @@ export function RequirementForm({
     projectId,
     documentId,
   );
+  const { document: requirementDocument, isLoading: isDocumentLoading } =
+    useRequirementDocument(projectId, documentId);
+  const sectionId = useId();
+  const typeId = useId();
+  const priorityId = useId();
+  const statusId = useId();
   const categoryId = useId();
   const titleId = useId();
   const descriptionId = useId();
@@ -88,6 +100,7 @@ export function RequirementForm({
   const approvedAtId = useId();
   const changeSummaryId = useId();
   const reasonId = useId();
+  const managementRef = useRef<HTMLDetailsElement>(null);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<RequirementFormErrors>({});
   const { user } = useAuth();
@@ -130,6 +143,17 @@ export function RequirementForm({
         priority: fieldErrors.priority?.[0],
         status: fieldErrors.status?.[0],
       });
+      if (!fieldErrors.title && managementRef.current) {
+        managementRef.current.open = true;
+      }
+      const firstErrorId = fieldErrors.title
+        ? titleId
+        : fieldErrors.requirementType
+          ? typeId
+          : fieldErrors.priority
+            ? priorityId
+            : statusId;
+      document.getElementById(firstErrorId)?.focus();
       return;
     }
 
@@ -146,6 +170,10 @@ export function RequirementForm({
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
+  const selectedSection = sections.find(
+    (section) => String(section.id) === values.sectionId,
+  );
+  const listPath = `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements${initialValues.sectionId ? `&sectionId=${initialValues.sectionId}` : ""}`;
 
   return (
     <>
@@ -157,160 +185,246 @@ export function RequirementForm({
         onSubmit={handleSubmit}
       >
         <FieldGroup>
-          <FormSection
-            title="配置先"
-            description="要件を配置するセクションを選択します。未分類にする場合はセクション未設定を選択してください。"
-          >
-            <Field>
-              <FieldLabel>セクション</FieldLabel>
-              <Select
-                value={values.sectionId || "none"}
-                disabled={isSectionsLoading}
-                onValueChange={(value) =>
-                  updateValue("sectionId", value === "none" ? "" : value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="セクションを選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">セクション未設定</SelectItem>
-                    {sections.map((section) => (
-                      <SelectItem key={section.id} value={String(section.id)}>
-                        {section.title}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </FormSection>
-
-          <FormSection title="基本情報">
-            <FieldGroup className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2 @min-[52rem]/requirement-form:grid-cols-4">
-              {mode === "update" ? (
-                <Field>
-                  <FieldLabel>要件コード</FieldLabel>
-                  <Input value={values.requirementCode} readOnly disabled />
-                </Field>
-              ) : null}
-
-              <Field data-invalid={errors.requirementType ? true : undefined}>
-                <FieldLabel>種別</FieldLabel>
+          <div className="flex min-w-0 flex-col gap-2 text-sm">
+            <p className="break-words text-muted-foreground">
+              要件定義書:{" "}
+              {requirementDocument?.title ??
+                (isDocumentLoading ? "読み込み中…" : "情報を取得できません")}
+              {mode === "update" ? ` / ${values.requirementCode}` : null}
+            </p>
+            <details>
+              <summary className="w-fit cursor-pointer rounded-sm break-words hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+                配置先:{" "}
+                {selectedSection?.title ??
+                  (values.sectionId
+                    ? isSectionsLoading
+                      ? "セクションを確認中…"
+                      : "セクション情報を取得できません"
+                    : "セクション未設定")}
+                <span className="ml-2 text-xs text-muted-foreground">変更</span>
+              </summary>
+              <Field className="mt-3">
+                <FieldLabel htmlFor={sectionId}>
+                  配置先のセクション（任意）
+                </FieldLabel>
                 <Select
-                  value={values.requirementType}
+                  value={values.sectionId || "none"}
+                  disabled={isSectionsLoading}
                   onValueChange={(value) =>
-                    updateValue("requirementType", value)
+                    updateValue("sectionId", value === "none" ? "" : value)
                   }
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="種別を選択" />
+                  <SelectTrigger id={sectionId} className="w-full">
+                    <SelectValue placeholder="セクションを選択" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {REQUIREMENT_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      <SelectItem value="none">セクション未設定</SelectItem>
+                      {sections.map((section) => (
+                        <SelectItem key={section.id} value={String(section.id)}>
+                          {section.title}
                         </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                {errors.requirementType ? (
-                  <FieldError>{errors.requirementType}</FieldError>
-                ) : null}
+                <FieldDescription>
+                  未設定のまま作成し、後から分類することもできます。
+                </FieldDescription>
               </Field>
+            </details>
+          </div>
 
-              <Field data-invalid={errors.priority ? true : undefined}>
-                <FieldLabel>優先度</FieldLabel>
-                <Select
-                  value={values.priority}
-                  onValueChange={(value) => updateValue("priority", value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="優先度を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {REQUIREMENT_PRIORITY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {errors.priority ? (
-                  <FieldError>{errors.priority}</FieldError>
-                ) : null}
+          <FieldSet>
+            <FieldLegend>要件の内容</FieldLegend>
+            <FieldGroup>
+              <Field data-invalid={errors.title ? true : undefined}>
+                <FieldLabel htmlFor={titleId}>要件名（必須）</FieldLabel>
+                <Input
+                  id={titleId}
+                  name="title"
+                  autoComplete="off"
+                  value={values.title}
+                  placeholder="例：メールアドレスとパスワードでログインできる…"
+                  onChange={(event) => updateValue("title", event.target.value)}
+                  aria-required="true"
+                  aria-invalid={Boolean(errors.title)}
+                />
+                {errors.title ? <FieldError>{errors.title}</FieldError> : null}
               </Field>
-
-              <Field data-invalid={errors.status ? true : undefined}>
-                <FieldLabel>ステータス</FieldLabel>
-                <Select
-                  value={values.status}
-                  onValueChange={(value) => updateValue("status", value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="ステータスを選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {REQUIREMENT_STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {errors.status ? (
-                  <FieldError>{errors.status}</FieldError>
-                ) : null}
+              <Field>
+                <FieldLabel htmlFor={descriptionId}>
+                  要件の内容（任意）
+                </FieldLabel>
+                <Textarea
+                  id={descriptionId}
+                  name="description"
+                  className="min-h-32"
+                  rows={5}
+                  autoComplete="off"
+                  value={values.description}
+                  aria-describedby={`${descriptionId}-help`}
+                  placeholder="例：利用者は登録済みのメールアドレスとパスワードを使ってログインできる…"
+                  onChange={(event) =>
+                    updateValue("description", event.target.value)
+                  }
+                />
+                <FieldDescription id={`${descriptionId}-help`}>
+                  誰が、どの場面で、何をできる必要があるかを記入します。
+                </FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={acceptanceCriteriaId}>
+                  受け入れ条件（任意）
+                </FieldLabel>
+                <Textarea
+                  id={acceptanceCriteriaId}
+                  name="acceptanceCriteria"
+                  className="min-h-24"
+                  rows={4}
+                  autoComplete="off"
+                  value={values.acceptanceCriteria}
+                  aria-describedby={`${acceptanceCriteriaId}-help`}
+                  placeholder="例：正しい情報でログインするとホーム画面が開く。誤った情報ではエラーが表示される…"
+                  onChange={(event) =>
+                    updateValue("acceptanceCriteria", event.target.value)
+                  }
+                />
+                <FieldDescription id={`${acceptanceCriteriaId}-help`}>
+                  何を確認できれば、この要件を満たしたと判断できるかを記入します。
+                </FieldDescription>
               </Field>
             </FieldGroup>
+          </FieldSet>
 
-            <Field>
-              <FieldLabel htmlFor={categoryId}>カテゴリ</FieldLabel>
-              <Input
-                id={categoryId}
-                value={values.category}
-                onChange={(event) =>
-                  updateValue("category", event.target.value)
-                }
-              />
-            </Field>
+          <details ref={managementRef} className="border-t pt-4">
+            <summary className="w-fit cursor-pointer rounded-sm text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+              分類・担当を設定
+            </summary>
+            <FieldGroup className="mt-4">
+              <FieldGroup className="grid gap-4 @min-[32rem]/requirement-form:grid-cols-3">
+                <Field data-invalid={errors.requirementType ? true : undefined}>
+                  <FieldLabel htmlFor={typeId}>種別</FieldLabel>
+                  <Select
+                    value={values.requirementType}
+                    onValueChange={(value) =>
+                      updateValue("requirementType", value)
+                    }
+                  >
+                    <SelectTrigger
+                      id={typeId}
+                      className="w-full"
+                      aria-invalid={Boolean(errors.requirementType)}
+                    >
+                      <SelectValue placeholder="種別を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {REQUIREMENT_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {errors.requirementType ? (
+                    <FieldError>{errors.requirementType}</FieldError>
+                  ) : null}
+                </Field>
 
-            <Field data-invalid={errors.title ? true : undefined}>
-              <FieldLabel htmlFor={titleId}>タイトル</FieldLabel>
-              <Input
-                id={titleId}
-                value={values.title}
-                onChange={(event) => updateValue("title", event.target.value)}
-                aria-invalid={Boolean(errors.title)}
-              />
-              {errors.title ? <FieldError>{errors.title}</FieldError> : null}
-            </Field>
-          </FormSection>
+                <Field data-invalid={errors.priority ? true : undefined}>
+                  <FieldLabel htmlFor={priorityId}>優先度</FieldLabel>
+                  <Select
+                    value={values.priority}
+                    onValueChange={(value) => updateValue("priority", value)}
+                  >
+                    <SelectTrigger
+                      id={priorityId}
+                      className="w-full"
+                      aria-invalid={Boolean(errors.priority)}
+                    >
+                      <SelectValue placeholder="優先度を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {REQUIREMENT_PRIORITY_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {errors.priority ? (
+                    <FieldError>{errors.priority}</FieldError>
+                  ) : null}
+                </Field>
 
-          <FormSection title="内容">
-            <Field>
-              <FieldLabel htmlFor={descriptionId}>説明</FieldLabel>
-              <Textarea
-                id={descriptionId}
-                value={values.description}
-                onChange={(event) =>
-                  updateValue("description", event.target.value)
-                }
-              />
-            </Field>
+                <Field data-invalid={errors.status ? true : undefined}>
+                  <FieldLabel htmlFor={statusId}>ステータス</FieldLabel>
+                  <Select
+                    value={values.status}
+                    onValueChange={(value) => updateValue("status", value)}
+                  >
+                    <SelectTrigger
+                      id={statusId}
+                      className="w-full"
+                      aria-invalid={Boolean(errors.status)}
+                    >
+                      <SelectValue placeholder="ステータスを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {REQUIREMENT_STATUS_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {errors.status ? (
+                    <FieldError>{errors.status}</FieldError>
+                  ) : null}
+                </Field>
+              </FieldGroup>
 
-            <div className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2">
+              <FieldGroup className="grid gap-4 @min-[32rem]/requirement-form:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor={categoryId}>カテゴリ（任意）</FieldLabel>
+                  <Input
+                    id={categoryId}
+                    name="category"
+                    autoComplete="off"
+                    value={values.category}
+                    onChange={(event) =>
+                      updateValue("category", event.target.value)
+                    }
+                  />
+                </Field>
+                <RequirementUserSelectField
+                  projectId={projectId}
+                  label="担当者（任意）"
+                  value={values.ownerId}
+                  initialUser={initialOwner}
+                  onChange={(value) => updateValue("ownerId", value)}
+                />
+              </FieldGroup>
+            </FieldGroup>
+          </details>
+
+          <details className="border-t pt-4">
+            <summary className="w-fit cursor-pointer rounded-sm text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+              背景・情報源を補足（任意）
+            </summary>
+            <FieldGroup className="mt-4">
               <Field>
-                <FieldLabel htmlFor={rationaleId}>理由</FieldLabel>
+                <FieldLabel htmlFor={rationaleId}>背景・理由</FieldLabel>
                 <Textarea
                   id={rationaleId}
+                  name="rationale"
+                  autoComplete="off"
                   value={values.rationale}
                   onChange={(event) =>
                     updateValue("rationale", event.target.value)
@@ -318,39 +432,25 @@ export function RequirementForm({
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor={acceptanceCriteriaId}>
-                  受け入れ条件
-                </FieldLabel>
-                <Textarea
-                  id={acceptanceCriteriaId}
-                  value={values.acceptanceCriteria}
-                  onChange={(event) =>
-                    updateValue("acceptanceCriteria", event.target.value)
-                  }
-                />
-              </Field>
-            </div>
-          </FormSection>
-
-          <FormSection title="担当・承認">
-            <div className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2 @min-[52rem]/requirement-form:grid-cols-4">
-              <Field>
                 <FieldLabel htmlFor={sourceId}>情報源</FieldLabel>
                 <Input
                   id={sourceId}
+                  name="source"
+                  autoComplete="off"
                   value={values.source}
                   onChange={(event) =>
                     updateValue("source", event.target.value)
                   }
                 />
               </Field>
-              <RequirementUserSelectField
-                projectId={projectId}
-                label="担当者"
-                value={values.ownerId}
-                initialUser={initialOwner}
-                onChange={(value) => updateValue("ownerId", value)}
-              />
+            </FieldGroup>
+          </details>
+
+          <details className="border-t pt-4">
+            <summary className="w-fit cursor-pointer rounded-sm text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+              承認情報を確認・編集（任意）
+            </summary>
+            <FieldGroup className="mt-4 grid gap-4 @min-[32rem]/requirement-form:grid-cols-2">
               <RequirementUserSelectField
                 projectId={projectId}
                 label="承認者"
@@ -361,6 +461,7 @@ export function RequirementForm({
                 <FieldLabel htmlFor={approvedAtId}>承認日時</FieldLabel>
                 <Input
                   id={approvedAtId}
+                  name="approvedAt"
                   type="datetime-local"
                   value={values.approvedAt}
                   onChange={(event) =>
@@ -368,39 +469,54 @@ export function RequirementForm({
                   }
                 />
               </Field>
-            </div>
-          </FormSection>
+            </FieldGroup>
+          </details>
 
           {mode === "update" ? (
-            <div className="grid gap-4 @min-[24rem]/requirement-form:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor={changeSummaryId}>変更概要</FieldLabel>
-                <Input
-                  id={changeSummaryId}
-                  value={values.changeSummary}
-                  onChange={(event) =>
-                    updateValue("changeSummary", event.target.value)
-                  }
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor={reasonId}>変更理由</FieldLabel>
-                <Input
-                  id={reasonId}
-                  value={values.reason}
-                  onChange={(event) =>
-                    updateValue("reason", event.target.value)
-                  }
-                />
-              </Field>
-            </div>
+            <details className="border-t pt-4">
+              <summary className="w-fit cursor-pointer rounded-sm text-sm font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+                変更の記録を追加（任意）
+              </summary>
+              <FieldGroup className="mt-4 grid gap-4 @min-[32rem]/requirement-form:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor={changeSummaryId}>変更概要</FieldLabel>
+                  <Input
+                    id={changeSummaryId}
+                    name="changeSummary"
+                    autoComplete="off"
+                    value={values.changeSummary}
+                    onChange={(event) =>
+                      updateValue("changeSummary", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor={reasonId}>変更理由</FieldLabel>
+                  <Input
+                    id={reasonId}
+                    name="reason"
+                    autoComplete="off"
+                    value={values.reason}
+                    onChange={(event) =>
+                      updateValue("reason", event.target.value)
+                    }
+                  />
+                </Field>
+              </FieldGroup>
+            </details>
           ) : null}
 
           <FormApiError error={error} />
 
-          <FormSubmitButton isPending={isPending}>
-            {mode === "create" ? "登録" : "更新"}
-          </FormSubmitButton>
+          <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t bg-background py-3">
+            <Button asChild variant="outline">
+              <Link href={listPath}>要件一覧へ戻る</Link>
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? <Spinner data-icon="inline-start" /> : null}
+              {mode === "create" ? "要件を作成" : "変更を保存"}
+            </Button>
+          </div>
         </FieldGroup>
       </form>
 
@@ -426,27 +542,5 @@ export function RequirementForm({
         onDiscard={draft.discardDraft}
       />
     </>
-  );
-}
-
-function FormSection({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-4 rounded-lg border p-4">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-medium">{title}</h3>
-        {description ? (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        ) : null}
-      </div>
-      <div className="flex flex-col gap-4">{children}</div>
-    </section>
   );
 }
