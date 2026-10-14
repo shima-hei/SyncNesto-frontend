@@ -1,5 +1,7 @@
 "use client";
 
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
+
 import { useState } from "react";
 import Link from "next/link";
 import { DownloadIcon, EditIcon, Trash2Icon } from "lucide-react";
@@ -65,13 +67,17 @@ export function RequirementDocumentDetailPage({
     projectId,
     documentId,
   );
-  const [selectedSectionValue, setSelectedSectionValue] = useUrlTabState({
-    values: ["all", ...sections.map((section) => String(section.id))],
-    defaultValue: "all",
-    paramName: "sectionId",
-  });
-  const selectedSectionId =
-    selectedSectionValue === "all" ? null : Number(selectedSectionValue);
+  const [selectedSectionQuery, setSelectedSectionId] = useUrlFilterState<
+    number | null
+  >("sectionId", null);
+  const selectedSectionId = sections.some(
+    (section) => section.id === selectedSectionQuery,
+  )
+    ? selectedSectionQuery
+    : null;
+  const selectedSectionValue = selectedSectionId
+    ? String(selectedSectionId)
+    : "all";
   const createRequirementPath = selectedSectionId
     ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${selectedSectionId}`
     : `/projects/joined/${projectId}/requirements/${documentId}/items/new`;
@@ -143,10 +149,10 @@ export function RequirementDocumentDetailPage({
           className="w-full justify-start overflow-x-auto border-b"
         >
           <TabsTrigger className="flex-none px-4 py-2" value="overview">
-            概要
+            文書として読む
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="requirements">
-            要件
+            要件を書く・整理する
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="issues">
             未決事項
@@ -174,9 +180,7 @@ export function RequirementDocumentDetailPage({
             projectId={projectId}
             documentId={documentId}
             selectedSectionId={selectedSectionId}
-            onSelectSection={(sectionId) =>
-              setSelectedSectionValue(sectionId ? String(sectionId) : "all")
-            }
+            onSelectSection={(sectionId) => setSelectedSectionId(sectionId)}
             canCreate={canCreateRequirement(currentProjectRole)}
             canUpdate={canUpdateRequirement(currentProjectRole)}
             canComment={canCommentRequirement(currentProjectRole)}

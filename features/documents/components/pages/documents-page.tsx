@@ -1,4 +1,5 @@
 "use client";
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -26,9 +27,9 @@ import { documentKeys, documentsHref } from "../../lib/document";
 import { DocumentLoadError } from "../shared/document-feedback";
 
 export function DocumentsPage({ projectId }: { projectId: number }) {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
+  const [page, setPage] = useUrlFilterState("page", 1);
+  const [q, setQ] = useUrlFilterState("q", "");
+  const [search, setSearch] = useState(q);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const query = useQuery({
     queryKey: [...documentKeys.all(projectId), "list", page, q],

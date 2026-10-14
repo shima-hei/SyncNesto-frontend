@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 import { EditIcon, ExternalLinkIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,9 @@ function SelectedRequirementSummaryContent({
   const { summary, isLoading } = useRequirementSummary(
     projectId,
     requirementId,
+  );
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`,
   );
 
   if (isLoading) {
@@ -146,7 +150,9 @@ function SelectedRequirementSummaryContent({
           {canUpdate ? (
             <Button asChild size="sm">
               <Link
-                href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`}
+                href={withReturn(
+                  `/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`,
+                )}
               >
                 <EditIcon data-icon="inline-start" />
                 要件を編集
@@ -155,7 +161,9 @@ function SelectedRequirementSummaryContent({
           ) : null}
           <Button asChild variant="outline" size="sm">
             <Link
-              href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`}
+              href={withReturn(
+                `/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`,
+              )}
             >
               <ExternalLinkIcon data-icon="inline-start" />
               詳細を開く

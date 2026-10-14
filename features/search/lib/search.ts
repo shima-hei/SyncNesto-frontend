@@ -23,6 +23,7 @@ export const searchKindLabels: Record<SearchItem["kind"], string> = {
   test_item: "テスト項目",
   test_case: "テストケース",
   document: "ドキュメント",
+  specification: "画面・API設計書",
 };
 
 export function readSearchState(
@@ -68,6 +69,8 @@ export function searchResultHref(item: SearchItem): string {
       return `${base}/tasks/${id}`;
     case "document":
       return `${base}/documents/${id}`;
+    case "specification":
+      return `${base}/specifications/${id}`;
     case "test_design":
       return `${base}/test-designs/${id}`;
     case "test_item":

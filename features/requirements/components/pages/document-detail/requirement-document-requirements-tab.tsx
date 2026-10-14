@@ -1,5 +1,9 @@
 "use client";
 
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
+import { useRequirement } from "../../../hooks/use-requirement";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
+
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -52,15 +56,22 @@ export function RequirementDocumentRequirementsTab({
 }: RequirementDocumentRequirementsTabProps) {
   const router = useRouter();
   const supportPanelId = useId();
-  const [selectedRequirement, setSelectedRequirement] =
-    useState<RequirementRead | null>(null);
+  const [selectedRequirementId, setSelectedRequirementId] = useUrlFilterState<
+    number | null
+  >("selectedRequirement", null);
+  const selectedQuery = useRequirement(projectId, selectedRequirementId ?? 0, {
+    enabled: Boolean(selectedRequirementId),
+  });
+  const selectedRequirement =
+    selectedQuery.requirement?.document_id === documentId
+      ? selectedQuery.requirement
+      : null;
   const [commentTargetMode, setCommentTargetMode] =
-    useState<CommentTargetMode>("section");
+    useUrlFilterState<CommentTargetMode>("reviewTarget", "requirement");
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementReviewTargetAnchor | null>(null);
   const [activeAnchorKey, setActiveAnchorKey] = useState<string | null>(null);
   const { sections } = useRequirementSections(projectId, documentId);
-  const selectedRequirementId = selectedRequirement?.id ?? null;
   const selectedSection = sections.find(
     (section) => section.id === selectedSectionId,
   );
@@ -85,37 +96,41 @@ export function RequirementDocumentRequirementsTab({
     (targetAnchor) => targetAnchor.scope === "section_requirements_review",
   );
   const reviewTarget =
-    commentTargetMode === "requirement" && selectedRequirement
-      ? {
-          targetType: "requirement_item",
-          targetId: selectedRequirement.id,
-          title: `要件コメント: ${selectedRequirement.requirement_code}`,
-          label: `${selectedRequirement.requirement_code} ${selectedRequirement.title}`,
-          approvalTargetType: "requirement_item",
-          approvalTargetId: selectedRequirement.id,
-          approvalTitle: "要件の承認",
-          historyTargetType: "requirement",
-          historyTargetId: selectedRequirement.id,
-          historyTitle: "要件の変更履歴",
-        }
-      : selectedSectionId
+    selectedRequirementId &&
+    commentTargetMode === "requirement" &&
+    !selectedRequirement
+      ? null
+      : commentTargetMode === "requirement" && selectedRequirement
         ? {
-            targetType: "section",
-            targetId: selectedSectionId,
-            title: "セクションコメント",
-            label: selectedSection?.title ?? "選択中セクション",
-            approvalTargetType: "section",
-            approvalTargetId: selectedSectionId,
-            approvalTitle: "セクションの承認",
-            historyTargetType: "requirement_section",
-            historyTargetId: selectedSectionId,
-            historyTitle: "セクションの変更履歴",
+            targetType: "requirement_item",
+            targetId: selectedRequirement.id,
+            title: `要件コメント: ${selectedRequirement.requirement_code}`,
+            label: `${selectedRequirement.requirement_code} ${selectedRequirement.title}`,
+            approvalTargetType: "requirement_item",
+            approvalTargetId: selectedRequirement.id,
+            approvalTitle: "要件の承認",
+            historyTargetType: "requirement",
+            historyTargetId: selectedRequirement.id,
+            historyTitle: "要件の変更履歴",
           }
-        : null;
+        : selectedSectionId
+          ? {
+              targetType: "section",
+              targetId: selectedSectionId,
+              title: "セクションコメント",
+              label: selectedSection?.title ?? "選択中セクション",
+              approvalTargetType: "section",
+              approvalTargetId: selectedSectionId,
+              approvalTitle: "セクションの承認",
+              historyTargetType: "requirement_section",
+              historyTargetId: selectedSectionId,
+              historyTitle: "セクションの変更履歴",
+            }
+          : null;
 
   const handleSelectSection = (sectionId: number | null) => {
     onSelectSection(sectionId);
-    setSelectedRequirement(null);
+    setSelectedRequirementId(null);
     setCommentTargetMode("section");
     setSelectedTargetAnchor(null);
   };
@@ -125,7 +140,7 @@ export function RequirementDocumentRequirementsTab({
     if (selectedRequirement?.id !== requirement.id) {
       setSelectedTargetAnchor(null);
     }
-    setSelectedRequirement(requirement);
+    setSelectedRequirementId(requirement.id);
   };
 
   const handleSelectRequirementAnchor = (
@@ -133,7 +148,7 @@ export function RequirementDocumentRequirementsTab({
     targetAnchor: RequirementReviewTargetAnchor,
   ) => {
     setCommentTargetMode("requirement");
-    setSelectedRequirement(requirement);
+    setSelectedRequirementId(requirement.id);
     setSelectedTargetAnchor(targetAnchor);
   };
 
@@ -243,7 +258,7 @@ export function RequirementDocumentRequirementsTab({
             onActivateSectionComments={handleActivateSectionComments}
             onDeleted={() => {
               onSelectSection(null);
-              setSelectedRequirement(null);
+              setSelectedRequirementId(null);
               setCommentTargetMode("section");
               setSelectedTargetAnchor(null);
             }}
@@ -267,7 +282,11 @@ export function RequirementDocumentRequirementsTab({
           aria-label="選択対象のコメント・承認・履歴"
           className="min-w-0 scroll-mt-20 @min-[64rem]/requirements:sticky @min-[64rem]/requirements:top-20 @min-[64rem]/requirements:max-h-[calc(100dvh-6rem)] @min-[64rem]/requirements:overflow-y-auto @min-[64rem]/requirements:overscroll-contain"
         >
-          {reviewTarget ? (
+          {selectedRequirementId && selectedQuery.isLoading ? (
+            <p role="status">選択した要件を読み込み中…</p>
+          ) : selectedQuery.error ? (
+            <FormApiError error={selectedQuery.error} />
+          ) : reviewTarget ? (
             <div className="flex flex-col gap-4">
               {commentTargetMode === "requirement" && selectedRequirementId ? (
                 <SelectedRequirementSummarySection

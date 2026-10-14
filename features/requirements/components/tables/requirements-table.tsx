@@ -2,6 +2,7 @@
 
 import { type ReactNode } from "react";
 import Link from "next/link";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 import { EditIcon, MessageSquarePlusIcon } from "lucide-react";
 
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
@@ -82,6 +83,9 @@ export function RequirementsTable({
   onSelectRequirement,
   onSelectReviewAnchor,
 }: RequirementsTableProps) {
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`,
+  );
   const { updateRequirementListItem, isPending } =
     useUpdateRequirementListItem(projectId);
 
@@ -143,7 +147,9 @@ export function RequirementsTable({
                         className="shrink-0"
                       >
                         <Link
-                          href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}/edit`}
+                          href={withReturn(
+                            `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}/edit`,
+                          )}
                           aria-label={`${requirement.requirement_code} ${requirement.title}を編集`}
                           onClick={(event) => event.stopPropagation()}
                         >
@@ -305,7 +311,9 @@ export function RequirementsTable({
             return (
               <ClickableTableRow
                 key={requirement.id}
-                href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`}
+                href={withReturn(
+                  `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
+                )}
               >
                 {cells}
               </ClickableTableRow>

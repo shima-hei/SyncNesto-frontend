@@ -10,6 +10,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   activities: "最近の動き",
   "audit-logs": "監査ログ",
   documents: "ドキュメント",
+  specifications: "画面・API設計",
   forbidden: "アクセス権限なし",
   help: "ヘルプ",
   joined: "プロジェクト",
@@ -152,6 +153,7 @@ const getNewPageLabel = (previousSegment?: string) => {
     items: "要件登録",
     management: "プロジェクト登録",
     requirements: "要件定義書登録",
+    specifications: "設計書を作成",
     users: "ユーザー登録",
   };
 

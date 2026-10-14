@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
+import { useUrlTabState } from "@/hooks/use-url-tab-state";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +39,10 @@ export function DocumentDetailPage({
   documentId: number;
 }) {
   const [deleting, setDeleting] = useState(false);
+  const [tab, setTab] = useUrlTabState({
+    values: ["body", "attachments", "links", "history"] as const,
+    defaultValue: "body",
+  });
   const router = useRouter();
   const cache = useQueryClient();
   const { currentProjectRole } = useCurrentProjectRole(projectId);
@@ -96,7 +102,7 @@ export function DocumentDetailPage({
         }
       />
       <FormApiError error={remove.error} />
-      <Tabs defaultValue="body" className="min-w-0">
+      <Tabs value={tab} onValueChange={setTab} className="min-w-0">
         <TabsList variant="line" className="max-w-full">
           <TabsTrigger value="body">本文</TabsTrigger>
           <TabsTrigger value="attachments">添付</TabsTrigger>
@@ -122,6 +128,11 @@ export function DocumentDetailPage({
             projectId={projectId}
             documentId={documentId}
             canEdit={canEdit}
+          />
+          <RelatedSpecifications
+            projectId={projectId}
+            targetType="document"
+            targetId={String(documentId)}
           />
         </TabsContent>
         <TabsContent value="history">

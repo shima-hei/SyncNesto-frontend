@@ -1,6 +1,8 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import { initialRequirementValues } from "../../constants/requirement-form";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 import Link from "next/link";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
@@ -62,7 +64,10 @@ type RequirementFormProps = {
   conflictValues?: RequirementFormValues | null;
   onCloseConflict?: () => void;
   onResolveConflict?: (values: RequirementFormValues) => Promise<unknown>;
-  onSubmit: (values: RequirementFormValues) => Promise<unknown>;
+  onSubmit: (
+    values: RequirementFormValues,
+    options?: { continueCreating?: boolean },
+  ) => Promise<unknown>;
 };
 
 export function RequirementForm({
@@ -158,8 +163,25 @@ export function RequirementForm({
     }
 
     setErrors({});
-    await onSubmit(result.data)
-      .then(() => draft.clearDraft())
+    const continueCreating =
+      mode === "create" &&
+      (event.nativeEvent.submitter as HTMLElement | null)?.dataset
+        .continueCreating === "true";
+    await onSubmit(result.data, { continueCreating })
+      .then(() => {
+        draft.clearDraft();
+        if (continueCreating) {
+          setValues({
+            ...initialRequirementValues,
+            sectionId: values.sectionId,
+            requirementType: values.requirementType,
+            category: values.category,
+            priority: values.priority,
+            ownerId: values.ownerId,
+          });
+          document.getElementById(titleId)?.focus();
+        }
+      })
       .catch(() => undefined);
   };
 
@@ -173,7 +195,9 @@ export function RequirementForm({
   const selectedSection = sections.find(
     (section) => String(section.id) === values.sectionId,
   );
-  const listPath = `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements${initialValues.sectionId ? `&sectionId=${initialValues.sectionId}` : ""}`;
+  const { returnTo: listPath } = useListNavigation(
+    `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements${initialValues.sectionId ? `&sectionId=${initialValues.sectionId}` : ""}`,
+  );
 
   return (
     <>
@@ -516,6 +540,16 @@ export function RequirementForm({
               {isPending ? <Spinner data-icon="inline-start" /> : null}
               {mode === "create" ? "要件を作成" : "変更を保存"}
             </Button>
+            {mode === "create" && (
+              <Button
+                type="submit"
+                variant="outline"
+                data-continue-creating="true"
+                disabled={isPending}
+              >
+                保存して続けて作成
+              </Button>
+            )}
           </div>
         </FieldGroup>
       </form>

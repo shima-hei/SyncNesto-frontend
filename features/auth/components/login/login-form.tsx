@@ -71,6 +71,7 @@ export function LoginForm({
       <Card className="p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form
+            method="post"
             className="p-6 md:p-8"
             onSubmit={handleSubmit}
             autoComplete="on"

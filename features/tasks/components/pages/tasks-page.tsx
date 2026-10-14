@@ -1,5 +1,7 @@
 "use client";
 
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
+
 import { useMemo, useState } from "react";
 import { PlusIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -68,34 +70,54 @@ export function TasksPage({ projectId }: TasksPageProps) {
     defaultValue: "list",
   });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState(ALL_STATUSES);
-  const [priority, setPriority] = useState(ALL_PRIORITIES);
-  const [taskType, setTaskType] = useState(ALL_TYPES);
-  const [overdue, setOverdue] = useState(ALL_OVERDUE);
+  const [page, setPage] = useUrlFilterState("page", 1);
+  const [q, setQ] = useUrlFilterState("q", "");
+  const [searchInput, setSearchInput] = useState(q);
+  const [status, setStatus] = useUrlFilterState("status", ALL_STATUSES);
+  const [priority, setPriority] = useUrlFilterState("priority", ALL_PRIORITIES);
+  const [taskType, setTaskType] = useUrlFilterState("taskType", ALL_TYPES);
+  const [overdue, setOverdue] = useUrlFilterState("overdue", ALL_OVERDUE);
   const [selectedAssigneeId, setAssigneeId] = useState<string | null>(null);
   const assigneeId =
     selectedAssigneeId ??
     (searchParams.get("assignee") === "me" ? String(user?.id ?? "") : "");
-  const [requirementId, setRequirementId] = useState("");
-  const [tag, setTag] = useState("");
-  const [startDateFrom, setStartDateFrom] = useState("");
-  const [dueDateTo, setDueDateTo] = useState("");
-  const [sort, setSort] =
-    useState<(typeof SORT_OPTIONS)[number]["value"]>("updated_desc");
+  const [requirementId, setRequirementId] = useUrlFilterState(
+    "requirementId",
+    "",
+  );
+  const [tag, setTag] = useUrlFilterState("tag", "");
+  const [startDateFrom, setStartDateFrom] = useUrlFilterState(
+    "startDateFrom",
+    "",
+  );
+  const [dueDateTo, setDueDateTo] = useUrlFilterState("dueDateTo", "");
+  const [sort, setSort] = useUrlFilterState<
+    (typeof SORT_OPTIONS)[number]["value"]
+  >("sort", "updated_desc");
   const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
   const [bulkStatus, setBulkStatus] = useState(NO_BULK_STATUS_CHANGE);
   const [bulkAssigneeId, setBulkAssigneeId] = useState("");
   const [bulkDueDate, setBulkDueDate] = useState("");
-  const [ganttStartDate, setGanttStartDate] = useState("");
-  const [ganttEndDate, setGanttEndDate] = useState("");
-  const [ganttAssigneeId, setGanttAssigneeId] = useState("");
-  const [ganttRequirementId, setGanttRequirementId] = useState("");
-  const [ganttDisplayUnit, setGanttDisplayUnit] =
-    useState<(typeof GANTT_DISPLAY_OPTIONS)[number]["value"]>("day");
-  const [boardSwimlane, setBoardSwimlane] = useState<BoardSwimlane>("none");
+  const [ganttStartDate, setGanttStartDate] = useUrlFilterState(
+    "ganttStartDate",
+    "",
+  );
+  const [ganttEndDate, setGanttEndDate] = useUrlFilterState("ganttEndDate", "");
+  const [ganttAssigneeId, setGanttAssigneeId] = useUrlFilterState(
+    "ganttAssigneeId",
+    "",
+  );
+  const [ganttRequirementId, setGanttRequirementId] = useUrlFilterState(
+    "ganttRequirementId",
+    "",
+  );
+  const [ganttDisplayUnit, setGanttDisplayUnit] = useUrlFilterState<
+    (typeof GANTT_DISPLAY_OPTIONS)[number]["value"]
+  >("ganttDisplayUnit", "day");
+  const [boardSwimlane, setBoardSwimlane] = useUrlFilterState<BoardSwimlane>(
+    "boardSwimlane",
+    "none",
+  );
   const [isBoardCompletedCollapsed, setIsBoardCompletedCollapsed] =
     useState(true);
   const [milestoneCreateDialogOpen, setMilestoneCreateDialogOpen] =

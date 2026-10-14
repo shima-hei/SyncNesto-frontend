@@ -7,6 +7,7 @@ export const TRASH_LABELS = {
   task: "タスク",
   test_design: "テスト設計書",
   document: "ドキュメント",
+  specification: "画面・API設計書",
   document_attachment: "文書添付",
 } as const;
 
@@ -29,6 +30,8 @@ export const restoredHref = (projectId: number, item: TrashItem) => {
       return `${base}/test-designs/${item.id}`;
     case "document":
       return `${base}/documents/${item.id}`;
+    case "specification":
+      return `${base}/specifications/${item.id}`;
     case "document_attachment":
       return item.container_id
         ? `${base}/documents/${item.container_id}`

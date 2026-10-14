@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 import Link from "next/link";
 import {
   ArrowLeftIcon,
@@ -74,6 +76,9 @@ export function RequirementDetailPage({
   documentId,
   requirementId,
 }: RequirementDetailPageProps) {
+  const { returnTo, withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`,
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementCommentAnchor | null>(null);
@@ -138,9 +143,7 @@ export function RequirementDetailPage({
   return (
     <div className="@container/requirement-detail flex min-w-0 flex-col gap-6">
       <Button asChild variant="outline" size="sm" className="w-fit">
-        <Link
-          href={`/projects/joined/${projectId}/requirements/${documentId}?tab=requirements${requirement.section_id ? `&sectionId=${requirement.section_id}` : ""}`}
-        >
+        <Link href={returnTo}>
           <ArrowLeftIcon data-icon="inline-start" />
           要件一覧へ戻る
         </Link>
@@ -168,7 +171,9 @@ export function RequirementDetailPage({
               {canUpdateRequirement(currentProjectRole) ? (
                 <Button asChild variant="outline">
                   <Link
-                    href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`}
+                    href={withReturn(
+                      `/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}/edit`,
+                    )}
                   >
                     <EditIcon data-icon="inline-start" />
                     編集
@@ -203,7 +208,7 @@ export function RequirementDetailPage({
               実現内容
             </TabsTrigger>
             <TabsTrigger className="flex-none px-4 py-2" value="relations">
-              関連
+              設計・タスク・テスト
             </TabsTrigger>
             <TabsTrigger className="flex-none px-4 py-2" value="reviews">
               レビュー
@@ -313,6 +318,11 @@ export function RequirementDetailPage({
 
           <TabsContent value="relations">
             <div className="grid gap-4">
+              <RelatedSpecifications
+                projectId={projectId}
+                targetType="requirement"
+                targetId={String(requirementId)}
+              />
               <div>
                 <RequirementTestItemsSection
                   projectId={projectId}

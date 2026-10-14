@@ -1,5 +1,7 @@
 "use client";
 
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
+
 import { useState } from "react";
 import Link from "next/link";
 
@@ -33,10 +35,10 @@ type RequirementDocumentsPageProps = {
 export function RequirementDocumentsPage({
   projectId,
 }: RequirementDocumentsPageProps) {
-  const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState(ALL_STATUSES);
+  const [page, setPage] = useUrlFilterState("page", 1);
+  const [q, setQ] = useUrlFilterState("q", "");
+  const [searchInput, setSearchInput] = useState(q);
+  const [status, setStatus] = useUrlFilterState("status", ALL_STATUSES);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const { documents, total, isLoading, isFetching, error, refetch } =
     useRequirementDocuments(projectId, {

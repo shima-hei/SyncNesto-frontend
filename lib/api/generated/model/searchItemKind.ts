@@ -9,6 +9,7 @@ export type SearchItemKind =
   (typeof SearchItemKind)[keyof typeof SearchItemKind];
 
 export const SearchItemKind = {
+  specification: "specification",
   requirement_document: "requirement_document",
   requirement: "requirement",
   task: "task",

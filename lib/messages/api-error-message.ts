@@ -26,6 +26,10 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
     "認証情報の確認に失敗しました。画面を更新して再度お試しください。",
   NOT_FOUND: "対象のデータが見つかりません。",
   CONFLICT: "データの状態が競合しています。内容を確認してください。",
+  SPECIFICATION_UNRESOLVED_COMMENTS:
+    "未解決のレビュー指摘があります。修正内容を確認して指摘を解決してから承認してください。",
+  SPECIFICATION_REVIEW_FIELDS_REQUIRED:
+    "目的と、APIのパスまたは画面URLを入力してからレビューを依頼してください。",
   DUPLICATE_RESOURCE: "同じ内容のデータが既に存在します。",
   VERSION_CONFLICT: "他の更新と競合しました。内容を確認してください。",
   LAST_PROJECT_ADMIN_REQUIRED:
