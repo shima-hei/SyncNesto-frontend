@@ -1,4 +1,5 @@
 import { ThemeSwitcher } from "@/components/shared/display/theme-switcher";
+import { PublicInformationLinks } from "@/components/shared/public/public-information-page";
 
 import { LoginForm } from "./login-form";
 import { LoginSessionToast } from "./login-session-toast";
@@ -22,6 +23,9 @@ export function LoginPage({
       <LoginSessionToast showSessionExpiredToast={showSessionExpiredToast} />
       <div className="w-full max-w-sm md:max-w-4xl">
         <LoginForm demoEnabled={demoEnabled && !returnTo} returnTo={returnTo} />
+      </div>
+      <div className="mt-6">
+        <PublicInformationLinks />
       </div>
     </main>
   );
