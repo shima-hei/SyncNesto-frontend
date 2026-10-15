@@ -25,8 +25,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { SidebarScopeMenuItem } from "./sidebar-scope-menu-item";
 
-export function SidebarUserMenu() {
+export function SidebarUserMenu({
+  scope,
+}: {
+  scope: "system" | "organization";
+}) {
   const { isMobile } = useSidebar();
   const { user } = useAuth();
   const { logout, isPending } = useLogout();
@@ -85,6 +90,7 @@ export function SidebarUserMenu() {
                   アカウント
                 </Link>
               </DropdownMenuItem>
+              <SidebarScopeMenuItem scope={scope} />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled={isPending} onSelect={handleLogout}>

@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useIsMutating } from "@tanstack/react-query";
-import {
-  CommandIcon,
-  UsersIcon,
-  FolderKanbanIcon,
-  ShieldCheckIcon,
-  Building2Icon,
-} from "lucide-react";
-import { isSystemAdmin } from "@/features/auth/utils/authorization";
+import { CommandIcon, UsersIcon, FolderKanbanIcon } from "lucide-react";
 
 import {
   Sidebar,
@@ -43,7 +35,6 @@ export function AppSidebar({
 }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const pending = useIsMutating();
   const system = scope === "system";
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
   const visibleManagementNavigation = getVisibleNavigationItems(
@@ -70,17 +61,6 @@ export function AppSidebar({
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {isSystemAdmin(user) ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                disabled={pending > 0}
-                onClick={() => window.location.assign(system ? "/" : "/system")}
-              >
-                {system ? <Building2Icon /> : <ShieldCheckIcon />}
-                <span>{system ? "組織の業務画面へ" : "システム管理へ"}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ) : null}
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
@@ -117,7 +97,7 @@ export function AppSidebar({
         />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarUserMenu />
+        <SidebarUserMenu scope={scope} />
       </SidebarFooter>
     </Sidebar>
   );
