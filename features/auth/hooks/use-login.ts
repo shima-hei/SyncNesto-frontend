@@ -38,7 +38,7 @@ export function useLogin(returnTo?: string) {
     router.replace(
       response.password_change_required
         ? "/initial-password"
-        : (mcpReturnPath(returnTo) ?? "/"),
+        : (mcpReturnPath(returnTo) ?? "/entry"),
     );
   };
 

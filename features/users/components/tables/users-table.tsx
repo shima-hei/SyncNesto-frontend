@@ -66,7 +66,7 @@ export function UsersTable({ users, isLoading }: UsersTableProps) {
               </TableCell>
               <TableCell>
                 <Badge variant={user.is_active ? "secondary" : "outline"}>
-                  {user.is_active ? "有効" : "無効"}
+                  {user.is_active ? "有効" : "全体停止"}
                 </Badge>
               </TableCell>
               <TableCell>{formatLastLoginAt(user.last_login_at)}</TableCell>

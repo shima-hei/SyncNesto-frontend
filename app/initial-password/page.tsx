@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const user = await requireUser({ allowInitialPassword: true });
-  if (!user.password_change_required) redirect("/");
+  if (!user.password_change_required) redirect("/entry");
   return (
     <InitialPasswordPage
       email={user.email}

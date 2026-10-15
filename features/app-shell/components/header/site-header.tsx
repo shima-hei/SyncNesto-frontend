@@ -9,8 +9,7 @@ import { useTenant } from "@/features/tenants/providers/tenant-provider";
 
 import { SiteBreadcrumbs } from "./site-breadcrumbs";
 
-export function SiteHeader() {
-  const { tenant } = useTenant();
+export function SiteHeader({ scope }: { scope: "system" | "organization" }) {
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex min-w-0 w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
@@ -22,10 +21,19 @@ export function SiteHeader() {
         <div className="min-w-0 flex-1">
           <SiteBreadcrumbs />
         </div>
-        <TenantSwitcher />
-        {tenant ? <NotificationCenter /> : null}
+        {scope === "organization" ? <OrganizationActions /> : null}
         <ThemeSwitcher />
       </div>
     </header>
+  );
+}
+
+function OrganizationActions() {
+  const { tenant } = useTenant();
+  return (
+    <>
+      <TenantSwitcher />
+      {tenant ? <NotificationCenter /> : null}
+    </>
   );
 }

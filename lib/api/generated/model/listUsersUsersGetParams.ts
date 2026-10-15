@@ -17,4 +17,5 @@ export type ListUsersUsersGetParams = {
   page_size?: number;
   q?: string | null;
   is_active?: boolean | null;
+  without_active_membership?: boolean;
 };

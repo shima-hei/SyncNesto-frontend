@@ -28,7 +28,7 @@ export default async function Page({
   return (
     <MfaPage
       flow={(await response.json()) as MfaFlowRead}
-      returnTo={mcpReturnPath(next) ?? "/"}
+      returnTo={mcpReturnPath(next) ?? "/entry"}
     />
   );
 }
