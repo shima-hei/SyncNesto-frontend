@@ -1,4 +1,6 @@
 "use client";
+import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -64,6 +66,9 @@ type TaskDetailPageProps = {
 };
 
 export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
+  const { returnTo } = useListNavigation(
+    `/projects/joined/${projectId}/tasks?tab=list`,
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [childTaskDialogOpen, setChildTaskDialogOpen] = useState(false);
@@ -107,7 +112,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
   return (
     <div className="@container/task-detail flex min-w-0 flex-col gap-6">
       <Button asChild variant="outline" size="sm" className="w-fit">
-        <Link href={`/projects/joined/${projectId}/tasks?tab=list`}>
+        <Link href={returnTo}>
           <ArrowLeftIcon data-icon="inline-start" />
           タスク一覧へ戻る
         </Link>
@@ -271,6 +276,11 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
           />
 
           <TaskChangeLogsSection taskId={taskId} />
+          <RelatedSpecifications
+            projectId={projectId}
+            targetType="task"
+            targetId={String(taskId)}
+          />
         </div>
 
         <aside className="min-w-0 @min-[64rem]/task-detail:sticky @min-[64rem]/task-detail:top-20">

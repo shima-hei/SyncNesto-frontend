@@ -26,7 +26,7 @@ export const requirementSchema = z.object({
     .string()
     .min(1, VALIDATION_MESSAGES.selectRequired("種別")),
   category: z.string(),
-  title: z.string().min(1, VALIDATION_MESSAGES.required("タイトル")),
+  title: z.string().min(1, VALIDATION_MESSAGES.required("要件名")),
   description: z.string(),
   rationale: z.string(),
   acceptanceCriteria: z.string(),

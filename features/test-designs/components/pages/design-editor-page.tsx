@@ -1,4 +1,6 @@
 "use client";
+import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 import { Activity, useMemo, useState } from "react";
 import Link from "next/link";
@@ -352,6 +354,14 @@ function Editor({ initial }: { initial: Design }) {
           ブラウザへの下書き保存ができません。保存または「編集内容を退避」を使用してください。
         </p>
       )}
+      {!design.items.some((item) => !item.is_spacer) && (
+        <Alert className="mb-4">
+          <AlertTitle>まず確認する操作を1件書きましょう</AlertTitle>
+          <AlertDescription>
+            対象の機能、手順、期待する結果から始めます。関連要件・画面・API設計を確認し、正常時と失敗時を具体的にします。条件の組合せが必要なら「パターン」を追加できます。
+          </AlertDescription>
+        </Alert>
+      )}
       <details className="group border-b">
         <summary className="flex cursor-pointer list-none items-center gap-2 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
           <span>設計書情報</span>
@@ -617,22 +627,31 @@ function Editor({ initial }: { initial: Design }) {
           </Activity>
           <Activity mode={inspector === "requirements" ? "visible" : "hidden"}>
             {activeItem ? (
-              <RequirementLinksPanel
-                projectId={design.project_id}
-                designId={design.id}
-                itemId={activeItem.id}
-                itemCode={activeItem.code}
-                disabled={readOnly || state.dirty}
-                disabledMessage={
-                  state.dirty
-                    ? "設計書を保存すると紐付けを変更できます。"
-                    : state.saving
-                      ? "保存完了後に紐付けを変更できます。"
-                      : !permissions.edit
-                        ? "紐付けを変更する権限がありません。"
-                        : undefined
-                }
-              />
+              <div className="flex flex-col gap-5">
+                <RequirementLinksPanel
+                  projectId={design.project_id}
+                  designId={design.id}
+                  itemId={activeItem.id}
+                  itemCode={activeItem.code}
+                  disabled={readOnly || state.dirty}
+                  disabledMessage={
+                    state.dirty
+                      ? "設計書を保存すると紐付けを変更できます。"
+                      : state.saving
+                        ? "保存完了後に紐付けを変更できます。"
+                        : !permissions.edit
+                          ? "紐付けを変更する権限がありません。"
+                          : undefined
+                  }
+                />
+                {!state.dirty && !state.saving && (
+                  <RelatedSpecifications
+                    projectId={design.project_id}
+                    targetType="test_item"
+                    targetId={activeItem.id}
+                  />
+                )}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">
                 テスト項目を選択してください。

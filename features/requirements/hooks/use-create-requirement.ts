@@ -17,12 +17,9 @@ export function useCreateRequirement(projectId: number, documentId: number) {
   const createRequirementMutation =
     useCreateRequirementProjectsProjectIdRequirementsPost({
       mutation: {
-        onSuccess: async (requirement) => {
+        onSuccess: async () => {
           await invalidateRequirementList(queryClient, projectId);
           toast.success(REQUIREMENT_MESSAGES.requirement.createSuccess);
-          router.push(
-            `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
-          );
         },
         onError: () => {
           toast.error(REQUIREMENT_MESSAGES.requirement.createError);
@@ -30,11 +27,19 @@ export function useCreateRequirement(projectId: number, documentId: number) {
       },
     });
 
-  const createRequirement = async (values: RequirementFormValues) => {
-    return createRequirementMutation.mutateAsync({
+  const createRequirement = async (
+    values: RequirementFormValues,
+    options?: { continueCreating?: boolean },
+  ) => {
+    const requirement = await createRequirementMutation.mutateAsync({
       projectId,
       data: toRequirementCreate(values, documentId),
     });
+    if (!options?.continueCreating)
+      router.push(
+        `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
+      );
+    return requirement;
   };
 
   return {

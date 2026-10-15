@@ -1,6 +1,10 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import { listRequirementsProjectsProjectIdRequirementsGet } from "@/lib/api/generated/requirements/requirements";
 
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +28,6 @@ import {
   getRequirementTypeLabel,
 } from "../../../constants/requirement-options";
 import { useRequirementSections } from "../../../hooks/use-requirement-sections";
-import { useRequirements } from "../../../hooks/use-requirements";
 import { useTargetComments } from "../../../hooks/use-target-comments";
 import {
   createRequirementReviewAnchor,
@@ -50,7 +53,7 @@ export function RequirementDocumentOverview({
   projectId,
   documentId,
   document,
-  canComment,
+  canComment: canCommentRequested,
 }: RequirementDocumentOverviewProps) {
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementReviewTargetAnchor | null>(null);
@@ -61,14 +64,30 @@ export function RequirementDocumentOverview({
     projectId,
     documentId,
   );
-  const { requirements, isLoading: isRequirementsLoading } = useRequirements(
-    projectId,
-    {
-      page: 1,
-      page_size: 100,
-      document_id: documentId,
-    },
-  );
+  const requirementsQuery = useInfiniteQuery({
+    queryKey: ["requirement-document-preview", projectId, documentId],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      listRequirementsProjectsProjectIdRequirementsGet(projectId, {
+        page: pageParam,
+        page_size: 100,
+        document_id: documentId,
+        sort: "code_asc",
+      }),
+    getNextPageParam: (last) =>
+      last.page * last.page_size < last.total ? last.page + 1 : undefined,
+    retry: false,
+  });
+  const requirements =
+    requirementsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const isRequirementsLoading = requirementsQuery.isPending;
+  const total = requirementsQuery.data?.pages[0]?.total ?? 0;
+  const canComment =
+    canCommentRequested &&
+    !isRequirementsLoading &&
+    !isSectionsLoading &&
+    !requirementsQuery.hasNextPage &&
+    !requirementsQuery.error;
   const { comments: targetComments } = useTargetComments(
     projectId,
     "document",
@@ -107,6 +126,13 @@ export function RequirementDocumentOverview({
   };
 
   const getTargetAnchorStatus = (targetAnchor: Record<string, unknown>) => {
+    if (
+      isRequirementsLoading ||
+      isSectionsLoading ||
+      requirementsQuery.hasNextPage ||
+      requirementsQuery.error
+    )
+      return null;
     if (!isRequirementReviewTargetAnchor(targetAnchor)) {
       return null;
     }
@@ -156,6 +182,34 @@ export function RequirementDocumentOverview({
 
   return (
     <div className="@container/document-overview flex min-w-0 flex-col gap-4">
+      {requirementsQuery.error && (
+        <DataLoadError
+          resourceName="プレビューの要件"
+          isRetrying={requirementsQuery.isFetching}
+          onRetry={() => void requirementsQuery.refetch()}
+        />
+      )}
+      {requirementsQuery.hasNextPage && (
+        <div
+          className="flex flex-wrap items-center gap-3 border-b pb-3"
+          role="status"
+        >
+          <p className="text-sm">
+            全{total}件中{requirements.length}
+            件を表示しています。全文への箇所指定レビューは全件の読込後にできます。
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={requirementsQuery.isFetchingNextPage}
+            onClick={() => void requirementsQuery.fetchNextPage()}
+          >
+            {requirementsQuery.isFetchingNextPage
+              ? "読込中…"
+              : "次の要件を読み込む"}
+          </Button>
+        </div>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>基本情報</CardTitle>

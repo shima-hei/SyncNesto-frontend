@@ -32,6 +32,11 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
     canShow: canViewProjectFeature,
   },
   {
+    label: "画面・API設計",
+    href: (projectId) => `/projects/joined/${projectId}/specifications`,
+    canShow: canViewProjectFeature,
+  },
+  {
     label: "テスト設計書",
     href: (projectId) => `/projects/joined/${projectId}/test-designs`,
     canShow: canViewProjectFeature,

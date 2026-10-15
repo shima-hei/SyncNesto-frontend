@@ -1,5 +1,7 @@
 "use client";
 
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
+
 import { useState } from "react";
 import Link from "next/link";
 import { DownloadIcon, EditIcon, Trash2Icon } from "lucide-react";
@@ -61,7 +63,24 @@ export function RequirementDocumentDetailPage({
     projectId,
     documentId,
   );
-  const { sections } = useRequirementSections(projectId, documentId);
+  const { sections, isLoading: isSectionsLoading } = useRequirementSections(
+    projectId,
+    documentId,
+  );
+  const [selectedSectionQuery, setSelectedSectionId] = useUrlFilterState<
+    number | null
+  >("sectionId", null);
+  const selectedSectionId = sections.some(
+    (section) => section.id === selectedSectionQuery,
+  )
+    ? selectedSectionQuery
+    : null;
+  const selectedSectionValue = selectedSectionId
+    ? String(selectedSectionId)
+    : "all";
+  const createRequirementPath = selectedSectionId
+    ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${selectedSectionId}`
+    : `/projects/joined/${projectId}/requirements/${documentId}/items/new`;
   const { deleteRequirementDocument, isPending: isDeletePending } =
     useDeleteRequirementDocument(projectId, documentId);
   const { exportRequirementDocument, isPending: isExportPending } =
@@ -95,13 +114,9 @@ export function RequirementDocumentDetailPage({
               <DownloadIcon data-icon="inline-start" />
               出力
             </Button>
-            {canCreateRequirement(currentProjectRole) ? (
+            {canCreateRequirement(currentProjectRole) && !isSectionsLoading ? (
               <Button asChild>
-                <Link
-                  href={`/projects/joined/${projectId}/requirements/${documentId}/items/new`}
-                >
-                  要件登録
-                </Link>
+                <Link href={createRequirementPath}>要件を追加</Link>
               </Button>
             ) : null}
             {canUpdateRequirement(currentProjectRole) ? (
@@ -110,7 +125,7 @@ export function RequirementDocumentDetailPage({
                   href={`/projects/joined/${projectId}/requirements/${documentId}/edit`}
                 >
                   <EditIcon data-icon="inline-start" />
-                  編集
+                  定義書の情報を編集
                 </Link>
               </Button>
             ) : null}
@@ -134,10 +149,10 @@ export function RequirementDocumentDetailPage({
           className="w-full justify-start overflow-x-auto border-b"
         >
           <TabsTrigger className="flex-none px-4 py-2" value="overview">
-            概要
+            文書として読む
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="requirements">
-            要件
+            要件を書く・整理する
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="issues">
             未決事項
@@ -161,8 +176,11 @@ export function RequirementDocumentDetailPage({
 
         <TabsContent value="requirements">
           <RequirementDocumentRequirementsTab
+            key={selectedSectionValue}
             projectId={projectId}
             documentId={documentId}
+            selectedSectionId={selectedSectionId}
+            onSelectSection={(sectionId) => setSelectedSectionId(sectionId)}
             canCreate={canCreateRequirement(currentProjectRole)}
             canUpdate={canUpdateRequirement(currentProjectRole)}
             canComment={canCommentRequirement(currentProjectRole)}

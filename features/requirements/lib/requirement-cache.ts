@@ -25,9 +25,14 @@ export const invalidateRequirementList = (
   queryClient: QueryClient,
   projectId: number,
 ) => {
-  return queryClient.invalidateQueries({
-    queryKey: getRequirementListKey(projectId),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: getRequirementListKey(projectId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ["requirement-document-preview", projectId],
+    }),
+  ]);
 };
 
 export const invalidateRequirementDocumentList = (

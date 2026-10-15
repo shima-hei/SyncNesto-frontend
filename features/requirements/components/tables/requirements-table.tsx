@@ -1,7 +1,9 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { MessageSquarePlusIcon } from "lucide-react";
+import Link from "next/link";
+import { useListNavigation } from "@/hooks/use-list-navigation";
+import { EditIcon, MessageSquarePlusIcon } from "lucide-react";
 
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
 import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
@@ -81,6 +83,9 @@ export function RequirementsTable({
   onSelectRequirement,
   onSelectReviewAnchor,
 }: RequirementsTableProps) {
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`,
+  );
   const { updateRequirementListItem, isPending } =
     useUpdateRequirementListItem(projectId);
 
@@ -107,31 +112,52 @@ export function RequirementsTable({
             const cells = (
               <>
                 <TableCell>
-                  <div className="flex min-w-64 flex-col">
-                    <ReviewableRequirementText
-                      documentId={documentId}
-                      requirement={requirement}
-                      field="title"
-                      label={`${requirement.requirement_code} タイトル`}
-                      value={requirement.title}
-                      className="truncate font-medium"
-                      targetAnchors={targetAnchors}
-                      activeAnchorKey={activeAnchorKey}
-                      onSelectRequirement={onSelectRequirement}
-                      onSelectReviewAnchor={onSelectReviewAnchor}
-                    />
-                    <ReviewableRequirementText
-                      documentId={documentId}
-                      requirement={requirement}
-                      field="requirement_code"
-                      label={`${requirement.requirement_code} 要件コード`}
-                      value={requirement.requirement_code}
-                      className="truncate text-xs text-muted-foreground"
-                      targetAnchors={targetAnchors}
-                      activeAnchorKey={activeAnchorKey}
-                      onSelectRequirement={onSelectRequirement}
-                      onSelectReviewAnchor={onSelectReviewAnchor}
-                    />
+                  <div className="flex min-w-64 items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <ReviewableRequirementText
+                        documentId={documentId}
+                        requirement={requirement}
+                        field="title"
+                        label={`${requirement.requirement_code} タイトル`}
+                        value={requirement.title}
+                        className="truncate font-medium"
+                        targetAnchors={targetAnchors}
+                        activeAnchorKey={activeAnchorKey}
+                        onSelectRequirement={onSelectRequirement}
+                        onSelectReviewAnchor={onSelectReviewAnchor}
+                      />
+                      <ReviewableRequirementText
+                        documentId={documentId}
+                        requirement={requirement}
+                        field="requirement_code"
+                        label={`${requirement.requirement_code} 要件コード`}
+                        value={requirement.requirement_code}
+                        className="truncate text-xs text-muted-foreground"
+                        targetAnchors={targetAnchors}
+                        activeAnchorKey={activeAnchorKey}
+                        onSelectRequirement={onSelectRequirement}
+                        onSelectReviewAnchor={onSelectReviewAnchor}
+                      />
+                    </div>
+                    {canUpdate ? (
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                      >
+                        <Link
+                          href={withReturn(
+                            `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}/edit`,
+                          )}
+                          aria-label={`${requirement.requirement_code} ${requirement.title}を編集`}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <EditIcon data-icon="inline-start" />
+                          編集
+                        </Link>
+                      </Button>
+                    ) : null}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -285,7 +311,9 @@ export function RequirementsTable({
             return (
               <ClickableTableRow
                 key={requirement.id}
-                href={`/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`}
+                href={withReturn(
+                  `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
+                )}
               >
                 {cells}
               </ClickableTableRow>

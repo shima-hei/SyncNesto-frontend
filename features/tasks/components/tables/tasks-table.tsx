@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 import { CopyIcon } from "lucide-react";
 
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
@@ -60,6 +61,9 @@ export function TasksTable({
   onToggleTask,
   onToggleAllTasks,
 }: TasksTableProps) {
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/tasks`,
+  );
   const { updateTaskStatus, isPending } = useUpdateTaskStatus(projectId);
   const { duplicateTask, isPending: isDuplicatePending } =
     useDuplicateTask(projectId);
@@ -114,7 +118,9 @@ export function TasksTable({
           tasks.map((task) => (
             <ClickableTableRow
               key={task.id}
-              href={`/projects/joined/${projectId}/tasks/${task.id}`}
+              href={withReturn(
+                `/projects/joined/${projectId}/tasks/${task.id}`,
+              )}
             >
               {canUpdate ? (
                 <TableCell
@@ -133,7 +139,9 @@ export function TasksTable({
               <TableCell>
                 <div className="flex min-w-64 flex-col gap-1">
                   <Link
-                    href={`/projects/joined/${projectId}/tasks/${task.id}`}
+                    href={withReturn(
+                      `/projects/joined/${projectId}/tasks/${task.id}`,
+                    )}
                     className="min-w-0 truncate rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
                     {task.title}
@@ -251,9 +259,14 @@ export function TaskDetailLink({
   projectId: number;
   task: TaskRead;
 }) {
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/tasks`,
+  );
   return (
     <Button asChild variant="outline" size="sm">
-      <Link href={`/projects/joined/${projectId}/tasks/${task.id}`}>詳細</Link>
+      <Link href={withReturn(`/projects/joined/${projectId}/tasks/${task.id}`)}>
+        詳細
+      </Link>
     </Button>
   );
 }

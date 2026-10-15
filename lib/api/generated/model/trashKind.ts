@@ -17,5 +17,6 @@ export const TrashKind = {
   task: "task",
   test_design: "test_design",
   document: "document",
+  specification: "specification",
   document_attachment: "document_attachment",
 } as const;

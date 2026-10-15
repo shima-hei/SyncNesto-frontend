@@ -1,4 +1,14 @@
 "use client";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
+
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -53,18 +63,29 @@ export function RequirementsListSection({
   onSelectReviewAnchor,
 }: RequirementsListSectionProps) {
   const { sections } = useRequirementSections(projectId, documentId);
-  const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState(ALL_REQUIREMENT_STATUSES);
-  const [requirementType, setRequirementType] = useState(ALL_REQUIREMENT_TYPES);
-  const [priority, setPriority] = useState(ALL_REQUIREMENT_PRIORITIES);
-  const [ownerId, setOwnerId] = useState<number | null>(null);
-  const [sort, setSort] =
-    useState<(typeof REQUIREMENT_SORT_OPTIONS)[number]["value"]>(
-      "updated_desc",
-    );
-  const { requirements, total, isLoading, isFetching } = useRequirements(
+  const [page, setPage] = useUrlFilterState("page", 1);
+  const [q, setQ] = useUrlFilterState("q", "");
+  const [searchInput, setSearchInput] = useState(q);
+  const [status, setStatus] = useUrlFilterState(
+    "status",
+    ALL_REQUIREMENT_STATUSES,
+  );
+  const [requirementType, setRequirementType] = useUrlFilterState(
+    "requirementType",
+    ALL_REQUIREMENT_TYPES,
+  );
+  const [priority, setPriority] = useUrlFilterState(
+    "priority",
+    ALL_REQUIREMENT_PRIORITIES,
+  );
+  const [ownerId, setOwnerId] = useUrlFilterState<number | null>(
+    "ownerId",
+    null,
+  );
+  const [sort, setSort] = useUrlFilterState<
+    (typeof REQUIREMENT_SORT_OPTIONS)[number]["value"]
+  >("sort", "updated_desc");
+  const { requirements, total, isLoading, isFetching, error } = useRequirements(
     projectId,
     {
       page,
@@ -131,14 +152,16 @@ export function RequirementsListSection({
         <div className="flex flex-col gap-1">
           <h3 className="text-base font-semibold">要件一覧</h3>
           <p className="text-sm text-muted-foreground">
-            配置先: {selectedSection?.title ?? "セクション未設定"}
+            {selectedSection
+              ? `追加先: ${selectedSection.title}`
+              : "全セクションの要件を表示しています。追加した要件はセクション未設定になります。"}
           </p>
         </div>
         {canCreate ? (
           <Button asChild>
             <Link href={createHref}>
               <PlusIcon data-icon="inline-start" />
-              この配置先に要件を追加
+              要件を追加
             </Link>
           </Button>
         ) : null}
@@ -159,22 +182,59 @@ export function RequirementsListSection({
         onOwnerChange={handleOwnerChange}
         onSortChange={handleSortChange}
       />
-      <RequirementsTable
-        projectId={projectId}
-        documentId={documentId}
-        requirements={requirements}
-        coverageByRequirement={coverageByRequirement}
-        coverageState={
-          coverage.isPending ? "loading" : coverage.isError ? "error" : "ready"
-        }
-        isLoading={isLoading}
-        canUpdate={canUpdate}
-        selectedRequirementId={selectedRequirementId}
-        targetAnchors={targetAnchors}
-        activeAnchorKey={activeAnchorKey}
-        onSelectRequirement={onSelectRequirement}
-        onSelectReviewAnchor={onSelectReviewAnchor}
-      />
+      {error ? (
+        <FormApiError error={error} />
+      ) : !isLoading &&
+        total === 0 &&
+        !q &&
+        status === ALL_REQUIREMENT_STATUSES &&
+        requirementType === ALL_REQUIREMENT_TYPES &&
+        priority === ALL_REQUIREMENT_PRIORITIES &&
+        ownerId === null ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>最初の要件を書きましょう</EmptyTitle>
+            <EmptyDescription>
+              誰が、どの場面で、何をできる必要があるかを1件ずつ書きます。未確定なら、未決事項として相談してから要件にできます。セクション分けは後からできます。
+            </EmptyDescription>
+          </EmptyHeader>
+          {canCreate && (
+            <EmptyContent className="flex-row flex-wrap justify-center">
+              <Button asChild>
+                <Link href={createHref}>最初の要件を書く</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link
+                  href={`/projects/joined/${projectId}/requirements/${documentId}?tab=issues`}
+                >
+                  未決事項を相談する
+                </Link>
+              </Button>
+            </EmptyContent>
+          )}
+        </Empty>
+      ) : (
+        <RequirementsTable
+          projectId={projectId}
+          documentId={documentId}
+          requirements={requirements}
+          coverageByRequirement={coverageByRequirement}
+          coverageState={
+            coverage.isPending
+              ? "loading"
+              : coverage.isError
+                ? "error"
+                : "ready"
+          }
+          isLoading={isLoading}
+          canUpdate={canUpdate}
+          selectedRequirementId={selectedRequirementId}
+          targetAnchors={targetAnchors}
+          activeAnchorKey={activeAnchorKey}
+          onSelectRequirement={onSelectRequirement}
+          onSelectReviewAnchor={onSelectReviewAnchor}
+        />
+      )}
       <DataPagination
         page={page}
         pageSize={PAGE_SIZE}
