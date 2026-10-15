@@ -10,6 +10,7 @@ const ALLOWED_PREFIXES = [
   "/demo",
   "/auth",
   "/tenants",
+  "/system",
   "/drafts",
   "/home",
   "/search",

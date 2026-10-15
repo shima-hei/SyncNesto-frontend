@@ -90,7 +90,7 @@ test("system admin sees system management destinations", () => {
   });
   assert.equal(
     items.map((item) => `${item.title}:${item.href}`).join(","),
-    "全体の組織管理:/system/tenants,全体のユーザー管理:/system/users",
+    "管理ホーム:/system,全体の組織管理:/system/tenants,全体のユーザー管理:/system/users",
   );
 });
 
@@ -114,6 +114,29 @@ test("breadcrumbs use daily and management labels without duplicate project hier
     getBreadcrumbItems("/system/users")
       .map((item) => item.label)
       .join(","),
-    "システム運営,全体のユーザー管理",
+    "システム管理,全体のユーザー管理",
   );
+});
+
+test("system and organization homes remain separate for a dual-role user", () => {
+  const { getAuthenticatedHome, isSystemPath } = load(
+    resolve(root, "features/app-shell/utils/scope.ts"),
+  );
+  assert.equal(
+    getAuthenticatedHome({ system_roles: [{ key: "system_admin" }] }),
+    "/system",
+  );
+  assert.equal(getAuthenticatedHome({ system_roles: [] }), "/");
+  assert.equal(isSystemPath("/"), false);
+  assert.equal(isSystemPath("/organization"), false);
+  assert.equal(isSystemPath("/system"), true);
+  assert.equal(isSystemPath("/system/tenants/42"), true);
+  assert.equal(isSystemPath("/systematic"), false);
+  assert.equal(
+    isNavigationItemActive({ href: "/system" }, "/system/tenants"),
+    false,
+  );
+  const items = getBreadcrumbItems("/system/tenants/42");
+  assert.equal(items[0].href, "/system");
+  assert.equal(items[2].label, "組織詳細");
 });

@@ -22,7 +22,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   projects: "プロジェクト",
   requirements: "要件定義書",
   search: "横断検索",
-  system: "システム運営",
+  system: "システム管理",
   tasks: "タスク",
   trash: "ごみ箱",
   "test-cases": "テストケース",
@@ -31,7 +31,7 @@ const SEGMENT_LABELS: Record<string, string> = {
 };
 
 const TECHNICAL_SEGMENTS = new Set(["items"]);
-const LINK_DISABLED_SEGMENTS = new Set(["projects", "system"]);
+const LINK_DISABLED_SEGMENTS = new Set(["projects"]);
 
 export const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
   if (pathname === "/") {
@@ -129,6 +129,10 @@ const getDynamicBreadcrumbItem = ({
       label: "ユーザー詳細",
       href,
     };
+  }
+
+  if (previousSegment === "tenants") {
+    return { label: "組織詳細", href };
   }
 
   if (previousSegment === "requirements") {

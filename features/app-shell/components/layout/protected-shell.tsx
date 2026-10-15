@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import { isSystemAdmin } from "@/features/auth/utils/authorization";
 import {
   TenantProvider,
   useTenant,
@@ -13,8 +15,21 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { SiteHeader } from "../header/site-header";
 import { DemoBanner } from "@/features/auth/components/shared/demo-banner";
+import { isSystemPath } from "../../utils/scope";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
+import { Button } from "@/components/ui/button";
 
 export function ProtectedShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  if (isSystemPath(pathname) || pathname === "/entry") {
+    return <ShellFrame scope="system">{children}</ShellFrame>;
+  }
   return (
     <TenantProvider>
       <ScopedShell>{children}</ScopedShell>
@@ -23,12 +38,47 @@ export function ProtectedShell({ children }: { children: ReactNode }) {
 }
 
 function ScopedShell({ children }: { children: ReactNode }) {
-  const { tenant } = useTenant();
+  const { tenant, canManageTenant } = useTenant();
+  const { user } = useAuth();
   const pathname = usePathname();
   const tenantIndependent =
-    pathname.startsWith("/system/") ||
     pathname.startsWith("/account") ||
-    pathname.startsWith("/help");
+    pathname.startsWith("/help") ||
+    pathname === "/forbidden";
+  return (
+    <ShellFrame scope="organization" canManageTenant={canManageTenant}>
+      {tenant || tenantIndependent ? (
+        children
+      ) : (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>所属する組織がありません</EmptyTitle>
+            <EmptyDescription>
+              組織管理者に所属の追加を依頼してください。
+            </EmptyDescription>
+          </EmptyHeader>
+          {isSystemAdmin(user) ? (
+            <EmptyContent>
+              <Button asChild variant="outline">
+                <Link href="/system">システム管理へ戻る</Link>
+              </Button>
+            </EmptyContent>
+          ) : null}
+        </Empty>
+      )}
+    </ShellFrame>
+  );
+}
+
+function ShellFrame({
+  children,
+  scope,
+  canManageTenant,
+}: {
+  children: ReactNode;
+  scope: "system" | "organization";
+  canManageTenant?: boolean;
+}) {
   return (
     <SidebarProvider
       style={
@@ -44,23 +94,17 @@ function ScopedShell({ children }: { children: ReactNode }) {
       >
         本文へ移動
       </a>
-      <AppSidebar variant="inset" />
+      <AppSidebar
+        variant="inset"
+        scope={scope}
+        canManageTenant={canManageTenant}
+      />
       <SidebarInset className="min-w-0">
-        <SiteHeader />
+        <SiteHeader scope={scope} />
         <DemoBanner />
         <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-            {tenant || tenantIndependent ? (
-              children
-            ) : (
-              <div className="flex flex-col gap-3">
-                <h1 className="text-2xl font-semibold">
-                  所属する組織がありません
-                </h1>
-                <p>組織管理者に所属の追加を依頼してください。</p>
-                <Link href="/system/tenants">運営者の組織管理</Link>
-              </div>
-            )}
+            {children}
           </div>
         </main>
       </SidebarInset>

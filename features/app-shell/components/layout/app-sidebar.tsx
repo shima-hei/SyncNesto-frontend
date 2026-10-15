@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CommandIcon, UsersIcon, FolderKanbanIcon } from "lucide-react";
-import { useTenant } from "@/features/tenants/providers/tenant-provider";
+import { useIsMutating } from "@tanstack/react-query";
+import {
+  CommandIcon,
+  UsersIcon,
+  FolderKanbanIcon,
+  ShieldCheckIcon,
+  Building2Icon,
+} from "lucide-react";
+import { isSystemAdmin } from "@/features/auth/utils/authorization";
 
 import {
   Sidebar,
@@ -26,10 +33,18 @@ import { getVisibleNavigationItems } from "../../utils/navigation";
 import { SidebarNav } from "../navigation/sidebar-nav";
 import { SidebarUserMenu } from "../user/sidebar-user-menu";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  scope,
+  canManageTenant = false,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  scope: "system" | "organization";
+  canManageTenant?: boolean;
+}) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const { canManageTenant } = useTenant();
+  const pending = useIsMutating();
+  const system = scope === "system";
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
   const visibleManagementNavigation = getVisibleNavigationItems(
     managementNavigation,
@@ -49,17 +64,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Link href="/">
+              <Link href={system ? "/system" : "/"}>
                 <CommandIcon />
                 <span className="text-base font-semibold">Syncnesto</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          {isSystemAdmin(user) ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                disabled={pending > 0}
+                onClick={() => window.location.assign(system ? "/" : "/system")}
+              >
+                {system ? <Building2Icon /> : <ShieldCheckIcon />}
+                <span>{system ? "組織の業務画面へ" : "システム管理へ"}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ) : null}
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarNav items={visibleMainNavigation} pathname={pathname} />
-        {canManageTenant ? (
+        <SidebarNav
+          items={system ? visibleManagementNavigation : visibleMainNavigation}
+          pathname={pathname}
+          label={system ? "システム管理" : "業務"}
+        />
+        {!system && canManageTenant ? (
           <>
             <SidebarSeparator />
             <SidebarNav
@@ -77,16 +107,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   icon: FolderKanbanIcon,
                 },
               ]}
-            />
-          </>
-        ) : null}
-        {visibleManagementNavigation.length ? (
-          <>
-            <SidebarSeparator />
-            <SidebarNav
-              items={visibleManagementNavigation}
-              pathname={pathname}
-              label="システム運営"
             />
           </>
         ) : null}
