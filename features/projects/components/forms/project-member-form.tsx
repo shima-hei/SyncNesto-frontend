@@ -111,13 +111,13 @@ export function ProjectMemberForm({
           </Field>
 
           <Field data-invalid={errors.roleKey ? true : undefined}>
-            <FieldLabel>権限</FieldLabel>
+            <FieldLabel>プロジェクト内の役割</FieldLabel>
             <Select
               value={values.roleKey}
               onValueChange={(value) => updateValue("roleKey", value)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="権限を選択" />
+                <SelectValue placeholder="役割を選択" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>

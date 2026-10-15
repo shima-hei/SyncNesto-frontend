@@ -90,7 +90,7 @@ test("system admin sees system management destinations", () => {
   });
   assert.equal(
     items.map((item) => `${item.title}:${item.href}`).join(","),
-    "組織の運営管理:/system/tenants,ユーザー管理:/system/users",
+    "全体の組織管理:/system/tenants,全体のユーザー管理:/system/users",
   );
 });
 
@@ -108,12 +108,12 @@ test("breadcrumbs use daily and management labels without duplicate project hier
     getBreadcrumbItems("/projects/management")
       .map((item) => item.label)
       .join(","),
-    "管理,プロジェクト管理",
+    "現在の組織,プロジェクト管理",
   );
   assert.equal(
     getBreadcrumbItems("/system/users")
       .map((item) => item.label)
       .join(","),
-    "管理,ユーザー管理",
+    "システム運営,全体のユーザー管理",
   );
 });

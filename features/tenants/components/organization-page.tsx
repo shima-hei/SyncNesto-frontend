@@ -48,12 +48,8 @@ import {
 } from "@/lib/api/generated/tenants/tenants";
 import { TenantAdminGuard, useTenant } from "../providers/tenant-provider";
 import { MemberAccountActions } from "./member-account-actions";
+import { TENANT_ROLE_LABELS } from "../constants/roles";
 
-export const TENANT_ROLE_LABELS = {
-  tenant_owner: "所有者",
-  tenant_admin: "管理者",
-  tenant_member: "メンバー",
-} as const;
 type Role = keyof typeof TENANT_ROLE_LABELS;
 const TABS = ["members", "settings"] as const;
 

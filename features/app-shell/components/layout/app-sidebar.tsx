@@ -64,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarSeparator />
             <SidebarNav
               pathname={pathname}
-              label="組織"
+              label="現在の組織"
               items={[
                 {
                   title: "メンバー・組織設定",
@@ -86,7 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarNav
               items={visibleManagementNavigation}
               pathname={pathname}
-              label="管理"
+              label="システム運営"
             />
           </>
         ) : null}
