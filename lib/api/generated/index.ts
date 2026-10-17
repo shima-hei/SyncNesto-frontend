@@ -1,4 +1,6 @@
 export * from "./account-actions/account-actions";
+export * from "./artifact-preservations/artifact-preservations";
+export * from "./artifact-releases/artifact-releases";
 export * from "./audit-logs/audit-logs";
 export * from "./auth/auth";
 export * from "./demo/demo";
