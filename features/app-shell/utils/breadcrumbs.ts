@@ -140,11 +140,20 @@ const getDynamicBreadcrumbItem = ({
 
   if (previousSegment === "items") {
     return {
-      label: "要件詳細",
+      label: `要件 #${id}`,
       href,
     };
   }
 
+  const labels: Record<string, string> = {
+    tasks: "タスク",
+    specifications: "設計書",
+    "test-designs": "テスト設計書",
+    documents: "ドキュメント",
+  };
+  if (previousSegment && labels[previousSegment]) {
+    return { label: `${labels[previousSegment]} #${id}`, href };
+  }
   return null;
 };
 

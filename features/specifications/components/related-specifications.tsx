@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useTaskOrigin } from "@/hooks/use-task-origin";
+import type { TaskOrigin } from "@/lib/navigation/task-origin";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
@@ -21,11 +23,14 @@ export function RelatedSpecifications({
   projectId,
   targetType,
   targetId,
+  origin,
 }: {
   projectId: number;
   targetType: SpecificationLinkCreate["target_type"];
   targetId: string;
+  origin?: TaskOrigin;
 }) {
+  const { withOrigin } = useTaskOrigin(projectId, origin);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const canRead = canViewRequirement(currentProjectRole);
   const query = useQuery({
@@ -62,7 +67,7 @@ export function RelatedSpecifications({
             <li key={row.id}>
               <Link
                 className="break-words text-sm font-medium underline-offset-4 hover:underline"
-                href={specificationHref(projectId, row.id)}
+                href={withOrigin(specificationHref(projectId, row.id))}
               >
                 {row.title}
               </Link>

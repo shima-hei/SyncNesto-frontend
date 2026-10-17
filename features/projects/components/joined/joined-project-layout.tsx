@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { JoinedProjectNav } from "./joined-project-nav";
+import { ProjectWorkOrigin } from "./project-work-origin";
 
 type JoinedProjectLayoutProps = {
   projectId: number;
@@ -13,7 +13,7 @@ export function JoinedProjectLayout({
 }: JoinedProjectLayoutProps) {
   return (
     <div className="flex flex-col gap-4">
-      <JoinedProjectNav projectId={projectId} />
+      <ProjectWorkOrigin projectId={projectId} />
       {children}
     </div>
   );
