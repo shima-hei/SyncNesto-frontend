@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { JoinedProjectNav } from "@/features/projects/components/joined/joined-project-nav";
+import { getJoinedProjectId } from "@/features/projects/constants/joined-project-navigation";
 import { usePathname } from "next/navigation";
 import { CommandIcon, UsersIcon, FolderKanbanIcon } from "lucide-react";
 
@@ -36,6 +38,7 @@ export function AppSidebar({
   const pathname = usePathname();
   const { user } = useAuth();
   const system = scope === "system";
+  const projectId = getJoinedProjectId(pathname);
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
   const visibleManagementNavigation = getVisibleNavigationItems(
     managementNavigation,
@@ -69,6 +72,9 @@ export function AppSidebar({
           pathname={pathname}
           label={system ? "システム管理" : "業務"}
         />
+        {!system && projectId ? (
+          <JoinedProjectNav key={projectId} projectId={projectId} />
+        ) : null}
         {!system && canManageTenant ? (
           <>
             <SidebarSeparator />

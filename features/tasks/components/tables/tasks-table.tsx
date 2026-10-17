@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useListNavigation } from "@/hooks/use-list-navigation";
+import { useTaskOrigin } from "@/hooks/use-task-origin";
 import { CopyIcon } from "lucide-react";
 
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
@@ -259,12 +260,17 @@ export function TaskDetailLink({
   projectId: number;
   task: TaskRead;
 }) {
+  const { withOrigin } = useTaskOrigin(projectId);
   const { withReturn } = useListNavigation(
     `/projects/joined/${projectId}/tasks`,
   );
   return (
     <Button asChild variant="outline" size="sm">
-      <Link href={withReturn(`/projects/joined/${projectId}/tasks/${task.id}`)}>
+      <Link
+        href={withOrigin(
+          withReturn(`/projects/joined/${projectId}/tasks/${task.id}`),
+        )}
+      >
         詳細
       </Link>
     </Button>

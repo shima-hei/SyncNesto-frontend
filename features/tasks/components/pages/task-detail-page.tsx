@@ -1,6 +1,8 @@
 "use client";
 import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
 import { useListNavigation } from "@/hooks/use-list-navigation";
+import { createTaskOrigin } from "@/lib/navigation/task-origin";
+import { TaskRequirementLinks } from "../shared/task-requirement-links";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -54,7 +56,6 @@ import { TaskTestCasesSection } from "../sections/task-test-cases-section";
 import {
   TaskFlagBadges,
   TaskPriorityBadge,
-  TaskRequirementBadges,
   TaskStatusBadge,
   TaskTags,
   TaskTypeBadge,
@@ -69,6 +70,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
   const { returnTo } = useListNavigation(
     `/projects/joined/${projectId}/tasks?tab=list`,
   );
+  const origin = createTaskOrigin(projectId, taskId, returnTo);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [childTaskDialogOpen, setChildTaskDialogOpen] = useState(false);
@@ -240,7 +242,12 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
             <CardContent className="grid gap-4 @min-[32rem]/task-content:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <span className="text-xs text-muted-foreground">関連要件</span>
-                <TaskRequirementBadges requirements={task.requirements} />
+                {task.requirements?.length ? (
+                  <TaskRequirementLinks
+                    requirements={task.requirements}
+                    origin={origin}
+                  />
+                ) : null}
                 {!task.requirements?.length ? (
                   <span className="text-sm text-muted-foreground">
                     関連要件はありません。
@@ -278,6 +285,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
           <TaskChangeLogsSection taskId={taskId} />
           <RelatedSpecifications
             projectId={projectId}
+            origin={origin}
             targetType="task"
             targetId={String(taskId)}
           />

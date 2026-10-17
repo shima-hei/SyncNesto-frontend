@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTaskOrigin } from "@/hooks/use-task-origin";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
@@ -39,6 +40,7 @@ export function SpecificationLinks({
   id: number;
   canEdit: boolean;
 }) {
+  const { withOrigin } = useTaskOrigin(projectId);
   const cache = useQueryClient();
   const [kind, setKind] =
     useState<SpecificationLinkCreate["target_type"]>("requirement");
@@ -214,7 +216,7 @@ export function SpecificationLinks({
                 </span>
                 <Link
                   className="block break-words text-sm font-medium underline-offset-4 hover:underline"
-                  href={relatedHref(projectId, link)}
+                  href={withOrigin(relatedHref(projectId, link))}
                 >
                   {link.title}
                 </Link>

@@ -140,3 +140,17 @@ test("system and organization homes remain separate for a dual-role user", () =>
   assert.equal(items[0].href, "/system");
   assert.equal(items[2].label, "組織詳細");
 });
+
+test("詳細のパンくずで対象IDと親機能を区別する", () => {
+  for (const [path, label] of [
+    ["tasks/51", "タスク #51"],
+    ["requirements/11/items/21", "要件 #21"],
+    ["specifications/31", "設計書 #31"],
+    ["test-designs/41", "テスト設計書 #41"],
+  ]) {
+    const items = getBreadcrumbItems(`/projects/joined/7/${path}`);
+    assert.equal(items.at(-1).label, label);
+    assert.equal(items.at(-1).href, undefined);
+    assert.equal(items[1].dynamicId, 7);
+  }
+});
