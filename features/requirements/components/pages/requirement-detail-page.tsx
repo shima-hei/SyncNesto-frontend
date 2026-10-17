@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/layout/page-header";
+import { ArtifactReleaseLink } from "@/features/artifact-releases/components/artifact-release-link";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -158,6 +159,12 @@ export function RequirementDetailPage({
           description={requirement.requirement_code}
           actions={
             <>
+              <ArtifactReleaseLink
+                projectId={projectId}
+                kind="requirement"
+                sourceId={requirementId}
+                version={requirement.version}
+              />
               {canCreateRequirement(currentProjectRole) ? (
                 <Button asChild variant="outline">
                   <Link

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { DownloadIcon, EditIcon, Trash2Icon } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/layout/page-header";
+import { ArtifactReleaseLink } from "@/features/artifact-releases/components/artifact-release-link";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -105,6 +106,12 @@ export function RequirementDocumentDetailPage({
         description={document.document_code}
         actions={
           <>
+            <ArtifactReleaseLink
+              projectId={projectId}
+              kind="requirement_document"
+              sourceId={documentId}
+              version={document.version}
+            />
             <Button
               type="button"
               variant="outline"
