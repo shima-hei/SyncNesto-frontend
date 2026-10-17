@@ -69,7 +69,10 @@ function SnapshotNode({ node }: { node: ArtifactNodeRead }) {
                 <div key={key}>
                   <dt className="text-xs text-muted-foreground">{label}</dt>
                   <dd className="text-sm">
-                    <MarkdownPreview value={String(node.payload[key])} />
+                    <MarkdownPreview
+                      className="min-h-0"
+                      value={String(node.payload[key])}
+                    />
                   </dd>
                 </div>
               ) : null,
