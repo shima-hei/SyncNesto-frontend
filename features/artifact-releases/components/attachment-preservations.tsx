@@ -279,7 +279,11 @@ export function AttachmentPreservations({
                         <Checkbox
                           id={`attachment-${file.id}`}
                           checked={checked}
-                          disabled={!checked && choices.length >= 20}
+                          disabled={
+                            preview.isPending ||
+                            reserve.isPending ||
+                            (!checked && choices.length >= 20)
+                          }
                           onCheckedChange={(value) =>
                             toggle(file, value === true)
                           }
@@ -316,6 +320,7 @@ export function AttachmentPreservations({
                     <Button
                       variant="ghost"
                       size="sm"
+                      disabled={preview.isPending || reserve.isPending}
                       onClick={() => {
                         setChoices((current) =>
                           current.filter(
