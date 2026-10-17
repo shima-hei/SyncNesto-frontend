@@ -2,78 +2,100 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarSeparator,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-
-import { joinedProjectNavigationItems } from "../../constants/joined-project-navigation";
+import {
+  joinedProjectNavigationGroups,
+  joinedProjectNavigationItems,
+  isJoinedProjectNavigationActive,
+} from "../../constants/joined-project-navigation";
 import { useCurrentProjectRole } from "../../hooks/use-current-project-role";
+import { useProject } from "../../hooks/use-project";
 
-type JoinedProjectNavProps = {
-  projectId: number;
-};
-
-export function JoinedProjectNav({ projectId }: JoinedProjectNavProps) {
+export function JoinedProjectNav({ projectId }: { projectId: number }) {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const { currentProjectRole, isLoading } = useCurrentProjectRole(projectId);
+  const { project } = useProject(projectId);
 
   if (isLoading) {
     return (
-      <div className="flex gap-2 overflow-x-auto border-b">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton key={index} className="mb-1 h-9 w-24 shrink-0" />
+      <div
+        className="flex flex-col gap-2 p-2"
+        aria-label="案件内メニューを読み込み中"
+      >
+        {Array.from({ length: 5 }, (_, index) => (
+          <Skeleton key={index} className="h-8 w-full" />
         ))}
       </div>
     );
   }
-
   const visibleItems = joinedProjectNavigationItems.filter((item) =>
     item.canShow(currentProjectRole),
   );
-
-  if (!visibleItems.length) {
-    return null;
-  }
+  if (!visibleItems.length) return null;
 
   return (
-    <nav
-      aria-label="プロジェクト内ナビゲーション"
-      className="overflow-x-auto border-b"
-    >
-      <div className="flex min-w-max gap-5">
-        {visibleItems.map((item) => {
-          const href = item.href(projectId);
-          const isActive = isNavigationActive(pathname, href, projectId);
-
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "inline-flex min-h-10 shrink-0 items-center border-b-2 border-transparent px-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary",
-                isActive && "border-primary font-medium text-foreground",
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </div>
+    <nav aria-label="プロジェクト内ナビゲーション">
+      <SidebarSeparator />
+      <p className="px-4 pt-3 pb-1 text-sm font-semibold break-words">
+        {project?.name ?? "このプロジェクト"}
+      </p>
+      {joinedProjectNavigationGroups.map((group) => {
+        const items = visibleItems.filter((item) => item.group === group);
+        if (!items.length) return null;
+        return (
+          <SidebarGroup key={group} className="py-1">
+            <SidebarGroupLabel>{group}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => {
+                  const href = item.href(projectId);
+                  const active = isJoinedProjectNavigationActive(
+                    pathname,
+                    href,
+                    projectId,
+                  );
+                  return (
+                    <SidebarMenuItem key={href}>
+                      <SidebarMenuButton asChild isActive={active}>
+                        <Link
+                          href={href}
+                          aria-current={active ? "page" : undefined}
+                          title={item.purpose}
+                          onClick={(event) => {
+                            if (
+                              !event.defaultPrevented &&
+                              event.button === 0 &&
+                              !event.metaKey &&
+                              !event.ctrlKey &&
+                              !event.shiftKey &&
+                              !event.altKey
+                            ) {
+                              setOpenMobile(false);
+                            }
+                          }}
+                        >
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        );
+      })}
     </nav>
   );
 }
-
-const isNavigationActive = (
-  pathname: string,
-  href: string,
-  projectId: number,
-) => {
-  const overviewHref = `/projects/joined/${projectId}`;
-
-  if (href === overviewHref) {
-    return pathname === href;
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
-};

@@ -117,3 +117,17 @@ test("breadcrumbs use daily and management labels without duplicate project hier
     "システム運営,全体のユーザー管理",
   );
 });
+
+test("詳細のパンくずで対象IDと親機能を区別する", () => {
+  for (const [path, label] of [
+    ["tasks/51", "タスク #51"],
+    ["requirements/11/items/21", "要件 #21"],
+    ["specifications/31", "設計書 #31"],
+    ["test-designs/41", "テスト設計書 #41"],
+  ]) {
+    const items = getBreadcrumbItems(`/projects/joined/7/${path}`);
+    assert.equal(items.at(-1).label, label);
+    assert.equal(items.at(-1).href, undefined);
+    assert.equal(items[1].dynamicId, 7);
+  }
+});
