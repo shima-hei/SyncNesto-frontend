@@ -513,6 +513,26 @@ export function ApprovalRequestForm({
             </Field>
             {validation ? <FieldError>{validation}</FieldError> : null}
             <FormApiError error={preview.error ?? save.error} />
+            {preview.error || save.error ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy || basis.isFetching || candidates.isFetching}
+                onClick={() => {
+                  invalidate();
+                  preview.reset();
+                  save.reset();
+                  if (target?.node_kind === "requirement_document")
+                    void basis.refetch();
+                  if (attachmentChoice) void candidates.refetch();
+                  void attachments.refetch();
+                  if (legacyId) void legacySource.refetch();
+                  if (originImport) void archivedOrigin.refetch();
+                }}
+              >
+                入力を残して合意根拠・指定先を再取得
+              </Button>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
                 type="submit"
