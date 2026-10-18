@@ -73,6 +73,7 @@ import {
 import { PublicationContent } from "./publication-content";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PREPARATION_WRITES_ENABLED = true;
 
 export function PublicationsPage({ projectId }: { projectId: number }) {
   const { user } = useAuth();
@@ -216,183 +217,199 @@ function Workspace({ projectId }: { projectId: number }) {
           保存しても相手の閲覧許可は発行されず、承認にもなりません。全文・設計例・テストデータ・添付を確認し、機密があれば元データを直して新しい固定版を作ってください。
         </AlertDescription>
       </Alert>
-      <Card>
-        <CardHeader>
-          <CardTitle>1. 相手へ見せる内容を選ぶ</CardTitle>
-          <CardDescription>
-            固定版の本文全体と、保全が完了した添付構成を選びます。行・列・章の一部だけを隠すことはできません。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="publication-source">固定した本文</FieldLabel>
-              {sources.isPending ? (
-                <Skeleton className="h-9" />
-              ) : sources.error ? (
-                <DataLoadError
-                  resourceName="固定版"
-                  onRetry={() => void sources.refetch()}
-                />
-              ) : sources.data.items.length === 0 ? (
-                <p className="text-sm">
-                  固定版がありません。固定版画面で本文を保存してください。
-                </p>
-              ) : (
-                <>
+      {PREPARATION_WRITES_ENABLED ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>1. 相手へ見せる内容を選ぶ</CardTitle>
+            <CardDescription>
+              固定版の本文全体と、保全が完了した添付構成を選びます。行・列・章の一部だけを隠すことはできません。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="publication-source">
+                  固定した本文
+                </FieldLabel>
+                {sources.isPending ? (
+                  <Skeleton className="h-9" />
+                ) : sources.error ? (
+                  <DataLoadError
+                    resourceName="固定版"
+                    onRetry={() => void sources.refetch()}
+                  />
+                ) : sources.data.items.length === 0 ? (
+                  <p className="text-sm">
+                    固定版がありません。固定版画面で本文を保存してください。
+                  </p>
+                ) : (
+                  <>
+                    <Select
+                      value={uuid.test(release) ? release : undefined}
+                      onValueChange={chooseRelease}
+                      disabled={busy}
+                    >
+                      <SelectTrigger id="publication-source" className="w-full">
+                        <SelectValue placeholder="固定版を選択">
+                          {selectedSource.data
+                            ? `${selectedSource.data.title}・元の版 ${selectedSource.data.source_version}`
+                            : undefined}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {sources.data.items.map((r) => (
+                            <SelectItem key={r.id} value={r.id}>
+                              {r.title}・元の版 {r.source_version}・
+                              {displayDate(r.created_at)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <DataPagination
+                      page={sourcePage}
+                      pageSize={20}
+                      total={sources.data.total}
+                      currentCount={sources.data.items.length}
+                      onPageChange={setSourcePage}
+                      isFetching={sources.isFetching}
+                    />
+                  </>
+                )}
+                <FieldDescription>
+                  相手に見せたい目的・要件・設計・テストが含まれている版か確認します。
+                </FieldDescription>
+              </Field>
+              {uuid.test(release) ? (
+                <Field>
+                  <FieldLabel htmlFor="publication-preservation">
+                    保全した添付構成
+                  </FieldLabel>
                   <Select
-                    value={uuid.test(release) ? release : undefined}
-                    onValueChange={chooseRelease}
-                    disabled={busy}
+                    value={preservation}
+                    disabled={busy || preserved.isPending}
+                    onValueChange={(value) => {
+                      setPreservation(value);
+                      setConfirmed(null);
+                      save.reset();
+                    }}
                   >
-                    <SelectTrigger id="publication-source" className="w-full">
-                      <SelectValue placeholder="固定版を選択">
-                        {selectedSource.data
-                          ? `${selectedSource.data.title}・元の版 ${selectedSource.data.source_version}`
-                          : undefined}
-                      </SelectValue>
+                    <SelectTrigger
+                      id="publication-preservation"
+                      className="w-full"
+                    >
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {sources.data.items.map((r) => (
-                          <SelectItem key={r.id} value={r.id}>
-                            {r.title}・元の版 {r.source_version}・
-                            {displayDate(r.created_at)}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="none">添付なし</SelectItem>
+                        {preserved.data?.items
+                          .filter((p) => p.status === "ready")
+                          .map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {displayDate(p.completed_at ?? p.created_at)}・
+                              {p.files.length}ファイル
+                            </SelectItem>
+                          ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  <DataPagination
-                    page={sourcePage}
-                    pageSize={20}
-                    total={sources.data.total}
-                    currentCount={sources.data.items.length}
-                    onPageChange={setSourcePage}
-                    isFetching={sources.isFetching}
-                  />
-                </>
-              )}
-              <FieldDescription>
-                相手に見せたい目的・要件・設計・テストが含まれている版か確認します。
-              </FieldDescription>
-            </Field>
-            {uuid.test(release) ? (
-              <Field>
-                <FieldLabel htmlFor="publication-preservation">
-                  保全した添付構成
-                </FieldLabel>
-                <Select
-                  value={preservation}
-                  disabled={busy || preserved.isPending}
-                  onValueChange={(value) => {
-                    setPreservation(value);
-                    setConfirmed(null);
-                    save.reset();
-                  }}
-                >
-                  <SelectTrigger
-                    id="publication-preservation"
-                    className="w-full"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="none">添付なし</SelectItem>
-                      {preserved.data?.items
-                        .filter((p) => p.status === "ready")
-                        .map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {displayDate(p.completed_at ?? p.created_at)}・
-                            {p.files.length}ファイル
-                          </SelectItem>
-                        ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {preserved.error ? (
-                  <DataLoadError
-                    resourceName="保全した添付構成"
-                    onRetry={() => void preserved.refetch()}
-                  />
-                ) : null}
-                {preserved.data ? (
-                  <DataPagination
-                    page={preservationPage}
-                    pageSize={20}
-                    total={preserved.data.total}
-                    currentCount={preserved.data.items.length}
-                    onPageChange={setPreservationPage}
-                    isFetching={preserved.isFetching}
-                  />
-                ) : null}
-                <FieldDescription>
-                  この段階では添付一覧を確認します。ファイルの中身は元の内部固定版で確認してください。
-                </FieldDescription>
-              </Field>
+                  {preserved.error ? (
+                    <DataLoadError
+                      resourceName="保全した添付構成"
+                      onRetry={() => void preserved.refetch()}
+                    />
+                  ) : null}
+                  {preserved.data ? (
+                    <DataPagination
+                      page={preservationPage}
+                      pageSize={20}
+                      total={preserved.data.total}
+                      currentCount={preserved.data.items.length}
+                      onPageChange={setPreservationPage}
+                      isFetching={preserved.isFetching}
+                    />
+                  ) : null}
+                  <FieldDescription>
+                    この段階では添付一覧を確認します。ファイルの中身は元の内部固定版で確認してください。
+                  </FieldDescription>
+                </Field>
+              ) : null}
+            </FieldGroup>
+            {selectedSource.error ? (
+              <DataLoadError
+                resourceName="選択した固定版"
+                onRetry={() => void selectedSource.refetch()}
+              />
             ) : null}
-          </FieldGroup>
-          {selectedSource.error ? (
-            <DataLoadError
-              resourceName="選択した固定版"
-              onRetry={() => void selectedSource.refetch()}
-            />
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              disabled={!selectedSource.data || busy}
-              onClick={() => {
-                setConfirmed(null);
-                save.reset();
-                preview.mutate();
-              }}
-            >
-              {preview.isPending ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
-                <EyeIcon data-icon="inline-start" />
-              )}
-              準備する範囲を確認
-            </Button>
-            {uuid.test(release) ? (
-              <Button asChild variant="outline">
-                <Link
-                  href={`/projects/joined/${projectId}/artifact-releases?release=${release}`}
-                >
-                  元の固定版と添付を確認
-                </Link>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                disabled={!selectedSource.data || busy}
+                onClick={() => {
+                  setConfirmed(null);
+                  save.reset();
+                  preview.mutate();
+                }}
+              >
+                {preview.isPending ? (
+                  <Spinner data-icon="inline-start" />
+                ) : (
+                  <EyeIcon data-icon="inline-start" />
+                )}
+                準備する範囲を確認
               </Button>
-            ) : null}
-          </div>
-          <FormApiError error={preview.error} />
-          {confirmed ? (
-            <div className="flex flex-col gap-3" aria-live="polite">
-              <p className="font-medium">{confirmed.preview.title}</p>
-              <p className="text-sm">
-                本文 {confirmed.preview.node_count}部分 / 添付{" "}
-                {confirmed.preview.files.length}件 /{" "}
-                {displayBytes(confirmed.preview.byte_size)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                除外する情報：{confirmed.preview.excluded_metadata.join("、")}
-                。本文やファイル内の秘密を自動判別したものではありません。
-              </p>
-              <div>
-                <Button disabled={save.isPending} onClick={() => save.mutate()}>
-                  {save.isPending ? <Spinner data-icon="inline-start" /> : null}
-                  準備版を保存して全文を確認
+              {uuid.test(release) ? (
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/projects/joined/${projectId}/artifact-releases?release=${release}`}
+                  >
+                    元の固定版と添付を確認
+                  </Link>
                 </Button>
-              </div>
-              <FormApiError error={save.error} />
-              <p className="text-xs text-muted-foreground">
-                通信失敗時は同じボタンで再試行できます。内容の不一致が出たときは、範囲を確認し直してください。
-              </p>
+              ) : null}
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+            <FormApiError error={preview.error} />
+            {confirmed ? (
+              <div className="flex flex-col gap-3" aria-live="polite">
+                <p className="font-medium">{confirmed.preview.title}</p>
+                <p className="text-sm">
+                  本文 {confirmed.preview.node_count}部分 / 添付{" "}
+                  {confirmed.preview.files.length}件 /{" "}
+                  {displayBytes(confirmed.preview.byte_size)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  除外する情報：{confirmed.preview.excluded_metadata.join("、")}
+                  。本文やファイル内の秘密を自動判別したものではありません。
+                </p>
+                <div>
+                  <Button
+                    disabled={save.isPending}
+                    onClick={() => save.mutate()}
+                  >
+                    {save.isPending ? (
+                      <Spinner data-icon="inline-start" />
+                    ) : null}
+                    準備版を保存して全文を確認
+                  </Button>
+                </div>
+                <FormApiError error={save.error} />
+                <p className="text-xs text-muted-foreground">
+                  通信失敗時は同じボタンで再試行できます。内容の不一致が出たときは、範囲を確認し直してください。
+                </p>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : (
+        <Alert>
+          <AlertTitle>準備版の新規保存を停止しています</AlertTitle>
+          <AlertDescription>
+            保存済みの準備版は引き続き確認できます。
+          </AlertDescription>
+        </Alert>
+      )}
       <section
         className="flex min-w-0 flex-col gap-3"
         aria-label="保存した公開準備版"
