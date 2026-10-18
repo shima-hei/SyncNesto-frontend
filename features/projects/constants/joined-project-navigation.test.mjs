@@ -28,9 +28,9 @@ const {
   resolve(root, "features/projects/constants/joined-project-navigation.ts"),
 );
 
-test("分類を変えても既存9入口とURLを保持し、テストと管理の子入口を隠さない", () => {
+test("既存9入口を保持し、同じ論理分類へ合意・承認を追加する", () => {
   const paths = items.map((item) => item.href(7));
-  assert.equal(paths.length, 9);
+  assert.equal(paths.length, 10);
   for (const suffix of [
     "",
     "/members",
@@ -41,6 +41,7 @@ test("分類を変えても既存9入口とURLを保持し、テストと管理�
     "/test-cases",
     "/documents",
     "/trash",
+    "/fixed-approvals",
   ])
     assert.ok(paths.includes(`/projects/joined/7${suffix}`));
   assert.equal(groups.length, 7);
@@ -58,7 +59,7 @@ test("既存canShowを維持し、Projectロールなしはsystem_adminでも業
     const visible = items.filter((item) =>
       item.canShow({ role: { key }, is_system_admin: false }),
     );
-    assert.equal(visible.length, key === "viewer" ? 8 : 9);
+    assert.equal(visible.length, key === "viewer" ? 9 : 10);
   }
 });
 

@@ -49,6 +49,7 @@ import {
 } from "../lib/api";
 import { safeArtifactOrigin, type ArtifactKind } from "../lib/navigation";
 import { AttachmentPreservations } from "./attachment-preservations";
+import { IncludedSourcesPicker } from "./included-sources-picker";
 import { SnapshotContent } from "./snapshot-content";
 import { displayBytes, displayDate } from "../lib/display";
 
@@ -130,6 +131,7 @@ function ReleaseWorkspace({
   const cache = useQueryClient();
   const [page, setPage] = useUrlFilterState("page", 1);
   const [selected, setSelected] = useUrlFilterState("release", "");
+  const [includedSources, setIncludedSources] = useState<ArtifactSource[]>([]);
   const [confirmed, setConfirmed] = useState<{
     preview: ArtifactPreview;
     requestId: string;
@@ -161,15 +163,31 @@ function ReleaseWorkspace({
         id: current.data.id,
         version: current.data.version,
       };
-      return previewRelease(projectId, { source: ref });
+      const included = await Promise.all(
+        includedSources.map(async (item) => {
+          const currentSource = await readSource(projectId, item.kind, item.id);
+          return {
+            kind: item.kind,
+            id: item.id,
+            version: currentSource.version,
+          };
+        }),
+      );
+      return previewRelease(projectId, {
+        source: ref,
+        included_sources: included,
+      });
     },
-    onSuccess: (value) =>
-      setConfirmed({ preview: value, requestId: crypto.randomUUID() }),
+    onSuccess: (value) => {
+      setIncludedSources(value.included_sources);
+      setConfirmed({ preview: value, requestId: crypto.randomUUID() });
+    },
   });
   const save = useMutation({
     mutationFn: () =>
       createRelease(projectId, {
         source: confirmed!.preview.source,
+        included_sources: confirmed!.preview.included_sources,
         request_id: confirmed!.requestId,
         expected_scope_digest: confirmed!.preview.scope_digest,
       }),
@@ -217,6 +235,18 @@ function ReleaseWorkspace({
               </p>
             )}
             <div>
+              {source.kind === "requirement" ||
+              source.kind === "requirement_document" ? (
+                <IncludedSourcesPicker
+                  projectId={projectId}
+                  value={includedSources}
+                  disabled={preview.isPending || save.isPending}
+                  onChange={(value) => {
+                    setIncludedSources(value);
+                    setConfirmed(null);
+                  }}
+                />
+              ) : null}
               <Button
                 variant="outline"
                 disabled={
@@ -377,6 +407,18 @@ function ReleaseWorkspace({
             projectId={projectId}
             releaseId={selected}
           />
+          {source?.kind === "requirement" ||
+          source?.kind === "requirement_document" ||
+          row?.source_kind === "requirement" ||
+          row?.source_kind === "requirement_document" ? (
+            <Button asChild>
+              <Link
+                href={`/projects/joined/${projectId}/fixed-approvals?release=${selected}`}
+              >
+                この固定内容への合意・正式承認を依頼
+              </Link>
+            </Button>
+          ) : null}
         </section>
       ) : null}
     </>
