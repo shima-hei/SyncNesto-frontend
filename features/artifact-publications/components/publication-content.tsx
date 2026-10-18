@@ -89,7 +89,9 @@ function PublicNode({ node }: { node: PublicationNodeRead }) {
                   />
                 ) : (
                   <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-sm">
-                    {JSON.stringify(value, null, 2) ?? "記載なし"}
+                    {value == null
+                      ? "記載なし"
+                      : JSON.stringify(value, null, 2)}
                   </pre>
                 )}
               </dd>
