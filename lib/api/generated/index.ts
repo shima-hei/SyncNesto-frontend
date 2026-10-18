@@ -6,6 +6,7 @@ export * from "./auth/auth";
 export * from "./demo/demo";
 export * from "./documents/documents";
 export * from "./drafts/drafts";
+export * from "./fixed-approvals/fixed-approvals";
 export * from "./health/health";
 export * from "./home/home";
 export * from "./mcp/mcp";

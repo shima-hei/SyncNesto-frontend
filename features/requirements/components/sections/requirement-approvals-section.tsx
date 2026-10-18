@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CheckIcon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -111,6 +112,16 @@ export function RequirementApprovalsSection({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          この欄は対象本文を固定していない従来の承認です。
+        </p>
+        <Button asChild variant="outline" size="sm">
+          <Link
+            href={`/projects/joined/${projectId}/fixed-approvals?targetKind=${targetType === "document" ? "requirement_document" : targetType === "requirement_item" ? "requirement" : targetType}&sourceId=${targetId}`}
+          >
+            版を固定した合意・承認と履歴を確認
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {canReview ? (

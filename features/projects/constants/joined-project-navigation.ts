@@ -42,6 +42,13 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
     canShow: canViewProjectFeature,
   },
   {
+    label: "合意・承認",
+    group: "何を満たすか",
+    purpose: "判断が必要な内容と合意履歴を確認する",
+    href: (projectId) => `/projects/joined/${projectId}/fixed-approvals`,
+    canShow: canViewProjectFeature,
+  },
+  {
     label: "画面・API設計",
     group: "どう作るか",
     purpose: "画面やAPIの設計を確認する",
