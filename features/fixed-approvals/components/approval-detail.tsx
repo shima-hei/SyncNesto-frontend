@@ -228,7 +228,7 @@ export function ApprovalDetail({
       ) : null}
       {row.legacy_import_id ? (
         <p className="text-sm text-muted-foreground">
-          従来申請から切り替えた依頼です。過去の判断日時と今回の判断日時は別に保持します。
+          従来履歴を引き継いだ今回の依頼です。過去の判断日時と今回の判断日時は別に保持します。
         </p>
       ) : null}
       <Card>
