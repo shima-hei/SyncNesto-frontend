@@ -78,6 +78,7 @@ function defaultColumnWidth(sheet: string, key: string) {
     : 180;
 }
 type Props = {
+  viewOnly?: boolean;
   columnAddLabel?: string;
   focusRowId?: string;
   focusColumnKey?: string;
@@ -110,6 +111,7 @@ type Props = {
 };
 
 export function DesignGrid({
+  viewOnly = false,
   sheet,
   columns,
   rows: dataRows,
@@ -599,7 +601,7 @@ export function DesignGrid({
       : undefined;
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      {sheet === "matrix" && (
+      {sheet === "matrix" && !viewOnly && (
         <div
           className="flex flex-wrap items-center gap-2"
           aria-label="組み合わせの構造操作"
@@ -656,233 +658,242 @@ export function DesignGrid({
           </DropdownMenu>
         </div>
       )}
-      <div
-        className="flex flex-wrap items-center gap-2 border-y py-1"
-        aria-label="セルの書式設定"
-      >
-        {sheet !== "matrix" && (
-          <>
-            {onInsert && (
-              <>
+      {!viewOnly ? (
+        <div
+          className="flex flex-wrap items-center gap-2 border-y py-1"
+          aria-label="セルの書式設定"
+        >
+          {sheet !== "matrix" && (
+            <>
+              {onInsert && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={readOnly}
+                    onClick={() => onInsert(rows[active.row]?.id ?? "", false)}
+                  >
+                    <PlusIcon data-icon="inline-start" />行
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={readOnly}
+                    onClick={() => onInsert(rows[active.row]?.id ?? "", true)}
+                  >
+                    <PlusIcon data-icon="inline-start" />
+                    区切り
+                  </Button>
+                </>
+              )}
+              {!appendRow && (
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={readOnly}
-                  onClick={() => onInsert(rows[active.row]?.id ?? "", false)}
+                  onClick={onAdd}
                 >
-                  <PlusIcon data-icon="inline-start" />行
+                  行を追加
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={readOnly}
-                  onClick={() => onInsert(rows[active.row]?.id ?? "", true)}
-                >
-                  <PlusIcon data-icon="inline-start" />
-                  区切り
-                </Button>
-              </>
-            )}
-            {!appendRow && (
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="行・列の操作"
+                  >
+                    <MoreHorizontalIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuGroup>
+                    {onAddColumn && (
+                      <DropdownMenuItem
+                        disabled={readOnly}
+                        onSelect={onAddColumn}
+                      >
+                        {columnAddLabel}
+                      </DropdownMenuItem>
+                    )}
+                    {hasSelection && selectionKind === "row" && (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        disabled={readOnly || active.row >= dataLength}
+                        onSelect={() =>
+                          onDelete(
+                            rows
+                              .slice(minRow, Math.min(maxRow + 1, dataLength))
+                              .map((r) => r.id),
+                          )
+                        }
+                      >
+                        選択行を削除
+                      </DropdownMenuItem>
+                    )}
+                    {hasSelection &&
+                      selectionKind === "column" &&
+                      onDeleteColumn &&
+                      canDeleteColumn(columns[active.col]?.key ?? "") && (
+                        <DropdownMenuItem
+                          variant="destructive"
+                          disabled={readOnly}
+                          onSelect={() =>
+                            onDeleteColumn(columns[active.col].key)
+                          }
+                        >
+                          選択列を削除
+                        </DropdownMenuItem>
+                      )}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
+          {hasSelection && (
+            <>
+              <Separator orientation="vertical" className="h-5" />
+              <span className="sr-only">書式</span>
               <Button
                 size="sm"
                 variant="outline"
                 disabled={readOnly}
-                onClick={onAdd}
+                aria-label="太字"
+                title="太字"
+                aria-pressed={currentStyle?.bold ?? false}
+                className={cn(
+                  currentStyle?.bold && "border-primary bg-primary/10",
+                )}
+                onClick={() => format({ bold: !currentStyle?.bold })}
               >
-                行を追加
+                <BoldIcon />
               </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label="行・列の操作"
+              <label className="flex items-center gap-1 text-sm">
+                配置
+                <select
+                  aria-label="文字配置"
+                  disabled={readOnly}
+                  value={currentStyle?.align ?? "left"}
+                  onChange={(e) =>
+                    format({ align: e.target.value as CellStyle["align"] })
+                  }
                 >
-                  <MoreHorizontalIcon />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuGroup>
-                  {onAddColumn && (
-                    <DropdownMenuItem
-                      disabled={readOnly}
-                      onSelect={onAddColumn}
-                    >
-                      {columnAddLabel}
-                    </DropdownMenuItem>
-                  )}
-                  {hasSelection && selectionKind === "row" && (
-                    <DropdownMenuItem
-                      variant="destructive"
-                      disabled={readOnly || active.row >= dataLength}
-                      onSelect={() =>
-                        onDelete(
-                          rows
-                            .slice(minRow, Math.min(maxRow + 1, dataLength))
-                            .map((r) => r.id),
-                        )
-                      }
-                    >
-                      選択行を削除
-                    </DropdownMenuItem>
-                  )}
-                  {hasSelection &&
-                    selectionKind === "column" &&
-                    onDeleteColumn &&
-                    canDeleteColumn(columns[active.col]?.key ?? "") && (
-                      <DropdownMenuItem
-                        variant="destructive"
-                        disabled={readOnly}
-                        onSelect={() => onDeleteColumn(columns[active.col].key)}
-                      >
-                        選択列を削除
-                      </DropdownMenuItem>
-                    )}
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
-        {hasSelection && (
-          <>
-            <Separator orientation="vertical" className="h-5" />
-            <span className="sr-only">書式</span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={readOnly}
-              aria-label="太字"
-              title="太字"
-              aria-pressed={currentStyle?.bold ?? false}
-              className={cn(
-                currentStyle?.bold && "border-primary bg-primary/10",
-              )}
-              onClick={() => format({ bold: !currentStyle?.bold })}
-            >
-              <BoldIcon />
-            </Button>
-            <label className="flex items-center gap-1 text-sm">
-              配置
-              <select
-                aria-label="文字配置"
-                disabled={readOnly}
-                value={currentStyle?.align ?? "left"}
-                onChange={(e) =>
-                  format({ align: e.target.value as CellStyle["align"] })
-                }
-              >
-                <option value="left">左</option>
-                <option value="center">中央</option>
-                <option value="right">右</option>
-              </select>
-            </label>
-            <label className="flex items-center gap-1 text-sm">
-              背景
-              <input
-                aria-label="背景色"
-                type="color"
-                className="h-7 w-9"
-                disabled={readOnly}
-                value={currentStyle?.background ?? "#ffffff"}
-                onChange={(e) => format({ background: e.target.value })}
-              />
-            </label>
-            <label className="flex items-center gap-1 text-sm">
-              文字
-              <input
-                aria-label="文字色"
-                type="color"
-                className="h-7 w-9"
-                disabled={readOnly}
-                value={currentStyle?.color ?? "#000000"}
-                onChange={(e) => format({ color: e.target.value })}
-              />
-            </label>
-          </>
-        )}
-        {hasSelection &&
-          (selectionKind === "column" || selectionKind === "row") && (
-            <>
-              <Separator orientation="vertical" className="h-5" />
-              <span className="text-xs text-muted-foreground">サイズ</span>
-              {selectionKind === "column" && (
-                <label className="text-sm">
-                  列幅
-                  <input
-                    aria-label="列幅"
-                    type="number"
-                    min={60}
-                    max={1200}
-                    className="w-16"
-                    disabled={readOnly}
-                    value={width(columns[active.col]?.key ?? "")}
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (n >= 60 && n <= 1200)
-                        onLayout({
-                          ...layout,
-                          widths: {
-                            ...layout.widths,
-                            [`${sheet}:${columns[active.col].key}`]: n,
-                          },
-                        });
-                    }}
-                  />
-                </label>
-              )}
-              {selectionKind === "row" && (
-                <label className="text-sm">
-                  行高
-                  <input
-                    aria-label="行高"
-                    type="number"
-                    min={28}
-                    max={300}
-                    className="w-16"
-                    disabled={readOnly || !rows[active.row]}
-                    value={rows[active.row] ? height(rows[active.row]) : 36}
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (n >= 28 && n <= 300 && rows[active.row])
-                        onLayout({
-                          ...layout,
-                          heights: {
-                            ...layout.heights,
-                            [`${sheet}:${rows[active.row].id}`]: n,
-                          },
-                        });
-                    }}
-                  />
-                </label>
-              )}
+                  <option value="left">左</option>
+                  <option value="center">中央</option>
+                  <option value="right">右</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-1 text-sm">
+                背景
+                <input
+                  aria-label="背景色"
+                  type="color"
+                  className="h-7 w-9"
+                  disabled={readOnly}
+                  value={currentStyle?.background ?? "#ffffff"}
+                  onChange={(e) => format({ background: e.target.value })}
+                />
+              </label>
+              <label className="flex items-center gap-1 text-sm">
+                文字
+                <input
+                  aria-label="文字色"
+                  type="color"
+                  className="h-7 w-9"
+                  disabled={readOnly}
+                  value={currentStyle?.color ?? "#000000"}
+                  onChange={(e) => format({ color: e.target.value })}
+                />
+              </label>
             </>
           )}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              className="ml-auto"
-              aria-label="キーボード操作・ヘルプ"
-            >
-              <HelpCircleIcon />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 text-xs">
-            {" "}
-            <p className="pt-1">
-              {dataLength}行 {appendRow && "· 末尾の空行へ入力すると項目を作成"}{" "}
-              · ドラッグ / Shift＋矢印で範囲選択 · F2 / ダブルクリックで編集 ·
-              Alt＋Enterでセル内改行 · Enterで下、Tabで右へ移動 ·
-              Ctrl/⌘＋C/X/V/Z · Escで編集取消
-              {sheet === "matrix" &&
-                " · ○ 水準は因子ごとに1つ、● 期待値は複数選択できます。クリック / Spaceで選択・解除。"}
-            </p>
-          </PopoverContent>
-        </Popover>
-      </div>
+          {hasSelection &&
+            (selectionKind === "column" || selectionKind === "row") && (
+              <>
+                <Separator orientation="vertical" className="h-5" />
+                <span className="text-xs text-muted-foreground">サイズ</span>
+                {selectionKind === "column" && (
+                  <label className="text-sm">
+                    列幅
+                    <input
+                      aria-label="列幅"
+                      type="number"
+                      min={60}
+                      max={1200}
+                      className="w-16"
+                      disabled={readOnly}
+                      value={width(columns[active.col]?.key ?? "")}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (n >= 60 && n <= 1200)
+                          onLayout({
+                            ...layout,
+                            widths: {
+                              ...layout.widths,
+                              [`${sheet}:${columns[active.col].key}`]: n,
+                            },
+                          });
+                      }}
+                    />
+                  </label>
+                )}
+                {selectionKind === "row" && (
+                  <label className="text-sm">
+                    行高
+                    <input
+                      aria-label="行高"
+                      type="number"
+                      min={28}
+                      max={300}
+                      className="w-16"
+                      disabled={readOnly || !rows[active.row]}
+                      value={rows[active.row] ? height(rows[active.row]) : 36}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (n >= 28 && n <= 300 && rows[active.row])
+                          onLayout({
+                            ...layout,
+                            heights: {
+                              ...layout.heights,
+                              [`${sheet}:${rows[active.row].id}`]: n,
+                            },
+                          });
+                      }}
+                    />
+                  </label>
+                )}
+              </>
+            )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className="ml-auto"
+                aria-label="キーボード操作・ヘルプ"
+              >
+                <HelpCircleIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 text-xs">
+              {" "}
+              <p className="pt-1">
+                {dataLength}行{" "}
+                {appendRow && "· 末尾の空行へ入力すると項目を作成"} · ドラッグ /
+                Shift＋矢印で範囲選択 · F2 / ダブルクリックで編集 ·
+                Alt＋Enterでセル内改行 · Enterで下、Tabで右へ移動 ·
+                Ctrl/⌘＋C/X/V/Z · Escで編集取消
+                {sheet === "matrix" &&
+                  " · ○ 水準は因子ごとに1つ、● 期待値は複数選択できます。クリック / Spaceで選択・解除。"}
+              </p>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          読み取り専用 · 矢印 / Shift＋矢印で選択 · Ctrl/⌘＋Cでコピー
+        </p>
+      )}
       <div
         ref={container}
         role="grid"
@@ -1076,7 +1087,7 @@ export function DesignGrid({
               />
             </div>
           ))}
-          {sheet === "matrix" && onAddColumn && (
+          {sheet === "matrix" && onAddColumn && !viewOnly && (
             <button
               type="button"
               aria-label="組み合わせ列を追加"

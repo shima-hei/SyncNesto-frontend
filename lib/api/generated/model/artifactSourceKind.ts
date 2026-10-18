@@ -12,4 +12,5 @@ export const ArtifactSourceKind = {
   requirement: "requirement",
   requirement_document: "requirement_document",
   specification: "specification",
+  test_design: "test_design",
 } as const;

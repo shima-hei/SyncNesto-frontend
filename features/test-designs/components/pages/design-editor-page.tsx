@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ArtifactReleaseLink } from "@/features/artifact-releases/components/artifact-release-link";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { Input } from "@/components/ui/input";
@@ -279,12 +280,20 @@ function Editor({ initial }: { initial: Design }) {
         title={design.name}
         description={`テスト項目 ${design.items.filter((item) => !item.is_spacer).length}件 · パターン展開後 ${expandedCount}テストケース`}
         actions={
-          <Button
-            disabled={readOnly || !state.dirty}
-            onClick={() => void state.save()}
-          >
-            保存
-          </Button>
+          <>
+            <ArtifactReleaseLink
+              projectId={design.project_id}
+              kind="test_design"
+              sourceId={design.id}
+              version={design.version}
+            />
+            <Button
+              disabled={readOnly || !state.dirty}
+              onClick={() => void state.save()}
+            >
+              保存
+            </Button>
+          </>
         }
       />
       <div className="flex flex-wrap items-center gap-3 border-y py-2">

@@ -29,3 +29,13 @@ test("外部・別案件・編集画面・不正URLを戻り先として使わ�
     "/projects/joined/7/specifications/2?tab=overview",
   );
 });
+
+test("固定版からテスト設計の表・項目・タブを保持して戻る", () => {
+  const path =
+    "/projects/joined/7/test-designs/4?table=uuid&item=uuid2&tab=patterns";
+  assert.equal(safeArtifactOrigin(path, 7), path);
+  assert.equal(
+    safeArtifactOrigin(path.replace("joined/7", "joined/8"), 7),
+    "/projects/joined/7/requirements",
+  );
+});

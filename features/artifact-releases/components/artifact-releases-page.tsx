@@ -56,6 +56,8 @@ const kinds: Record<string, string> = {
   requirement_document: "要件定義書",
   requirement: "要件",
   specification: "画面・API設計",
+  test_design: "テスト設計",
+  test_design_part: "本文データの分割",
   section: "セクション",
   requirement_detail: "種別別の詳細",
 };
@@ -195,6 +197,7 @@ function ReleaseWorkspace({
             <CardTitle>1. 本文を固定する</CardTitle>
             <CardDescription>
               現在の内容を確認して保存します。要件定義書は配下のセクションと要件を含みます。
+              テスト設計は保存済みの項目・因子水準・組み合わせ・書式を含み、未保存の下書きや実行結果は含みません。
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -234,6 +237,14 @@ function ReleaseWorkspace({
             <FormApiError error={preview.error} />
             {confirmed ? (
               <div className="flex flex-col gap-3" aria-live="polite">
+                {sourceQuery.data?.counts ? (
+                  <p className="text-sm">
+                    テスト項目 {sourceQuery.data.counts.items}件 / 因子{" "}
+                    {sourceQuery.data.counts.factors}件 / 水準{" "}
+                    {sourceQuery.data.counts.levels}件 / 組み合わせ{" "}
+                    {sourceQuery.data.counts.patterns}件
+                  </p>
+                ) : null}
                 <p>
                   {confirmed.preview.title}・版{" "}
                   {confirmed.preview.source.version}

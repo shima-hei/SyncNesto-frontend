@@ -14,9 +14,12 @@ export default async function Page({
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
   const kind =
     typeof query.kind === "string" &&
-    ["requirement", "requirement_document", "specification"].includes(
-      query.kind,
-    )
+    [
+      "requirement",
+      "requirement_document",
+      "specification",
+      "test_design",
+    ].includes(query.kind)
       ? (query.kind as ArtifactKind)
       : undefined;
   const sourceId =
