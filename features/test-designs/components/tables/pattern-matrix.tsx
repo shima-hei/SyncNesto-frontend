@@ -31,6 +31,7 @@ import {
 } from "../../lib/pattern-comments";
 
 export function PatternMatrix({
+  viewOnly = false,
   design,
   change,
   readOnly,
@@ -41,6 +42,7 @@ export function PatternMatrix({
   onCommentTarget,
   onOpenComments,
 }: {
+  viewOnly?: boolean;
   design: Design;
   change: (mutate: (d: Design) => void) => void;
   readOnly: boolean;
@@ -90,6 +92,7 @@ export function PatternMatrix({
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <DesignGrid
+        viewOnly={viewOnly}
         sheet="matrix"
         toggleOnClick
         toggleStartRow={0}
@@ -250,7 +253,7 @@ export function PatternMatrix({
           })
         }
       />
-      {selectedPattern && (
+      {selectedPattern && !viewOnly && (
         <details className="rounded-md border p-3 text-sm">
           <summary className="cursor-pointer font-medium focus-visible:outline-2 focus-visible:outline-primary">
             {selectedPattern.code} · 組み合わせ名・有効状態・説明・備考

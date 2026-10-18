@@ -22,6 +22,7 @@ import {
   readRequirementProjectsProjectIdRequirementsRequirementIdGet as readRequirement,
 } from "@/lib/api/generated/requirements/requirements";
 import { readSpecificationProjectsProjectIdSpecificationsSpecificationIdGet as readSpecification } from "@/lib/api/generated/specifications/specifications";
+import { readTestDesignProjectsProjectIdTestDesignsDesignIdGet as readTestDesign } from "@/lib/api/generated/test-designs/test-designs";
 import type { ArtifactKind } from "./navigation";
 
 export async function readSource(
@@ -29,6 +30,21 @@ export async function readSource(
   kind: ArtifactKind,
   id: number,
 ) {
+  if (kind === "test_design") {
+    const row = await readTestDesign(projectId, id);
+    return {
+      kind,
+      id: row.id,
+      title: row.name,
+      version: row.version,
+      counts: {
+        items: row.items.filter((item) => !item.is_spacer).length,
+        factors: row.factors.length,
+        levels: row.levels.length,
+        patterns: row.patterns.length,
+      },
+    };
+  }
   const row =
     kind === "requirement_document"
       ? await readDocument(projectId, id)

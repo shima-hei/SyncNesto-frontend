@@ -1,5 +1,5 @@
 export type ArtifactKind =
-  "requirement" | "requirement_document" | "specification";
+  "requirement" | "requirement_document" | "specification" | "test_design";
 
 export function safeArtifactOrigin(
   candidate: string | null,
@@ -11,7 +11,7 @@ export function safeArtifactOrigin(
     const url = new URL(candidate, "https://syncnesto.invalid");
     if (url.origin !== "https://syncnesto.invalid") return fallback;
     const pattern = new RegExp(
-      `^/projects/joined/${projectId}/(?:requirements/\\d+(?:/items/\\d+)?|specifications/\\d+)$`,
+      `^/projects/joined/${projectId}/(?:requirements/\\d+(?:/items/\\d+)?|specifications/\\d+|test-designs/\\d+)$`,
     );
     return pattern.test(url.pathname)
       ? `${url.pathname}${url.search}${url.hash}`

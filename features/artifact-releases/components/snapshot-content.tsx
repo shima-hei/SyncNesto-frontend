@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +15,9 @@ const SpecificationFields = dynamic(() =>
   import("@/features/specifications/components/specification-fields").then(
     (module) => module.SpecificationFields,
   ),
+);
+const TestDesignSnapshot = dynamic(() =>
+  import("./test-design-snapshot").then((module) => module.TestDesignSnapshot),
 );
 const labels: Record<string, string> = {
   purpose: "目的",
@@ -110,6 +114,15 @@ export function SnapshotContent({
     getNextPageParam: (last) => last.next_cursor ?? undefined,
     retry: false,
   });
+  const nodes = useMemo(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  );
+  const hasGraph = nodes.some((node) => node.node_kind === "test_design");
+  const { hasNextPage, isFetching, error, fetchNextPage } = query;
+  useEffect(() => {
+    if (hasGraph && hasNextPage && !isFetching && !error) void fetchNextPage();
+  }, [hasGraph, hasNextPage, isFetching, error, fetchNextPage]);
   if (query.isPending) return <Skeleton className="h-24" />;
   if (query.error)
     return (
@@ -120,11 +133,21 @@ export function SnapshotContent({
     );
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      {query.data.pages
-        .flatMap((page) => page.items)
-        .map((node) => (
-          <SnapshotNode key={node.id} node={node} />
-        ))}
+      {nodes
+        .filter((node) => node.node_kind !== "test_design_part")
+        .map((node) =>
+          node.node_kind === "test_design" ? (
+            <TestDesignSnapshot
+              key={node.id}
+              root={node}
+              nodes={nodes}
+              projectId={projectId}
+              complete={!query.hasNextPage}
+            />
+          ) : (
+            <SnapshotNode key={node.id} node={node} />
+          ),
+        )}
       {query.hasNextPage ? (
         <Button
           variant="outline"
