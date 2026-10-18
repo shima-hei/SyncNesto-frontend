@@ -407,6 +407,13 @@ function ReleaseWorkspace({
             projectId={projectId}
             releaseId={selected}
           />
+          <Button asChild variant="outline">
+            <Link
+              href={`/projects/joined/${projectId}/artifact-publications?release=${selected}`}
+            >
+              公開内容を確認（未公開）
+            </Link>
+          </Button>
           {source?.kind === "requirement" ||
           source?.kind === "requirement_document" ||
           row?.source_kind === "requirement" ||
