@@ -9,6 +9,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   account: "アカウント",
   activities: "最近の動き",
   "artifact-releases": "固定版と添付",
+  "artifact-publications": "公開内容を確認",
   "fixed-approvals": "合意・承認",
   "audit-logs": "監査ログ",
   documents: "ドキュメント",
