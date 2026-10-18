@@ -87,11 +87,22 @@ export function ApprovalWorkspace({
         title="合意・承認"
         description="どの内容に誰の判断が必要か、何が未合意のまま残っているかを確認します。"
         actions={
-          <Button asChild variant="outline">
-            <Link href={`/projects/joined/${projectId}/requirements`}>
-              要件定義へ
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {canManage ? (
+              <Button asChild>
+                <Link
+                  href={`/projects/joined/${projectId}/artifact-releases${sourceId && (targetKind === "requirement" || targetKind === "requirement_document") ? `?kind=${targetKind}&sourceId=${sourceId}` : ""}`}
+                >
+                  固定版を確認して依頼する
+                </Link>
+              </Button>
+            ) : null}
+            <Button asChild variant="outline">
+              <Link href={`/projects/joined/${projectId}/requirements`}>
+                要件定義へ
+              </Link>
+            </Button>
+          </div>
         }
       />
       <Alert>
