@@ -4,21 +4,26 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
 import type {
   HTTPValidationError,
+  SharedFileDownload,
+  SharedFileDownloadRequest,
   SharedPublicationFiles,
   SharedPublicationList,
   SharedPublicationNodePage,
@@ -28,7 +33,7 @@ import type {
 } from "../model";
 
 import { apiClient } from "../../client";
-import type { ErrorType } from "../../client";
+import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -1030,3 +1035,173 @@ export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export const getDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostUrl =
+  (publicationId: string, fileId: string) => {
+    return `/shared/publications/${publicationId}/files/${fileId}/download`;
+  };
+
+/**
+ * 現在許可された保全添付に限り、配信専用の短期URLを発行する。
+ * @summary Download Shared Publication File
+ */
+export const downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost =
+  async (
+    publicationId: string,
+    fileId: string,
+    sharedFileDownloadRequest: SharedFileDownloadRequest,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedFileDownload> => {
+    const getHeaders = (
+      h?: NonNullable<RequestInit["headers"]>,
+    ): Record<string, string | readonly string[]> => {
+      if (!h) return {};
+      if (h instanceof Headers) return Object.fromEntries(h.entries());
+      if (Symbol.iterator in h) {
+        return Object.fromEntries(
+          Array.from(
+            h as Iterable<Iterable<string>>,
+            (entry) => Array.from(entry) as [string, string],
+          ),
+        );
+      }
+      const headers: Record<string, string | readonly string[]> = {};
+      for (const [name, value] of Object.entries<
+        string | readonly string[] | undefined
+      >(h)) {
+        if (value !== undefined) headers[name] = value;
+      }
+      return headers;
+    };
+    return apiClient<SharedFileDownload>(
+      getDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostUrl(
+        publicationId,
+        fileId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getHeaders(options?.headers),
+        },
+        body: JSON.stringify(sharedFileDownloadRequest),
+      },
+    );
+  };
+
+export const getDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationKey =
+  () =>
+    [
+      "downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost",
+    ] as const;
+
+export const getDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost
+        >
+      >,
+      TError,
+      DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost
+      >
+    >,
+    TError,
+    DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost
+        >
+      >,
+      DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationVariables
+    > = (props) => {
+      const { publicationId, fileId, data } = props ?? {};
+
+      return downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost(
+        publicationId,
+        fileId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost
+      >
+    >
+  >;
+export type DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationBody =
+  BodyType<SharedFileDownloadRequest>;
+export type DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationVariables =
+  {
+    publicationId: string;
+    fileId: string;
+    data: BodyType<SharedFileDownloadRequest>;
+  };
+
+/**
+ * @summary Download Shared Publication File
+ */
+export const useDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost
+          >
+        >,
+        TError,
+        DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost
+      >
+    >,
+    TError,
+    DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };

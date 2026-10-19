@@ -357,6 +357,8 @@ export * from "./searchProjectsSearchProjectsGetParams";
 export * from "./searchRead";
 export * from "./searchResourcesSearchGetCategory";
 export * from "./searchResourcesSearchGetParams";
+export * from "./sharedFileDownload";
+export * from "./sharedFileDownloadRequest";
 export * from "./sharedPublicationFiles";
 export * from "./sharedPublicationList";
 export * from "./sharedPublicationNodePage";

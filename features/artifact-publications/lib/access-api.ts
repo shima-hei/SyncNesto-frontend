@@ -10,6 +10,7 @@ export {
   revokeProjectGuestParticipationProjectsProjectIdGuestParticipationsParticipationIdRevokePost as revokeParticipation,
 } from "@/lib/api/generated/publication-access/publication-access";
 export {
+  downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost as downloadSharedFile,
   sharedPublicationsSharedPublicationsGet as listShared,
   sharedPublicationSharedPublicationsPublicationIdGet as readShared,
   sharedPublicationNodesSharedPublicationsPublicationIdNodesGet as readSharedNodes,

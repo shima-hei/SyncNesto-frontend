@@ -13,5 +13,12 @@ export default async function SharedPublicationPage({
     )
   )
     notFound();
-  return <SharedPublicationDetail identity={publicationId} />;
+  return (
+    <SharedPublicationDetail
+      identity={publicationId}
+      downloadsEnabled={
+        process.env.SHARED_PUBLICATION_DOWNLOAD_ENABLED === "true"
+      }
+    />
+  );
 }

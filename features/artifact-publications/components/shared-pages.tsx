@@ -9,6 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { SharedAttachments } from "./shared-attachments";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useLogout } from "@/features/auth/hooks/use-logout";
-import {
-  displayBytes,
-  displayDate,
-} from "@/features/artifact-releases/lib/display";
+import { displayDate } from "@/features/artifact-releases/lib/display";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import type {
   PublicationNodeRead,
@@ -109,6 +107,7 @@ function useFreshShared<T>(
   const [state, setState] = useState<{
     key: string;
     value?: T;
+    operationSignal?: AbortSignal;
     error?: unknown;
   }>({ key });
   const mask = useCallback(() => {
@@ -130,7 +129,7 @@ function useFreshShared<T>(
       if (active.signal.aborted || current !== ticket.current) return;
       const value = await load(active.signal);
       if (!active.signal.aborted && current === ticket.current)
-        setState({ key, value });
+        setState({ key, value, operationSignal: active.signal });
     } catch (error) {
       if (!active.signal.aborted && current === ticket.current)
         setState({ key, error });
@@ -179,6 +178,7 @@ function useFreshShared<T>(
     value: state.key === key ? state.value : undefined,
     error: state.key === key ? state.error : undefined,
     refresh,
+    operationSignal: state.key === key ? state.operationSignal : undefined,
   };
 }
 
@@ -380,7 +380,13 @@ type SharedDetail = {
   nodes: PublicationNodeRead[];
 };
 
-export function SharedPublicationDetail({ identity }: { identity: string }) {
+export function SharedPublicationDetail({
+  identity,
+  downloadsEnabled = false,
+}: {
+  identity: string;
+  downloadsEnabled?: boolean;
+}) {
   const load = useCallback(
     async (signal: AbortSignal): Promise<SharedDetail> => {
       const metadata = await readShared(identity, { signal });
@@ -479,24 +485,14 @@ export function SharedPublicationDetail({ identity }: { identity: string }) {
               nodes={data.value.nodes}
               publicationId={`${identity}:${data.value.metadata.authorization_revision}`}
             />
-            <section
-              aria-label="共有された添付一覧"
-              className="flex min-w-0 flex-col gap-3"
-            >
-              <h2 className="font-semibold">添付ファイル</h2>
-              <ul className="flex flex-col gap-2">
-                {data.value.metadata.content.files.map((file) => (
-                  <li key={file.id} className="break-words text-sm">
-                    {file.filename} · {displayBytes(file.byte_size)}
-                  </li>
-                ))}
-              </ul>
-              <p className="text-sm text-muted-foreground">
-                {data.value.metadata.content.files.length
-                  ? "この段階では添付の一覧を確認できます。ダウンロードは後続工程です。"
-                  : "添付なし"}
-              </p>
-            </section>
+            <SharedAttachments
+              key={`${identity}:${data.value.metadata.authorization_revision}:files`}
+              publicationId={identity}
+              files={data.value.metadata.content.files}
+              revision={data.value.metadata.authorization_revision}
+              signal={data.operationSignal}
+              enabled={downloadsEnabled}
+            />
           </>
         )}
       </div>
