@@ -411,7 +411,7 @@ function ReleaseWorkspace({
             <Link
               href={`/projects/joined/${projectId}/artifact-publications?release=${selected}`}
             >
-              公開内容を確認（未公開）
+              公開内容と共有先を確認
             </Link>
           </Button>
           {source?.kind === "requirement" ||
