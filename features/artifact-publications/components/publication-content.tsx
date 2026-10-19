@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -112,10 +112,12 @@ function PublicGraph({
   root,
   nodes,
   publicationId,
+  onReady,
 }: {
   root: PublicationNodeRead;
   nodes: PublicationNodeRead[];
   publicationId: string;
+  onReady: (id: string, ready: boolean) => void;
 }) {
   const graph = useQuery({
     queryKey: [
@@ -128,6 +130,10 @@ function PublicGraph({
     retry: false,
     gcTime: 0,
   });
+  useEffect(() => {
+    onReady(root.id, graph.isSuccess);
+    return () => onReady(root.id, false);
+  }, [onReady, root.id, graph.isSuccess]);
   if (graph.isPending) return <Skeleton className="h-32" />;
   if (graph.error)
     return (
@@ -142,9 +148,11 @@ function PublicGraph({
 export function PublicationContent({
   projectId,
   publicationId,
+  onReady,
 }: {
   projectId: number;
   publicationId: string;
+  onReady?: (ready: boolean) => void;
 }) {
   const query = useInfiniteQuery({
     queryKey: ["publication-nodes", projectId, publicationId],
@@ -185,6 +193,37 @@ export function PublicationContent({
       </Alert>
     );
   return (
+    <PublicationBody
+      nodes={nodes}
+      publicationId={publicationId}
+      onReady={onReady}
+    />
+  );
+}
+
+export function PublicationBody({
+  nodes,
+  publicationId,
+  onReady,
+}: {
+  nodes: PublicationNodeRead[];
+  publicationId: string;
+  onReady?: (ready: boolean) => void;
+}) {
+  const [graphs, setGraphs] = useState<Record<string, boolean>>({});
+  const graphReady = useCallback((id: string, ready: boolean) => {
+    setGraphs((previous) =>
+      previous[id] === ready ? previous : { ...previous, [id]: ready },
+    );
+  }, []);
+  const allReady = nodes
+    .filter((n) => n.node_kind === "test_design")
+    .every((n) => graphs[n.id]);
+  useEffect(() => {
+    onReady?.(allReady);
+    return () => onReady?.(false);
+  }, [allReady, onReady]);
+  return (
     <div
       className="flex min-w-0 flex-col gap-6"
       aria-label="相手に見せる本文全体"
@@ -201,6 +240,7 @@ export function PublicationContent({
               root={node}
               nodes={nodes}
               publicationId={publicationId}
+              onReady={graphReady}
             />
           ) : (
             <PublicNode key={node.id} node={node} />

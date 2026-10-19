@@ -7,6 +7,7 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 
 // BFFでは、フロントエンドから呼び出す想定のAPIグループだけを公開する。
 const ALLOWED_PREFIXES = [
+  "/shared/publications",
   "/demo",
   "/auth",
   "/tenants",
@@ -64,7 +65,28 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
 const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   const upstreamPath = await getUpstreamPath(context);
+  const privatePublication =
+    /^\/projects\/[^/]+\/(?:artifact-publications|guest-participations)(?:\/|$)/.test(
+      upstreamPath,
+    ) ||
+    upstreamPath === "/shared/publications" ||
+    upstreamPath.startsWith("/shared/publications/");
+  if (!privatePublication) return proxyUpstream(request, upstreamPath);
+  let response: NextResponse;
+  try {
+    response = await proxyUpstream(request, upstreamPath);
+  } catch {
+    response = NextResponse.json(
+      { message: "Service unavailable", code: "SERVICE_UNAVAILABLE" },
+      { status: 503 },
+    );
+  }
+  response.headers.set("Cache-Control", "private, no-store");
+  response.headers.set("Referrer-Policy", "no-referrer");
+  return response;
+};
 
+const proxyUpstream = async (request: NextRequest, upstreamPath: string) => {
   if (!isAllowedPath(upstreamPath)) {
     return NextResponse.json({ message: "Not found" }, { status: 404 });
   }
@@ -92,6 +114,9 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   let upstreamHeaders: Headers;
   try {
     upstreamHeaders = getUpstreamRequestHeaders(request);
+    if (upstreamPath.startsWith("/shared/publications")) {
+      upstreamHeaders.delete("X-Tenant-ID");
+    }
   } catch {
     return NextResponse.json(
       { message: "Service unavailable", code: "SERVICE_UNAVAILABLE" },

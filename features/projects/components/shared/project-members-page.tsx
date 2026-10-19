@@ -19,6 +19,7 @@ import { useRemoveProjectMember } from "../../hooks/use-remove-project-member";
 import { useUpdateProjectMember } from "../../hooks/use-update-project-member";
 import { ProjectMemberForm } from "../forms/project-member-form";
 import { ProjectMembersTable } from "../tables/project-members-table";
+import { GuestParticipationsPanel } from "@/features/artifact-publications/components/access-controls";
 
 type ProjectMembersPageProps = {
   projectId: number;
@@ -108,6 +109,11 @@ export function ProjectMembersPage({
             ? `${project.name} のメンバーと権限を管理します。`
             : `${project.name} のメンバーと権限を確認します。`
         }
+      />
+
+      <GuestParticipationsPanel
+        projectId={projectId}
+        canManage={canManageMembers}
       />
 
       {canManageMembers ? (

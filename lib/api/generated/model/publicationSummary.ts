@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PublicationSummarySourceKindsItem } from "./publicationSummarySourceKindsItem";
+import type { PublicationSummaryState } from "./publicationSummaryState";
 
 /**
  * 社内一覧専用。公開状態と顧客承認状態を混同しない。
@@ -19,5 +20,6 @@ export interface PublicationSummary {
   byte_size: number;
   captured_at: string;
   created_at: string;
-  state?: "prepared";
+  state?: PublicationSummaryState;
+  publication_version?: number;
 }

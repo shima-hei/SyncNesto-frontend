@@ -71,6 +71,10 @@ import {
   readRelease,
 } from "../lib/api";
 import { PublicationContent } from "./publication-content";
+import {
+  PublicationAccessPanel,
+  publicationStateLabel,
+} from "./access-controls";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PREPARATION_WRITES_ENABLED = true;
@@ -212,7 +216,7 @@ function Workspace({ projectId }: { projectId: number }) {
   return (
     <>
       <Alert>
-        <AlertTitle>未公開の準備画面です</AlertTitle>
+        <AlertTitle>固定した内容の公開を管理します</AlertTitle>
         <AlertDescription>
           保存しても相手の閲覧許可は発行されず、承認にもなりません。全文・設計例・テストデータ・添付を確認し、機密があれば元データを直して新しい固定版を作ってください。
         </AlertDescription>
@@ -453,7 +457,9 @@ function Workspace({ projectId }: { projectId: number }) {
                     <TableCell>{displayDate(p.created_at)}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary">未公開</Badge>
+                        <Badge variant="secondary">
+                          {publicationStateLabel(p.state ?? "prepared")}
+                        </Badge>
                         <Button
                           variant="outline"
                           size="sm"
@@ -497,6 +503,7 @@ function Detail({
   projectId: number;
   identity: string;
 }) {
+  const [fullContentReady, setFullContentReady] = useState(false);
   const query = useQuery({
     queryKey: ["publication", projectId, identity],
     queryFn: () => readPublication(projectId, identity),
@@ -527,9 +534,18 @@ function Detail({
             {displayBytes(content.byte_size)}
           </p>
         </div>
-        <Badge variant="secondary">未公開・閲覧許可なし</Badge>
+        <Badge variant="secondary">
+          {query.data.state === "prepared"
+            ? "未公開・閲覧許可なし"
+            : publicationStateLabel(query.data.state ?? "prepared")}
+        </Badge>
       </div>
-      <PublicationContent projectId={projectId} publicationId={identity} />
+      <PublicationContent
+        key={identity}
+        projectId={projectId}
+        publicationId={identity}
+        onReady={setFullContentReady}
+      />
       <section
         className="flex min-w-0 flex-col gap-3"
         aria-label="公開する添付一覧"
@@ -572,9 +588,15 @@ function Detail({
       <Alert>
         <AlertTitle>次に確認すること</AlertTitle>
         <AlertDescription>
-          目的と受け入れ条件、設計・テストとの対応、機密情報の有無を確認してください。修正が必要なら元の内容から新しい固定版を作ります。相手の指定と閲覧許可の発行は後続工程です。
+          目的と受け入れ条件、設計・テストとの対応、機密情報の有無を確認してください。修正が必要なら元の内容から新しい固定版を作ります。確認後に相手と期限を指定します。
         </AlertDescription>
       </Alert>
+      <PublicationAccessPanel
+        key={identity}
+        projectId={projectId}
+        publication={query.data}
+        fullContentReady={fullContentReady}
+      />
       <Button asChild variant="outline">
         <Link
           href={`/projects/joined/${projectId}/artifact-releases?release=${origin.release_id}`}

@@ -6,12 +6,14 @@
  */
 import type { PublicationContentMetadata } from "./publicationContentMetadata";
 import type { PublicationInternalOrigin } from "./publicationInternalOrigin";
+import type { PublicationReadState } from "./publicationReadState";
 
 /**
  * 社内準備版の詳細。相手向け本文はcontentだけで完結する。
  */
 export interface PublicationRead {
-  state?: "prepared";
+  state?: PublicationReadState;
+  publication_version?: number;
   content: PublicationContentMetadata;
   internal_origin: PublicationInternalOrigin;
 }

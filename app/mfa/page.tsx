@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { MfaPage } from "@/features/auth/components/mfa/mfa-page";
-import { mcpReturnPath } from "@/features/mcp/lib/navigation";
+import { loginReturnPath } from "@/lib/auth/return-path";
 import type { MfaFlowRead } from "@/lib/api/generated/model";
 import { authenticateBackendRequest } from "@/lib/security/backend";
 
@@ -28,7 +28,7 @@ export default async function Page({
   return (
     <MfaPage
       flow={(await response.json()) as MfaFlowRead}
-      returnTo={mcpReturnPath(next) ?? "/"}
+      returnTo={loginReturnPath(next) ?? "/"}
     />
   );
 }

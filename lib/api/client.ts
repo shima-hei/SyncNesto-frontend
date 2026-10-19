@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/session-events";
 
 import { ApiError } from "./error";
+import { announceSharedAuthChange } from "@/lib/auth/shared-access-events";
 import {
   getClientDataRealm,
   registerDemoStatus,
@@ -37,12 +38,16 @@ export async function apiClient<T>(
   const { method = "GET", params, body, headers, signal } = options;
   const requestUrl = buildUrl(url, params);
   const requestHeaders = buildHeaders(headers, body, method);
+  const sharedPublication =
+    url === "/shared/publications" || url.startsWith("/shared/publications/");
   const realm = getClientDataRealm();
   // /auth/meは新しいCookieの状態を取得し、画面側の認証状態を更新する。
   if (realm && !(url === "/auth/me" && method.toUpperCase() === "GET"))
     requestHeaders.set("X-Syncnesto-Data-Realm", realm);
   const tenantId = getApiTenant();
-  if (tenantId !== null && !requestHeaders.has("X-Tenant-ID")) {
+  if (sharedPublication) {
+    requestHeaders.delete("X-Tenant-ID");
+  } else if (tenantId !== null && !requestHeaders.has("X-Tenant-ID")) {
     requestHeaders.set("X-Tenant-ID", String(tenantId));
   }
   const response = await fetch(requestUrl, {
@@ -51,6 +56,7 @@ export async function apiClient<T>(
     headers: requestHeaders,
     body: getRequestBody(body),
     signal,
+    cache: sharedPublication ? "no-store" : undefined,
   });
 
   const data = await parseResponse(response);
@@ -87,6 +93,9 @@ export async function apiClient<T>(
   }
 
   if (url === "/auth/me" && data) registerDemoUser(data as CurrentUserRead);
+  if (url.startsWith("/auth/") && isCsrfProtectedMethod(method)) {
+    announceSharedAuthChange();
+  }
   if (url === "/demo/status" && data) registerDemoStatus(data as DemoStatus);
   return data as T;
 }
