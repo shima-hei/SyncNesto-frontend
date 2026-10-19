@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      ...[
+        "/shared/publications/:path*",
+        "/api/shared/publications/:path*",
+        "/api/projects/:projectId/artifact-publications/:path*",
+        "/api/projects/:projectId/guest-participations/:path*",
+      ].map((source) => ({
+        source,
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      })),
     ];
   },
 };
