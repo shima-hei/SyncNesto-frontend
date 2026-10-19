@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -492,6 +493,28 @@ export function PublicationAccessPanel({
                   ? "公開相手の追加を確認"
                   : "公開する内容と相手を確認"}
               </Button>
+              {state === "published" ? (
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(
+                        new URL(
+                          `/shared/publications/${identity}`,
+                          window.location.origin,
+                        ).href,
+                      );
+                      toast.success(
+                        "共有用リンクをコピーしました。許可された本人のログインが必要です。",
+                      );
+                    } catch {
+                      toast.error("リンクをコピーできませんでした。");
+                    }
+                  }}
+                >
+                  共有用リンクをコピー
+                </Button>
+              ) : null}
               <RevokeAccessDialog
                 label="公開全体を停止"
                 description="全員の閲覧許可を停止し、同じ版は再公開しません。社内の固定内容・履歴は残ります。"
