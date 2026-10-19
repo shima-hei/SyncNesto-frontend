@@ -541,7 +541,7 @@ function Detail({
         </Badge>
       </div>
       <PublicationContent
-        key={identity}
+        key={`${identity}:content`}
         projectId={projectId}
         publicationId={identity}
         onReady={setFullContentReady}
@@ -592,7 +592,7 @@ function Detail({
         </AlertDescription>
       </Alert>
       <PublicationAccessPanel
-        key={identity}
+        key={`${identity}:access`}
         projectId={projectId}
         publication={query.data}
         fullContentReady={fullContentReady}
