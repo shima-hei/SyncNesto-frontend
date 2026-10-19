@@ -46,3 +46,11 @@ export function evidenceIssues(value: unknown) {
 export function approvalPath(projectId: number, approvalId?: string) {
   return `/projects/joined/${projectId}/fixed-approvals${approvalId ? `/${approvalId}` : ""}`;
 }
+export function approvalUserLabel(
+  name: string | null | undefined,
+  userId: number,
+  currentUserId?: number,
+) {
+  const label = name?.trim() || "名前を確認できないユーザー";
+  return userId === currentUserId ? `${label}（あなた）` : label;
+}

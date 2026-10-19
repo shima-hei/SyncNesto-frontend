@@ -28,7 +28,12 @@ import {
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format/date";
 import { listApprovals } from "../lib/api";
-import { approvalPath, evidenceIssues, statusLabels } from "../lib/display";
+import {
+  approvalPath,
+  approvalUserLabel,
+  evidenceIssues,
+  statusLabels,
+} from "../lib/display";
 import { ApprovalRequestForm } from "./approval-request-form";
 import { LegacyMigrationPanel } from "./legacy-migration-panel";
 import { ChoiceField } from "./choice-field";
@@ -173,7 +178,7 @@ export function ApprovalWorkspace({
                   <TableRow>
                     <TableHead>対象・方式</TableHead>
                     <TableHead>状態</TableHead>
-                    <TableHead>指定先・申請日時</TableHead>
+                    <TableHead>承認者・申請日時</TableHead>
                     <TableHead>確認</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -207,7 +212,13 @@ export function ApprovalWorkspace({
                         ) : null}
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm">本人 ID {item.approver_id}</p>
+                        <p className="max-w-64 whitespace-normal break-words text-sm">
+                          {approvalUserLabel(
+                            item.approver_name,
+                            item.approver_id,
+                            user?.id,
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {formatDateTime(item.created_at)}
                         </p>

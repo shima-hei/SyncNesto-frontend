@@ -19,6 +19,8 @@ export interface FixedApprovalHistoryItem {
   status: string;
   requester_id: number;
   approver_id: number;
+  requester_name?: string | null;
+  approver_name?: string | null;
   created_at: string;
   finalized_at?: string | null;
   evidence?: FixedApprovalHistoryItemEvidence;

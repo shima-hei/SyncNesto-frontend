@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
@@ -48,6 +49,7 @@ import {
 } from "../lib/api";
 import {
   approvalPath,
+  approvalUserLabel,
   basisLabels,
   numberValue,
   recordValue,
@@ -87,6 +89,7 @@ export function ApprovalDetail({
   projectId: number;
   approvalId: string;
 }) {
+  const { user } = useAuth();
   const cache = useQueryClient();
   const [showContent, setShowContent] = useState(false);
   const [page, setPage] = useState(1);
@@ -208,8 +211,14 @@ export function ApprovalDetail({
         </AlertTitle>
         <AlertDescription>
           <p>
-            申請者：{row.requester_name ?? `ID ${row.requester_id}`} ／
-            指定本人：{row.approver_name ?? `ID ${row.approver_id}`}
+            申請者：
+            {approvalUserLabel(
+              row.requester_name,
+              row.requester_id,
+              user?.id,
+            )}{" "}
+            ／ 承認者：
+            {approvalUserLabel(row.approver_name, row.approver_id, user?.id)}
           </p>
           <p>
             申請日時 {formatDateTime(row.created_at)}
