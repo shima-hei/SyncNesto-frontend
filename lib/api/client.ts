@@ -42,6 +42,11 @@ export async function apiClient<T>(
     url === "/shared/publications" ||
     url.startsWith("/shared/publications/") ||
     url.startsWith("/guest-invitations/");
+  const guestApproval =
+    url === "/shared/publications/approval-requests" ||
+    /^\/shared\/publications\/[a-f0-9-]{36}\/approval-requests\/[a-f0-9-]{36}(?:\/(?:bases|decision-preview|decisions))?$/i.test(
+      url,
+    );
   const realm = getClientDataRealm();
   // /auth/meは新しいCookieの状態を取得し、画面側の認証状態を更新する。
   if (realm && !(url === "/auth/me" && method.toUpperCase() === "GET"))
@@ -67,6 +72,7 @@ export async function apiClient<T>(
     const code = getErrorCode(data);
     if (
       code === "MFA_REQUIRED" &&
+      !guestApproval &&
       !url.startsWith("/guest-invitations/") &&
       !url.startsWith("/auth/mfa") &&
       typeof window !== "undefined" &&

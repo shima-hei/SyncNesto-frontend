@@ -109,3 +109,41 @@ test("本人変更の別tab通知には本文・token・本人情報を保存し
     globalThis.BroadcastChannel = previousChannel;
   }
 });
+
+test("外部判断のMFA不足は画面内で扱い、既存APIの再ログインは維持する", async () => {
+  const { apiClient } = load("../lib/api/client.ts", {
+    "./tenant-context": { getApiTenant: () => null },
+    "@/lib/demo/session": { getClientDataRealm: () => "normal" },
+    "@/lib/auth/session-events": { isAuthSessionInvalidCode: () => false },
+    "./error": { ApiError: class extends Error {} },
+  });
+  const previousFetch = globalThis.fetch;
+  const previousWindow = globalThis.window;
+  const redirects = [];
+  globalThis.window = {
+    location: {
+      pathname: "/shared/publications",
+      replace: (url) => redirects.push(url),
+    },
+  };
+  globalThis.fetch = async () =>
+    Response.json({ code: "MFA_REQUIRED" }, { status: 403 });
+  const detail =
+    "/shared/publications/11111111-1111-1111-1111-111111111111/approval-requests/22222222-2222-2222-2222-222222222222";
+  try {
+    for (const path of [
+      "/shared/publications/approval-requests",
+      detail,
+      detail + "/bases",
+      detail + "/decision-preview",
+      detail + "/decisions",
+    ])
+      await assert.rejects(apiClient(path, {}));
+    assert.deepEqual(redirects, []);
+    await assert.rejects(apiClient("/projects/21", {}));
+    assert.deepEqual(redirects, ["/login?reason=mfa-required"]);
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+});
