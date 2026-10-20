@@ -226,7 +226,7 @@ export function SharedNotificationsPage() {
                     <span className="text-sm font-medium break-words">
                       {notice.action === "cancelled"
                         ? "依頼元が取り消しました"
-                        : `${notice.requester_name}さんからの判断依頼`}
+                        : `${notice.requester_name}からの判断依頼`}
                     </span>
                     <span className="text-sm break-words">{notice.title}</span>
                     <span className="text-xs text-muted-foreground">

@@ -8,7 +8,7 @@ export function notificationMessage(notification: NotificationRead) {
     case "mentioned":
       return `${actor_name}さんが「${target_title}」のコメントであなたをメンションしました`;
     case "fixed_approval_requested":
-      return `${actor_name}さんから「${target_title}」の合意・承認依頼が届きました`;
+      return `${actor_name}から「${target_title}」の合意・承認依頼が届きました`;
     case "fixed_approval_decided": {
       const label =
         notification.context.action === "rejected"
@@ -18,10 +18,10 @@ export function notificationMessage(notification: NotificationRead) {
             : notification.context.target_kind === "requirement"
               ? "合意"
               : "承認";
-      return `${actor_name}さんが「${target_title}」を${label}しました`;
+      return `${actor_name}が「${target_title}」を${label}しました`;
     }
     case "fixed_approval_cancelled":
-      return `${actor_name}さんが「${target_title}」への依頼を取り消しました`;
+      return `${actor_name}が「${target_title}」への依頼を取り消しました`;
   }
 }
 
