@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
         ],
       },
       ...[
+        "/shared/notifications/:path*",
+        "/api/shared/notifications/:path*",
         "/shared/publications/:path*",
         "/guest-invitations/:path*",
         "/api/guest-invitations/:path*",
