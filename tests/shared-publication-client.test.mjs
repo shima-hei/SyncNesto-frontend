@@ -136,8 +136,10 @@ test("外部判断のMFA不足は画面内で扱い、既存APIの再ログイ�
   try {
     for (const path of [
       "/shared/publications/approval-requests",
+      "/shared/publications/approval-requests?status=requested&page_size=20",
       detail,
       detail + "/bases",
+      detail + "/bases?cursor=opaque&page_size=100",
       detail + "/decision-preview",
       detail + "/decisions",
     ])
