@@ -36,6 +36,7 @@ import type {
 } from "@/lib/api/generated/model";
 import {
   deliveryStateLabel,
+  invitationActorLabel,
   invitationCommand,
   invitationDate,
   invitationStateLabel,
@@ -340,11 +341,7 @@ function InvitationRow({
                   <ol className="flex flex-col gap-2">
                     {query.data.items.map((event) => (
                       <li key={event.id}>
-                        {eventLabel(event.kind)} ·{" "}
-                        {event.actor_name ??
-                          (event.actor_kind === "email_recipient"
-                            ? "招待メールの確認者"
-                            : "配送処理")}{" "}
+                        {eventLabel(event.kind)} · {invitationActorLabel(event)}{" "}
                         · {invitationDate(event.occurred_at)}
                         {event.reason ? (
                           <p className="text-muted-foreground">

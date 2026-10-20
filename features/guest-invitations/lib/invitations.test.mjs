@@ -7,10 +7,33 @@ const { outputText } = ts.transpileModule(
   readFileSync(new URL("./invitations.ts", import.meta.url), "utf8"),
   { compilerOptions: { module: ts.ModuleKind.ESNext } },
 );
-const { invitationTokenFromHash, invitationStateLabel, deliveryStateLabel } =
-  await import(
-    `data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`
+const {
+  invitationTokenFromHash,
+  invitationStateLabel,
+  deliveryStateLabel,
+  invitationActorLabel,
+} = await import(
+  `data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`
+);
+
+test("氏名の欠けた本人の記録を配送処理と表示しない", () => {
+  assert.equal(
+    invitationActorLabel({ actor_name: null, actor_kind: "user" }),
+    "氏名を確認できない利用者",
   );
+  assert.equal(
+    invitationActorLabel({ actor_name: "  ", actor_kind: "email_recipient" }),
+    "招待メールの確認者",
+  );
+  assert.equal(
+    invitationActorLabel({ actor_name: null, actor_kind: "delivery" }),
+    "配送処理",
+  );
+  assert.equal(
+    invitationActorLabel({ actor_name: "佐藤さん", actor_kind: "user" }),
+    "佐藤さん",
+  );
+});
 
 test("メールfragmentの正確な形式だけを確認する", () => {
   const token = "A".repeat(43);
