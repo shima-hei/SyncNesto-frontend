@@ -42,7 +42,8 @@ export default async function Page({
           returnTo &&
           ((reauth === "invitation" && isGuestInvitationPath(returnTo)) ||
             (reauth === "guest-approval" &&
-              (isSharedApprovalPath(returnTo) ||
+              (returnTo === "/shared/notifications" ||
+                isSharedApprovalPath(returnTo) ||
                 returnTo === "/shared/publications" ||
                 /^\/shared\/publications\/[a-f0-9-]+$/i.test(returnTo))))
         )

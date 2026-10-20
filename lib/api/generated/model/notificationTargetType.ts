@@ -19,4 +19,5 @@ export const NotificationTargetType = {
   requirement_comment: "requirement_comment",
   requirement_target_comment: "requirement_target_comment",
   test_design_comment: "test_design_comment",
+  fixed_approval: "fixed_approval",
 } as const;

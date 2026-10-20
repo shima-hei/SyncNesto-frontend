@@ -7,6 +7,21 @@ export function notificationMessage(notification: NotificationRead) {
       return `${actor_name}さんがあなたを「${target_title}」の${notification.target_type === "requirement" ? "オーナー" : "担当者"}に設定しました`;
     case "mentioned":
       return `${actor_name}さんが「${target_title}」のコメントであなたをメンションしました`;
+    case "fixed_approval_requested":
+      return `${actor_name}さんから「${target_title}」の合意・承認依頼が届きました`;
+    case "fixed_approval_decided": {
+      const label =
+        notification.context.action === "rejected"
+          ? "差し戻し"
+          : notification.context.action === "approved_with_exceptions"
+            ? "例外あり正式承認"
+            : notification.context.target_kind === "requirement"
+              ? "合意"
+              : "承認";
+      return `${actor_name}さんが「${target_title}」を${label}しました`;
+    }
+    case "fixed_approval_cancelled":
+      return `${actor_name}さんが「${target_title}」への依頼を取り消しました`;
   }
 }
 
@@ -27,6 +42,10 @@ export function notificationHref(
   } = notification.context;
   const targetId = encodeURIComponent(notification.target_id);
   switch (notification.target_type) {
+    case "fixed_approval":
+      return notification.context.approval_id
+        ? `${base}/fixed-approvals/${encodeURIComponent(notification.context.approval_id)}`
+        : null;
     case "task":
       return `${base}/tasks/${targetId}`;
     case "requirement":

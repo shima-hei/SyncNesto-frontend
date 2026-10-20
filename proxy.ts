@@ -22,6 +22,7 @@ export function proxy(request: NextRequest) {
   // nonceを含むHTMLを共有キャッシュから再配信しない。
   response.headers.set("Cache-Control", "private, no-store");
   if (
+    request.nextUrl.pathname === "/shared/notifications" ||
     request.nextUrl.pathname.startsWith("/shared/publications") ||
     request.nextUrl.pathname.startsWith("/guest-invitations/")
   ) {

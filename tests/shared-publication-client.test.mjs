@@ -26,6 +26,7 @@ test("共有・本人招待・従来MCPだけをログイン後の戻り先に�
   });
   for (const valid of [
     "/shared/publications",
+    "/shared/notifications",
     "/guest-invitations/11111111-1111-1111-1111-111111111111",
     "/shared/publications/11111111-1111-1111-1111-111111111111",
     "/shared/publications/11111111-1111-1111-1111-111111111111/approval-requests/22222222-2222-2222-2222-222222222222",
@@ -34,6 +35,8 @@ test("共有・本人招待・従来MCPだけをログイン後の戻り先に�
     assert.equal(loginReturnPath(valid), valid);
   for (const invalid of [
     "https://example.com",
+    "/shared/notifications?next=//evil.test",
+    "/shared/notifications/../users",
     "//example.com",
     "/shared/publications?next=//example.com",
     "/shared/publications/../users",
@@ -136,6 +139,11 @@ test("外部判断のMFA不足は画面内で扱い、既存APIの再ログイ�
   try {
     for (const path of [
       "/shared/publications/approval-requests",
+      "/shared/notifications",
+      "/shared/notifications?unread_only=true&page=2",
+      "/shared/notifications/unread-count",
+      "/shared/notifications/read-all",
+      "/shared/notifications/11111111-1111-1111-1111-111111111111/read",
       "/shared/publications/approval-requests?status=requested&page_size=20",
       detail,
       detail + "/bases",

@@ -14,4 +14,7 @@ export type NotificationType =
 export const NotificationType = {
   assigned: "assigned",
   mentioned: "mentioned",
+  fixed_approval_requested: "fixed_approval_requested",
+  fixed_approval_decided: "fixed_approval_decided",
+  fixed_approval_cancelled: "fixed_approval_cancelled",
 } as const;

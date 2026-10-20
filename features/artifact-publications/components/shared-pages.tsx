@@ -34,6 +34,7 @@ import { PublicationBody } from "./publication-content";
 import { loadSharedContent } from "../lib/load-shared-content";
 import { useFreshShared } from "../hooks/use-fresh-shared";
 import { SharedApprovalList } from "@/features/guest-fixed-approvals/components/shared-approval-list";
+import { SharedNotificationsLink } from "@/features/notifications/components/shared-notifications";
 
 export function SharedShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -51,6 +52,10 @@ export function SharedShell({ children }: { children: React.ReactNode }) {
             Syncnesto · 共有された内容
           </Link>
           <div className="flex flex-wrap items-center gap-2">
+            {process.env.NEXT_PUBLIC_FIXED_APPROVAL_NOTIFICATIONS_ENABLED ===
+            "true" ? (
+              <SharedNotificationsLink />
+            ) : null}
             <span className="text-sm text-muted-foreground">{user?.name}</span>
             <Button
               size="sm"

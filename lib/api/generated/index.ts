@@ -21,6 +21,7 @@ export * from "./publication-access/publication-access";
 export * from "./requirements/requirements";
 export * from "./search/search";
 export * from "./shared-fixed-approvals/shared-fixed-approvals";
+export * from "./shared-notifications/shared-notifications";
 export * from "./shared-publications/shared-publications";
 export * from "./specifications/specifications";
 export * from "./tasks/tasks";

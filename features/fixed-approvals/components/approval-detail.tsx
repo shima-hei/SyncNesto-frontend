@@ -1,4 +1,5 @@
 "use client";
+import { ApprovalNextActions } from "@/features/notifications/components/approval-next-actions";
 
 import { useId, useState } from "react";
 import Link from "next/link";
@@ -226,6 +227,14 @@ export function ApprovalDetail({
           ) : null}
         </AlertDescription>
       </Alert>
+      {process.env.NEXT_PUBLIC_FIXED_APPROVAL_NOTIFICATIONS_ENABLED ===
+      "true" ? (
+        <ApprovalNextActions
+          projectId={projectId}
+          approvalId={approvalId}
+          version={row.version}
+        />
+      ) : null}
       {row.guest_context ? (
         <Alert>
           <AlertTitle>

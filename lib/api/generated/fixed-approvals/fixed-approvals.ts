@@ -26,6 +26,7 @@ import type {
   ApprovalCandidates,
   ApprovalDecisionInput,
   ApprovalDecisionPreview,
+  ApprovalNextActions,
   FixedApprovalCreate,
   FixedApprovalHistoryPage,
   FixedApprovalPreview,
@@ -64,6 +65,282 @@ const withQueryKey = <T extends object, K>(
   }
   return result;
 };
+
+export const getReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetUrl =
+  (projectId: number, approvalId: string) => {
+    return `/projects/${projectId}/fixed-approvals/${approvalId}/next-actions`;
+  };
+
+/**
+ * 現在の権限で利用できる既存画面への次操作を返す。
+ * @summary Read Approval Next Actions
+ */
+export const readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet =
+  async (
+    projectId: number,
+    approvalId: string,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<ApprovalNextActions> => {
+    return apiClient<ApprovalNextActions>(
+      getReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetUrl(
+        projectId,
+        approvalId,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetQueryKey =
+  (projectId: number, approvalId: string) => {
+    return [
+      `/projects/${projectId}/fixed-approvals/${approvalId}/next-actions`,
+    ] as const;
+  };
+
+export const getReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    approvalId: string,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetQueryKey(
+        projectId,
+        approvalId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+        >
+      >
+    > = ({ signal }) =>
+      readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet(
+        projectId,
+        approvalId,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        approvalId !== null &&
+        approvalId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type ReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+      >
+    >
+  >;
+export type ReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function useReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  approvalId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  approvalId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  approvalId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Read Approval Next Actions
+ */
+
+export function useReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  approvalId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getReadApprovalNextActionsProjectsProjectIdFixedApprovalsApprovalIdNextActionsGetQueryOptions(
+      projectId,
+      approvalId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export const getPreviewFixedApprovalProjectsProjectIdFixedApprovalsPreviewPostUrl =
   (projectId: number) => {

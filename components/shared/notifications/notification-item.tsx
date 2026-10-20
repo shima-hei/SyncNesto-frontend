@@ -1,6 +1,11 @@
 "use client";
 
-import { MessageSquareIcon, UserRoundCheckIcon } from "lucide-react";
+import {
+  MessageSquareIcon,
+  UserRoundCheckIcon,
+  ClipboardCheckIcon,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 import { Button } from "@/components/ui/button";
 import { notificationMessage } from "@/features/notifications/lib/notification-display";
@@ -24,7 +29,11 @@ export function NotificationItem({
   onMarkRead,
 }: Props) {
   const Icon =
-    notification.type === "assigned" ? UserRoundCheckIcon : MessageSquareIcon;
+    notification.target_type === "fixed_approval"
+      ? ClipboardCheckIcon
+      : notification.type === "assigned"
+        ? UserRoundCheckIcon
+        : MessageSquareIcon;
   const unavailable = notification.target_status !== "available";
   const content = (
     <>
@@ -60,6 +69,16 @@ export function NotificationItem({
         >
           {notificationMessage(notification)}
         </p>
+        {notification.target_type === "fixed_approval" ? (
+          <span className="text-xs text-muted-foreground">
+            <Badge variant="outline">合意・承認</Badge>{" "}
+            {notification.context.current_status === "requested"
+              ? "依頼の固定内容を確認"
+              : notification.context.current_status === "cancelled"
+                ? "現在は取消済み"
+                : "判断済み・結果と次の対応を確認"}
+          </span>
+        ) : null}
         {notification.snapshot.excerpt ? (
           <p
             className={cn(
