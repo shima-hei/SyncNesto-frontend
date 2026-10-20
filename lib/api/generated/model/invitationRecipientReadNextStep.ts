@@ -11,6 +11,7 @@ export type InvitationRecipientReadNextStep =
 export const InvitationRecipientReadNextStep = {
   register: "register",
   login: "login",
+  mfa: "mfa",
   accept: "accept",
   accepted: "accepted",
   unavailable: "unavailable",

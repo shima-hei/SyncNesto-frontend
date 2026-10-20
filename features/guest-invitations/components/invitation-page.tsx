@@ -22,6 +22,7 @@ import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { PublicActionShell } from "@/features/auth/components/account-actions/public-action-shell";
 import { logoutUserAuthLogoutPost } from "@/lib/api/generated/auth/auth";
+import { startMfaReauthenticationAuthMfaReauthPost } from "@/lib/api/generated/mfa/mfa";
 import {
   invitationInspectGuestInvitationsInvitationIdInspectPost as inspect,
   invitationReadGuestInvitationsInvitationIdGet as read,
@@ -304,6 +305,56 @@ export function InvitationPage({ invitationId }: { invitationId: string }) {
                   </Link>
                 </Button>
               </div>
+            ) : info.next_step === "mfa" ? (
+              <form
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  if (lock.current) return;
+                  const target = event.currentTarget;
+                  lock.current = true;
+                  setBusy(true);
+                  setError(null);
+                  try {
+                    await startMfaReauthenticationAuthMfaReauthPost({
+                      password: String(new FormData(target).get("password")),
+                    });
+                    window.location.replace(
+                      `/mfa?reauth=invitation&next=${encodeURIComponent(returnTo)}`,
+                    );
+                  } catch (failure) {
+                    setError(failure as Error);
+                    lock.current = false;
+                    setBusy(false);
+                  } finally {
+                    target.reset();
+                  }
+                }}
+              >
+                <FieldGroup>
+                  <p className="text-sm">
+                    {info.current_user_name}
+                    （あなた）の参加を保護するため、追加認証を完了してください。
+                  </p>
+                  <Field>
+                    <FieldLabel htmlFor={`${id}-reauth`}>
+                      現在のパスワード
+                    </FieldLabel>
+                    <Input
+                      id={`${id}-reauth`}
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      maxLength={128}
+                      disabled={busy}
+                    />
+                    <FieldDescription>
+                      本人確認後、通常の追加認証へ進みます。未設定なら認証器を登録します。
+                    </FieldDescription>
+                  </Field>
+                  <Button disabled={busy}>追加認証に進む</Button>
+                </FieldGroup>
+              </form>
             ) : info.next_step === "accept" ? (
               <div className="flex flex-col gap-2">
                 <p className="text-sm">
