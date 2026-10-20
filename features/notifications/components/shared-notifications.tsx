@@ -232,7 +232,9 @@ export function SharedNotificationsPage() {
                     <span className="text-xs text-muted-foreground">
                       {notice.can_decide
                         ? "固定内容・依頼の目的を確認して判断する"
-                        : `現在：${statusLabels[notice.current_status]} · 内容と履歴を確認`}
+                        : notice.current_status === "requested"
+                          ? "判断停止中 · 内容と履歴を確認"
+                          : `現在：${statusLabels[notice.current_status]} · 内容と履歴を確認`}
                     </span>
                   </button>
                 </li>
