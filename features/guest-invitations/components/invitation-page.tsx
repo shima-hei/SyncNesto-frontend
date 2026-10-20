@@ -90,6 +90,9 @@ export function InvitationPage({ invitationId }: { invitationId: string }) {
       token = undefined;
     }
     let active = true;
+    const invalidateResponse = () => {
+      revision.current += 1;
+    };
     void initialization.current
       .then(() => {
         if (active) return refresh();
@@ -102,7 +105,7 @@ export function InvitationPage({ invitationId }: { invitationId: string }) {
       });
     return () => {
       active = false;
-      revision.current++;
+      invalidateResponse();
     };
   }, [invitationId, refresh]);
 
