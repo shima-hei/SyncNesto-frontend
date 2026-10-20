@@ -56,7 +56,9 @@ export function SharedShell({ children }: { children: React.ReactNode }) {
             "true" ? (
               <SharedNotificationsLink />
             ) : null}
-            <span className="text-sm text-muted-foreground">{user?.name}</span>
+            <span className="min-w-0 break-words text-sm text-muted-foreground">
+              {user?.name}
+            </span>
             <Button
               size="sm"
               variant="ghost"

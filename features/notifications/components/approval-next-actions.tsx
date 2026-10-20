@@ -64,7 +64,7 @@ export function ApprovalNextActions({
   const name = data.next_actor.name || "指定された担当者";
   return (
     <Alert>
-      <AlertTitle>
+      <AlertTitle className="min-w-0 break-words">
         次にすること · {name}
         {data.next_actor.is_you ? "（あなた）" : ""}
       </AlertTitle>
