@@ -49,7 +49,10 @@ function PublicNode({ node }: { node: PublicationNodeRead }) {
     node.payload.content &&
     typeof node.payload.content === "object";
   return (
-    <article className="flex min-w-0 flex-col gap-3 border-b pb-5 last:border-b-0">
+    <article
+      id={`public-node-${node.id}`}
+      className="flex min-w-0 flex-col gap-3 border-b pb-5 last:border-b-0"
+    >
       <p className="text-xs text-muted-foreground">
         固定した内容
         {node.source_version ? `・元の版 ${node.source_version}` : ""}
@@ -149,10 +152,12 @@ export function PublicationContent({
   projectId,
   publicationId,
   onReady,
+  onNodes,
 }: {
   projectId: number;
   publicationId: string;
   onReady?: (ready: boolean) => void;
+  onNodes?: (nodes: PublicationNodeRead[]) => void;
 }) {
   const query = useInfiniteQuery({
     queryKey: ["publication-nodes", projectId, publicationId],
@@ -174,6 +179,9 @@ export function PublicationContent({
   useEffect(() => {
     if (hasNextPage && !isFetching && !error) void fetchNextPage();
   }, [hasNextPage, isFetching, error, fetchNextPage]);
+  useEffect(() => {
+    onNodes?.(!query.hasNextPage && query.isSuccess ? nodes : []);
+  }, [nodes, query.hasNextPage, query.isSuccess, onNodes]);
   if (query.isPending) return <Skeleton className="h-40" />;
   if (query.error)
     return (
@@ -235,13 +243,14 @@ export function PublicationBody({
         .filter((n) => n.node_kind !== "test_design_part")
         .map((node) =>
           node.node_kind === "test_design" ? (
-            <PublicGraph
-              key={node.id}
-              root={node}
-              nodes={nodes}
-              publicationId={publicationId}
-              onReady={graphReady}
-            />
+            <section key={node.id} id={`public-node-${node.id}`}>
+              <PublicGraph
+                root={node}
+                nodes={nodes}
+                publicationId={publicationId}
+                onReady={graphReady}
+              />
+            </section>
           ) : (
             <PublicNode key={node.id} node={node} />
           ),

@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { FixedApprovalHistoryItemAudience } from "./fixedApprovalHistoryItemAudience";
 import type { FixedApprovalHistoryItemEvidence } from "./fixedApprovalHistoryItemEvidence";
 import type { FixedApprovalHistoryItemScheme } from "./fixedApprovalHistoryItemScheme";
 
@@ -26,4 +27,5 @@ export interface FixedApprovalHistoryItem {
   evidence?: FixedApprovalHistoryItemEvidence;
   import_id?: string | null;
   migrated_to?: string | null;
+  audience?: FixedApprovalHistoryItemAudience;
 }

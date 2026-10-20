@@ -28,6 +28,7 @@ test("共有・本人招待・従来MCPだけをログイン後の戻り先に�
     "/shared/publications",
     "/guest-invitations/11111111-1111-1111-1111-111111111111",
     "/shared/publications/11111111-1111-1111-1111-111111111111",
+    "/shared/publications/11111111-1111-1111-1111-111111111111/approval-requests/22222222-2222-2222-2222-222222222222",
     "/mcp/authorize?request_id=11111111-1111-1111-1111-111111111111",
   ])
     assert.equal(loginReturnPath(valid), valid);
@@ -37,6 +38,9 @@ test("共有・本人招待・従来MCPだけをログイン後の戻り先に�
     "/shared/publications?next=//example.com",
     "/shared/publications/../users",
     "/shared/publications\\evil",
+    "/shared/publications/11111111-1111-1111-1111-111111111111/approval-requests/../../users",
+    "/shared/publications/11111111-1111-1111-1111-111111111111/approval-requests/22222222-2222-2222-2222-222222222222?next=//evil.test",
+    "/shared/publications/11111111-1111-1111-1111-111111111111/approval-requests/22222222-2222-2222-2222-222222222222#secret",
     "/projects/21",
     "/guest-invitations/11111111-1111-1111-1111-111111111111#token=secret",
     "/guest-invitations/11111111-1111-1111-1111-111111111111?next=//evil.test",

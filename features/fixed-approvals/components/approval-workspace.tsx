@@ -26,6 +26,7 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table";
+import { approvalKindLabels } from "@/features/guest-fixed-approvals/lib/display";
 import { formatDateTime } from "@/lib/format/date";
 import { listApprovals } from "../lib/api";
 import {
@@ -61,6 +62,8 @@ export function ApprovalWorkspace({
     ["project_admin", "manager"].includes(
       role.currentProjectRole?.role?.key ?? "",
     );
+  const [audience] = useUrlFilterState("audience", "");
+  const [publicationId] = useUrlFilterState("publication_id", "");
   const [page, setPage] = useUrlFilterState("page", 1);
   const [status, setStatus] = useUrlFilterState("status", "");
   const [mine, setMine] = useUrlFilterState("mine", "");
@@ -74,6 +77,8 @@ export function ApprovalWorkspace({
       mine,
       targetKind,
       sourceId,
+      audience,
+      publicationId,
     ],
     queryFn: () =>
       listApprovals(projectId, {
@@ -83,6 +88,11 @@ export function ApprovalWorkspace({
         mine: mine === "true",
         target_kind: targetKind,
         source_id: sourceId,
+        audience:
+          audience === "guest" || audience === "internal"
+            ? audience
+            : undefined,
+        publication_id: publicationId || undefined,
       }),
     retry: false,
   });
@@ -111,7 +121,9 @@ export function ApprovalWorkspace({
         }
       />
       <Alert>
-        <AlertTitle>要件の合意と、文書の正式承認は別の判断です</AlertTitle>
+        <AlertTitle>
+          要件・文書・設計・テスト設計への判断を区別します
+        </AlertTitle>
         <AlertDescription>
           元の内容が更新されても過去の合意はその固定内容に残ります。タスク完了・テスト合格・顧客公開を自動的に確定するものではありません。
         </AlertDescription>
@@ -190,9 +202,10 @@ export function ApprovalWorkspace({
                         <p className="text-xs text-muted-foreground">
                           {item.scheme === "legacy"
                             ? "従来承認・対象版未固定"
-                            : item.target_kind === "requirement"
-                              ? "個別要件の合意"
-                              : "要件定義書の正式承認"}
+                            : (approvalKindLabels[item.target_kind] ??
+                              "固定内容への判断")}
+                          ・
+                          {item.audience === "guest" ? "外部依頼" : "社内記録"}
                           ・対象 ID {item.source_id}
                         </p>
                       </TableCell>

@@ -5,7 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { FixedApprovalEventRead } from "./fixedApprovalEventRead";
+import type { FixedApprovalReadAudience } from "./fixedApprovalReadAudience";
 import type { FixedApprovalReadScopeManifest } from "./fixedApprovalReadScopeManifest";
+import type { GuestApprovalContext } from "./guestApprovalContext";
 
 /**
  * 現在の閲覧権限を確認した新依頼の詳細。
@@ -33,4 +35,6 @@ export interface FixedApprovalRead {
   events?: FixedApprovalEventRead[];
   can_decide?: boolean;
   can_cancel?: boolean;
+  audience?: FixedApprovalReadAudience;
+  guest_context?: GuestApprovalContext | null;
 }

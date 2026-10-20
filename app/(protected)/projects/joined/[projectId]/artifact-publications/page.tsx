@@ -9,5 +9,10 @@ export default async function Page({
   const { projectId } = await params;
   const id = Number(projectId);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
-  return <PublicationsPage projectId={id} />;
+  return (
+    <PublicationsPage
+      projectId={id}
+      requestsEnabled={process.env.GUEST_FIXED_APPROVALS_ENABLED === "true"}
+    />
+  );
 }

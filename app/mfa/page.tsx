@@ -1,7 +1,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { MfaPage } from "@/features/auth/components/mfa/mfa-page";
-import { isGuestInvitationPath, loginReturnPath } from "@/lib/auth/return-path";
+import {
+  isGuestInvitationPath,
+  isSharedApprovalPath,
+  loginReturnPath,
+} from "@/lib/auth/return-path";
 import type { MfaFlowRead } from "@/lib/api/generated/model";
 import { authenticateBackendRequest } from "@/lib/security/backend";
 
@@ -35,9 +39,12 @@ export default async function Page({
       returnTo={returnTo ?? "/"}
       allowRecovery={
         !(
-          reauth === "invitation" &&
           returnTo &&
-          isGuestInvitationPath(returnTo)
+          ((reauth === "invitation" && isGuestInvitationPath(returnTo)) ||
+            (reauth === "guest-approval" &&
+              (isSharedApprovalPath(returnTo) ||
+                returnTo === "/shared/publications" ||
+                /^\/shared\/publications\/[a-f0-9-]+$/i.test(returnTo))))
         )
       }
     />

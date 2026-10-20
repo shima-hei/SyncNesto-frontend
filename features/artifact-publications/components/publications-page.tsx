@@ -60,6 +60,7 @@ import {
 } from "@/features/artifact-releases/lib/display";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import type {
+  PublicationNodeRead,
   PublicationPreview,
   PublicationPreviewRequest,
 } from "@/lib/api/generated/model";
@@ -76,10 +77,18 @@ import {
   publicationStateLabel,
 } from "./access-controls";
 
+import { GuestApprovalRequestPanel } from "@/features/guest-fixed-approvals/components/request-panel";
+
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PREPARATION_WRITES_ENABLED = true;
 
-export function PublicationsPage({ projectId }: { projectId: number }) {
+export function PublicationsPage({
+  projectId,
+  requestsEnabled = false,
+}: {
+  projectId: number;
+  requestsEnabled?: boolean;
+}) {
   const { user } = useAuth();
   const role = useCurrentProjectRole(projectId);
   const allowed =
@@ -117,13 +126,19 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
           </AlertDescription>
         </Alert>
       ) : (
-        <Workspace projectId={projectId} />
+        <Workspace projectId={projectId} requestsEnabled={requestsEnabled} />
       )}
     </div>
   );
 }
 
-function Workspace({ projectId }: { projectId: number }) {
+function Workspace({
+  projectId,
+  requestsEnabled,
+}: {
+  projectId: number;
+  requestsEnabled: boolean;
+}) {
   const cache = useQueryClient();
   const [release, setRelease] = useUrlFilterState("release", "");
   const [publication, setPublication] = useUrlFilterState("publication", "");
@@ -490,6 +505,7 @@ function Workspace({ projectId }: { projectId: number }) {
           key={`${projectId}:${publication}`}
           projectId={projectId}
           identity={publication}
+          requestsEnabled={requestsEnabled}
         />
       ) : null}
     </>
@@ -499,11 +515,14 @@ function Workspace({ projectId }: { projectId: number }) {
 function Detail({
   projectId,
   identity,
+  requestsEnabled,
 }: {
   projectId: number;
   identity: string;
+  requestsEnabled: boolean;
 }) {
   const [fullContentReady, setFullContentReady] = useState(false);
+  const [publicNodes, setPublicNodes] = useState<PublicationNodeRead[]>([]);
   const query = useQuery({
     queryKey: ["publication", projectId, identity],
     queryFn: () => readPublication(projectId, identity),
@@ -545,6 +564,7 @@ function Detail({
         projectId={projectId}
         publicationId={identity}
         onReady={setFullContentReady}
+        onNodes={setPublicNodes}
       />
       <section
         className="flex min-w-0 flex-col gap-3"
@@ -591,6 +611,13 @@ function Detail({
           目的と受け入れ条件、設計・テストとの対応、機密情報の有無を確認してください。修正が必要なら元の内容から新しい固定版を作ります。確認後に相手と期限を指定します。
         </AlertDescription>
       </Alert>
+      <GuestApprovalRequestPanel
+        projectId={projectId}
+        publicationId={identity}
+        nodes={publicNodes}
+        enabled={requestsEnabled && query.data.state === "published"}
+        ready={fullContentReady}
+      />
       <PublicationAccessPanel
         key={`${identity}:access`}
         projectId={projectId}

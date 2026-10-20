@@ -36,6 +36,7 @@ import {
   FieldLegend,
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { approvalKindLabels } from "@/features/guest-fixed-approvals/lib/display";
 import { SnapshotContent } from "@/features/artifact-releases/components/snapshot-content";
 import { downloadFile } from "@/features/artifact-releases/lib/api";
 import { formatDateTime } from "@/lib/format/date";
@@ -191,11 +192,7 @@ export function ApprovalDetail({
     <div className="flex min-w-0 flex-col gap-6">
       <PageHeader
         title={title}
-        description={
-          row.target_kind === "requirement"
-            ? "個別要件の固定内容への合意"
-            : "要件定義書の固定内容への正式承認"
-        }
+        description={approvalKindLabels[row.target_kind] ?? "固定内容への判断"}
         actions={
           <Button asChild variant="outline">
             <Link href={approvalPath(projectId)}>依頼一覧へ</Link>
@@ -229,6 +226,31 @@ export function ApprovalDetail({
           ) : null}
         </AlertDescription>
       </Alert>
+      {row.guest_context ? (
+        <Alert>
+          <AlertTitle>
+            外部参加者への依頼
+            {!row.guest_context.can_access && row.status === "requested"
+              ? " · 判断停止中"
+              : ""}
+          </AlertTitle>
+          <AlertDescription>
+            <p>
+              指定された承認者が、共有画面から判断します。社内画面から代わりに判断することはできません。
+            </p>
+            {!row.guest_context.can_access && row.status === "requested" ? (
+              <p>{row.guest_context.blocked_reason}</p>
+            ) : null}
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={`/projects/joined/${projectId}/artifact-publications?publication=${row.guest_context.publication_id}`}
+              >
+                公開内容・共有先と再依頼を確認
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
       {row.legacy_import_id ? (
         <LegacyOriginCard
           projectId={projectId}
@@ -246,7 +268,9 @@ export function ApprovalDetail({
           <CardDescription>
             {row.target_kind === "requirement"
               ? "対象はこの個別要件と同梱した設計・添付です。文書内の他の要件は参考表示です。"
-              : "保存した文書・章・要件と、明示して同梱した設計・テスト設計・添付を確認します。"}
+              : row.target_kind === "requirement_document"
+                ? "保存した文書・章・要件と、明示して同梱した設計・テスト設計・添付を確認します。"
+                : "選択した設計またはテスト設計と添付が承認対象です。その他の本文は参考資料です。"}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex min-w-0 flex-col gap-4">

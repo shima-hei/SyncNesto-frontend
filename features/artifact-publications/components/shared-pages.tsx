@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { SharedAttachments } from "./shared-attachments";
@@ -34,20 +28,12 @@ import type {
   SharedPublicationsSharedPublicationsGetParams,
 } from "@/lib/api/generated/model";
 import { ApiError } from "@/lib/api/error";
-import { subscribeAuthSessionInvalid } from "@/lib/auth/session-events";
-import {
-  announceSharedAuthChange,
-  sharedAuthChannel,
-  SHARED_AUTH_EVENT,
-  SHARED_AUTH_STORAGE_KEY,
-} from "@/lib/auth/shared-access-events";
-import {
-  listShared,
-  readShared,
-  readSharedFiles,
-  readSharedNodes,
-} from "../lib/access-api";
+import { announceSharedAuthChange } from "@/lib/auth/shared-access-events";
+import { listShared } from "../lib/access-api";
 import { PublicationBody } from "./publication-content";
+import { loadSharedContent } from "../lib/load-shared-content";
+import { useFreshShared } from "../hooks/use-fresh-shared";
+import { SharedApprovalList } from "@/features/guest-fixed-approvals/components/shared-approval-list";
 
 export function SharedShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -94,92 +80,6 @@ export function SharedShell({ children }: { children: React.ReactNode }) {
       </main>
     </div>
   );
-}
-
-function useFreshShared<T>(
-  key: string,
-  load: (signal: AbortSignal) => Promise<T>,
-  setMasked: (hidden: boolean) => void,
-) {
-  const { user, refetchUser } = useAuth();
-  const controller = useRef<AbortController | null>(null);
-  const ticket = useRef(0);
-  const [state, setState] = useState<{
-    key: string;
-    value?: T;
-    operationSignal?: AbortSignal;
-    error?: unknown;
-  }>({ key });
-  const mask = useCallback(() => {
-    ticket.current += 1;
-    controller.current?.abort();
-    setMasked(true);
-    setState({ key });
-  }, [key, setMasked]);
-  const refresh = useCallback(async () => {
-    mask();
-    if (document.visibilityState === "hidden") return;
-    const current = ticket.current;
-    const active = new AbortController();
-    controller.current = active;
-    try {
-      const auth = await refetchUser();
-      if (!auth.data || auth.error)
-        throw auth.error ?? new Error("ログインを確認してください");
-      if (active.signal.aborted || current !== ticket.current) return;
-      const value = await load(active.signal);
-      if (!active.signal.aborted && current === ticket.current)
-        setState({ key, value, operationSignal: active.signal });
-    } catch (error) {
-      if (!active.signal.aborted && current === ticket.current)
-        setState({ key, error });
-    }
-  }, [key, load, mask, refetchUser]);
-  useLayoutEffect(() => {
-    setMasked(false);
-  }, [state, setMasked]);
-  useEffect(() => {
-    const request = () => {
-      void refresh();
-    };
-    const visible = () =>
-      document.visibilityState === "hidden" ? mask() : request();
-    const storage = (event: StorageEvent) => {
-      if (event.key === SHARED_AUTH_STORAGE_KEY) request();
-    };
-    const channel = sharedAuthChannel();
-    if (channel) channel.onmessage = request;
-    const unsubscribe = subscribeAuthSessionInvalid(mask);
-    window.addEventListener("focus", request);
-    window.addEventListener("pageshow", request);
-    window.addEventListener("pagehide", mask);
-    window.addEventListener("offline", mask);
-    window.addEventListener("online", request);
-    window.addEventListener("storage", storage);
-    window.addEventListener(SHARED_AUTH_EVENT, request);
-    document.addEventListener("visibilitychange", visible);
-    request();
-    return () => {
-      ticket.current += 1;
-      controller.current?.abort();
-      channel?.close();
-      unsubscribe();
-      window.removeEventListener("focus", request);
-      window.removeEventListener("pageshow", request);
-      window.removeEventListener("pagehide", mask);
-      window.removeEventListener("offline", mask);
-      window.removeEventListener("online", request);
-      window.removeEventListener("storage", storage);
-      window.removeEventListener(SHARED_AUTH_EVENT, request);
-      document.removeEventListener("visibilitychange", visible);
-    };
-  }, [mask, refresh, user?.id]);
-  return {
-    value: state.key === key ? state.value : undefined,
-    error: state.key === key ? state.error : undefined,
-    refresh,
-    operationSignal: state.key === key ? state.operationSignal : undefined,
-  };
 }
 
 function SharedFailure({
@@ -260,6 +160,7 @@ export function SharedPublicationsList() {
           あなたに許可された固定内容から、目的・要件・設計・テストを確認できます。
         </p>
       </div>
+      <SharedApprovalList />
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(event) => {
@@ -388,41 +289,8 @@ export function SharedPublicationDetail({
   downloadsEnabled?: boolean;
 }) {
   const load = useCallback(
-    async (signal: AbortSignal): Promise<SharedDetail> => {
-      const metadata = await readShared(identity, { signal });
-      const nodes: PublicationNodeRead[] = [];
-      let cursor: string | undefined;
-      do {
-        const page = await readSharedNodes(
-          identity,
-          { page_size: 100, cursor },
-          { signal },
-        );
-        if (
-          page.authorization_revision !== metadata.authorization_revision ||
-          page.total !== metadata.content.node_count
-        )
-          throw new Error("公開許可が変わりました");
-        nodes.push(...page.items);
-        cursor = page.next_cursor ?? undefined;
-      } while (cursor);
-      if (
-        nodes.length !== metadata.content.node_count ||
-        nodes.some((node, index) => node.ordinal !== index)
-      )
-        throw new Error("本文全体を取得できませんでした");
-      const [files, latest] = await Promise.all([
-        readSharedFiles(identity, { signal }),
-        readShared(identity, { signal }),
-      ]);
-      if (
-        files.authorization_revision !== metadata.authorization_revision ||
-        latest.authorization_revision !== metadata.authorization_revision ||
-        JSON.stringify(files.items) !== JSON.stringify(metadata.content.files)
-      )
-        throw new Error("公開許可が変わりました");
-      return { metadata, nodes };
-    },
+    (signal: AbortSignal): Promise<SharedDetail> =>
+      loadSharedContent(identity, signal),
     [identity],
   );
   const contentRoot = useRef<HTMLDivElement>(null);
@@ -477,9 +345,10 @@ export function SharedPublicationDetail({
             <Alert>
               <AlertTitle>共有された固定内容の確認</AlertTitle>
               <AlertDescription>
-                目的・受け入れ条件と設計・テストの内容を確認してください。元の編集内容が更新されても、この固定内容は変わりません。この画面で合意・正式承認は行いません。
+                目的・受け入れ条件と設計・テストの内容を確認してください。元の編集内容が更新されても、この固定内容は変わりません。あなたへの判断依頼がある場合は、依頼を開いて判断します。
               </AlertDescription>
             </Alert>
+            <SharedApprovalList publicationId={identity} />
             <PublicationBody
               key={data.value.metadata.authorization_revision}
               nodes={data.value.nodes}

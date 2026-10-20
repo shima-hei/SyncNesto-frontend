@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
+import { headers } from "next/headers";
+import { loginReturnPath } from "@/lib/auth/return-path";
 import { SharedShell } from "@/features/artifact-publications/components/shared-pages";
 
 export const metadata: Metadata = {
@@ -13,6 +15,9 @@ export default async function SharedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireUser({ returnTo: "/shared/publications" });
+  const path = (await headers()).get("x-syncnesto-pathname");
+  await requireUser({
+    returnTo: loginReturnPath(path) ?? "/shared/publications",
+  });
   return <SharedShell>{children}</SharedShell>;
 }

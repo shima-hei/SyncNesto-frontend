@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListFixedApprovalsProjectsProjectIdFixedApprovalsGetAudience } from "./listFixedApprovalsProjectsProjectIdFixedApprovalsGetAudience";
 import type { ListFixedApprovalsProjectsProjectIdFixedApprovalsGetScheme } from "./listFixedApprovalsProjectsProjectIdFixedApprovalsGetScheme";
 
 export type ListFixedApprovalsProjectsProjectIdFixedApprovalsGetParams = {
@@ -21,4 +22,6 @@ export type ListFixedApprovalsProjectsProjectIdFixedApprovalsGetParams = {
    * @maximum 100
    */
   page_size?: number;
+  audience?: ListFixedApprovalsProjectsProjectIdFixedApprovalsGetAudience;
+  publication_id?: string | null;
 };
