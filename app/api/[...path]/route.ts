@@ -68,6 +68,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   const upstreamPath = await getUpstreamPath(context);
   const privatePublication =
+    /^\/projects\/[^/]+\/fixed-approvals\/[^/]+\/next-actions$/.test(
+      upstreamPath,
+    ) ||
     upstreamPath === "/shared/notifications" ||
     upstreamPath.startsWith("/shared/notifications/") ||
     /^\/projects\/[^/]+\/(?:artifact-publications|guest-participations|guest-invitations|guest-fixed-approvals)(?:\/|$)/.test(
