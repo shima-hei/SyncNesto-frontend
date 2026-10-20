@@ -264,6 +264,7 @@ function InvitationRow({
       resent: "新リンクで再送",
       delivery_sent: "送信を受付",
       delivery_unknown: "送信結果不明",
+      delivery_failed: "送信失敗",
       registered: "本人が初回設定",
       accepted: "本人が参加",
       declined: "参加を辞退",
