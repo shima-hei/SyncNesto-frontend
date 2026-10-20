@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -30,8 +30,9 @@ export function NotificationsPage() {
 }
 
 function NotificationInbox({ projectId }: { projectId?: number }) {
-  const [filter, setFilter] = useState("all");
-  const [page, setPage] = useState(1);
+  const [rawFilter, setFilter] = useUrlFilterState("filter", "all");
+  const filter = rawFilter === "unread" ? "unread" : "all";
+  const [page, setPage] = useUrlFilterState("page", 1);
   const query = useNotifications({
     page,
     page_size: 20,

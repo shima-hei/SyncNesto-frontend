@@ -19,6 +19,7 @@ import {
 } from "@/features/guest-fixed-approvals/lib/display";
 import { statusLabels } from "@/features/fixed-approvals/lib/display";
 import { ApiError } from "@/lib/api/error";
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import { formatDateTime, formatRelativeDate } from "@/lib/format/date";
 import type { SharedNotificationRead } from "@/lib/api/generated/model";
 import {
@@ -65,8 +66,9 @@ export function SharedNotificationsLink() {
 }
 
 export function SharedNotificationsPage() {
-  const [page, setPage] = useState(1);
-  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [page, setPage] = useUrlFilterState("page", 1);
+  const [mode, setMode] = useUrlFilterState("filter", "all");
+  const unreadOnly = mode === "unread";
   const [busy, setBusy] = useState(false);
   const [operationError, setOperationError] = useState<unknown>(null);
   const router = useRouter();
@@ -180,7 +182,7 @@ export function SharedNotificationsPage() {
                 size="sm"
                 aria-pressed={unreadOnly}
                 onClick={() => {
-                  setUnreadOnly(!unreadOnly);
+                  setMode(unreadOnly ? "all" : "unread");
                   setPage(1);
                 }}
               >
