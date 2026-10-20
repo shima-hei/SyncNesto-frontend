@@ -20,7 +20,10 @@ export function proxy(request: NextRequest) {
   response.headers.set("Content-Security-Policy", policy);
   // nonceを含むHTMLを共有キャッシュから再配信しない。
   response.headers.set("Cache-Control", "private, no-store");
-  if (request.nextUrl.pathname.startsWith("/shared/publications")) {
+  if (
+    request.nextUrl.pathname.startsWith("/shared/publications") ||
+    request.nextUrl.pathname.startsWith("/guest-invitations/")
+  ) {
     response.headers.set("Referrer-Policy", "no-referrer");
   }
   return response;

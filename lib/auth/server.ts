@@ -133,7 +133,7 @@ export const requireUser = async (options?: {
   }
 
   if (result.user.password_change_required && !options?.allowInitialPassword) {
-    redirect("/initial-password");
+    redirect(withReturn("/initial-password"));
   }
 
   return result.user;

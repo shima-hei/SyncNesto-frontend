@@ -8,6 +8,7 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 // BFFでは、フロントエンドから呼び出す想定のAPIグループだけを公開する。
 const ALLOWED_PREFIXES = [
   "/shared/publications",
+  "/guest-invitations",
   "/demo",
   "/auth",
   "/tenants",
@@ -66,11 +67,12 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   const upstreamPath = await getUpstreamPath(context);
   const privatePublication =
-    /^\/projects\/[^/]+\/(?:artifact-publications|guest-participations)(?:\/|$)/.test(
+    /^\/projects\/[^/]+\/(?:artifact-publications|guest-participations|guest-invitations)(?:\/|$)/.test(
       upstreamPath,
     ) ||
     upstreamPath === "/shared/publications" ||
-    upstreamPath.startsWith("/shared/publications/");
+    upstreamPath.startsWith("/shared/publications/") ||
+    upstreamPath.startsWith("/guest-invitations/");
   if (!privatePublication) return proxyUpstream(request, upstreamPath);
   let response: NextResponse;
   try {
@@ -114,7 +116,10 @@ const proxyUpstream = async (request: NextRequest, upstreamPath: string) => {
   let upstreamHeaders: Headers;
   try {
     upstreamHeaders = getUpstreamRequestHeaders(request);
-    if (upstreamPath.startsWith("/shared/publications")) {
+    if (
+      upstreamPath.startsWith("/shared/publications") ||
+      upstreamPath.startsWith("/guest-invitations/")
+    ) {
       upstreamHeaders.delete("X-Tenant-ID");
     }
   } catch {

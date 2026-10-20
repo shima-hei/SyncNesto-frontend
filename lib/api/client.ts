@@ -39,7 +39,9 @@ export async function apiClient<T>(
   const requestUrl = buildUrl(url, params);
   const requestHeaders = buildHeaders(headers, body, method);
   const sharedPublication =
-    url === "/shared/publications" || url.startsWith("/shared/publications/");
+    url === "/shared/publications" ||
+    url.startsWith("/shared/publications/") ||
+    url.startsWith("/guest-invitations/");
   const realm = getClientDataRealm();
   // /auth/meは新しいCookieの状態を取得し、画面側の認証状態を更新する。
   if (realm && !(url === "/auth/me" && method.toUpperCase() === "GET"))
@@ -65,6 +67,7 @@ export async function apiClient<T>(
     const code = getErrorCode(data);
     if (
       code === "MFA_REQUIRED" &&
+      !url.startsWith("/guest-invitations/") &&
       !url.startsWith("/auth/mfa") &&
       typeof window !== "undefined" &&
       !["/login", "/mfa", "/mfa/recover"].includes(window.location.pathname)
@@ -74,6 +77,7 @@ export async function apiClient<T>(
 
     if (
       code === "PASSWORD_CHANGE_REQUIRED" &&
+      !url.startsWith("/guest-invitations/") &&
       typeof window !== "undefined" &&
       window.location.pathname !== "/initial-password"
     ) {

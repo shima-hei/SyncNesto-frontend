@@ -20,12 +20,14 @@ import { useUpdateProjectMember } from "../../hooks/use-update-project-member";
 import { ProjectMemberForm } from "../forms/project-member-form";
 import { ProjectMembersTable } from "../tables/project-members-table";
 import { GuestParticipationsPanel } from "@/features/artifact-publications/components/access-controls";
+import { GuestInvitationsPanel } from "@/features/guest-invitations/components/invitations-panel";
 
 type ProjectMembersPageProps = {
   projectId: number;
   canManageMembers?: boolean;
   isPermissionLoading?: boolean;
   userSelectMode?: "directory" | "candidates";
+  guestInvitationsEnabled?: boolean;
 };
 
 type ProjectMemberRoleValues = {
@@ -42,6 +44,7 @@ export function ProjectMembersPage({
   canManageMembers = true,
   isPermissionLoading = false,
   userSelectMode = "directory",
+  guestInvitationsEnabled = false,
 }: ProjectMembersPageProps) {
   const { user: currentUser } = useAuth();
   const [updateAttempt, setUpdateAttempt] =
@@ -111,6 +114,12 @@ export function ProjectMembersPage({
         }
       />
 
+      {guestInvitationsEnabled ? (
+        <GuestInvitationsPanel
+          projectId={projectId}
+          canManage={canManageMembers}
+        />
+      ) : null}
       <GuestParticipationsPanel
         projectId={projectId}
         canManage={canManageMembers}

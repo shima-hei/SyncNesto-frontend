@@ -8,6 +8,8 @@ export * from "./demo/demo";
 export * from "./documents/documents";
 export * from "./drafts/drafts";
 export * from "./fixed-approvals/fixed-approvals";
+export * from "./guest-invitation-recipient/guest-invitation-recipient";
+export * from "./guest-invitations/guest-invitations";
 export * from "./health/health";
 export * from "./home/home";
 export * from "./mcp/mcp";

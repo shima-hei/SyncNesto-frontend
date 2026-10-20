@@ -70,6 +70,7 @@ function setup({ cancel = async () => {} } = {}) {
     "next/navigation": { usePathname: () => "/account" },
     sonner: { toast: { error: (message) => toasts.push(message) } },
     "@/lib/api/error": { ApiError },
+    "@/lib/auth/return-path": { isGuestInvitationPath: () => false },
     "@/lib/demo/session": {
       clearDemoData: () => calls.push("demo-cleared"),
       subscribeDemoEnded: (callback) => {

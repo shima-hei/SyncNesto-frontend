@@ -19,13 +19,14 @@ function load(path, dependencies = {}) {
   return loaded.exports;
 }
 
-test("共有と従来MCPだけをログイン後の戻り先に許可する", () => {
+test("共有・本人招待・従来MCPだけをログイン後の戻り先に許可する", () => {
   const navigation = load("../features/mcp/lib/navigation.ts");
   const { loginReturnPath } = load("../lib/auth/return-path.ts", {
     "@/features/mcp/lib/navigation": navigation,
   });
   for (const valid of [
     "/shared/publications",
+    "/guest-invitations/11111111-1111-1111-1111-111111111111",
     "/shared/publications/11111111-1111-1111-1111-111111111111",
     "/mcp/authorize?request_id=11111111-1111-1111-1111-111111111111",
   ])
@@ -37,6 +38,9 @@ test("共有と従来MCPだけをログイン後の戻り先に許可する", ()
     "/shared/publications/../users",
     "/shared/publications\\evil",
     "/projects/21",
+    "/guest-invitations/11111111-1111-1111-1111-111111111111#token=secret",
+    "/guest-invitations/11111111-1111-1111-1111-111111111111?next=//evil.test",
+    "/guest-invitations/../users",
     ["/shared/publications"],
     null,
   ])

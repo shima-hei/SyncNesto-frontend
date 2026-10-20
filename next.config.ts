@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
       },
       ...[
         "/shared/publications/:path*",
+        "/guest-invitations/:path*",
+        "/api/guest-invitations/:path*",
+        "/api/projects/:projectId/guest-invitations/:path*",
         "/api/shared/publications/:path*",
         "/api/projects/:projectId/artifact-publications/:path*",
         "/api/projects/:projectId/guest-participations/:path*",

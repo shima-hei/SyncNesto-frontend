@@ -16,5 +16,10 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  return <JoinedProjectMembersPage projectId={parsedProjectId} />;
+  return (
+    <JoinedProjectMembersPage
+      projectId={parsedProjectId}
+      guestInvitationsEnabled={process.env.GUEST_INVITATIONS_ENABLED === "true"}
+    />
+  );
 }

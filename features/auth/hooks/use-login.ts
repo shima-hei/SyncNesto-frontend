@@ -37,7 +37,7 @@ export function useLogin(returnTo?: string) {
     await invalidateCurrentUser(queryClient);
     router.replace(
       response.password_change_required
-        ? "/initial-password"
+        ? `/initial-password${loginReturnPath(returnTo) ? `?next=${encodeURIComponent(loginReturnPath(returnTo)!)}` : ""}`
         : (loginReturnPath(returnTo) ?? "/"),
     );
   };

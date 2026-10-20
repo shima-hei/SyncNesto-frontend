@@ -735,7 +735,7 @@ export function GuestParticipationsPanel({
     >
       <h2 className="text-base font-semibold">外部ゲストの参加資格</h2>
       <p className="text-sm text-muted-foreground">
-        参加資格と資料ごとの閲覧許可は別です。ここでは参加資格全体を失効できます。招待・参加登録は後続工程です。
+        参加資格と資料ごとの閲覧許可は別です。ここでは参加資格全体を失効できます。再参加しても以前の閲覧許可は復活しません。
       </p>
       {query.isPending ? (
         <Skeleton className="h-20" />
