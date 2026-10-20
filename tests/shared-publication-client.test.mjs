@@ -127,7 +127,10 @@ test("外部判断のMFA不足は画面内で扱い、既存APIの再ログイ�
     },
   };
   globalThis.fetch = async () =>
-    Response.json({ code: "MFA_REQUIRED" }, { status: 403 });
+    Response.json(
+      { code: "MFA_REQUIRED", message: "追加認証が必要です" },
+      { status: 403 },
+    );
   const detail =
     "/shared/publications/11111111-1111-1111-1111-111111111111/approval-requests/22222222-2222-2222-2222-222222222222";
   try {
