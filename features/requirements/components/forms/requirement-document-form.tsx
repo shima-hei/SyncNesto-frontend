@@ -1,6 +1,18 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useProjectObjectives } from "@/features/projects/hooks/use-project-objectives";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
@@ -42,6 +54,7 @@ import {
 
 type RequirementDocumentFormProps = {
   projectId: number;
+  overviewHref?: string;
   mode: "create" | "update";
   initialValues: RequirementDocumentFormValues;
   draftScope?: string;
@@ -59,6 +72,7 @@ type RequirementDocumentFormProps = {
 
 export function RequirementDocumentForm({
   projectId,
+  overviewHref,
   mode,
   initialValues,
   draftScope,
@@ -92,6 +106,8 @@ export function RequirementDocumentForm({
   const vendorNameId = useId();
   const approvedAtId = useId();
   const [values, setValues] = useState(initialValues);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const isDirty = JSON.stringify(values) !== JSON.stringify(initialValues);
   const [errors, setErrors] = useState<RequirementDocumentFormErrors>({});
   const { user } = useAuth();
   const draft = useFormDraft({
@@ -176,6 +192,38 @@ export function RequirementDocumentForm({
 
   return (
     <>
+      {overviewHref ? (
+        <>
+          <Button variant="outline" size="sm" asChild className="self-start">
+            <Link
+              href={overviewHref}
+              aria-disabled={isPending}
+              onClick={(event) => {
+                if (isPending || isDirty) event.preventDefault();
+                if (!isPending && isDirty) setLeaveOpen(true);
+              }}
+            >
+              案件概要へ戻る
+            </Link>
+          </Button>
+          <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>保存前の変更があります</AlertDialogTitle>
+                <AlertDialogDescription>
+                  案件の目標はまだ更新されていません。編集を続けて保存するか、保存せずに概要へ戻れます。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>編集を続ける</AlertDialogCancel>
+                <AlertDialogAction asChild>
+                  <Link href={overviewHref}>保存せずに概要へ</Link>
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      ) : null}
       <form
         className="@container/document-form min-w-0 max-w-3xl"
         onSubmit={handleSubmit}

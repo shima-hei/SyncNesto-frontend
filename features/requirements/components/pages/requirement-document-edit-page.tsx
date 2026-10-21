@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { createDraftScope } from "@/lib/draft/draft-key";
@@ -48,12 +45,10 @@ export function RequirementDocumentEditPage({
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <PageHeader title="要件定義書編集" description={document.title} />
-      <Button variant="outline" size="sm" asChild className="self-start">
-        <Link href={`/projects/joined/${projectId}`}>案件概要へ戻る</Link>
-      </Button>
       <RequirementDocumentForm
         key={document.version}
         projectId={projectId}
+        overviewHref={`/projects/joined/${projectId}`}
         mode="update"
         initialValues={getRequirementDocumentFormValues(document)}
         draftScope={createDraftScope(

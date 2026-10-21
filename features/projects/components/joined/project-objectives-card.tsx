@@ -155,7 +155,7 @@ export function ProjectObjectivesCard({ projectId }: { projectId: number }) {
       </Card>
     );
   const editHref = data.document
-    ? `${base}/requirements/${data.document.id}/edit?returnTo=${encodeURIComponent(base)}`
+    ? `${base}/requirements/${data.document.id}/edit`
     : null;
   return (
     <Card>
