@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
+import { DocumentObjectives } from "./document-objectives";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
@@ -328,6 +329,8 @@ export function RequirementDocumentOverview({
                     )}
                   </p>
                 </ReviewablePreviewBlock>
+
+                <DocumentObjectives projectId={projectId} document={document} />
 
                 {sortedSections.map((section) => (
                   <DocumentPreviewSection

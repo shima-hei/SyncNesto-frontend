@@ -17,6 +17,7 @@ export * from "./mcp/mcp";
 export * from "./mfa/mfa";
 export * from "./notification-preferences/notification-preferences";
 export * from "./notifications/notifications";
+export * from "./project-objectives/project-objectives";
 export * from "./projects/projects";
 export * from "./publication-access/publication-access";
 export * from "./requirements/requirements";

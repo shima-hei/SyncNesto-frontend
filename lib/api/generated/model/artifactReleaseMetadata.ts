@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ArtifactReleaseMetadataProjectionVersion } from "./artifactReleaseMetadataProjectionVersion";
 import type { ArtifactReleaseMetadataSourceKind } from "./artifactReleaseMetadataSourceKind";
 import type { ArtifactReleaseMetadataSourceState } from "./artifactReleaseMetadataSourceState";
 import type { ArtifactSource } from "./artifactSource";
@@ -18,7 +19,7 @@ export interface ArtifactReleaseMetadata {
   source_id: number;
   source_version: number;
   schema_version: number;
-  projection_version: "internal-preview-v1";
+  projection_version: ArtifactReleaseMetadataProjectionVersion;
   title: string;
   content_digest: string;
   node_count: number;

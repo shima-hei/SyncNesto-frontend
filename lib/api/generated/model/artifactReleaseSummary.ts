@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ArtifactReleaseSummaryProjectionVersion } from "./artifactReleaseSummaryProjectionVersion";
 import type { ArtifactReleaseSummarySourceKind } from "./artifactReleaseSummarySourceKind";
 
 /**
@@ -16,7 +17,7 @@ export interface ArtifactReleaseSummary {
   source_id: number;
   source_version: number;
   schema_version: number;
-  projection_version: "internal-preview-v1";
+  projection_version: ArtifactReleaseSummaryProjectionVersion;
   title: string;
   content_digest: string;
   node_count: number;

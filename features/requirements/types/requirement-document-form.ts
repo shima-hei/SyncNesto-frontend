@@ -3,6 +3,9 @@ export type RequirementDocumentFormValues = {
   documentCode: string;
   status: string;
   purpose: string;
+  projectGoal?: string;
+  projectScope?: string;
+  projectCompletionCriteria?: string;
   targetSystemName: string;
   clientName: string;
   vendorName: string;

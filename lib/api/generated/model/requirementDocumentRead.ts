@@ -10,6 +10,9 @@ import type { UserSummary } from "./userSummary";
  * 要件定義書読み取り時に返すschema。
  */
 export interface RequirementDocumentRead {
+  project_goal?: string | null;
+  project_scope?: string | null;
+  project_completion_criteria?: string | null;
   title: string;
   document_code: string;
   status?: string;

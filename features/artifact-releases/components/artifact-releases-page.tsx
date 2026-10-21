@@ -175,6 +175,7 @@ function ReleaseWorkspace({
       );
       return previewRelease(projectId, {
         source: ref,
+        projection_version: "internal-preview-v2",
         included_sources: included,
       });
     },
@@ -187,6 +188,7 @@ function ReleaseWorkspace({
     mutationFn: () =>
       createRelease(projectId, {
         source: confirmed!.preview.source,
+        projection_version: confirmed!.preview.projection_version,
         included_sources: confirmed!.preview.included_sources,
         request_id: confirmed!.requestId,
         expected_scope_digest: confirmed!.preview.scope_digest,

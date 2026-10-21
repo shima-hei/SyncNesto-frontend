@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicationSummaryProjectionVersion } from "./publicationSummaryProjectionVersion";
 import type { PublicationSummarySourceKindsItem } from "./publicationSummarySourceKindsItem";
 import type { PublicationSummaryState } from "./publicationSummaryState";
 
@@ -13,7 +14,7 @@ import type { PublicationSummaryState } from "./publicationSummaryState";
 export interface PublicationSummary {
   id: string;
   title: string;
-  projection_version: "public-preview-v1";
+  projection_version: PublicationSummaryProjectionVersion;
   public_digest: string;
   source_kinds: PublicationSummarySourceKindsItem[];
   node_count: number;

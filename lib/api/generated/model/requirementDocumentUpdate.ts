@@ -9,6 +9,9 @@
  * 要件定義書更新リクエストで受け取るschema。
  */
 export interface RequirementDocumentUpdate {
+  project_goal?: string | null;
+  project_scope?: string | null;
+  project_completion_criteria?: string | null;
   version: number;
   title?: string | null;
   document_code?: string | null;

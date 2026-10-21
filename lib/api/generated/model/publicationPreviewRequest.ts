@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicationPreviewRequestProjectionVersion } from "./publicationPreviewRequestProjectionVersion";
 
 /**
  * 既存の封印済み固定版とready保全構成だけを指定する。
@@ -11,6 +12,6 @@
 export interface PublicationPreviewRequest {
   release_id: string;
   preservation_id?: string | null;
-  projection_version?: "public-preview-v1";
+  projection_version?: PublicationPreviewRequestProjectionVersion;
   request_id: string;
 }

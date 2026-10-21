@@ -193,8 +193,13 @@ function Workspace({
   });
   const preview = useMutation({
     mutationFn: async () => {
+      const source = await readRelease(projectId, release);
       const data: PublicationPreviewRequest = {
         release_id: release,
+        projection_version:
+          source.projection_version === "internal-preview-v2"
+            ? "public-preview-v2"
+            : "public-preview-v1",
         preservation_id: preservation === "none" ? null : preservation,
         request_id: crypto.randomUUID(),
       };

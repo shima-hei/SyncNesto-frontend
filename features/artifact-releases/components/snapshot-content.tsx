@@ -21,6 +21,9 @@ const TestDesignSnapshot = dynamic(() =>
 );
 const labels: Record<string, string> = {
   purpose: "目的",
+  project_goal: "案件ゴール",
+  project_scope: "対象範囲・対象外",
+  project_completion_criteria: "案件の完了条件",
   content: "内容",
   description: "要件の内容",
   rationale: "背景・理由",

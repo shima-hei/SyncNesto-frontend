@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ArtifactPreviewNodeCounts } from "./artifactPreviewNodeCounts";
+import type { ArtifactPreviewProjectionVersion } from "./artifactPreviewProjectionVersion";
 import type { ArtifactSource } from "./artifactSource";
 
 /**
@@ -13,7 +14,7 @@ import type { ArtifactSource } from "./artifactSource";
 export interface ArtifactPreview {
   source: ArtifactSource;
   included_sources: ArtifactSource[];
-  projection_version: "internal-preview-v1";
+  projection_version: ArtifactPreviewProjectionVersion;
   title: string;
   scope_digest: string;
   node_count: number;

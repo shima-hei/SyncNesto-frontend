@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicationNodePageProjectionVersion } from "./publicationNodePageProjectionVersion";
 import type { PublicationNodeRead } from "./publicationNodeRead";
 
 /**
@@ -11,7 +12,7 @@ import type { PublicationNodeRead } from "./publicationNodeRead";
  */
 export interface PublicationNodePage {
   publication_id: string;
-  projection_version: "public-preview-v1";
+  projection_version: PublicationNodePageProjectionVersion;
   items: PublicationNodeRead[];
   total: number;
   next_cursor: string | null;

@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PublicationPreviewNodeCounts } from "./publicationPreviewNodeCounts";
+import type { PublicationPreviewProjectionVersion } from "./publicationPreviewProjectionVersion";
 import type { PublicFile } from "./publicFile";
 
 /**
@@ -12,7 +13,7 @@ import type { PublicFile } from "./publicFile";
  */
 export interface PublicationPreview {
   title: string;
-  projection_version: "public-preview-v1";
+  projection_version: PublicationPreviewProjectionVersion;
   public_digest: string;
   source_manifest_digest: string;
   node_count: number;

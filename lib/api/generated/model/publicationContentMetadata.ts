@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicationContentMetadataProjectionVersion } from "./publicationContentMetadataProjectionVersion";
 import type { PublicFile } from "./publicFile";
 
 /**
@@ -13,7 +14,7 @@ export interface PublicationContentMetadata {
   id: string;
   title: string;
   schema_version: number;
-  projection_version: "public-preview-v1";
+  projection_version: PublicationContentMetadataProjectionVersion;
   public_digest: string;
   node_count: number;
   byte_size: number;

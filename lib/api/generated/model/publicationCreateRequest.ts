@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicationCreateRequestProjectionVersion } from "./publicationCreateRequestProjectionVersion";
 
 /**
  * プレビューで確認した公開本文と内部対応のdigestを指定する。
@@ -11,7 +12,7 @@
 export interface PublicationCreateRequest {
   release_id: string;
   preservation_id?: string | null;
-  projection_version?: "public-preview-v1";
+  projection_version?: PublicationCreateRequestProjectionVersion;
   request_id: string;
   /** @pattern ^[a-f0-9]{64}$ */
   expected_public_digest: string;

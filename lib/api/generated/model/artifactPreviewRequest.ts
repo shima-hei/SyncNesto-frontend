@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ArtifactPreviewRequestProjectionVersion } from "./artifactPreviewRequestProjectionVersion";
 import type { ArtifactSource } from "./artifactSource";
 
 /**
@@ -13,5 +14,5 @@ export interface ArtifactPreviewRequest {
   source: ArtifactSource;
   /** @maxItems 100 */
   included_sources?: ArtifactSource[];
-  projection_version?: "internal-preview-v1";
+  projection_version?: ArtifactPreviewRequestProjectionVersion;
 }

@@ -5,13 +5,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PublicationNodeRead } from "./publicationNodeRead";
+import type { SharedPublicationNodePageProjectionVersion } from "./sharedPublicationNodePageProjectionVersion";
 
 /**
  * 本文ページにも本人/sessionの認可revisionを付ける。
  */
 export interface SharedPublicationNodePage {
   publication_id: string;
-  projection_version: "public-preview-v1";
+  projection_version: SharedPublicationNodePageProjectionVersion;
   items: PublicationNodeRead[];
   total: number;
   next_cursor: string | null;
