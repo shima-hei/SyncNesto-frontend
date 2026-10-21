@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: frontend-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
@@ -34,6 +34,15 @@ jobs:
       - run: npm audit --omit=dev --audit-level=low
       - run: npm run build
       - run: npm run security:check
+      - name: Preserve complete test output
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-tests
+          retention-days: 7
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .verify/
 
   deploy:
     needs: checks
