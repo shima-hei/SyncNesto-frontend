@@ -83,6 +83,8 @@ try {
     "/api/shared/publications/11111111-1111-1111-1111-111111111111/nodes",
     "/api/projects/1/artifact-publications",
     "/api/projects/1/guest-participations",
+    "/api/projects/1/objectives",
+    "/api/projects/1/objectives/events",
   ]) {
     const response = await fetch(`${origin}${path}`);
     assert.equal(response.status, 503);

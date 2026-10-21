@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
         "/shared/notifications/:path*",
         "/api/shared/notifications/:path*",
         "/api/notification-preferences",
+        "/api/projects/:projectId/objectives/:path*",
         "/api/projects/:projectId/fixed-approvals/:approvalId/next-actions",
         "/shared/publications/:path*",
         "/guest-invitations/:path*",
