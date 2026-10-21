@@ -112,13 +112,13 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
       else url.searchParams.delete(key);
     }
     const href = `${url.pathname}${url.search}${url.hash}`;
-    if (push)
-      window.history.pushState(
-        { ...window.history.state, tracePanelOpened: true },
+    if (push) window.history.pushState({ tracePanelOpened: true }, "", href);
+    else
+      window.history.replaceState(
+        { tracePanelOpened: Boolean(window.history.state?.tracePanelOpened) },
         "",
         href,
       );
-    else window.history.replaceState(window.history.state, "", href);
   };
   const close = () => {
     if (window.history.state?.tracePanelOpened) window.history.back();
