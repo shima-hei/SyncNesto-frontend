@@ -39,6 +39,7 @@ export async function apiClient<T>(
   const requestUrl = buildUrl(url, params);
   const requestHeaders = buildHeaders(headers, body, method);
   const sharedPublication =
+    url.split("?", 1)[0] === "/notification-preferences" ||
     url.split("?", 1)[0] === "/shared/notifications" ||
     url.startsWith("/shared/notifications/") ||
     url === "/shared/publications" ||
@@ -46,6 +47,7 @@ export async function apiClient<T>(
     url.startsWith("/guest-invitations/");
   const guestApprovalPath = url.split("?", 1)[0];
   const guestApproval =
+    guestApprovalPath === "/notification-preferences" ||
     guestApprovalPath === "/shared/notifications" ||
     /^\/shared\/notifications\/(?:unread-count|read-all|[a-f0-9-]{36}\/read)$/i.test(
       guestApprovalPath,

@@ -7,7 +7,9 @@ export default function Page() {
     notFound();
   return (
     <Suspense fallback={<p>通知と閲覧許可を確認しています…</p>}>
-      <SharedNotificationsPage />
+      <SharedNotificationsPage
+        emailEnabled={process.env.FIXED_APPROVAL_EMAIL_ENABLED === "true"}
+      />
     </Suspense>
   );
 }

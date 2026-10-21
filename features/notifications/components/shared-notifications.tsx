@@ -13,6 +13,7 @@ import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { useFreshShared } from "@/features/artifact-publications/hooks/use-fresh-shared";
 import { ApprovalMfa } from "@/features/guest-fixed-approvals/components/approval-mfa";
+import { EmailPreferences } from "./email-preferences";
 import {
   sharedApprovalPath,
   approvalKindLabels,
@@ -65,7 +66,11 @@ export function SharedNotificationsLink() {
   );
 }
 
-export function SharedNotificationsPage() {
+export function SharedNotificationsPage({
+  emailEnabled = false,
+}: {
+  emailEnabled?: boolean;
+}) {
   const [page, setPage] = useUrlFilterState("page", 1);
   const [mode, setMode] = useUrlFilterState("filter", "all");
   const unreadOnly = mode === "unread";
@@ -149,6 +154,7 @@ export function SharedNotificationsPage() {
           </Button>
         }
       />
+      {emailEnabled ? <EmailPreferences /> : null}
       {data.error instanceof ApiError && data.error.code === "MFA_REQUIRED" ? (
         <ApprovalMfa returnTo="/shared/notifications" />
       ) : error ? (

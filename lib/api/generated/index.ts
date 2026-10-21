@@ -15,6 +15,7 @@ export * from "./health/health";
 export * from "./home/home";
 export * from "./mcp/mcp";
 export * from "./mfa/mfa";
+export * from "./notification-preferences/notification-preferences";
 export * from "./notifications/notifications";
 export * from "./projects/projects";
 export * from "./publication-access/publication-access";

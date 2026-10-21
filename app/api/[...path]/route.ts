@@ -7,6 +7,7 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 
 // BFFでは、フロントエンドから呼び出す想定のAPIグループだけを公開する。
 const ALLOWED_PREFIXES = [
+  "/notification-preferences",
   "/shared/notifications",
   "/shared/publications",
   "/guest-invitations",
@@ -68,6 +69,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   const upstreamPath = await getUpstreamPath(context);
   const privatePublication =
+    upstreamPath === "/notification-preferences" ||
     /^\/projects\/[^/]+\/fixed-approvals\/[^/]+\/next-actions$/.test(
       upstreamPath,
     ) ||
@@ -123,6 +125,7 @@ const proxyUpstream = async (request: NextRequest, upstreamPath: string) => {
   try {
     upstreamHeaders = getUpstreamRequestHeaders(request);
     if (
+      upstreamPath === "/notification-preferences" ||
       upstreamPath === "/shared/notifications" ||
       upstreamPath.startsWith("/shared/notifications/") ||
       upstreamPath.startsWith("/shared/publications") ||

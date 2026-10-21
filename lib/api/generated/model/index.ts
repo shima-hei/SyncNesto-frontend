@@ -232,6 +232,8 @@ export * from "./milestoneCreate";
 export * from "./milestoneRead";
 export * from "./milestoneUpdate";
 export * from "./notificationContext";
+export * from "./notificationEmailPreferences";
+export * from "./notificationEmailPreferencesUpdate";
 export * from "./notificationListResponse";
 export * from "./notificationMarkAllRead";
 export * from "./notificationRead";

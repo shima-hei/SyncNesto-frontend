@@ -73,6 +73,9 @@ test("sharedの取得だけは選択Tenantを付けず、明示headerも除き�
       { headers: { "X-Tenant-ID": "999" } },
     );
     await client.apiClient("/projects/21", {});
+    await client.apiClient("/notification-preferences", {
+      headers: { "X-Tenant-ID": "999", "X-Syncnesto-Expected-User": "7" },
+    });
     assert.equal(calls[0].headers.has("X-Tenant-ID"), false);
     assert.equal(calls[1].headers.has("X-Tenant-ID"), false);
     assert.equal(calls[0].cache, "no-store");
@@ -80,6 +83,9 @@ test("sharedの取得だけは選択Tenantを付けず、明示headerも除き�
     assert.equal(calls[0].signal, abort.signal);
     assert.equal(calls[2].headers.get("X-Tenant-ID"), "17");
     assert.equal(calls[2].cache, undefined);
+    assert.equal(calls[3].headers.has("X-Tenant-ID"), false);
+    assert.equal(calls[3].headers.get("X-Syncnesto-Expected-User"), "7");
+    assert.equal(calls[3].cache, "no-store");
   } finally {
     globalThis.fetch = previous;
   }
