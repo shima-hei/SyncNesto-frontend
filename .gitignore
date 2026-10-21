@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/.verify/
 /.playwright-cli
 /output/playwright/
 
