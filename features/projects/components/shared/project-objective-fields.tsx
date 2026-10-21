@@ -18,6 +18,7 @@ export function ProjectObjectiveFields({
           <dt className="text-sm font-medium">{label}</dt>
           <dd className="min-w-0 text-sm">
             <MarkdownPreview
+              className="min-h-0 break-words"
               value={values[key as keyof typeof objectiveFieldLabels] ?? ""}
               emptyMessage="未登録です。必要に応じて要件定義書で追記できます。"
             />
