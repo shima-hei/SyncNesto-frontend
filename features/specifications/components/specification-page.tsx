@@ -1,4 +1,5 @@
 "use client";
+import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -205,6 +206,7 @@ export function SpecificationPage({
   );
   return (
     <div className="flex min-w-0 flex-col gap-5">
+      <OverviewReturn projectId={projectId} />
       <PageHeader
         title={row.title}
         description={`${kindLabels[row.kind]}・版 ${row.version}・更新 ${formatDateTime(row.updated_at)}`}

@@ -1,4 +1,5 @@
 "use client";
+import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -98,6 +99,7 @@ export function ApprovalWorkspace({
   });
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <OverviewReturn projectId={projectId} />
       <PageHeader
         title="合意・承認"
         description="どの内容に誰の判断が必要か、何が未合意のまま残っているかを確認します。"

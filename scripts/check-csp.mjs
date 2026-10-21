@@ -85,6 +85,8 @@ try {
     "/api/projects/1/guest-participations",
     "/api/projects/1/objectives",
     "/api/projects/1/objectives/events",
+    "/api/projects/1/requirement-trace",
+    "/api/projects/1/requirement-trace/1",
   ]) {
     const response = await fetch(`${origin}${path}`);
     assert.equal(response.status, 503);

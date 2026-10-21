@@ -20,6 +20,7 @@ export * from "./notifications/notifications";
 export * from "./project-objectives/project-objectives";
 export * from "./projects/projects";
 export * from "./publication-access/publication-access";
+export * from "./requirement-trace/requirement-trace";
 export * from "./requirements/requirements";
 export * from "./search/search";
 export * from "./shared-fixed-approvals/shared-fixed-approvals";

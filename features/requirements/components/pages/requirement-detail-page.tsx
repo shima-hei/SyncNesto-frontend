@@ -1,4 +1,5 @@
 "use client";
+import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 
 import { useState } from "react";
 import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
@@ -143,6 +144,7 @@ export function RequirementDetailPage({
 
   return (
     <div className="@container/requirement-detail flex min-w-0 flex-col gap-6">
+      <OverviewReturn projectId={projectId} />
       <Button asChild variant="outline" size="sm" className="w-fit">
         <Link href={returnTo}>
           <ArrowLeftIcon data-icon="inline-start" />
