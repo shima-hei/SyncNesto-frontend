@@ -395,7 +395,7 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
           }}
         >
           <SheetContent
-            className="w-full overflow-y-auto sm:max-w-xl"
+            className="overflow-y-auto data-[side=right]:w-full data-[side=right]:sm:max-w-xl"
             onCloseAutoFocus={(e) => {
               e.preventDefault();
               requestAnimationFrame(() =>
