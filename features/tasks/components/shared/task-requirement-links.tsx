@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useReadRequirementProjectsProjectIdRequirementsRequirementIdGet } from "@/lib/api/generated/requirements/requirements";
 import type { TaskRequirementSummary } from "@/lib/api/generated/model";
-import { withTaskOrigin, type TaskOrigin } from "@/lib/navigation/task-origin";
+import type { TaskOrigin } from "@/lib/navigation/task-origin";
+import { useTaskOrigin } from "@/hooks/use-task-origin";
 import { canViewRequirement } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ function RequirementLink({
   origin: TaskOrigin;
   canRead: boolean;
 }) {
+  const { withOrigin } = useTaskOrigin(origin.projectId, origin);
   const query = useReadRequirementProjectsProjectIdRequirementsRequirementIdGet(
     origin.projectId,
     requirement.id,
@@ -52,9 +54,8 @@ function RequirementLink({
       {query.data ? (
         <Link
           className="break-words font-medium underline underline-offset-4"
-          href={withTaskOrigin(
+          href={withOrigin(
             `/projects/joined/${origin.projectId}/requirements/${query.data.document_id}/items/${requirement.id}`,
-            origin,
           )}
         >
           {label}
