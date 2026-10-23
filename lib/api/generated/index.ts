@@ -22,6 +22,7 @@ export * from "./projects/projects";
 export * from "./publication-access/publication-access";
 export * from "./requirement-agreements/requirement-agreements";
 export * from "./requirement-trace/requirement-trace";
+export * from "./requirement-verifications/requirement-verifications";
 export * from "./requirements/requirements";
 export * from "./search/search";
 export * from "./shared-fixed-approvals/shared-fixed-approvals";

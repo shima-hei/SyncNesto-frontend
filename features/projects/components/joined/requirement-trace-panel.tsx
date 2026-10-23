@@ -11,6 +11,7 @@ import { useTenant } from "@/features/tenants/providers/tenant-provider";
 import type { TraceFacet } from "@/lib/api/generated/model";
 import { readRequirementTraceDetailProjectsProjectIdRequirementTraceRequirementIdGet as readDetail } from "@/lib/api/generated/requirement-trace/requirement-trace";
 import { withOverviewOrigin } from "@/lib/navigation/overview-origin";
+import { VerificationEntry } from "@/features/requirement-verifications/components/verification-entry";
 import { useRequirementAgreements } from "@/features/projects/hooks/use-requirement-agreements";
 import {
   RequirementAgreements,
@@ -99,6 +100,12 @@ export function RequirementTracePanel({
           onRefresh={() => void query.refetch()}
         />
       </section>
+      <VerificationEntry
+        projectId={projectId}
+        requirementId={row.id}
+        version={row.version}
+        from={returnTo}
+      />
       {(
         [
           ["description", "期待する振る舞い・要件の本文"],

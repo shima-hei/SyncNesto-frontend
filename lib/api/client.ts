@@ -72,7 +72,11 @@ export async function apiClient<T>(
     headers: requestHeaders,
     body: getRequestBody(body),
     signal,
-    cache: sharedPublication ? "no-store" : undefined,
+    cache:
+      sharedPublication ||
+      /^\/projects\/[^/]+\/requirement-verification-plans(?:\/|$)/.test(url)
+        ? "no-store"
+        : undefined,
   });
 
   const data = await parseResponse(response);
