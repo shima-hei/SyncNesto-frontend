@@ -48,6 +48,7 @@ import type {
 import { getPlan, updatePlan } from "../lib/api";
 import { VerificationRowEditor } from "./verification-row-editor";
 import { VerificationEvidence } from "./verification-evidence";
+import { EvidenceSubmissions } from "./evidence-submissions";
 import { VerificationHistory } from "./verification-history";
 import { readDraftVersion, verificationDraftScope } from "../lib/draft-version";
 
@@ -510,6 +511,14 @@ export function VerificationEditor({
             current.map((r) => (r.id === value.id ? value : r)),
           )
         }
+      />
+      <EvidenceSubmissions
+        projectId={projectId}
+        planId={row.id}
+        version={row.current_version}
+        rows={row.revision.checklist.rows ?? []}
+        selected={selected}
+        dirty={dirty}
       />
       <VerificationHistory
         projectId={projectId}

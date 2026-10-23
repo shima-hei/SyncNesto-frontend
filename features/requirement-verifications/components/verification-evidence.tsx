@@ -149,7 +149,7 @@ export function VerificationEvidence({
       <CardHeader>
         <CardTitle>3. 現在のケースと直近実行</CardTitle>
         <CardDescription>
-          保存した確認項目の参照情報です。実行時の要件版は未記録のため、旧実行の採用には後続工程で再確認が必要です。
+          保存した確認項目の参照情報です。実行時の要件版は未記録のため、採用時には固定要件との対応を今確認する必要があります。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
