@@ -45,7 +45,7 @@ export function VerificationHistory({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>4. 確認表の保存履歴</CardTitle>
+        <CardTitle>確認表の保存履歴</CardTitle>
         <CardDescription>
           誰が、いつ、どの確認項目を保存したかを確認できます。過去版は編集できません。
         </CardDescription>

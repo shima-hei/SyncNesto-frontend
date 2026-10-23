@@ -36,3 +36,4 @@ export * from "./test-designs/test-designs";
 export * from "./test-issues/test-issues";
 export * from "./trash/trash";
 export * from "./users/users";
+export * from "./verification-evidence/verification-evidence";
