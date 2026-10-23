@@ -19,6 +19,25 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      ...[
+        "/shared/notifications/:path*",
+        "/api/shared/notifications/:path*",
+        "/api/notification-preferences",
+        "/api/projects/:projectId/objectives/:path*",
+        "/api/projects/:projectId/requirement-trace/:path*",
+        "/api/projects/:projectId/requirement-agreements/:path*",
+        "/api/projects/:projectId/fixed-approvals/:approvalId/next-actions",
+        "/shared/publications/:path*",
+        "/guest-invitations/:path*",
+        "/api/guest-invitations/:path*",
+        "/api/projects/:projectId/guest-invitations/:path*",
+        "/api/shared/publications/:path*",
+        "/api/projects/:projectId/artifact-publications/:path*",
+        "/api/projects/:projectId/guest-participations/:path*",
+      ].map((source) => ({
+        source,
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      })),
     ];
   },
 };

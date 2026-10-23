@@ -14,6 +14,7 @@ import {
   renumberItems,
   uid,
   type Design,
+  type DesignContent,
 } from "./design";
 
 export const sheets = ["items", "patterns", "cases"] as const;
@@ -28,7 +29,7 @@ export const sheetLabels: Record<Sheet, string> = {
 };
 
 export function gridData(
-  design: Design,
+  design: DesignContent,
   sheet: Sheet,
 ): { columns: GridColumn[]; rows: GridRow[] } {
   const factorNames = new Map(design.factors.map((f) => [f.id, f.name]));

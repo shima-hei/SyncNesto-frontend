@@ -45,6 +45,50 @@ new Function("require", "module", "exports", routeSource)(
   route.exports,
 );
 
+test("本人メール設定はTenantを外し、本人照合ヘッダーを中継して失敗応答も保存しない", async () => {
+  const previous = globalThis.fetch;
+  const oldVercel = process.env.VERCEL;
+  delete process.env.VERCEL;
+  try {
+    const request = {
+      method: "PATCH",
+      nextUrl: new URL("http://localhost:3000/api/notification-preferences"),
+      headers: new Headers({
+        Origin: "http://localhost:3000",
+        "X-Tenant-ID": "17",
+        "X-Syncnesto-Expected-User": "7",
+        Cookie: "access_token=jwt",
+      }),
+      arrayBuffer: async () =>
+        new TextEncoder().encode(
+          '{"version":1,"fixed_approval_email_enabled":true}',
+        ).buffer,
+    };
+    const context = {
+      params: Promise.resolve({ path: ["notification-preferences"] }),
+    };
+    globalThis.fetch = async (_url, options) => {
+      assert.equal(options.headers.has("X-Tenant-ID"), false);
+      assert.equal(options.headers.get("X-Syncnesto-Expected-User"), "7");
+      return Response.json({ code: "VERSION_CONFLICT" }, { status: 409 });
+    };
+    const conflict = await route.exports.PATCH(request, context);
+    assert.equal(conflict.status, 409);
+    assert.equal(conflict.headers.get("Cache-Control"), "private, no-store");
+    assert.equal(conflict.headers.get("Referrer-Policy"), "no-referrer");
+    globalThis.fetch = async () => {
+      throw new Error("unavailable");
+    };
+    const unavailable = await route.exports.PATCH(request, context);
+    assert.equal(unavailable.status, 503);
+    assert.equal(unavailable.headers.get("Cache-Control"), "private, no-store");
+  } finally {
+    globalThis.fetch = previous;
+    if (oldVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = oldVercel;
+  }
+});
+
 test("MCP利用資格APIをCookie付きで中継し、資格と未認証の応答を維持する", async () => {
   const oldFetch = globalThis.fetch;
   const oldVercel = process.env.VERCEL;

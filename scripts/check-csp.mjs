@@ -1,13 +1,26 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { setTimeout } from "node:timers/promises";
+import { createServer } from "node:http";
 
 const port = process.env.CSP_TEST_PORT ?? "4317";
 const origin = `http://127.0.0.1:${port}`;
+const upstream = createServer((_request, response) => {
+  response.writeHead(503, { "content-type": "application/json" });
+  response.end(JSON.stringify({ code: "SERVICE_UNAVAILABLE" }));
+});
+await new Promise((resolve) => upstream.listen(0, "127.0.0.1", resolve));
+const upstreamAddress = upstream.address();
 const server = spawn(
   process.execPath,
   ["node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1", "-p", port],
-  { stdio: ["ignore", "pipe", "pipe"] },
+  {
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      API_BASE_URL: `http://127.0.0.1:${upstreamAddress.port}`,
+    },
+  },
 );
 let output = "";
 for (const stream of [server.stdout, server.stderr]) {
@@ -65,6 +78,22 @@ try {
   });
   assert.notEqual(first, second, "nonceをリクエスト間で再利用しない");
   assert.notEqual(second, "attacker-controlled", "外部nonceを信用しない");
+  for (const path of [
+    "/api/shared/publications",
+    "/api/shared/publications/11111111-1111-1111-1111-111111111111/nodes",
+    "/api/projects/1/artifact-publications",
+    "/api/projects/1/guest-participations",
+    "/api/projects/1/objectives",
+    "/api/projects/1/objectives/events",
+    "/api/projects/1/requirement-trace",
+    "/api/projects/1/requirement-trace/1",
+    "/api/projects/1/requirement-agreements?requirement_ids=1",
+  ]) {
+    const response = await fetch(`${origin}${path}`);
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get("cache-control"), "private, no-store");
+    assert.equal(response.headers.get("referrer-policy"), "no-referrer");
+  }
   console.log(
     "Production CSP: SSR・テーマのnonce、偽装拒否、キャッシュ制限を確認",
   );
@@ -78,4 +107,5 @@ try {
       resolve();
     });
   });
+  await new Promise((resolve) => upstream.close(resolve));
 }

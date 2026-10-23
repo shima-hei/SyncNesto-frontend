@@ -8,6 +8,7 @@ import type { CurrentUserRead } from "@/lib/api/generated/model";
 import { AUTH_ERROR_CODES } from "@/lib/auth/session-events";
 import { CSRF_COOKIE_NAME } from "@/lib/security/csrf";
 import { authenticateBackendRequest } from "@/lib/security/backend";
+import { loginReturnPath } from "@/lib/auth/return-path";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "access_token";
@@ -109,22 +110,30 @@ const isSessionExpiredCode = (code: string | undefined) => {
 
 export const requireUser = async (options?: {
   allowInitialPassword?: boolean;
+  returnTo?: string;
 }) => {
   const result = await getCurrentUserResultOnServer();
+  const returnTo = loginReturnPath(options?.returnTo);
+  const withReturn = (path: string) =>
+    returnTo
+      ? `${path}${path.includes("?") ? "&" : "?"}next=${encodeURIComponent(returnTo)}`
+      : path;
 
   if (!result.user) {
-    if (result.failureReason === "mfa-pending") redirect("/mfa");
+    if (result.failureReason === "mfa-pending") redirect(withReturn("/mfa"));
     if (result.failureReason === "mfa-required")
-      redirect("/login?reason=mfa-required");
+      redirect(withReturn("/login?reason=mfa-required"));
     redirect(
-      result.failureReason === "session-expired"
-        ? SESSION_EXPIRED_LOGIN_PATH
-        : LOGIN_PATH,
+      withReturn(
+        result.failureReason === "session-expired"
+          ? SESSION_EXPIRED_LOGIN_PATH
+          : LOGIN_PATH,
+      ),
     );
   }
 
   if (result.user.password_change_required && !options?.allowInitialPassword) {
-    redirect("/initial-password");
+    redirect(withReturn("/initial-password"));
   }
 
   return result.user;

@@ -64,6 +64,11 @@ test("Server Guardは限定Cookieを業務認証として扱わず、追加認�
   const oldFetch = globalThis.fetch;
   const cookies = new Set(["mfa_flow", "csrf_token"]);
   const server = load("../lib/auth/server.ts", {
+    "@/lib/auth/return-path": load("../lib/auth/return-path.ts", {
+      "@/features/mcp/lib/navigation": load(
+        "../features/mcp/lib/navigation.ts",
+      ),
+    }),
     "next/headers": {
       cookies: async () => ({ has: (name) => cookies.has(name) }),
     },
@@ -89,6 +94,11 @@ test("Server Guardは限定Cookieを業務認証として扱わず、追加認�
 test("旧通常セッションのMFA_REQUIREDは再ログインを要求する", async () => {
   const oldFetch = globalThis.fetch;
   const server = load("../lib/auth/server.ts", {
+    "@/lib/auth/return-path": load("../lib/auth/return-path.ts", {
+      "@/features/mcp/lib/navigation": load(
+        "../features/mcp/lib/navigation.ts",
+      ),
+    }),
     "next/headers": {
       cookies: async () => ({
         has: (name) => name === "access_token",

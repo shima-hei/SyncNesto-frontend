@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { NotificationList } from "@/components/shared/notifications/notification
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmailPreferences } from "./email-preferences";
 
 import {
   useNotificationMutations,
@@ -19,19 +20,36 @@ import {
   useNotificationUnreadCount,
 } from "../hooks/use-notifications";
 
-export function NotificationsPage() {
+export function NotificationsPage({
+  emailEnabled = false,
+}: {
+  emailEnabled?: boolean;
+}) {
   const params = useSearchParams();
   const parsedProjectId = Number(params.get("project"));
   const projectId =
     Number.isSafeInteger(parsedProjectId) && parsedProjectId > 0
       ? parsedProjectId
       : undefined;
-  return <NotificationInbox key={projectId ?? "all"} projectId={projectId} />;
+  return (
+    <NotificationInbox
+      key={projectId ?? "all"}
+      projectId={projectId}
+      emailEnabled={emailEnabled}
+    />
+  );
 }
 
-function NotificationInbox({ projectId }: { projectId?: number }) {
-  const [filter, setFilter] = useState("all");
-  const [page, setPage] = useState(1);
+function NotificationInbox({
+  projectId,
+  emailEnabled,
+}: {
+  projectId?: number;
+  emailEnabled: boolean;
+}) {
+  const [rawFilter, setFilter] = useUrlFilterState("filter", "all");
+  const filter = rawFilter === "unread" ? "unread" : "all";
+  const [page, setPage] = useUrlFilterState("page", 1);
   const query = useNotifications({
     page,
     page_size: 20,
@@ -68,6 +86,7 @@ function NotificationInbox({ projectId }: { projectId?: number }) {
           </Button>
         }
       />
+      {emailEnabled ? <EmailPreferences /> : null}
       {projectId ? (
         <Button variant="ghost" size="sm" className="self-start" asChild>
           <Link href="/notifications">全案件の通知を見る</Link>

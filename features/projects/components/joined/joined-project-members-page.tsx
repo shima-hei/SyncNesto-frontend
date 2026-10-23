@@ -7,10 +7,12 @@ import { ProjectMembersPage } from "../shared/project-members-page";
 
 type JoinedProjectMembersPageProps = {
   projectId: number;
+  guestInvitationsEnabled?: boolean;
 };
 
 export function JoinedProjectMembersPage({
   projectId,
+  guestInvitationsEnabled,
 }: JoinedProjectMembersPageProps) {
   const { currentProjectRole, isLoading } = useCurrentProjectRole(projectId);
   const canManageMembers = canManageProjectMembers(currentProjectRole);
@@ -18,6 +20,7 @@ export function JoinedProjectMembersPage({
   return (
     <ProjectMembersPage
       projectId={projectId}
+      guestInvitationsEnabled={guestInvitationsEnabled}
       canManageMembers={canManageMembers}
       isPermissionLoading={isLoading}
       userSelectMode="candidates"

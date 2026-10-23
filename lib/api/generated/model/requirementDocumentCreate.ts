@@ -9,6 +9,9 @@
  * 要件定義書作成リクエストで受け取るschema。
  */
 export interface RequirementDocumentCreate {
+  project_goal?: string | null;
+  project_scope?: string | null;
+  project_completion_criteria?: string | null;
   title: string;
   document_code: string;
   status?: string;

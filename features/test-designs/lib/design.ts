@@ -1,6 +1,7 @@
 import type { TestDesignRead, TestItemInput } from "@/lib/api/generated/model";
 
 export type Design = TestDesignRead;
+export type DesignContent = Omit<Design, "id" | "project_id" | "updated_at">;
 export const uid = () => crypto.randomUUID();
 export const itemColumns = [
   ["code", "テスト項目ID"],

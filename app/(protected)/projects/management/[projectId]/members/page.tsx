@@ -19,5 +19,10 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  return <ProjectMembersPage projectId={parsedProjectId} />;
+  return (
+    <ProjectMembersPage
+      projectId={parsedProjectId}
+      guestInvitationsEnabled={process.env.GUEST_INVITATIONS_ENABLED === "true"}
+    />
+  );
 }

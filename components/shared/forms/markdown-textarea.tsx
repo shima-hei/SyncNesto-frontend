@@ -272,6 +272,7 @@ type MarkdownPreviewProps = {
   emptyMessage?: string;
   className?: string;
   highlightQuotes?: string[];
+  inert?: boolean;
 };
 
 export function MarkdownPreview({
@@ -279,6 +280,7 @@ export function MarkdownPreview({
   emptyMessage = "プレビューする本文がありません。",
   className,
   highlightQuotes = [],
+  inert = false,
 }: MarkdownPreviewProps) {
   if (!value.trim()) {
     return (
@@ -338,16 +340,29 @@ export function MarkdownPreview({
               {renderHighlightedMarkdownChildren(children, highlightQuotes)}
             </p>
           ),
-          a: ({ children, href }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium text-primary underline underline-offset-4"
-            >
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </a>
-          ),
+          img: inert
+            ? ({ alt, src }) => (
+                <span>
+                  画像: {alt}（{typeof src === "string" ? src : ""}）
+                </span>
+              )
+            : undefined,
+          a: ({ children, href }) =>
+            inert ? (
+              <span>
+                {children}
+                {href ? `（${href}）` : ""}
+              </span>
+            ) : (
+              <a
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary underline underline-offset-4"
+              >
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </a>
+            ),
           strong: ({ children }) => (
             <strong>
               {renderHighlightedMarkdownChildren(children, highlightQuotes)}
@@ -403,7 +418,7 @@ export function MarkdownPreview({
             const isCodeBlock = rawContent.includes("\n");
             const content = rawContent.replace(/\n$/, "");
 
-            if (language === "mermaid") {
+            if (language === "mermaid" && !inert) {
               return <MermaidDiagram chart={content} />;
             }
 

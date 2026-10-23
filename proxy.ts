@@ -15,11 +15,19 @@ export function proxy(request: NextRequest) {
   // Next.jsがSSRするスクリプトにも同じnonceを付ける。受信値は信用しない。
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("x-syncnesto-pathname", request.nextUrl.pathname);
   requestHeaders.set("Content-Security-Policy", policy);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", policy);
   // nonceを含むHTMLを共有キャッシュから再配信しない。
   response.headers.set("Cache-Control", "private, no-store");
+  if (
+    request.nextUrl.pathname === "/shared/notifications" ||
+    request.nextUrl.pathname.startsWith("/shared/publications") ||
+    request.nextUrl.pathname.startsWith("/guest-invitations/")
+  ) {
+    response.headers.set("Referrer-Policy", "no-referrer");
+  }
   return response;
 }
 

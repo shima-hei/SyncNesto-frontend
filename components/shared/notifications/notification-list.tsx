@@ -30,11 +30,15 @@ export function NotificationList({
   const { markRead } = useNotificationMutations();
   const open = async (notification: NotificationRead, navigate: boolean) => {
     try {
-      if (!notification.is_read) {
-        await markRead.mutateAsync(notification.id);
+      let current = notification;
+      if (
+        !notification.is_read ||
+        notification.target_type === "fixed_approval"
+      ) {
+        current = await markRead.mutateAsync(notification.id);
         onRead?.();
       }
-      const href = navigate ? notificationHref(notification) : null;
+      const href = navigate ? notificationHref(current) : null;
       if (href) {
         onNavigate?.();
         router.push(href);

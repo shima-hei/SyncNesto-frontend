@@ -1,4 +1,5 @@
 "use client";
+import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 
 import { useState } from "react";
 import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/layout/page-header";
+import { ArtifactReleaseLink } from "@/features/artifact-releases/components/artifact-release-link";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,6 +144,7 @@ export function RequirementDetailPage({
 
   return (
     <div className="@container/requirement-detail flex min-w-0 flex-col gap-6">
+      <OverviewReturn projectId={projectId} />
       <Button asChild variant="outline" size="sm" className="w-fit">
         <Link href={returnTo}>
           <ArrowLeftIcon data-icon="inline-start" />
@@ -158,6 +161,12 @@ export function RequirementDetailPage({
           description={requirement.requirement_code}
           actions={
             <>
+              <ArtifactReleaseLink
+                projectId={projectId}
+                kind="requirement"
+                sourceId={requirementId}
+                version={requirement.version}
+              />
               {canCreateRequirement(currentProjectRole) ? (
                 <Button asChild variant="outline">
                   <Link

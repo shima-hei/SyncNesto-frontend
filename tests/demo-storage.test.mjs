@@ -28,6 +28,9 @@ const design = load("../features/test-designs/lib/draft.ts", {
   "@/lib/demo/session": demo,
 });
 const client = load("../lib/api/client.ts", {
+  "@/lib/auth/shared-access-events": load(
+    "../lib/auth/shared-access-events.ts",
+  ),
   "@/lib/demo/session": demo,
   "./tenant-context": { getApiTenant: () => null },
 });

@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { ProjectObjectivesCard } from "./project-objectives-card";
+import { RequirementTrace } from "./requirement-trace";
 import { ArrowUpRightIcon } from "lucide-react";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
@@ -47,6 +49,9 @@ export function JoinedProjectDetailPage({
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <PageHeader title={project.name} description={project.project_code} />
+
+      <ProjectObjectivesCard projectId={projectId} />
+      <RequirementTrace projectId={projectId} />
 
       <section
         aria-label="プロジェクト基本情報"

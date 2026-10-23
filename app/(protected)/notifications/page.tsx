@@ -5,7 +5,9 @@ import { NotificationsPage } from "@/features/notifications/components/notificat
 export default function Page() {
   return (
     <Suspense>
-      <NotificationsPage />
+      <NotificationsPage
+        emailEnabled={process.env.FIXED_APPROVAL_EMAIL_ENABLED === "true"}
+      />
     </Suspense>
   );
 }

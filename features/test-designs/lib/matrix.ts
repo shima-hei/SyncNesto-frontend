@@ -1,7 +1,13 @@
-import { type Design, nextCode, uid, removeFactors } from "./design";
+import {
+  type Design,
+  type DesignContent,
+  nextCode,
+  uid,
+  removeFactors,
+} from "./design";
 import type { CellEdit, GridRow } from "../components/tables/design-grid";
 
-export function matrixRows(d: Design): GridRow[] {
+export function matrixRows(d: DesignContent): GridRow[] {
   const rows: GridRow[] = [
     ...["code", "enabled", "description", "notes"].map((key, i) => ({
       id: `meta:${key}`,
