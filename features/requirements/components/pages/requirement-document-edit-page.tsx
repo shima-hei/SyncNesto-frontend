@@ -48,6 +48,7 @@ export function RequirementDocumentEditPage({
       <RequirementDocumentForm
         key={document.version}
         projectId={projectId}
+        overviewHref={`/projects/joined/${projectId}`}
         mode="update"
         initialValues={getRequirementDocumentFormValues(document)}
         draftScope={createDraftScope(

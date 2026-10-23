@@ -37,6 +37,9 @@ export function useUpdateRequirementDocument(
               document,
             );
             await Promise.all([
+              queryClient.invalidateQueries({
+                queryKey: ["project-objectives"],
+              }),
               invalidateRequirementDocumentList(queryClient, projectId),
               invalidateRequirementChangeLogs(queryClient, projectId),
             ]);

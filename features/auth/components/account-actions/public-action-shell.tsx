@@ -15,10 +15,12 @@ export function PublicActionShell({
   title,
   description,
   children,
+  loginHref = "/login",
 }: {
   title: string;
   description: string;
   children: ReactNode;
+  loginHref?: string;
 }) {
   return (
     <main className="relative flex min-h-svh items-center justify-center bg-muted px-4 py-16 sm:px-6">
@@ -35,7 +37,7 @@ export function PublicActionShell({
         <CardContent>{children}</CardContent>
         <CardFooter>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/login" prefetch={false}>
+            <Link href={loginHref} prefetch={false}>
               ログイン画面へ
             </Link>
           </Button>

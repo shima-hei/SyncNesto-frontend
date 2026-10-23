@@ -92,6 +92,17 @@ export const toRequirementDocumentCreate = (
     document_code: values.documentCode,
     status: values.status,
     purpose: values.purpose || null,
+    ...(values.projectGoal !== undefined
+      ? { project_goal: values.projectGoal || null }
+      : {}),
+    ...(values.projectScope !== undefined
+      ? { project_scope: values.projectScope || null }
+      : {}),
+    ...(values.projectCompletionCriteria !== undefined
+      ? {
+          project_completion_criteria: values.projectCompletionCriteria || null,
+        }
+      : {}),
     target_system_name: values.targetSystemName || null,
     client_name: values.clientName || null,
     vendor_name: values.vendorName || null,

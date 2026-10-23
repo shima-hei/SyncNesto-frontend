@@ -1,6 +1,6 @@
 import { LoginPage } from "@/features/auth/components/login/login-page";
 import { redirectIfAuthenticated } from "@/lib/auth/server";
-import { mcpReturnPath } from "@/features/mcp/lib/navigation";
+import { loginReturnPath } from "@/lib/auth/return-path";
 
 type PageProps = {
   searchParams: Promise<{
@@ -11,7 +11,7 @@ type PageProps = {
 
 export default async function Page({ searchParams }: PageProps) {
   const { reason, next } = await searchParams;
-  const returnTo = mcpReturnPath(next);
+  const returnTo = loginReturnPath(next);
   await redirectIfAuthenticated(returnTo);
   const showSessionExpiredToast = reason === "session-expired";
 

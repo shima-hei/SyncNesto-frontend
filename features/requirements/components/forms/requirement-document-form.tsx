@@ -1,6 +1,19 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useProjectObjectives } from "@/features/projects/hooks/use-project-objectives";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { DraftRestoreDialog } from "@/components/shared/dialogs/draft-restore-dialog";
@@ -41,6 +54,7 @@ import {
 
 type RequirementDocumentFormProps = {
   projectId: number;
+  overviewHref?: string;
   mode: "create" | "update";
   initialValues: RequirementDocumentFormValues;
   draftScope?: string;
@@ -58,6 +72,7 @@ type RequirementDocumentFormProps = {
 
 export function RequirementDocumentForm({
   projectId,
+  overviewHref,
   mode,
   initialValues,
   draftScope,
@@ -70,6 +85,19 @@ export function RequirementDocumentForm({
   onResolveConflict,
   onSubmit,
 }: RequirementDocumentFormProps) {
+  const objectives = useProjectObjectives(projectId);
+  const objectivesEnabled = Boolean(
+    objectives.data?.enabled && objectives.data.state !== "restricted",
+  );
+  const goalInputId = useId();
+  const prepareValues = (input: RequirementDocumentFormValues) => {
+    if (objectivesEnabled) return input;
+    const copy = { ...input };
+    delete copy.projectGoal;
+    delete copy.projectScope;
+    delete copy.projectCompletionCriteria;
+    return copy;
+  };
   const titleId = useId();
   const documentCodeId = useId();
   const purposeId = useId();
@@ -78,6 +106,8 @@ export function RequirementDocumentForm({
   const vendorNameId = useId();
   const approvedAtId = useId();
   const [values, setValues] = useState(initialValues);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const isDirty = JSON.stringify(values) !== JSON.stringify(initialValues);
   const [errors, setErrors] = useState<RequirementDocumentFormErrors>({});
   const { user } = useAuth();
   const draft = useFormDraft({
@@ -125,15 +155,29 @@ export function RequirementDocumentForm({
         title: fieldErrors.title?.[0],
         documentCode: fieldErrors.documentCode?.[0],
         status: fieldErrors.status?.[0],
+        projectGoal: fieldErrors.projectGoal?.[0],
+        projectScope: fieldErrors.projectScope?.[0],
+        projectCompletionCriteria: fieldErrors.projectCompletionCriteria?.[0],
       });
-      document
-        .getElementById(fieldErrors.title ? titleId : documentCodeId)
-        ?.focus();
+      const goalError = (
+        ["projectGoal", "projectScope", "projectCompletionCriteria"] as const
+      ).find((key) => fieldErrors[key]?.length);
+      requestAnimationFrame(() =>
+        document
+          .getElementById(
+            fieldErrors.title
+              ? titleId
+              : goalError
+                ? `${goalInputId}-${goalError}`
+                : documentCodeId,
+          )
+          ?.focus(),
+      );
       return;
     }
 
     setErrors({});
-    await onSubmit(result.data)
+    await onSubmit(prepareValues(result.data))
       .then(() => draft.clearDraft())
       .catch(() => undefined);
   };
@@ -148,6 +192,38 @@ export function RequirementDocumentForm({
 
   return (
     <>
+      {overviewHref ? (
+        <>
+          <Button variant="outline" size="sm" asChild className="self-start">
+            <Link
+              href={overviewHref}
+              aria-disabled={isPending}
+              onClick={(event) => {
+                if (isPending || isDirty) event.preventDefault();
+                if (!isPending && isDirty) setLeaveOpen(true);
+              }}
+            >
+              案件概要へ戻る
+            </Link>
+          </Button>
+          <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>保存前の変更があります</AlertDialogTitle>
+                <AlertDialogDescription>
+                  案件の目標はまだ更新されていません。編集を続けて保存するか、保存せずに概要へ戻れます。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>編集を続ける</AlertDialogCancel>
+                <AlertDialogAction asChild>
+                  <Link href={overviewHref}>保存せずに概要へ</Link>
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      ) : null}
       <form
         className="@container/document-form min-w-0 max-w-3xl"
         onSubmit={handleSubmit}
@@ -177,6 +253,52 @@ export function RequirementDocumentForm({
               onChange={(event) => updateValue("purpose", event.target.value)}
             />
           </Field>
+
+          {objectivesEnabled ? (
+            <details
+              className="border-t pt-3"
+              open={
+                errors.projectGoal ||
+                errors.projectScope ||
+                errors.projectCompletionCriteria
+                  ? true
+                  : undefined
+              }
+            >
+              <summary className="cursor-pointer rounded-sm text-sm font-medium focus-visible:outline-2">
+                案件のゴール・範囲・完了条件（任意）
+              </summary>
+              <FieldGroup className="mt-4">
+                <FieldDescription>
+                  この文書に保存した内容を案件概要から参照できます。既存の文書の目的とは別に、必要な項目だけ追記します。
+                </FieldDescription>
+                {(
+                  [
+                    ["projectGoal", "ゴール・実現すること"],
+                    ["projectScope", "対象範囲・対象外"],
+                    ["projectCompletionCriteria", "案件の完了条件"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <Field key={key} data-invalid={Boolean(errors[key])}>
+                    <FieldLabel htmlFor={`${goalInputId}-${key}`}>
+                      {label}
+                    </FieldLabel>
+                    <Textarea
+                      id={`${goalInputId}-${key}`}
+                      name={key}
+                      value={values[key] ?? ""}
+                      maxLength={20000}
+                      aria-invalid={Boolean(errors[key])}
+                      onChange={(event) => updateValue(key, event.target.value)}
+                    />
+                    {errors[key] ? (
+                      <FieldError>{errors[key]}</FieldError>
+                    ) : null}
+                  </Field>
+                ))}
+              </FieldGroup>
+            </details>
+          ) : null}
 
           <p className="text-sm text-muted-foreground">
             名前だけで始められます。保存後に要件を書き、まだ決まっていないことは未決事項として相談できます。
@@ -330,7 +452,7 @@ export function RequirementDocumentForm({
           onOpenChange={(open) => !open && onCloseConflict()}
           onResolve={async (resolvedValues) => {
             setValues(resolvedValues);
-            await onResolveConflict(resolvedValues);
+            await onResolveConflict(prepareValues(resolvedValues));
           }}
         />
       ) : null}

@@ -12,9 +12,11 @@ import { MfaChallenge } from "./mfa-challenge";
 export function MfaPage({
   flow,
   returnTo,
+  allowRecovery = true,
 }: {
   flow: MfaFlowRead;
   returnTo: string;
+  allowRecovery?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [cancelling, setCancelling] = useState(false);
@@ -23,10 +25,12 @@ export function MfaPage({
     <PublicActionShell
       title={flow.next_step === "mfa_verify" ? "追加認証" : "追加認証の登録"}
       description="アカウントを保護するため、追加認証を完了してください。"
+      loginHref={`/login?next=${encodeURIComponent(returnTo)}`}
     >
       <div className="flex flex-col gap-4">
         <MfaChallenge
           initialState={flow}
+          allowRecovery={allowRecovery}
           onComplete={() => {
             queryClient.clear();
             window.location.replace(returnTo);

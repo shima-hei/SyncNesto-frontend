@@ -23,6 +23,32 @@ const item = {
   },
 };
 
+test("fixed approval notices lead to the canonical decision and distinguish exceptions", () => {
+  const fixed = {
+    ...item,
+    type: "fixed_approval_decided",
+    target_type: "fixed_approval",
+    context: { approval_id: "a-b-c", action: "approved_with_exceptions" },
+  };
+  assert.equal(
+    notificationHref(fixed),
+    "/projects/joined/7/fixed-approvals/a-b-c",
+  );
+  assert.match(notificationMessage(fixed), /例外あり正式承認/);
+  assert.match(
+    notificationMessage({
+      ...fixed,
+      context: { ...fixed.context, action: "rejected" },
+    }),
+    /差し戻し/,
+  );
+  assert.equal(
+    notificationHref({ ...fixed, target_status: "forbidden" }),
+    null,
+  );
+  assert.equal(notificationHref({ ...fixed, context: {} }), null);
+});
+
 test("target information maps to existing task, requirement, issue and comment routes", () => {
   assert.equal(notificationHref(item), "/projects/joined/7/tasks/8");
   assert.equal(

@@ -28,9 +28,11 @@ import { PublicActionShell } from "./public-action-shell";
 export function InitialPasswordPage({
   expiresAt,
   email,
+  returnTo,
 }: {
   expiresAt?: string | null;
   email: string;
+  returnTo?: string;
 }) {
   const authClient = useAuthQueryClient();
   const logout = useLogout();
@@ -86,6 +88,9 @@ export function InitialPasswordPage({
     <PublicActionShell
       title="ご自身のパスワードを設定"
       description="初回ログインの確認ができました。利用を開始する前に、初回パスワードとは異なるパスワードを設定してください。"
+      loginHref={
+        returnTo ? `/login?next=${encodeURIComponent(returnTo)}` : "/login"
+      }
     >
       {setup.data ? (
         <p role="status">{setup.data.message}</p>

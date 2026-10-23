@@ -20,6 +20,7 @@ import {
   setCurrentUserCache,
 } from "../lib/current-user-cache";
 import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
+import { isGuestInvitationPath } from "@/lib/auth/return-path";
 
 type AuthContextValue = {
   authQueryClient: QueryClient;
@@ -43,6 +44,8 @@ const PUBLIC_AUTH_PATHS = new Set([
   "/mfa",
   "/mfa/recover",
 ]);
+const isPublicAuthPath = (path: string) =>
+  PUBLIC_AUTH_PATHS.has(path) || isGuestInvitationPath(path);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -51,7 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLoggingOut = useRef(false);
   const { user, isLoading, isFetching, isAuthenticated, error, refetchUser } =
     useCurrentUser(
-      !pathname.startsWith("/mfa") && !PUBLIC_INFORMATION_PATHS.has(pathname),
+      !pathname.startsWith("/mfa") &&
+        !PUBLIC_INFORMATION_PATHS.has(pathname) &&
+        !isGuestInvitationPath(pathname),
     );
 
   const handleSessionInvalid = useCallback(() => {
@@ -67,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setCurrentUserCache(queryClient, null);
 
-      if (PUBLIC_AUTH_PATHS.has(pathname)) return;
+      if (isPublicAuthPath(pathname)) return;
 
       toast.error(CURRENT_USER_MESSAGES.sessionExpired);
 
@@ -97,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    if (user?.password_change_required && !PUBLIC_AUTH_PATHS.has(pathname)) {
+    if (user?.password_change_required && !isPublicAuthPath(pathname)) {
       window.location.replace("/initial-password");
     }
   }, [user?.password_change_required, pathname]);
@@ -114,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const revalidateRestoredPage = (event: PageTransitionEvent) => {
-      if (event.persisted && !PUBLIC_AUTH_PATHS.has(window.location.pathname))
+      if (event.persisted && !isPublicAuthPath(window.location.pathname))
         window.location.reload();
     };
     window.addEventListener("pageshow", revalidateRestoredPage);

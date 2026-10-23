@@ -1,4 +1,5 @@
 "use client";
+import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -6,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/layout/page-header";
+import { ArtifactReleaseLink } from "@/features/artifact-releases/components/artifact-release-link";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
@@ -204,11 +206,18 @@ export function SpecificationPage({
   );
   return (
     <div className="flex min-w-0 flex-col gap-5">
+      <OverviewReturn projectId={projectId} />
       <PageHeader
         title={row.title}
         description={`${kindLabels[row.kind]}・版 ${row.version}・更新 ${formatDateTime(row.updated_at)}`}
         actions={
           <>
+            <ArtifactReleaseLink
+              projectId={projectId}
+              kind="specification"
+              sourceId={row.id}
+              version={row.version}
+            />
             <Button asChild variant="outline">
               <Link href={specificationHref(projectId)}>設計書一覧へ</Link>
             </Button>

@@ -1,4 +1,4 @@
-import { type Design, uid, nextCode } from "./design";
+import { type Design, type DesignContent, uid, nextCode } from "./design";
 
 export function caseCount(d: Design, itemId: string) {
   const item = d.items.find((i) => i.id === itemId);
@@ -43,7 +43,7 @@ export function createPatternTable(d: Design, itemId?: string) {
   return id;
 }
 
-export function tableDesign(d: Design, id: string): Design {
+export function tableDesign<T extends DesignContent>(d: T, id: string): T {
   const factors = d.factors.filter((f) => f.table_id === id);
   const factorIds = new Set(factors.map((f) => f.id));
   const patterns = d.patterns.filter((p) => p.table_id === id);

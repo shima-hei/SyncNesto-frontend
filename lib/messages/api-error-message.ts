@@ -32,6 +32,10 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
     "目的と、APIのパスまたは画面URLを入力してからレビューを依頼してください。",
   DUPLICATE_RESOURCE: "同じ内容のデータが既に存在します。",
   VERSION_CONFLICT: "他の更新と競合しました。内容を確認してください。",
+  APPROVAL_SCOPE_CONFLICT:
+    "判断対象・合意根拠・現在の状態が変わりました。入力を残したまま再取得し、対象を確認してください。",
+  APPROVAL_MIGRATED:
+    "この従来申請は新方式へ切り替え済みです。合意・承認の一覧から切替先を確認してください。",
   LAST_PROJECT_ADMIN_REQUIRED:
     "プロジェクト管理者を0人にすることはできません。",
   EMAIL_ALREADY_REGISTERED: "このメールアドレスは既に登録されています。",

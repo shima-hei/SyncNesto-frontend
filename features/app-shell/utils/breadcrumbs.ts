@@ -8,6 +8,9 @@ export type BreadcrumbItem = {
 const SEGMENT_LABELS: Record<string, string> = {
   account: "アカウント",
   activities: "最近の動き",
+  "artifact-releases": "固定版と添付",
+  "artifact-publications": "公開内容を確認",
+  "fixed-approvals": "合意・承認",
   "audit-logs": "監査ログ",
   documents: "ドキュメント",
   specifications: "画面・API設計",
@@ -97,6 +100,12 @@ const getBreadcrumbItemForSegment = ({
   if (isNumericSegment(segment)) {
     return getDynamicBreadcrumbItem({ segment, previousSegment, href });
   }
+  if (
+    previousSegment === "fixed-approvals" &&
+    /^[0-9a-f-]{36}$/i.test(segment)
+  ) {
+    return { label: "判断対象・履歴", href };
+  }
 
   return {
     label: SEGMENT_LABELS[segment] ?? formatUnknownSegment(segment),
@@ -140,11 +149,20 @@ const getDynamicBreadcrumbItem = ({
 
   if (previousSegment === "items") {
     return {
-      label: "要件詳細",
+      label: `要件 #${id}`,
       href,
     };
   }
 
+  const labels: Record<string, string> = {
+    tasks: "タスク",
+    specifications: "設計書",
+    "test-designs": "テスト設計書",
+    documents: "ドキュメント",
+  };
+  if (previousSegment && labels[previousSegment]) {
+    return { label: `${labels[previousSegment]} #${id}`, href };
+  }
   return null;
 };
 

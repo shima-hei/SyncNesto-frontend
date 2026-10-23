@@ -15,4 +15,9 @@ export interface NotificationContext {
   design_id?: number | null;
   subject_type?: string | null;
   subject_id?: string | null;
+  approval_id?: string | null;
+  event_id?: string | null;
+  action?: string | null;
+  current_status?: string | null;
+  target_kind?: string | null;
 }

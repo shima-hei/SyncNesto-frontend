@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { JoinedProjectNav } from "@/features/projects/components/joined/joined-project-nav";
+import { getJoinedProjectId } from "@/features/projects/constants/joined-project-navigation";
 import { usePathname } from "next/navigation";
 import { CommandIcon, UsersIcon, FolderKanbanIcon } from "lucide-react";
 import { useTenant } from "@/features/tenants/providers/tenant-provider";
@@ -29,6 +31,7 @@ import { SidebarUserMenu } from "../user/sidebar-user-menu";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const projectId = getJoinedProjectId(pathname);
   const { canManageTenant } = useTenant();
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
   const visibleManagementNavigation = getVisibleNavigationItems(
@@ -59,6 +62,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarNav items={visibleMainNavigation} pathname={pathname} />
+        {projectId ? (
+          <JoinedProjectNav key={projectId} projectId={projectId} />
+        ) : null}
         {canManageTenant ? (
           <>
             <SidebarSeparator />

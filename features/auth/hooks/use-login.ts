@@ -9,7 +9,7 @@ import { getLoginApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { invalidateCurrentUser } from "../lib/current-user-cache";
 import type { LoginFormValues } from "../types/login";
-import { mcpReturnPath } from "@/features/mcp/lib/navigation";
+import { loginReturnPath } from "@/lib/auth/return-path";
 
 export function useLogin(returnTo?: string) {
   const router = useRouter();
@@ -28,7 +28,7 @@ export function useLogin(returnTo?: string) {
         );
         return;
       }
-      const safeReturn = mcpReturnPath(returnTo);
+      const safeReturn = loginReturnPath(returnTo);
       router.replace(
         safeReturn ? `/mfa?next=${encodeURIComponent(safeReturn)}` : "/mfa",
       );
@@ -37,8 +37,8 @@ export function useLogin(returnTo?: string) {
     await invalidateCurrentUser(queryClient);
     router.replace(
       response.password_change_required
-        ? "/initial-password"
-        : (mcpReturnPath(returnTo) ?? "/"),
+        ? `/initial-password${loginReturnPath(returnTo) ? `?next=${encodeURIComponent(loginReturnPath(returnTo)!)}` : ""}`
+        : (loginReturnPath(returnTo) ?? "/"),
     );
   };
 
