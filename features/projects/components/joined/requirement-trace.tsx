@@ -69,6 +69,11 @@ import {
   safeOverviewReturn,
 } from "@/lib/navigation/overview-origin";
 import { RequirementTracePanel } from "./requirement-trace-panel";
+import {
+  RequirementAgreements,
+  AgreementRefresh,
+} from "./requirement-agreements";
+import { useRequirementAgreements } from "@/features/projects/hooks/use-requirement-agreements";
 
 export function RequirementTrace({ projectId }: { projectId: number }) {
   const params = useSearchParams();
@@ -105,6 +110,12 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
     enabled: documentsOpen && query.data?.state === "ready",
     retry: false,
   });
+  const agreements = useRequirementAgreements(
+    projectId,
+    query.data?.state === "ready" && !query.isError
+      ? (query.data.items ?? []).map((r) => r.id)
+      : [],
+  );
   const change = (changes: Record<string, string | null>, push = false) => {
     const url = new URL(window.location.href);
     for (const [key, value] of Object.entries(changes)) {
@@ -212,6 +223,12 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
           </Button>
         </form>
         <div className="flex flex-wrap items-center gap-2">
+          {items.length ? (
+            <AgreementRefresh
+              query={agreements}
+              onRefresh={() => void query.refetch()}
+            />
+          ) : null}
           <Dialog open={documentsOpen} onOpenChange={setDocumentsOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -330,12 +347,13 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
         ) : (
           <Table>
             <TableCaption>
-              編集状態は、固定内容への合意・正式承認や現在の検証結果を示しません。関連なしは「不要」の確定ではありません。
+              合意ありは指定された人の判断です。関係者全員の合意やテストの合格を意味しません。編集状態と現在内容への判断は別々に確認できます。
             </TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>何を満たすか</TableHead>
                 <TableHead>編集状態</TableHead>
+                <TableHead>現在の内容への合意</TableHead>
                 <TableHead>設計</TableHead>
                 <TableHead>関連作業</TableHead>
                 <TableHead>テスト項目</TableHead>
@@ -360,6 +378,14 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
                     <Badge variant="outline">
                       {getRequirementStatusLabel(row.status)}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="whitespace-normal">
+                    <RequirementAgreements
+                      query={agreements}
+                      requirementId={row.id}
+                      version={row.version}
+                      projectId={projectId}
+                    />
                   </TableCell>
                   <TableCell>
                     <FacetCount facet={row.designs} />

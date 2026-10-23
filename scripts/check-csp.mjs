@@ -87,6 +87,7 @@ try {
     "/api/projects/1/objectives/events",
     "/api/projects/1/requirement-trace",
     "/api/projects/1/requirement-trace/1",
+    "/api/projects/1/requirement-agreements?requirement_ids=1",
   ]) {
     const response = await fetch(`${origin}${path}`);
     assert.equal(response.status, 503);

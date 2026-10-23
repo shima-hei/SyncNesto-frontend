@@ -70,6 +70,7 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   const upstreamPath = await getUpstreamPath(context);
   const privatePublication =
     upstreamPath === "/notification-preferences" ||
+    /^\/projects\/[^/]+\/requirement-agreements(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/requirement-trace(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/objectives(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/fixed-approvals\/[^/]+\/next-actions$/.test(

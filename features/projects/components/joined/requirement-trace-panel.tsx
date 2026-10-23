@@ -11,6 +11,11 @@ import { useTenant } from "@/features/tenants/providers/tenant-provider";
 import type { TraceFacet } from "@/lib/api/generated/model";
 import { readRequirementTraceDetailProjectsProjectIdRequirementTraceRequirementIdGet as readDetail } from "@/lib/api/generated/requirement-trace/requirement-trace";
 import { withOverviewOrigin } from "@/lib/navigation/overview-origin";
+import { useRequirementAgreements } from "@/features/projects/hooks/use-requirement-agreements";
+import {
+  RequirementAgreements,
+  AgreementRefresh,
+} from "./requirement-agreements";
 
 export function RequirementTracePanel({
   projectId,
@@ -41,6 +46,10 @@ export function RequirementTracePanel({
     retry: false,
     refetchOnWindowFocus: false,
   });
+  const agreements = useRequirementAgreements(
+    projectId,
+    query.data && !query.isError ? [requirementId] : [],
+  );
   const base = `/projects/joined/${projectId}`;
   const href = (path: string) => withOverviewOrigin(path, projectId, returnTo);
   if (query.isPending)
@@ -73,6 +82,23 @@ export function RequirementTracePanel({
           <Link href={href(full)}>個別要件の詳細・全文を開く</Link>
         </Button>
       </div>
+      <section aria-label="現在内容への合意" className="flex flex-col gap-2">
+        <h4 className="text-sm font-medium">この内容・版への判断</h4>
+        <p className="text-xs text-muted-foreground">
+          社内と外部の指定された人の判断を分けて確認できます。関係者全員の合意を示すものではありません。
+        </p>
+        <RequirementAgreements
+          query={agreements}
+          requirementId={row.id}
+          version={row.version}
+          projectId={projectId}
+          returnTo={returnTo}
+        />
+        <AgreementRefresh
+          query={agreements}
+          onRefresh={() => void query.refetch()}
+        />
+      </section>
       {(
         [
           ["description", "期待する振る舞い・要件の本文"],
