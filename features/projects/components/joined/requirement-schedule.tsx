@@ -258,7 +258,7 @@ export function RequirementScheduleView({
         </span>
       </div>
       <p className="text-sm text-muted-foreground">
-        要件ごとの予定です。同じタスクが複数の要件に表示されることがあります。
+        要件別の予定を表示しています。工程別の表示は今後対応します。
       </p>
       <Table>
         <TableHeader>
