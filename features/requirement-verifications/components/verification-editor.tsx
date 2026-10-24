@@ -49,6 +49,7 @@ import { getPlan, updatePlan } from "../lib/api";
 import { VerificationRowEditor } from "./verification-row-editor";
 import { VerificationEvidence } from "./verification-evidence";
 import { EvidenceSubmissions } from "./evidence-submissions";
+import { VerdictRequests } from "./verdict-requests";
 import { VerificationHistory } from "./verification-history";
 import { readDraftVersion, verificationDraftScope } from "../lib/draft-version";
 
@@ -519,6 +520,15 @@ export function VerificationEditor({
         rows={row.revision.checklist.rows ?? []}
         selected={selected}
         dirty={dirty}
+      />
+      <VerdictRequests
+        projectId={projectId}
+        requirementId={row.source_requirement_id}
+        planId={row.id}
+        version={row.current_version}
+        dirty={dirty}
+        from={from}
+        rowId={selected}
       />
       <VerificationHistory
         projectId={projectId}

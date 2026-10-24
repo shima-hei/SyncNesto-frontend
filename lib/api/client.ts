@@ -74,7 +74,9 @@ export async function apiClient<T>(
     signal,
     cache:
       sharedPublication ||
-      /^\/projects\/[^/]+\/requirement-verification-plans(?:\/|$)/.test(url)
+      /^\/projects\/[^/]+\/(?:requirement-verification-plans|requirement-verification-requests|requirement-verdicts)(?:\/|$)/.test(
+        url,
+      )
         ? "no-store"
         : undefined,
   });
