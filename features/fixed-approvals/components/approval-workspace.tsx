@@ -12,13 +12,7 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -102,7 +96,7 @@ export function ApprovalWorkspace({
       <OverviewReturn projectId={projectId} />
       <PageHeader
         title="合意・承認"
-        description="どの内容に誰の判断が必要か、何が未合意のまま残っているかを確認します。"
+        description="依頼の対象・状態・担当者を確認します。"
         actions={
           <div className="flex flex-wrap gap-2">
             {canManage ? (
@@ -122,14 +116,6 @@ export function ApprovalWorkspace({
           </div>
         }
       />
-      <Alert>
-        <AlertTitle>
-          要件・文書・設計・テスト設計への判断を区別します
-        </AlertTitle>
-        <AlertDescription>
-          元の内容が更新されても過去の合意はその固定内容に残ります。タスク完了・テスト合格・顧客公開を自動的に確定するものではありません。
-        </AlertDescription>
-      </Alert>
       {releaseId && canManage ? (
         <ApprovalRequestForm
           key={`${releaseId}:${legacyId ?? originImport ?? "new"}`}
@@ -141,10 +127,7 @@ export function ApprovalWorkspace({
       ) : null}
       <Card>
         <CardHeader>
-          <CardTitle>依頼と判断履歴</CardTitle>
-          <CardDescription>
-            従来の記録と、内容を固定した新しい依頼を区別して表示します。
-          </CardDescription>
+          <CardTitle>依頼一覧</CardTitle>
         </CardHeader>
         <CardContent className="flex min-w-0 flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -190,17 +173,19 @@ export function ApprovalWorkspace({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>対象・方式</TableHead>
+                    <TableHead>対象</TableHead>
                     <TableHead>状態</TableHead>
                     <TableHead>承認者・申請日時</TableHead>
-                    <TableHead>確認</TableHead>
+                    <TableHead>操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {history.data.items.map((item) => (
                     <TableRow key={`${item.scheme}:${item.id}`}>
                       <TableCell>
-                        <p className="max-w-72 truncate">{item.title}</p>
+                        <p className="max-w-72 whitespace-normal break-words">
+                          {item.title}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {item.scheme === "legacy"
                             ? "従来承認・対象版未固定"
@@ -208,7 +193,6 @@ export function ApprovalWorkspace({
                               "固定内容への判断")}
                           ・
                           {item.audience === "guest" ? "外部依頼" : "社内記録"}
-                          ・対象 ID {item.source_id}
                         </p>
                       </TableCell>
                       <TableCell>
@@ -242,7 +226,9 @@ export function ApprovalWorkspace({
                         {item.scheme === "fixed" ? (
                           <Button asChild variant="outline" size="sm">
                             <Link href={approvalPath(projectId, item.id)}>
-                              内容・判断履歴
+                              {item.status === "requested"
+                                ? "対象を確認"
+                                : "判断履歴を見る"}
                             </Link>
                           </Button>
                         ) : (
@@ -290,6 +276,19 @@ export function ApprovalWorkspace({
           )}
         </CardContent>
       </Card>
+      <details>
+        <summary className="cursor-pointer rounded-sm text-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+          合意・承認の対象と従来記録について
+        </summary>
+        <Alert className="mt-3">
+          <AlertTitle>
+            要件・文書・設計・テスト設計への判断を区別します
+          </AlertTitle>
+          <AlertDescription>
+            元の内容が更新されても、判断は保存時の内容に残ります。タスク完了・テスト合格・顧客公開を自動的に確定するものではありません。従来の記録は対象版が未固定で、詳細から元の記録と移行先を確認できます。
+          </AlertDescription>
+        </Alert>
+      </details>
       {selectedLegacy > 0 ? (
         <LegacyMigrationPanel
           key={selectedLegacy}
