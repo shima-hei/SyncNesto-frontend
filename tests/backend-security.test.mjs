@@ -136,6 +136,35 @@ test("MCP利用資格APIをCookie付きで中継し、資格と未認証の応�
   }
 });
 
+test("個人の要件日程を共有キャッシュへ保存せず、権限失効を空件数へ変換しない", async () => {
+  const previous = globalThis.fetch;
+  const path = ["projects", "7", "requirement-schedule"];
+  try {
+    for (const status of [200, 403]) {
+      globalThis.fetch = async (_url, options) => {
+        assert.equal(options.cache, "no-store");
+        return Response.json(
+          status === 200 ? { enabled: true, total: 3 } : { code: "FORBIDDEN" },
+          { status },
+        );
+      };
+      const response = await route.exports.GET(
+        {
+          method: "GET",
+          nextUrl: new URL(`https://front.example/api/${path.join("/")}`),
+          headers: new Headers(),
+        },
+        { params: Promise.resolve({ path }) },
+      );
+      assert.equal(response.status, status);
+      assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+      assert.equal(response.headers.get("Referrer-Policy"), "no-referrer");
+    }
+  } finally {
+    globalThis.fetch = previous;
+  }
+});
+
 test("MCP利用資格APIの追加でOAuthや他の連携パスを公開しない", async () => {
   const oldFetch = globalThis.fetch;
   try {

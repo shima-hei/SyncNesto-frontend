@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Card,
   CardHeader,
@@ -66,6 +67,7 @@ import { listRequirementDocumentsProjectsProjectIdRequirementDocumentsGet as rea
 import type { TraceFacet } from "@/lib/api/generated/model";
 import {
   readTraceParams,
+  readScheduleParams,
   safeOverviewReturn,
 } from "@/lib/navigation/overview-origin";
 import { RequirementTracePanel } from "./requirement-trace-panel";
@@ -74,10 +76,16 @@ import {
   AgreementRefresh,
 } from "./requirement-agreements";
 import { useRequirementAgreements } from "@/features/projects/hooks/use-requirement-agreements";
+import {
+  RequirementScheduleView,
+  useScheduleAvailability,
+} from "./requirement-schedule";
 
 export function RequirementTrace({ projectId }: { projectId: number }) {
   const params = useSearchParams();
   const state = readTraceParams(params);
+  const scheduleRequested = readScheduleParams(params).view === "schedule";
+  const schedule = useScheduleAvailability(projectId);
   const { user } = useAuth();
   const { tenant } = useTenant();
   const [documentsOpen, setDocumentsOpen] = useState(false);
@@ -93,7 +101,9 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
   const query = useQuery({
     queryKey: ["requirement-trace", tenant?.id, user?.id, projectId, filters],
     queryFn: () => readTrace(projectId, filters),
-    enabled: Boolean(user && tenant && projectId > 0),
+    enabled: Boolean(
+      user && tenant && projectId > 0 && (!scheduleRequested || state.selected),
+    ),
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -107,17 +117,25 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
     ],
     queryFn: () =>
       readDocuments(projectId, { page: documentsPage, page_size: 20 }),
-    enabled: documentsOpen && query.data?.state === "ready",
+    enabled:
+      documentsOpen &&
+      (query.data?.state === "ready" || Boolean(schedule.data?.enabled)),
     retry: false,
   });
   const agreements = useRequirementAgreements(
     projectId,
-    query.data?.state === "ready" && !query.isError
+    query.data?.state === "ready" && !query.isError && !scheduleRequested
       ? (query.data.items ?? []).map((r) => r.id)
       : [],
   );
   const change = (changes: Record<string, string | null>, push = false) => {
     const url = new URL(window.location.href);
+    if (
+      ["traceDocument", "traceQ", "traceStatus"].some((key) => key in changes)
+    ) {
+      url.searchParams.delete("schedulePage");
+      url.searchParams.delete("commonPage");
+    }
     for (const [key, value] of Object.entries(changes)) {
       if (value) url.searchParams.set(key, value);
       else url.searchParams.delete(key);
@@ -135,9 +153,9 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
     if (window.history.state?.tracePanelOpened) window.history.back();
     else change({ selectedRequirement: null });
   };
-  if (query.isPending)
+  if (query.isPending && !scheduleRequested && !schedule.data?.enabled)
     return <Skeleton className="h-36" aria-label="要件の関連を読込中" />;
-  if (query.isError)
+  if (query.isError && !scheduleRequested && !schedule.data?.enabled)
     return (
       <DataLoadError
         resourceName="要件と関連"
@@ -145,8 +163,9 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
       />
     );
   const data = query.data;
-  if (!data?.enabled) return null;
-  if (data.state === "restricted")
+  if (!data?.enabled && !scheduleRequested && !schedule.data?.enabled)
+    return null;
+  if (data?.state === "restricted" && !scheduleRequested)
     return (
       <Card>
         <CardHeader>
@@ -155,19 +174,42 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
         </CardHeader>
       </Card>
     );
-  const items = data.items ?? [];
+  const items = data?.items ?? [];
   const selected = items.find((row) => row.id === state.selected);
   const current = `/projects/joined/${projectId}${params.size ? `?${params}` : ""}`;
   const returnTo = safeOverviewReturn(current, projectId)!;
   return (
     <Card>
       <CardHeader>
-        <CardTitle>要件から次の作業を確認する</CardTitle>
+        <CardTitle>
+          {scheduleRequested
+            ? "要件から予定を確認する"
+            : "要件から次の作業を確認する"}
+        </CardTitle>
         <CardDescription>
-          何を満たすかを選び、設計・作業・テストと判断の根拠をたどれます。文書の絞り込みは案件の共通ゴールを変更しません。
+          {scheduleRequested
+            ? "タスクの予定を参照します。日程変更はガントで行います。"
+            : "何を満たすかを選び、設計・作業・テストと判断の根拠をたどれます。文書の絞り込みは案件の共通ゴールを変更しません。"}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex min-w-0 flex-col gap-4">
+        {schedule.data?.enabled || scheduleRequested ? (
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={scheduleRequested ? "schedule" : "requirements"}
+            onValueChange={(value) => {
+              if (value)
+                change({
+                  overviewView: value === "schedule" ? "schedule" : null,
+                });
+            }}
+            aria-label="概要の表示"
+          >
+            <ToggleGroupItem value="requirements">要件ビュー</ToggleGroupItem>
+            <ToggleGroupItem value="schedule">日程ビュー</ToggleGroupItem>
+          </ToggleGroup>
+        ) : null}
         <form
           key={state.q}
           className="flex flex-col gap-3 sm:flex-row sm:items-end"
@@ -223,7 +265,7 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
           </Button>
         </form>
         <div className="flex flex-wrap items-center gap-2">
-          {items.length ? (
+          {!scheduleRequested && items.length ? (
             <AgreementRefresh
               query={agreements}
               onRefresh={() => void query.refetch()}
@@ -335,7 +377,18 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
             </Button>
           ) : null}
         </div>
-        {items.length === 0 ? (
+        {scheduleRequested ? (
+          <RequirementScheduleView projectId={projectId} change={change} />
+        ) : query.isPending ? (
+          <Skeleton className="h-36" aria-label="要件の関連を読込中" />
+        ) : query.isError ? (
+          <DataLoadError
+            resourceName="要件と関連"
+            onRetry={() => void query.refetch()}
+          />
+        ) : !data?.enabled ? (
+          <p>要件ビューは現在無効です。</p>
+        ) : items.length === 0 ? (
           <Empty>
             <EmptyHeader>
               <EmptyTitle>表示できる要件はありません</EmptyTitle>
@@ -415,7 +468,7 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
           </Table>
         )}
         <Sheet
-          open={Boolean(state.selected)}
+          open={Boolean(state.selected) && !scheduleRequested}
           onOpenChange={(open) => {
             if (!open) close();
           }}
@@ -451,29 +504,33 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
           </SheetContent>
         </Sheet>
       </CardContent>
-      <CardFooter className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {data.total}件中 {items.length}件 / {state.page}ページ
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={state.page === 1 || query.isFetching}
-            onClick={() => change({ tracePage: String(state.page - 1) })}
-          >
-            前のページ
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={state.page * 20 >= (data.total ?? 0) || query.isFetching}
-            onClick={() => change({ tracePage: String(state.page + 1) })}
-          >
-            次のページ
-          </Button>
-        </div>
-      </CardFooter>
+      {!scheduleRequested && data?.enabled ? (
+        <CardFooter className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            {data.total}件中 {items.length}件 / {state.page}ページ
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={state.page === 1 || query.isFetching}
+              onClick={() => change({ tracePage: String(state.page - 1) })}
+            >
+              前のページ
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={
+                state.page * 20 >= (data.total ?? 0) || query.isFetching
+              }
+              onClick={() => change({ tracePage: String(state.page + 1) })}
+            >
+              次のページ
+            </Button>
+          </div>
+        </CardFooter>
+      ) : null}
     </Card>
   );
 }
