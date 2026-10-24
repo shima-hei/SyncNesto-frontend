@@ -13,6 +13,8 @@ import { readRequirementTraceDetailProjectsProjectIdRequirementTraceRequirementI
 import { withOverviewOrigin } from "@/lib/navigation/overview-origin";
 import { VerificationEntry } from "@/features/requirement-verifications/components/verification-entry";
 import { useRequirementAgreements } from "@/features/projects/hooks/use-requirement-agreements";
+import { useRequirementVerdicts } from "@/features/projects/hooks/use-requirement-verdicts";
+import { RequirementVerdict } from "./requirement-verdict";
 import {
   RequirementAgreements,
   AgreementRefresh,
@@ -48,6 +50,10 @@ export function RequirementTracePanel({
     refetchOnWindowFocus: false,
   });
   const agreements = useRequirementAgreements(
+    projectId,
+    query.data && !query.isError ? [requirementId] : [],
+  );
+  const verdicts = useRequirementVerdicts(
     projectId,
     query.data && !query.isError ? [requirementId] : [],
   );
@@ -100,6 +106,18 @@ export function RequirementTracePanel({
           onRefresh={() => void query.refetch()}
         />
       </section>
+      {verdicts.data?.state !== "disabled" ? (
+        <section className="flex flex-col gap-2">
+          <h4 className="text-sm font-medium">検証と最終判断</h4>
+          <RequirementVerdict
+            query={verdicts}
+            requirementId={row.id}
+            version={row.version}
+            projectId={projectId}
+            returnTo={returnTo}
+          />
+        </section>
+      ) : null}
       <VerificationEntry
         projectId={projectId}
         requirementId={row.id}

@@ -254,7 +254,7 @@ export function VerificationEvidence({
                             ? "内容に変更あり"
                             : "未照合"}
                         <p className="text-xs text-muted-foreground">
-                          要件への合格判定は未実施
+                          ケースの結果です。要件全体の合格とは別です
                         </p>
                       </TableCell>
                       <TableCell>
