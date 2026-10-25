@@ -79,9 +79,6 @@ export function RequirementDocumentDetailPage({
   )
     ? selectedSectionQuery
     : null;
-  const selectedSectionValue = selectedSectionId
-    ? String(selectedSectionId)
-    : "all";
   const createRequirementPath = selectedSectionId
     ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${selectedSectionId}`
     : `/projects/joined/${projectId}/requirements/${documentId}/items/new`;
@@ -130,7 +127,10 @@ export function RequirementDocumentDetailPage({
               出力
             </Button>
             {canCreateRequirement(currentProjectRole) && !isSectionsLoading ? (
-              <Button asChild>
+              <Button
+                asChild
+                variant={activeTab === "requirements" ? "outline" : "default"}
+              >
                 <Link href={createRequirementPath}>要件を追加</Link>
               </Button>
             ) : null}
@@ -193,7 +193,6 @@ export function RequirementDocumentDetailPage({
 
         <TabsContent value="requirements">
           <RequirementDocumentRequirementsTab
-            key={selectedSectionValue}
             projectId={projectId}
             documentId={documentId}
             selectedSectionId={selectedSectionId}

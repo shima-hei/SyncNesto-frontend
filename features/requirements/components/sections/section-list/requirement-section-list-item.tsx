@@ -4,6 +4,7 @@ import { ArrowDownIcon, ArrowUpIcon, CheckIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { RequirementSectionRead } from "@/lib/api/generated/model";
+import { cn } from "@/lib/utils";
 
 import {
   getRequirementDocumentStatusLabel,
@@ -18,6 +19,7 @@ type RequirementSectionListItemProps = {
   canMoveDown: boolean;
   isSortPending: boolean;
   showSelectAction: boolean;
+  navigation?: boolean;
   onSelect?: (sectionId: number) => void;
   onMove: (section: RequirementSectionRead, direction: "up" | "down") => void;
 };
@@ -30,34 +32,51 @@ export function RequirementSectionListItem({
   canMoveDown,
   isSortPending,
   showSelectAction,
+  navigation = false,
   onSelect,
   onMove,
 }: RequirementSectionListItemProps) {
   return (
     <div
       data-state={isSelected ? "selected" : undefined}
-      className="rounded-lg border p-3 data-[state=selected]:border-primary"
+      className={cn(
+        navigation
+          ? "min-w-0 border-b pb-3 last:border-b-0"
+          : "rounded-lg border p-3 data-[state=selected]:border-primary",
+      )}
     >
       <div className="flex flex-col gap-3">
         <div className="flex min-w-0 flex-col gap-1">
-          <button
-            type="button"
-            className="flex min-w-0 flex-col gap-1 text-left"
-            onClick={() => onSelect?.(section.id)}
-          >
-            <span className="min-w-0 break-words font-medium">
-              {section.title}
-            </span>
-            <span className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <span>
-                {getRequirementSectionTypeLabel(section.section_type)}
+          {navigation ? (
+            <Button
+              type="button"
+              variant={isSelected ? "secondary" : "ghost"}
+              aria-current={isSelected ? "location" : undefined}
+              className="h-auto min-h-10 w-full justify-start whitespace-normal text-left"
+              onClick={() => onSelect?.(section.id)}
+            >
+              <span className="min-w-0 break-words">{section.title}</span>
+            </Button>
+          ) : (
+            <button
+              type="button"
+              className="flex min-w-0 flex-col gap-1 text-left"
+              onClick={() => onSelect?.(section.id)}
+            >
+              <span className="min-w-0 break-words font-medium">
+                {section.title}
               </span>
-              <span>{getRequirementDocumentStatusLabel(section.status)}</span>
-            </span>
-          </button>
+              <span className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                <span>
+                  {getRequirementSectionTypeLabel(section.section_type)}
+                </span>
+                <span>{getRequirementDocumentStatusLabel(section.status)}</span>
+              </span>
+            </button>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {showSelectAction ? (
+          {showSelectAction && !navigation ? (
             <Button
               type="button"
               variant={isSelected ? "default" : "outline"}
@@ -78,7 +97,7 @@ export function RequirementSectionListItem({
                 onClick={() => onMove(section, "up")}
               >
                 <ArrowUpIcon />
-                <span className="sr-only">上へ</span>
+                <span className="sr-only">{section.title}を上へ</span>
               </Button>
               <Button
                 type="button"
@@ -88,7 +107,7 @@ export function RequirementSectionListItem({
                 onClick={() => onMove(section, "down")}
               >
                 <ArrowDownIcon />
-                <span className="sr-only">下へ</span>
+                <span className="sr-only">{section.title}を下へ</span>
               </Button>
             </>
           ) : null}
