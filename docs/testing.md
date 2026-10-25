@@ -1,5 +1,21 @@
 # テストの実行と診断
 
+## Codex / MCPの実トークン計測
+
+```bash
+node scripts/measure-mcp-usage.mjs --source <現在の会話のrollout.jsonl> --output .verify/mcp-usage.json
+# 作業開始以降の複数turnを含む区間
+node scripts/measure-mcp-usage.mjs --source <rollout.jsonl> --since <ISO時刻> --output .verify/mcp-usage.json
+```
+
+現在のCodex desktopが記録する `token_usage_record` をresponse IDで重複除去し、最新turn（または指定区間）の実測を集計する。入力にはキャッシュ入力を含み、出力には推論を含むため二重加算しない。`observed_through` までのスナップショットであり、実行中の最後の応答はまだ含まれない。形式が変わって取得できない場合は `unavailable` とし、推定値で埋めない。
+
+本文・引数・出力・認証情報は保存せず、ネットワーク送信・追加モデル実行・新依存もない。execコード内のMCP参照は実際の内部RPC数ではない。取得できる実トークンはモデル処理全体で、MCP単独のトークン、ChatGPT利用枠への換算、API料金への換算は行わない。JSON bytesの減少も実トークン削減率とは呼ばない。
+
+根拠：[Codexのusage出力](https://learn.chatgpt.com/docs/non-interactive-mode)、[OpenAIのツールを含むトークン計数](https://developers.openai.com/api/docs/guides/token-counting)。ローカルrolloutのレコード形式自体は現物確認した実装依存で、公式の安定APIとは扱わない。
+
+## テスト実行
+
 ```bash
 npm test
 npm test -- --reuse
