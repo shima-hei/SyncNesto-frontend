@@ -35,6 +35,8 @@ import { RequirementDocumentOverview } from "./document-detail/requirement-docum
 import { RequirementDocumentRequirementsTab } from "./document-detail/requirement-document-requirements-tab";
 import { useSectionEdits } from "../../hooks/use-section-edits";
 import { SectionEditNotice } from "./document-detail/section-edit-notice";
+import { RequirementDocumentFullPreview } from "./document-detail/requirement-document-full-preview";
+import { useFullPreviewNavigation } from "../../hooks/use-full-preview-navigation";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
@@ -44,6 +46,7 @@ type RequirementDocumentDetailPageProps = {
 const REQUIREMENT_DOCUMENT_TABS = [
   "overview",
   "requirements",
+  "preview",
   "issues",
   "approvals",
   "history",
@@ -58,6 +61,11 @@ export function RequirementDocumentDetailPage({
     values: REQUIREMENT_DOCUMENT_TABS,
     defaultValue: "overview",
   });
+  const {
+    editorRef,
+    capture: capturePreviewReturn,
+    resume: resumeFromPreview,
+  } = useFullPreviewNavigation(activeTab);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportPreview, setExportPreview] =
@@ -160,16 +168,30 @@ export function RequirementDocumentDetailPage({
       />
 
       <SectionEditNotice projectId={projectId} documentId={documentId} />
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          if (value === "preview") capturePreviewReturn();
+          setActiveTab(value);
+        }}
+        className="gap-4"
+      >
         <TabsList
           variant="line"
-          className="w-full justify-start overflow-x-auto border-b"
+          className="w-full min-h-12 justify-start overflow-x-auto border-b group-data-horizontal/tabs:h-auto"
         >
           <TabsTrigger className="flex-none px-4 py-2" value="overview">
             文書として読む
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="requirements">
             要件を書く・整理する
+          </TabsTrigger>
+          <TabsTrigger
+            className="flex-none px-4 py-2"
+            value="preview"
+            data-full-preview-trigger
+          >
+            全文プレビュー
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="issues">
             未決事項
@@ -191,16 +213,34 @@ export function RequirementDocumentDetailPage({
           />
         </TabsContent>
 
-        <TabsContent value="requirements">
-          <RequirementDocumentRequirementsTab
+        <TabsContent
+          value="requirements"
+          forceMount={
+            activeTab === "requirements" || activeTab === "preview"
+              ? true
+              : undefined
+          }
+          className="data-[state=inactive]:hidden"
+        >
+          <div ref={editorRef}>
+            <RequirementDocumentRequirementsTab
+              projectId={projectId}
+              documentId={documentId}
+              selectedSectionId={selectedSectionId}
+              onSelectSection={(sectionId) => setSelectedSectionId(sectionId)}
+              canCreate={canCreateRequirement(currentProjectRole)}
+              canUpdate={canUpdateRequirement(currentProjectRole)}
+              canComment={canCommentRequirement(currentProjectRole)}
+              canReview={canReviewRequirement(currentProjectRole)}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="preview">
+          <RequirementDocumentFullPreview
             projectId={projectId}
-            documentId={documentId}
-            selectedSectionId={selectedSectionId}
-            onSelectSection={(sectionId) => setSelectedSectionId(sectionId)}
-            canCreate={canCreateRequirement(currentProjectRole)}
-            canUpdate={canUpdateRequirement(currentProjectRole)}
-            canComment={canCommentRequirement(currentProjectRole)}
-            canReview={canReviewRequirement(currentProjectRole)}
+            document={document}
+            onReturn={resumeFromPreview}
           />
         </TabsContent>
 

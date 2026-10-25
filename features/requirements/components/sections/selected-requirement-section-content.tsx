@@ -212,6 +212,7 @@ export function SelectedRequirementSectionContent({
         <CardContent className="flex flex-col gap-3">
           <h3
             data-requirement-section-field="title"
+            tabIndex={-1}
             className="scroll-mt-24 text-base font-semibold"
           >
             {section.title}

@@ -293,6 +293,8 @@ export function RequirementDocumentRequirementsTab({
 
             <aside
               id={supportPanelId}
+              data-preview-requirement-source
+              tabIndex={-1}
               aria-label="選択対象のコメント・承認・履歴"
               className="min-w-0 scroll-mt-20 @min-[80rem]/requirements:sticky @min-[80rem]/requirements:top-20 @min-[80rem]/requirements:max-h-[calc(100dvh-6rem)] @min-[80rem]/requirements:overflow-y-auto @min-[80rem]/requirements:overscroll-contain"
             >
