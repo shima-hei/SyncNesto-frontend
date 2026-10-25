@@ -33,6 +33,8 @@ import { RequirementOpenIssuesSection } from "../sections/requirement-open-issue
 import { RequirementDocumentDetailSkeleton } from "./document-detail/requirement-document-detail-skeleton";
 import { RequirementDocumentOverview } from "./document-detail/requirement-document-overview";
 import { RequirementDocumentRequirementsTab } from "./document-detail/requirement-document-requirements-tab";
+import { useSectionEdits } from "../../hooks/use-section-edits";
+import { SectionEditNotice } from "./document-detail/section-edit-notice";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
@@ -51,6 +53,7 @@ export function RequirementDocumentDetailPage({
   projectId,
   documentId,
 }: RequirementDocumentDetailPageProps) {
+  const { unsaved } = useSectionEdits(projectId, documentId);
   const [activeTab, setActiveTab] = useUrlTabState({
     values: REQUIREMENT_DOCUMENT_TABS,
     defaultValue: "overview",
@@ -115,7 +118,12 @@ export function RequirementDocumentDetailPage({
             <Button
               type="button"
               variant="outline"
-              disabled={isExportPending}
+              disabled={isExportPending || unsaved.length > 0}
+              title={
+                unsaved.length
+                  ? "章本文を保存してから出力してください"
+                  : undefined
+              }
               onClick={() => setExportDialogOpen(true)}
             >
               <DownloadIcon data-icon="inline-start" />
@@ -140,6 +148,7 @@ export function RequirementDocumentDetailPage({
               <Button
                 type="button"
                 variant="destructive"
+                disabled={unsaved.length > 0}
                 onClick={() => setDeleteDialogOpen(true)}
               >
                 <Trash2Icon data-icon="inline-start" />
@@ -150,6 +159,7 @@ export function RequirementDocumentDetailPage({
         }
       />
 
+      <SectionEditNotice projectId={projectId} documentId={documentId} />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
         <TabsList
           variant="line"

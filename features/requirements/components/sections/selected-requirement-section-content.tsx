@@ -27,6 +27,9 @@ import {
   type RequirementReviewTargetAnchor,
 } from "../../lib/requirement-review-anchor";
 import { RequirementSectionEditDialog } from "./section-detail/requirement-section-edit-dialog";
+import { useSectionEdits } from "../../hooks/use-section-edits";
+import { sectionEditBuffer } from "../../lib/section-edit-buffer";
+import { SectionBodyEditor } from "./section-detail/section-body-editor";
 
 type SelectedRequirementSectionContentProps = {
   projectId: number;
@@ -53,6 +56,8 @@ export function SelectedRequirementSectionContent({
 }: SelectedRequirementSectionContentProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { scope, edits } = useSectionEdits(projectId, documentId);
+  const editing = Boolean(sectionId && edits[sectionId]);
   const { sections, isLoading } = useRequirementSections(projectId, documentId);
   const {
     updateRequirementSection,
@@ -101,26 +106,55 @@ export function SelectedRequirementSectionContent({
   };
 
   const handleCardKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       handleActivateSectionComments();
     }
   };
 
+  const savedBody = (
+    <ReviewableSectionContent
+      documentId={documentId}
+      sectionId={section.id}
+      sectionVersion={section.version}
+      sectionTitle={section.title}
+      content={section.content ?? ""}
+      targetAnchors={targetAnchors}
+      activeAnchorKey={activeAnchorKey}
+      onSelectTargetAnchor={onSelectTargetAnchor}
+      onActivateSectionComments={onActivateSectionComments}
+    >
+      <MarkdownPreview
+        value={section.content ?? ""}
+        emptyMessage="本文はありません。"
+        className="min-h-32"
+        highlightQuotes={getReviewHighlightQuotes({
+          targetAnchors,
+          scope: "section_review",
+          sectionId: section.id,
+          field: "content",
+        })}
+      />
+    </ReviewableSectionContent>
+  );
+
   return (
     <>
       <Card
-        role="button"
-        tabIndex={0}
-        className="cursor-pointer transition-colors hover:bg-muted/40"
-        onClick={handleActivateSectionComments}
-        onKeyDown={handleCardKeyDown}
+        role={editing ? undefined : "button"}
+        tabIndex={editing ? undefined : 0}
+        className={cn(
+          !editing && "cursor-pointer transition-colors hover:bg-muted/40",
+        )}
+        onClick={editing ? undefined : handleActivateSectionComments}
+        onKeyDown={editing ? undefined : handleCardKeyDown}
       >
         <CardHeader>
           <div className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
-                <CardTitle>選択中セクション</CardTitle>
+                <CardTitle>章本文</CardTitle>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>
                     {getRequirementSectionTypeLabel(section.section_type)}
@@ -132,23 +166,36 @@ export function SelectedRequirementSectionContent({
                 </div>
               </div>
               {canUpdate ? (
-                <div className="flex shrink-0 gap-2">
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={editing || !scope}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      sectionEditBuffer.begin(scope, section);
+                    }}
+                  >
+                    {editing ? "編集中" : "本文を編集"}
+                  </Button>
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
+                    disabled={editing}
                     onClick={(event) => {
                       event.stopPropagation();
                       setEditDialogOpen(true);
                     }}
                   >
                     <EditIcon data-icon="inline-start" />
-                    編集
+                    章の設定
                   </Button>
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
+                    disabled={editing}
                     onClick={(event) => {
                       event.stopPropagation();
                       setDeleteDialogOpen(true);
@@ -169,29 +216,25 @@ export function SelectedRequirementSectionContent({
           >
             {section.title}
           </h3>
-          <ReviewableSectionContent
-            documentId={documentId}
-            sectionId={section.id}
-            sectionVersion={section.version}
-            sectionTitle={section.title}
-            content={section.content ?? ""}
-            targetAnchors={targetAnchors}
-            activeAnchorKey={activeAnchorKey}
-            onSelectTargetAnchor={onSelectTargetAnchor}
-            onActivateSectionComments={onActivateSectionComments}
-          >
-            <MarkdownPreview
-              value={section.content ?? ""}
-              emptyMessage="本文はありません。"
-              className="min-h-32"
-              highlightQuotes={getReviewHighlightQuotes({
-                targetAnchors,
-                scope: "section_review",
-                sectionId: section.id,
-                field: "content",
-              })}
-            />
-          </ReviewableSectionContent>
+          {editing ? (
+            <>
+              <SectionBodyEditor
+                projectId={projectId}
+                documentId={documentId}
+                sectionId={section.id}
+                currentVersion={section.version}
+                canUpdate={canUpdate}
+              />
+              <details>
+                <summary className="cursor-pointer text-sm text-muted-foreground">
+                  保存済みの本文・レビュー対象を確認
+                </summary>
+                {savedBody}
+              </details>
+            </>
+          ) : (
+            savedBody
+          )}
         </CardContent>
       </Card>
 

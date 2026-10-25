@@ -186,6 +186,13 @@ export function RequirementDocumentRequirementsTab({
       return;
     }
 
+    for (
+      let parent = element?.parentElement;
+      parent;
+      parent = parent.parentElement
+    ) {
+      if (parent instanceof HTMLDetailsElement) parent.open = true;
+    }
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
     setActiveAnchorKey(anchorKey);
     window.setTimeout(() => {

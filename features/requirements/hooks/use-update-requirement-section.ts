@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useUpdateRequirementSectionProjectsProjectIdRequirementSectionsSectionIdPatch } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
+import { isVersionConflictError } from "@/lib/api/conflict";
 import {
   invalidateRequirementChangeLogs,
   invalidateRequirementSections,
@@ -50,6 +51,29 @@ export function useUpdateRequirementSection(
 
   return {
     updateRequirementSection,
+    updateRequirementSectionContent: async (
+      sectionId: number,
+      version: number,
+      content: string,
+    ) => {
+      try {
+        return await updateSectionMutation.mutateAsync({
+          projectId,
+          sectionId,
+          data: { version, content: content || null },
+        });
+      } catch (error) {
+        if (isVersionConflictError(error)) {
+          // 比較用の保存済み本文だけを更新し、入力と編集開始版は保持する。
+          await invalidateRequirementSections(
+            queryClient,
+            projectId,
+            documentId,
+          );
+        }
+        throw error;
+      }
+    },
     isPending: updateSectionMutation.isPending,
     error: updateSectionMutation.error,
   };
