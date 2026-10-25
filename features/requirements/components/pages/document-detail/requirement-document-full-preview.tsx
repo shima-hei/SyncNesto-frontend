@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import styles from "./requirement-document-full-preview.module.css";
+import { cn } from "@/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -82,9 +84,22 @@ export function RequirementDocumentFullPreview({
   return (
     <div
       id="full-document-preview"
-      className="@container/full-preview flex min-w-0 flex-col gap-4 scroll-mt-20"
+      className={cn(
+        styles.root,
+        "@container/full-preview flex min-w-0 flex-col gap-4 scroll-mt-20",
+      )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className={styles.printStatus}>
+        確認用プレビュー・
+        {includeUnsaved
+          ? `未保存の章本文を含む（${unsaved.length}件）`
+          : "保存済み内容"}
+        。正式承認・固定版・顧客公開とは異なります。
+      </p>
+      <div
+        data-print-hidden
+        className="flex flex-wrap items-center justify-between gap-3"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold">全文プレビュー</h2>
           <Badge variant="secondary">編集内容の確認</Badge>
@@ -98,11 +113,11 @@ export function RequirementDocumentFullPreview({
           編集へ戻る
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p data-print-hidden className="text-sm text-muted-foreground">
         現在の文書・章・要件を確認する表示です。正式承認・固定版の作成・顧客公開は別の操作です。
         ファイル出力とは表示内容・並び順が異なる場合があります。
       </p>
-      <Field orientation="horizontal" className="w-fit">
+      <Field data-print-hidden orientation="horizontal" className="w-fit">
         <Checkbox
           id={toggleId}
           checked={includeUnsaved}
@@ -112,7 +127,7 @@ export function RequirementDocumentFullPreview({
           このタブの未保存の章本文を含める
         </FieldLabel>
       </Field>
-      <p className="text-xs text-muted-foreground">
+      <p data-print-hidden className="text-xs text-muted-foreground">
         切替による保存・承認・公開は行いません。文書情報・個別要件の別フォームで入力中の内容は含みません。
       </p>
       {warnings.length ? (
@@ -161,8 +176,14 @@ export function RequirementDocumentFullPreview({
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <div className="grid min-w-0 gap-6 @min-[64rem]/full-preview:grid-cols-[14rem_minmax(0,1fr)] @min-[64rem]/full-preview:items-start">
+        <div
+          className={cn(
+            styles.content,
+            "grid min-w-0 gap-6 @min-[64rem]/full-preview:grid-cols-[14rem_minmax(0,1fr)] @min-[64rem]/full-preview:items-start",
+          )}
+        >
           <nav
+            data-print-hidden
             aria-label="全文プレビューの目次"
             className="min-w-0 @min-[64rem]/full-preview:sticky @min-[64rem]/full-preview:top-20 @min-[64rem]/full-preview:max-h-[calc(100dvh-6rem)] @min-[64rem]/full-preview:overflow-y-auto"
           >
@@ -198,7 +219,10 @@ export function RequirementDocumentFullPreview({
           </nav>
           <article
             aria-label="全文プレビュー本文"
-            className="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-8 rounded-lg border bg-background px-4 py-6 break-words @min-[40rem]/full-preview:px-8"
+            className={cn(
+              styles.article,
+              "mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-8 rounded-lg border bg-background px-4 py-6 break-words @min-[40rem]/full-preview:px-8",
+            )}
           >
             <header className="flex flex-col gap-2 border-b pb-6">
               <p className="text-sm text-muted-foreground">
@@ -237,12 +261,18 @@ export function RequirementDocumentFullPreview({
                       ? "章本文は未記入です。"
                       : "この要件は章に所属していません。"
                   }
-                  className="min-h-0 border-0 bg-transparent p-0"
+                  className={cn(
+                    !group.content.trim() && styles.empty,
+                    "min-h-0 border-0 bg-transparent p-0",
+                  )}
                 />
                 {group.requirements.map((requirement) => (
                   <section
                     key={requirement.id}
-                    className="flex min-w-0 flex-col gap-3 border-t pt-4"
+                    className={cn(
+                      styles.requirement,
+                      "flex min-w-0 flex-col gap-3 border-t pt-4",
+                    )}
                   >
                     <h4 className="text-base font-semibold">
                       <a
@@ -290,7 +320,12 @@ export function RequirementDocumentFullPreview({
                   </section>
                 ))}
                 {!group.requirements.length ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p
+                    className={cn(
+                      styles.empty,
+                      "text-sm text-muted-foreground",
+                    )}
+                  >
                     この章の個別要件はありません。
                   </p>
                 ) : null}
@@ -319,7 +354,12 @@ function PreviewText({
 }) {
   const Heading = level === "requirement" ? "h5" : "h3";
   return (
-    <section className="flex min-w-0 flex-col gap-2">
+    <section
+      className={cn(
+        !value?.trim() && styles.empty,
+        "flex min-w-0 flex-col gap-2",
+      )}
+    >
       <Heading className="text-sm font-medium">{title}</Heading>
       <MarkdownPreview
         value={value ?? ""}

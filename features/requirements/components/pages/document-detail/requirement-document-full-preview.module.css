@@ -1,0 +1,109 @@
+.printStatus {
+  display: none;
+}
+
+@media print {
+  :global(body):has(.root) {
+    background: white;
+    color: black;
+  }
+
+  :global(body):has(.root) :global(*):has(.root) {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  :global(body):has(.root)
+    :global(*):has(.root)
+    > :global(*):not(:has(.root)):not(.root),
+  .root [data-print-hidden],
+  .root button,
+  .root [data-slot="skeleton"],
+  .root .empty {
+    display: none !important;
+  }
+
+  .root,
+  .content,
+  .article,
+  .article section,
+  .article header {
+    display: block;
+    container-type: normal;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: white;
+    color: black;
+  }
+
+  .root {
+    font-size: 10pt;
+    line-height: 1.6;
+  }
+
+  .printStatus {
+    display: block;
+    margin-bottom: 5mm;
+    font-size: 9pt;
+  }
+
+  .article > * + *,
+  .article section > * + * {
+    margin-top: 3mm;
+  }
+
+  .article h2,
+  .article h3,
+  .article h4,
+  .article h5,
+  .article header {
+    break-after: avoid-page;
+  }
+
+  .article .requirement {
+    break-inside: avoid-page;
+    margin-top: 5mm;
+  }
+
+  .article p,
+  .article li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .article table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .article th,
+  .article td,
+  .article pre {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .article tr {
+    break-inside: avoid-page;
+  }
+
+  .article a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
