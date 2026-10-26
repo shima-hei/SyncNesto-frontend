@@ -4,7 +4,7 @@ import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import { useRequirement } from "../../../hooks/use-requirement";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 
-import { useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ export function RequirementDocumentRequirementsTab({
   const supportPanelId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const originRef = useRef<HTMLElement | null>(null);
+  const panelFocusIntent = useRef<"open" | "close" | null>(null);
   const [panelMode, setPanelMode] = useUrlFilterState("supportPanel", "auto");
   const [selectedRequirementId, setSelectedRequirementId] = useUrlFilterState<
     number | null
@@ -151,8 +152,9 @@ export function RequirementDocumentRequirementsTab({
     (panelMode === "auto" && Boolean(selectedRequirementId));
   const openPanel = () => {
     originRef.current = window.document.activeElement as HTMLElement | null;
+    panelFocusIntent.current = "open";
     setPanelMode("open");
-    requestAnimationFrame(() => {
+    if (panelOpen) {
       const panel = panelRef.current;
       if (
         panel &&
@@ -162,11 +164,28 @@ export function RequirementDocumentRequirementsTab({
         panel.scrollIntoView({ block: "start" });
         panel.focus({ preventScroll: true });
       }
-    });
+      panelFocusIntent.current = null;
+    }
   };
   const closePanel = () => {
+    panelFocusIntent.current = "close";
     setPanelMode("closed");
-    requestAnimationFrame(() => {
+  };
+  useLayoutEffect(() => {
+    const intent = panelFocusIntent.current;
+    if (!intent || (intent === "open") !== panelOpen) return;
+    panelFocusIntent.current = null;
+    if (intent === "open") {
+      const panel = panelRef.current;
+      if (
+        panel &&
+        panel.getBoundingClientRect().left <=
+          (panel.parentElement?.getBoundingClientRect().left ?? 0) + 1
+      ) {
+        panel.scrollIntoView({ block: "start" });
+        panel.focus({ preventScroll: true });
+      }
+    } else {
       const row = selectedRequirementId
         ? window.document.querySelector<HTMLElement>(
             `[data-workbench-requirement-id="${selectedRequirementId}"]`,
@@ -191,8 +210,8 @@ export function RequirementDocumentRequirementsTab({
       ) {
         target.scrollIntoView({ block: "nearest" });
       }
-    });
-  };
+    }
+  });
 
   const handleSelectSection = (sectionId: number | null) => {
     onSelectSection(sectionId);
