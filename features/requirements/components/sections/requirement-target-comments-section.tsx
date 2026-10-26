@@ -100,6 +100,7 @@ export function RequirementTargetCommentsSection({
         {canComment ? (
           <RequirementTargetCommentForm
             projectId={projectId}
+            memoryKey={`comment:create:${JSON.stringify(selectedTargetAnchor)}`}
             key={JSON.stringify(selectedTargetAnchor)}
             initialValues={{
               body: "",
@@ -148,6 +149,7 @@ export function RequirementTargetCommentsSection({
               <CommentInlineHeader label="コメント編集" onClose={onClose} />
               <RequirementTargetCommentForm
                 projectId={projectId}
+                memoryKey={`comment:edit:${comment.id}:${comment.version}`}
                 initialValues={{
                   body: comment.body,
                   mentions: comment.mentions,
@@ -173,6 +175,7 @@ export function RequirementTargetCommentsSection({
               <CommentInlineHeader label="返信" onClose={onClose} />
               <RequirementTargetCommentForm
                 projectId={projectId}
+                memoryKey={`comment:reply:${comment.id}`}
                 initialValues={{ body: "", targetAnchor: "", reason: "" }}
                 submitLabel="返信追加"
                 showTargetAnchorInput={false}

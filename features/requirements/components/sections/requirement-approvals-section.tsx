@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useWorkbenchState } from "../../hooks/use-workbench-state";
 import Link from "next/link";
 import { CheckIcon, XIcon } from "lucide-react";
 
@@ -42,8 +43,14 @@ export function RequirementApprovalsSection({
   canReview,
 }: RequirementApprovalsSectionProps) {
   const [decisionTarget, setDecisionTarget] =
-    useState<ApprovalDecisionTarget | null>(null);
-  const [decisionComment, setDecisionComment] = useState("");
+    useWorkbenchState<ApprovalDecisionTarget | null>(
+      "approval-decision-target",
+      null,
+    );
+  const [decisionComment, setDecisionComment] = useWorkbenchState(
+    `approval-decision:${decisionTarget?.approval.id ?? "none"}:${decisionTarget?.action ?? "none"}`,
+    "",
+  );
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const { approvals, isLoading } = useRequirementApprovals(
     projectId,
@@ -66,7 +73,6 @@ export function RequirementApprovalsSection({
     action: ApprovalDecisionAction,
   ) => {
     setDecisionTarget({ approval, action });
-    setDecisionComment("");
     setDecisionError(null);
   };
 

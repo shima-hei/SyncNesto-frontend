@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useWorkbenchState } from "../../hooks/use-workbench-state";
 
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
@@ -32,7 +33,10 @@ export function RequirementApprovalRequestForm({
   error,
   onSubmit,
 }: RequirementApprovalRequestFormProps) {
-  const [values, setValues] = useState(initialValues);
+  const [values, setValues] = useWorkbenchState(
+    "approval-request",
+    initialValues,
+  );
   const [errors, setErrors] = useState<RequirementApprovalRequestFormErrors>(
     {},
   );
@@ -81,12 +85,13 @@ export function RequirementApprovalRequestForm({
           <FieldLabel>コメント</FieldLabel>
           <Textarea
             value={values.comment}
-            onChange={(event) =>
+            onChange={(event) => {
+              const comment = event.currentTarget.value;
               setValues((current) => ({
                 ...current,
-                comment: event.target.value,
-              }))
-            }
+                comment,
+              }));
+            }}
           />
         </Field>
 

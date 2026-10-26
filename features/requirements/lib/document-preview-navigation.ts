@@ -15,6 +15,7 @@ export function documentPreviewSourceSearch(
     if (source.requirementId) {
       params.set("selectedRequirement", String(source.requirementId));
       params.set("reviewTarget", "requirement");
+      params.set("supportPanel", "open");
     } else {
       params.delete("selectedRequirement");
       params.set("reviewTarget", "section");

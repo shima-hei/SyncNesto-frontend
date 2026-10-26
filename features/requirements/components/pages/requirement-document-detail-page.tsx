@@ -37,6 +37,8 @@ import { useSectionEdits } from "../../hooks/use-section-edits";
 import { SectionEditNotice } from "./document-detail/section-edit-notice";
 import { RequirementDocumentFullPreview } from "./document-detail/requirement-document-full-preview";
 import { useFullPreviewNavigation } from "../../hooks/use-full-preview-navigation";
+import { RequirementWorkbenchProvider } from "../../hooks/use-workbench-state";
+import { useWorkbenchReturnNavigation } from "../../hooks/use-workbench-return-navigation";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
@@ -56,6 +58,20 @@ export function RequirementDocumentDetailPage({
   projectId,
   documentId,
 }: RequirementDocumentDetailPageProps) {
+  return (
+    <RequirementWorkbenchProvider projectId={projectId} documentId={documentId}>
+      <RequirementDocumentDetailContent
+        projectId={projectId}
+        documentId={documentId}
+      />
+    </RequirementWorkbenchProvider>
+  );
+}
+
+function RequirementDocumentDetailContent({
+  projectId,
+  documentId,
+}: RequirementDocumentDetailPageProps) {
   const { unsaved } = useSectionEdits(projectId, documentId);
   const [activeTab, setActiveTab] = useUrlTabState({
     values: REQUIREMENT_DOCUMENT_TABS,
@@ -66,6 +82,7 @@ export function RequirementDocumentDetailPage({
     capture: capturePreviewReturn,
     resume: resumeFromPreview,
   } = useFullPreviewNavigation(activeTab);
+  const returnNotice = useWorkbenchReturnNavigation(editorRef, activeTab);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportPreview, setExportPreview] =
@@ -168,6 +185,11 @@ export function RequirementDocumentDetailPage({
       />
 
       <SectionEditNotice projectId={projectId} documentId={documentId} />
+      {returnNotice ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          {returnNotice}
+        </p>
+      ) : null}
       <Tabs
         value={activeTab}
         onValueChange={(value) => {

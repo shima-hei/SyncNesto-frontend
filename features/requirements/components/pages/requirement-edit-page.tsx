@@ -1,5 +1,7 @@
 "use client";
 
+import { useListNavigation } from "@/hooks/use-list-navigation";
+
 import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,12 +38,15 @@ export function RequirementEditPage({
     error: updateError,
   } = useUpdateRequirement(projectId, requirementId);
   const detailPath = `/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`;
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`,
+  );
   const handleUpdate = async (
     values: RequirementFormValues,
     version: number,
   ) => {
     await updateRequirement(values, version);
-    router.push(detailPath);
+    router.push(withReturn(detailPath));
   };
 
   if (isLoading) {

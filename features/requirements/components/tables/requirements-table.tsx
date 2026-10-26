@@ -292,6 +292,7 @@ export function RequirementsTable({
                 <TableRow
                   key={requirement.id}
                   tabIndex={0}
+                  data-workbench-requirement-id={requirement.id}
                   data-state={isSelected ? "selected" : undefined}
                   className="cursor-pointer data-[state=selected]:bg-muted"
                   onClick={() => onSelectRequirement(requirement)}
@@ -311,6 +312,7 @@ export function RequirementsTable({
             return (
               <ClickableTableRow
                 key={requirement.id}
+                data-workbench-requirement-id={requirement.id}
                 href={withReturn(
                   `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
                 )}

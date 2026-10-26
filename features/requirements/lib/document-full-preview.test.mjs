@@ -131,5 +131,6 @@ test("復帰は元の選択/検索条件を保ち、章/未所属REQへの移動
   assert.equal(req.has("sectionId"), false);
   assert.equal(req.get("selectedRequirement"), "7");
   assert.equal(req.get("reviewTarget"), "requirement");
+  assert.equal(req.get("supportPanel"), "open");
   assert.equal(req.get("page"), "3");
 });
