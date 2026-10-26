@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { isSystemAdmin } from "@/features/auth/utils/authorization";
@@ -74,6 +74,11 @@ const getCurrentUserResultOnServer = async (): Promise<CurrentUserResult> => {
 
 const fetchCurrentUser = async (cookieHeader: string) => {
   try {
+    const previewHeaders =
+      process.env.VERCEL_ENV === "preview" &&
+      process.env.BACKEND_PREVIEW_OIDC_ENABLED === "true"
+        ? new Headers(await headers())
+        : undefined;
     return await fetch(new URL("/auth/me", API_BASE_URL), {
       headers: authenticateBackendRequest(
         new Headers({
@@ -81,6 +86,7 @@ const fetchCurrentUser = async (cookieHeader: string) => {
           Cookie: cookieHeader,
           Accept: "application/json",
         }),
+        previewHeaders,
       ),
       cache: "no-store",
     });

@@ -11,10 +11,12 @@ export const authenticateBackendRequest = (
   headers: Headers,
   incoming?: Headers,
 ) => {
+  const requestOidcToken = incoming?.get("x-vercel-oidc-token");
   // ブラウザが送った内部用ヘッダーは必ず上書きする。
   headers.delete(BFF_KEY_HEADER);
   headers.delete(CLIENT_IP_HEADER);
   headers.delete(TRUSTED_OIDC_HEADER);
+  headers.delete("x-vercel-oidc-token");
   const secret = process.env.BFF_SHARED_SECRET;
   if (process.env.VERCEL === "1" && (!secret || secret.length < 32)) {
     throw new Error("BFF_SHARED_SECRET is required on Vercel");
@@ -35,7 +37,16 @@ export const authenticateBackendRequest = (
     ) {
       throw new Error("Preview backend requires a Vercel HTTPS origin");
     }
-    headers.set(TRUSTED_OIDC_HEADER, getVercelOidcTokenSync());
+    let token: string;
+    try {
+      token = getVercelOidcTokenSync();
+    } catch (error) {
+      // SDKのcontextがない実行形態では、VercelがRequestへ注入するtokenを使う。
+      // 接続先のTrusted Sourcesが署名と呼出元・環境を検証する。
+      if (process.env.VERCEL !== "1" || !requestOidcToken) throw error;
+      token = requestOidcToken;
+    }
+    headers.set(TRUSTED_OIDC_HEADER, token);
   }
   // Vercelが上書きするヘッダーだけをIP制限の識別に使う。
   if (process.env.VERCEL === "1") {
