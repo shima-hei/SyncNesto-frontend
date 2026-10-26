@@ -63,6 +63,12 @@ infraの `terraform/vercel/` で管理し、Actionsは既存のプロジェク�
 接続先は `API_BASE_URL` のVercel HTTPS originに限定し、BackendのTrusted Sourcesも
 Frontend Preview→Backend Previewだけを許可します。Cookie・CSRF・BFF共有鍵は引き続き必要です。
 
+OIDCが環境側で受理されないQAに限り、期限付き共有URLから得たBackend用cookieを
+Preview専用の `BACKEND_PREVIEW_VERCEL_AUTH_COOKIE` に設定できます。
+`BACKEND_PREVIEW_PROTECTED_ORIGIN` も設定し、API接続先との完全一致、cookieのaudienceと
+有効期限を検証します。Productionでは使用しません。共有URL・cookieは記録へ公開せず、
+QA終了時に共有許可、Previewの変数とdeployを回収します。
+
 ## よく使うコマンド
 
 ```bash
