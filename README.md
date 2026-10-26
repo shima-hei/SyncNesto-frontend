@@ -60,17 +60,10 @@ infraの `terraform/vercel/` で管理し、Actionsは既存のプロジェク�
 保護されたBackend Previewへ接続する検証時だけ、Preview用の
 `BACKEND_PREVIEW_OIDC_ENABLED=true` を設定します。既定は無効で、
 `VERCEL_ENV=preview` のときだけ公式 `@vercel/oidc` の短命tokenを付与します。
+system変数の自動公開を無効にした既存projectでは、このQA用Preview環境だけに
+`VERCEL_ENV=preview` と `VERCEL=1` を明示し、Production共通の設定は変更しません。
 接続先は `API_BASE_URL` のVercel HTTPS originに限定し、BackendのTrusted Sourcesも
 Frontend Preview→Backend Previewだけを許可します。Cookie・CSRF・BFF共有鍵は引き続き必要です。
-
-システム環境変数の自動公開が無効なprojectでは、Previewだけに
-`VERCEL_ENV=preview` と `VERCEL=1` を明示してから検証します。
-SDKのruntime contextが利用できない隔離QAでは、同じFrontend projectでCLI発行した
-短命tokenをSensitiveなPreview変数 `BACKEND_PREVIEW_OIDC_TOKEN` に設定できます。
-SDKを優先し、欠落時だけこのserver設定を使います。呼出元がdevelopmentのtokenなら、
-BackendのTrusted Sourcesにも同じFrontend projectのdevelopment→previewだけを
-一時追加します。QA後はtoken変数・追加許可・Previewを回収します。
-Productionの自動公開設定やアプリの認可は変更しません。
 
 ## よく使うコマンド
 
