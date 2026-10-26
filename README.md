@@ -63,12 +63,6 @@ infraの `terraform/vercel/` で管理し、Actionsは既存のプロジェク�
 接続先は `API_BASE_URL` のVercel HTTPS originに限定し、BackendのTrusted Sourcesも
 Frontend Preview→Backend Previewだけを許可します。Cookie・CSRF・BFF共有鍵は引き続き必要です。
 
-システム環境変数の自動公開が無効なprojectでは、Previewだけに
-`VERCEL_ENV=preview` と `VERCEL=1` を明示してから検証します。
-SDKのrequest contextを取得できない実行形態では、VercelがRequestへ注入する
-`x-vercel-oidc-token` を補助経路として使います。接続先のTrusted Sourcesによる
-署名・呼出元・環境の検証を維持し、Productionとflag OFFでは付与しません。
-
 ## よく使うコマンド
 
 ```bash
