@@ -7,6 +7,15 @@ const BFF_KEY_HEADER = "X-Syncnesto-BFF-Key";
 const CLIENT_IP_HEADER = "X-Syncnesto-Client-IP";
 const TRUSTED_OIDC_HEADER = "x-vercel-trusted-oidc-idp-token";
 
+const reportPreviewAuthFailure = (reason: string) => {
+  if (
+    process.env.VERCEL_ENV === "preview" &&
+    process.env.BACKEND_PREVIEW_OIDC_ENABLED === "true"
+  ) {
+    console.error("Backend Preview authentication unavailable", { reason });
+  }
+};
+
 export const authenticateBackendRequest = (
   headers: Headers,
   incoming?: Headers,
@@ -17,6 +26,7 @@ export const authenticateBackendRequest = (
   headers.delete(TRUSTED_OIDC_HEADER);
   const secret = process.env.BFF_SHARED_SECRET;
   if (process.env.VERCEL === "1" && (!secret || secret.length < 32)) {
+    reportPreviewAuthFailure("BFF_SHARED_SECRET_MISSING_OR_SHORT");
     throw new Error("BFF_SHARED_SECRET is required on Vercel");
   }
   if (secret) {
@@ -26,13 +36,20 @@ export const authenticateBackendRequest = (
     process.env.VERCEL_ENV === "preview" &&
     process.env.BACKEND_PREVIEW_OIDC_ENABLED === "true"
   ) {
-    const backend = new URL(process.env.API_BASE_URL ?? "");
+    let backend: URL;
+    try {
+      backend = new URL(process.env.API_BASE_URL ?? "");
+    } catch {
+      reportPreviewAuthFailure("BACKEND_ORIGIN_INVALID");
+      throw new Error("Preview backend requires a Vercel HTTPS origin");
+    }
     if (
       backend.protocol !== "https:" ||
       !backend.hostname.endsWith(".vercel.app") ||
       backend.username ||
       backend.password
     ) {
+      reportPreviewAuthFailure("BACKEND_ORIGIN_INVALID");
       throw new Error("Preview backend requires a Vercel HTTPS origin");
     }
     let token: string;
@@ -40,7 +57,10 @@ export const authenticateBackendRequest = (
       token = getVercelOidcTokenSync();
     } catch (error) {
       const qaToken = process.env.BACKEND_PREVIEW_OIDC_TOKEN;
-      if (!qaToken) throw error;
+      if (!qaToken) {
+        reportPreviewAuthFailure("OIDC_TOKEN_UNAVAILABLE");
+        throw error;
+      }
       token = qaToken;
     }
     headers.set(TRUSTED_OIDC_HEADER, token);
