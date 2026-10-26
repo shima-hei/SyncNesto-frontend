@@ -35,7 +35,15 @@ export const authenticateBackendRequest = (
     ) {
       throw new Error("Preview backend requires a Vercel HTTPS origin");
     }
-    headers.set(TRUSTED_OIDC_HEADER, getVercelOidcTokenSync());
+    let token: string;
+    try {
+      token = getVercelOidcTokenSync();
+    } catch (error) {
+      const qaToken = process.env.BACKEND_PREVIEW_OIDC_TOKEN;
+      if (!qaToken) throw error;
+      token = qaToken;
+    }
+    headers.set(TRUSTED_OIDC_HEADER, token);
   }
   // Vercelが上書きするヘッダーだけをIP制限の識別に使う。
   if (process.env.VERCEL === "1") {
