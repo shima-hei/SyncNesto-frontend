@@ -529,6 +529,8 @@ export * from "./specificationRule";
 export * from "./specificationStatusUpdate";
 export * from "./specificationStatusUpdateStatus";
 export * from "./specificationUpdate";
+export * from "./standardRequirementDocumentCreate";
+export * from "./standardRequirementDocumentResult";
 export * from "./systemSummary";
 export * from "./systemTenantListResponse";
 export * from "./systemTenantMemberListResponse";

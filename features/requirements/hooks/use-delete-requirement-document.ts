@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useListNavigation } from "@/hooks/use-list-navigation";
+import { requirementListHref } from "../lib/requirement-entry";
 
 import { useDeleteRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdDelete } from "@/lib/api/generated/requirements/requirements";
 
@@ -17,6 +19,7 @@ export function useDeleteRequirementDocument(
   documentId: number,
 ) {
   const router = useRouter();
+  const { returnTo } = useListNavigation(requirementListHref(projectId));
   const queryClient = useQueryClient();
   const deleteDocumentMutation =
     useDeleteRequirementDocumentProjectsProjectIdRequirementDocumentsDocumentIdDelete(
@@ -30,7 +33,7 @@ export function useDeleteRequirementDocument(
             );
             await invalidateRequirementDocumentList(queryClient, projectId);
             toast.success(REQUIREMENT_MESSAGES.document.deleteSuccess);
-            router.push(`/projects/joined/${projectId}/requirements`);
+            router.push(requirementListHref(projectId, returnTo));
           },
           onError: () => {
             toast.error(REQUIREMENT_MESSAGES.document.deleteError);

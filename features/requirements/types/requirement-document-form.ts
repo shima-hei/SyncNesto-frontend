@@ -1,4 +1,5 @@
 export type RequirementDocumentFormValues = {
+  standardChapters?: boolean;
   title: string;
   documentCode: string;
   status: string;

@@ -80,6 +80,7 @@ export const REQUIREMENT_REVIEW_STATUS_OPTIONS = [
 
 export const REQUIREMENT_SECTION_TYPE_OPTIONS = [
   { value: "overview", label: "概要" },
+  { value: "scope", label: "対象範囲" },
   { value: "business", label: "業務要件" },
   { value: "functional", label: "機能要件" },
   { value: "non_functional", label: "非機能要件" },
@@ -88,6 +89,7 @@ export const REQUIREMENT_SECTION_TYPE_OPTIONS = [
   { value: "screen", label: "画面一覧" },
   { value: "data", label: "データ項目" },
   { value: "open_issue", label: "未決事項" },
+  { value: "acceptance", label: "受け入れ条件" },
 ] as const;
 
 export const REQUIREMENT_OPEN_ISSUE_STATUS_OPTIONS = [

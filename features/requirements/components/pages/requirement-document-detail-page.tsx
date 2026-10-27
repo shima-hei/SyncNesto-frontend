@@ -1,6 +1,9 @@
 "use client";
 
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
+import { useListNavigation } from "@/hooks/use-list-navigation";
+import { requirementListHref } from "../../lib/requirement-entry";
+import { useProjectObjectives } from "@/features/projects/hooks/use-project-objectives";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -73,6 +76,11 @@ function RequirementDocumentDetailContent({
   documentId,
 }: RequirementDocumentDetailPageProps) {
   const { unsaved } = useSectionEdits(projectId, documentId);
+  const objectivesQuery = useProjectObjectives(projectId);
+  const { returnTo: listReturn } = useListNavigation(
+    requirementListHref(projectId),
+  );
+  const listHref = requirementListHref(projectId, listReturn);
   const [activeTab, setActiveTab] = useUrlTabState({
     values: REQUIREMENT_DOCUMENT_TABS,
     defaultValue: "overview",
@@ -131,6 +139,9 @@ function RequirementDocumentDetailContent({
         description={document.document_code}
         actions={
           <>
+            <Button variant="outline" asChild>
+              <Link href={listHref}>一覧へ戻る</Link>
+            </Button>
             <ArtifactReleaseLink
               projectId={projectId}
               kind="requirement_document"
@@ -246,6 +257,12 @@ function RequirementDocumentDetailContent({
         >
           <div ref={editorRef}>
             <RequirementDocumentRequirementsTab
+              document={document}
+              objectiveReferencesEnabled={Boolean(
+                objectivesQuery.data?.enabled &&
+                objectivesQuery.data.state !== "restricted",
+              )}
+              onOpenDocumentInfo={() => setActiveTab("overview")}
               projectId={projectId}
               documentId={documentId}
               selectedSectionId={selectedSectionId}
