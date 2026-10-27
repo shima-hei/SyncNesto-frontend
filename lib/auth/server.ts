@@ -149,7 +149,7 @@ export const requireSystemAdmin = async () => {
   return user;
 };
 
-export const redirectIfAuthenticated = async (redirectTo = "/") => {
+export const redirectIfAuthenticated = async (redirectTo = "/entry") => {
   const user = await getCurrentUserOnServer();
 
   if (user) {

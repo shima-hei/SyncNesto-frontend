@@ -16,7 +16,7 @@ export default async function Page({
 }) {
   const returnTo = loginReturnPath((await searchParams).next);
   const user = await requireUser({ allowInitialPassword: true, returnTo });
-  if (!user.password_change_required) redirect(returnTo ?? "/");
+  if (!user.password_change_required) redirect(returnTo ?? "/entry");
   return (
     <InitialPasswordPage
       email={user.email}

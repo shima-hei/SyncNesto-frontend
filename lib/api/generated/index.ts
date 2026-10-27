@@ -29,6 +29,7 @@ export * from "./shared-fixed-approvals/shared-fixed-approvals";
 export * from "./shared-notifications/shared-notifications";
 export * from "./shared-publications/shared-publications";
 export * from "./specifications/specifications";
+export * from "./system-management/system-management";
 export * from "./tasks/tasks";
 export * from "./tenants/tenants";
 export * from "./test-collaboration/test-collaboration";

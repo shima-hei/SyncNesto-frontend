@@ -5,7 +5,6 @@ import { JoinedProjectNav } from "@/features/projects/components/joined/joined-p
 import { getJoinedProjectId } from "@/features/projects/constants/joined-project-navigation";
 import { usePathname } from "next/navigation";
 import { CommandIcon, UsersIcon, FolderKanbanIcon } from "lucide-react";
-import { useTenant } from "@/features/tenants/providers/tenant-provider";
 
 import {
   Sidebar,
@@ -28,11 +27,18 @@ import { getVisibleNavigationItems } from "../../utils/navigation";
 import { SidebarNav } from "../navigation/sidebar-nav";
 import { SidebarUserMenu } from "../user/sidebar-user-menu";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  scope,
+  canManageTenant = false,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  scope: "system" | "organization";
+  canManageTenant?: boolean;
+}) {
   const pathname = usePathname();
   const { user } = useAuth();
   const projectId = getJoinedProjectId(pathname);
-  const { canManageTenant } = useTenant();
+  const system = scope === "system";
   const visibleMainNavigation = getVisibleNavigationItems(mainNavigation, user);
   const visibleManagementNavigation = getVisibleNavigationItems(
     managementNavigation,
@@ -52,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Link href="/">
+              <Link href={system ? "/system" : "/"}>
                 <CommandIcon />
                 <span className="text-base font-semibold">Syncnesto</span>
               </Link>
@@ -61,11 +67,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarNav items={visibleMainNavigation} pathname={pathname} />
-        {projectId ? (
+        <SidebarNav
+          items={system ? visibleManagementNavigation : visibleMainNavigation}
+          pathname={pathname}
+          label={system ? "システム管理" : "業務"}
+        />
+        {!system && projectId ? (
           <JoinedProjectNav key={projectId} projectId={projectId} />
         ) : null}
-        {canManageTenant ? (
+        {!system && canManageTenant ? (
           <>
             <SidebarSeparator />
             <SidebarNav
@@ -86,16 +96,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             />
           </>
         ) : null}
-        {visibleManagementNavigation.length ? (
-          <>
-            <SidebarSeparator />
-            <SidebarNav
-              items={visibleManagementNavigation}
-              pathname={pathname}
-              label="システム運営"
-            />
-          </>
-        ) : null}
         <SidebarNav
           items={visibleSecondaryNavigation}
           pathname={pathname}
@@ -103,7 +103,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarUserMenu />
+        <SidebarUserMenu scope={scope} />
       </SidebarFooter>
     </Sidebar>
   );

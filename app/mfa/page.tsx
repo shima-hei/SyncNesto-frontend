@@ -36,7 +36,7 @@ export default async function Page({
   return (
     <MfaPage
       flow={(await response.json()) as MfaFlowRead}
-      returnTo={returnTo ?? "/"}
+      returnTo={returnTo ?? "/entry"}
       allowRecovery={
         !(
           returnTo &&

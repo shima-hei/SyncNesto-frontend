@@ -19,5 +19,6 @@ export function useUsers(params: ListUsersUsersGetParams) {
     isLoading: usersQuery.isLoading,
     isFetching: usersQuery.isFetching,
     error: usersQuery.error,
+    refetch: usersQuery.refetch,
   };
 }

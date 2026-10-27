@@ -51,6 +51,7 @@ next-env.d.ts
 !/docs/mfa.md
 !/docs/account-issuance.md
 !/docs/design-system.md
+!/docs/system-administration.md
 !/docs/development-workflow-ux.md
 !/docs/notifications.md
 !/docs/home-workspace.md
