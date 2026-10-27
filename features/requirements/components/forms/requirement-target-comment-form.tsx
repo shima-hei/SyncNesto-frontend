@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useWorkbenchState } from "../../hooks/use-workbench-state";
 
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
@@ -31,6 +32,7 @@ type RequirementTargetCommentFormProps = {
   error?: Error | null;
   onSubmit: (values: RequirementTargetCommentFormValues) => Promise<unknown>;
   onSuccess?: () => void;
+  memoryKey?: string;
 };
 
 const defaultValues: RequirementTargetCommentFormValues = {
@@ -52,8 +54,12 @@ export function RequirementTargetCommentForm({
   error,
   onSubmit,
   onSuccess,
+  memoryKey = "target-comment",
 }: RequirementTargetCommentFormProps) {
-  const [values, setValues] = useState(initialValues ?? defaultValues);
+  const [values, setValues] = useWorkbenchState(
+    memoryKey,
+    initialValues ?? defaultValues,
+  );
   const [errors, setErrors] = useState<RequirementTargetCommentFormErrors>({});
 
   const handleSubmit = async (
@@ -115,9 +121,10 @@ export function RequirementTargetCommentForm({
               value={values.targetAnchor}
               rows={2}
               onChange={(event) => {
+                const targetAnchor = event.currentTarget.value;
                 setValues((current) => ({
                   ...current,
-                  targetAnchor: event.target.value,
+                  targetAnchor,
                 }));
                 setErrors((current) => ({
                   ...current,
@@ -145,12 +152,13 @@ export function RequirementTargetCommentForm({
             <FieldLabel>更新理由</FieldLabel>
             <Textarea
               value={values.reason}
-              onChange={(event) =>
+              onChange={(event) => {
+                const reason = event.currentTarget.value;
                 setValues((current) => ({
                   ...current,
-                  reason: event.target.value,
-                }))
-              }
+                  reason,
+                }));
+              }}
             />
           </Field>
         ) : null}

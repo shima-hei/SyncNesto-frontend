@@ -57,6 +57,14 @@ Vercelの登録名は `syncnesto`、サーバー専用の `API_BASE_URL` は
 `https://syncnesto-api.vercel.app` を使います。環境変数と公開ドメインは
 infraの `terraform/vercel/` で管理し、Actionsは既存のプロジェクトIDを使ってデプロイします。
 
+保護されたBackend Previewへ接続する検証時だけ、Preview用の
+`BACKEND_PREVIEW_OIDC_ENABLED=true` を設定します。既定は無効で、
+`VERCEL_ENV=preview` のときだけ公式 `@vercel/oidc` の短命tokenを付与します。
+system変数の自動公開を無効にした既存projectでは、このQA用Preview環境だけに
+`VERCEL_ENV=preview` と `VERCEL=1` を明示し、Production共通の設定は変更しません。
+接続先は `API_BASE_URL` のVercel HTTPS originに限定し、BackendのTrusted Sourcesも
+Frontend Preview→Backend Previewだけを許可します。Cookie・CSRF・BFF共有鍵は引き続き必要です。
+
 ## よく使うコマンド
 
 ```bash

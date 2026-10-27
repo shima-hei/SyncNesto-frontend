@@ -33,6 +33,12 @@ import { RequirementOpenIssuesSection } from "../sections/requirement-open-issue
 import { RequirementDocumentDetailSkeleton } from "./document-detail/requirement-document-detail-skeleton";
 import { RequirementDocumentOverview } from "./document-detail/requirement-document-overview";
 import { RequirementDocumentRequirementsTab } from "./document-detail/requirement-document-requirements-tab";
+import { useSectionEdits } from "../../hooks/use-section-edits";
+import { SectionEditNotice } from "./document-detail/section-edit-notice";
+import { RequirementDocumentFullPreview } from "./document-detail/requirement-document-full-preview";
+import { useFullPreviewNavigation } from "../../hooks/use-full-preview-navigation";
+import { RequirementWorkbenchProvider } from "../../hooks/use-workbench-state";
+import { useWorkbenchReturnNavigation } from "../../hooks/use-workbench-return-navigation";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
@@ -42,6 +48,7 @@ type RequirementDocumentDetailPageProps = {
 const REQUIREMENT_DOCUMENT_TABS = [
   "overview",
   "requirements",
+  "preview",
   "issues",
   "approvals",
   "history",
@@ -51,10 +58,31 @@ export function RequirementDocumentDetailPage({
   projectId,
   documentId,
 }: RequirementDocumentDetailPageProps) {
+  return (
+    <RequirementWorkbenchProvider projectId={projectId} documentId={documentId}>
+      <RequirementDocumentDetailContent
+        projectId={projectId}
+        documentId={documentId}
+      />
+    </RequirementWorkbenchProvider>
+  );
+}
+
+function RequirementDocumentDetailContent({
+  projectId,
+  documentId,
+}: RequirementDocumentDetailPageProps) {
+  const { unsaved } = useSectionEdits(projectId, documentId);
   const [activeTab, setActiveTab] = useUrlTabState({
     values: REQUIREMENT_DOCUMENT_TABS,
     defaultValue: "overview",
   });
+  const {
+    editorRef,
+    capture: capturePreviewReturn,
+    resume: resumeFromPreview,
+  } = useFullPreviewNavigation(activeTab);
+  const returnNotice = useWorkbenchReturnNavigation(editorRef, activeTab);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportPreview, setExportPreview] =
@@ -76,9 +104,6 @@ export function RequirementDocumentDetailPage({
   )
     ? selectedSectionQuery
     : null;
-  const selectedSectionValue = selectedSectionId
-    ? String(selectedSectionId)
-    : "all";
   const createRequirementPath = selectedSectionId
     ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${selectedSectionId}`
     : `/projects/joined/${projectId}/requirements/${documentId}/items/new`;
@@ -115,14 +140,22 @@ export function RequirementDocumentDetailPage({
             <Button
               type="button"
               variant="outline"
-              disabled={isExportPending}
+              disabled={isExportPending || unsaved.length > 0}
+              title={
+                unsaved.length
+                  ? "章本文を保存してから出力してください"
+                  : undefined
+              }
               onClick={() => setExportDialogOpen(true)}
             >
               <DownloadIcon data-icon="inline-start" />
               出力
             </Button>
             {canCreateRequirement(currentProjectRole) && !isSectionsLoading ? (
-              <Button asChild>
+              <Button
+                asChild
+                variant={activeTab === "requirements" ? "outline" : "default"}
+              >
                 <Link href={createRequirementPath}>要件を追加</Link>
               </Button>
             ) : null}
@@ -140,6 +173,7 @@ export function RequirementDocumentDetailPage({
               <Button
                 type="button"
                 variant="destructive"
+                disabled={unsaved.length > 0}
                 onClick={() => setDeleteDialogOpen(true)}
               >
                 <Trash2Icon data-icon="inline-start" />
@@ -150,16 +184,36 @@ export function RequirementDocumentDetailPage({
         }
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
+      <SectionEditNotice projectId={projectId} documentId={documentId} />
+      {returnNotice ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          {returnNotice}
+        </p>
+      ) : null}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          if (value === "preview") capturePreviewReturn();
+          setActiveTab(value);
+        }}
+        className="gap-4"
+      >
         <TabsList
           variant="line"
-          className="w-full justify-start overflow-x-auto border-b"
+          className="w-full min-h-12 justify-start overflow-x-auto border-b group-data-horizontal/tabs:h-auto"
         >
           <TabsTrigger className="flex-none px-4 py-2" value="overview">
             文書として読む
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="requirements">
             要件を書く・整理する
+          </TabsTrigger>
+          <TabsTrigger
+            className="flex-none px-4 py-2"
+            value="preview"
+            data-full-preview-trigger
+          >
+            全文プレビュー
           </TabsTrigger>
           <TabsTrigger className="flex-none px-4 py-2" value="issues">
             未決事項
@@ -181,17 +235,34 @@ export function RequirementDocumentDetailPage({
           />
         </TabsContent>
 
-        <TabsContent value="requirements">
-          <RequirementDocumentRequirementsTab
-            key={selectedSectionValue}
+        <TabsContent
+          value="requirements"
+          forceMount={
+            activeTab === "requirements" || activeTab === "preview"
+              ? true
+              : undefined
+          }
+          className="data-[state=inactive]:hidden"
+        >
+          <div ref={editorRef}>
+            <RequirementDocumentRequirementsTab
+              projectId={projectId}
+              documentId={documentId}
+              selectedSectionId={selectedSectionId}
+              onSelectSection={(sectionId) => setSelectedSectionId(sectionId)}
+              canCreate={canCreateRequirement(currentProjectRole)}
+              canUpdate={canUpdateRequirement(currentProjectRole)}
+              canComment={canCommentRequirement(currentProjectRole)}
+              canReview={canReviewRequirement(currentProjectRole)}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="preview">
+          <RequirementDocumentFullPreview
             projectId={projectId}
-            documentId={documentId}
-            selectedSectionId={selectedSectionId}
-            onSelectSection={(sectionId) => setSelectedSectionId(sectionId)}
-            canCreate={canCreateRequirement(currentProjectRole)}
-            canUpdate={canUpdateRequirement(currentProjectRole)}
-            canComment={canCommentRequirement(currentProjectRole)}
-            canReview={canReviewRequirement(currentProjectRole)}
+            document={document}
+            onReturn={resumeFromPreview}
           />
         </TabsContent>
 

@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
+import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -212,6 +213,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
+      <OverviewReturn projectId={projectId} />
       <PageHeader
         title="タスク"
         description="プロジェクトのタスク、カンバン、ガントチャートを管理します。"

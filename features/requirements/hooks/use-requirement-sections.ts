@@ -18,5 +18,6 @@ export function useRequirementSections(projectId: number, documentId: number) {
     sections: sectionsQuery.data ?? [],
     isLoading: sectionsQuery.isLoading,
     error: sectionsQuery.error,
+    refetch: sectionsQuery.refetch,
   };
 }

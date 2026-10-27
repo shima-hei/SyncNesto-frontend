@@ -2,6 +2,7 @@
 
 import { toast } from "sonner";
 
+import { ApiError } from "@/lib/api/error";
 import type {
   RequirementDocumentExportCreate,
   RequirementDocumentExportRead,
@@ -21,8 +22,13 @@ export function useExportRequirementDocument(
           onSuccess: () => {
             toast.success(REQUIREMENT_MESSAGES.export.success);
           },
-          onError: () => {
-            toast.error(REQUIREMENT_MESSAGES.export.error);
+          onError: (error) => {
+            toast.error(
+              error instanceof ApiError &&
+                error.code === "REQUIREMENT_PDF_UNSUPPORTED_CONTENT"
+                ? error.message
+                : REQUIREMENT_MESSAGES.export.error,
+            );
           },
         },
       },

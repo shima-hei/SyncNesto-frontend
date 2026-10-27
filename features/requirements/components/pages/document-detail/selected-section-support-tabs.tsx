@@ -6,6 +6,7 @@ import { RequirementApprovalsSection } from "../../sections/requirement-approval
 import { RequirementChangeLogsSection } from "../../sections/requirement-change-logs-section";
 import { RequirementTargetCommentsSection } from "../../sections/requirement-target-comments-section";
 import type { ReviewAnchorStatus } from "../../../lib/requirement-review-anchor";
+import { useWorkbenchState } from "../../../hooks/use-workbench-state";
 
 type SelectedSectionSupportTabsProps = {
   projectId: number;
@@ -48,8 +49,12 @@ export function SelectedSectionSupportTabs({
   canComment,
   canReview,
 }: SelectedSectionSupportTabsProps) {
+  const [activeTab, setActiveTab] = useWorkbenchState(
+    "support-tab",
+    "comments",
+  );
   return (
-    <Tabs defaultValue="comments" className="gap-3">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-3">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="comments">コメント</TabsTrigger>
         <TabsTrigger value="approvals">承認</TabsTrigger>

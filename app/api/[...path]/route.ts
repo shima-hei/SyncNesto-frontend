@@ -72,6 +72,7 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
     upstreamPath === "/notification-preferences" ||
     /^\/projects\/[^/]+\/requirement-agreements(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/requirement-trace(?:\/|$)/.test(upstreamPath) ||
+    /^\/projects\/[^/]+\/requirement-schedule$/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/objectives(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/fixed-approvals\/[^/]+\/next-actions$/.test(
       upstreamPath,

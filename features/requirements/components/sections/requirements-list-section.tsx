@@ -1,4 +1,6 @@
 "use client";
+
+import { useWorkbenchState } from "../../hooks/use-workbench-state";
 import {
   Empty,
   EmptyHeader,
@@ -10,7 +12,6 @@ import {
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 
-import { useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -65,7 +66,10 @@ export function RequirementsListSection({
   const { sections } = useRequirementSections(projectId, documentId);
   const [page, setPage] = useUrlFilterState("page", 1);
   const [q, setQ] = useUrlFilterState("q", "");
-  const [searchInput, setSearchInput] = useState(q);
+  const [searchInput, setSearchInput] = useWorkbenchState(
+    `search:${sectionId ?? "all"}`,
+    q,
+  );
   const [status, setStatus] = useUrlFilterState(
     "status",
     ALL_REQUIREMENT_STATUSES,
@@ -147,7 +151,10 @@ export function RequirementsListSection({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className="flex flex-col gap-4"
+      data-workbench-list-ready={!isLoading && !isFetching}
+    >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col gap-1">
           <h3 className="text-base font-semibold">要件一覧</h3>

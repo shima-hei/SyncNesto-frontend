@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/format/date";
+import { useWorkbenchState } from "../../hooks/use-workbench-state";
+import {
+  RequirementPriorityBadge,
+  RequirementStatusBadge,
+} from "../shared/requirement-badges";
 
 import {
   getRequirementPriorityLabel,
@@ -54,6 +59,10 @@ function SelectedRequirementSummaryContent({
   requirementId: number;
   canUpdate: boolean;
 }) {
+  const [summaryOpen, setSummaryOpen] = useWorkbenchState(
+    `summary:${requirementId}`,
+    false,
+  );
   const { summary, isLoading } = useRequirementSummary(
     projectId,
     requirementId,
@@ -106,8 +115,15 @@ function SelectedRequirementSummaryContent({
           <h3 className="text-base font-semibold break-words">
             {requirement.title}
           </h3>
+          <div className="flex flex-wrap gap-2">
+            <RequirementStatusBadge status={requirement.status} />
+            <RequirementPriorityBadge priority={requirement.priority} />
+          </div>
         </div>
-        <details>
+        <details
+          open={summaryOpen}
+          onToggle={(event) => setSummaryOpen(event.currentTarget.open)}
+        >
           <summary className="w-fit cursor-pointer rounded-sm text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
             要件の概要を表示
           </summary>
@@ -125,8 +141,17 @@ function SelectedRequirementSummaryContent({
               value={getRequirementStatusLabel(requirement.status)}
             />
             <RequirementSummaryInfo
-              label="担当者ID"
-              value={requirement.owner_id ? String(requirement.owner_id) : "-"}
+              label="担当者"
+              value={
+                requirement.owner?.name ??
+                (requirement.owner_id
+                  ? `ID: ${requirement.owner_id}`
+                  : "未設定")
+              }
+            />
+            <RequirementSummaryInfo
+              label="理由"
+              value={requirement.rationale ?? "未設定"}
             />
             <RequirementSummaryInfo
               label="説明"
@@ -186,7 +211,7 @@ function RequirementSummaryInfo({
     <div className="flex min-w-0 flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-        {value}
+        {value || "未設定"}
       </span>
     </div>
   );

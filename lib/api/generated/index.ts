@@ -21,6 +21,7 @@ export * from "./project-objectives/project-objectives";
 export * from "./projects/projects";
 export * from "./publication-access/publication-access";
 export * from "./requirement-agreements/requirement-agreements";
+export * from "./requirement-schedule/requirement-schedule";
 export * from "./requirement-trace/requirement-trace";
 export * from "./requirements/requirements";
 export * from "./search/search";

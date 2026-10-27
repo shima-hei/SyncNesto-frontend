@@ -29,7 +29,7 @@ type RequirementSectionsSectionProps = {
   canUpdate: boolean;
   selectedSectionId?: number | null;
   onSelectSection?: (sectionId: number | null) => void;
-  layout?: "list" | "compact";
+  layout?: "list" | "compact" | "navigation";
 };
 
 export function RequirementSectionsSection({
@@ -42,6 +42,8 @@ export function RequirementSectionsSection({
 }: RequirementSectionsSectionProps) {
   const sectionSelectId = useId();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const navigationId = useId();
   const { sections, isLoading } = useRequirementSections(projectId, documentId);
   const {
     createRequirementSection,
@@ -88,7 +90,7 @@ export function RequirementSectionsSection({
     <div
       className={cn(
         layout === "compact" && "grid gap-3 sm:grid-cols-2 lg:grid-cols-3",
-        layout === "list" && "flex flex-col gap-3",
+        layout !== "compact" && "flex flex-col gap-3",
       )}
     >
       {sortedSections.map((section, index) => {
@@ -104,6 +106,7 @@ export function RequirementSectionsSection({
             canMoveDown={index < sortedSections.length - 1}
             isSortPending={isSortPending}
             showSelectAction={Boolean(onSelectSection)}
+            navigation={layout === "navigation"}
             onSelect={onSelectSection ?? undefined}
             onMove={moveSection}
           />
@@ -134,6 +137,79 @@ export function RequirementSectionsSection({
       onSubmit={createRequirementSection}
     />
   );
+
+  if (layout === "navigation" && onSelectSection) {
+    return (
+      <section
+        aria-label="要件定義書の目次"
+        className="flex min-w-0 flex-col gap-3"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-base font-semibold">目次</h2>
+          {createButton}
+        </div>
+        <div className="flex flex-col gap-2 @min-[64rem]/requirements:hidden">
+          <label htmlFor={sectionSelectId} className="text-sm font-medium">
+            章・セクション
+          </label>
+          <Select
+            value={selectedSectionId ? String(selectedSectionId) : "all"}
+            disabled={isLoading}
+            onValueChange={(value) =>
+              onSelectSection(value === "all" ? null : Number(value))
+            }
+          >
+            <SelectTrigger id={sectionSelectId} className="w-full min-w-0">
+              <SelectValue placeholder="章・セクションを選択" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">すべての要件</SelectItem>
+                {sortedSections.map((section) => (
+                  <SelectItem key={section.id} value={String(section.id)}>
+                    {section.title}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-expanded={navigationOpen}
+            aria-controls={navigationId}
+            onClick={() => setNavigationOpen((open) => !open)}
+          >
+            {navigationOpen ? "目次を閉じる" : "目次・並び替えを開く"}
+          </Button>
+        </div>
+        <nav
+          id={navigationId}
+          aria-label="章・セクション"
+          className={cn(
+            "flex min-w-0 flex-col gap-3",
+            !navigationOpen && "hidden @min-[64rem]/requirements:flex",
+          )}
+        >
+          <Button
+            type="button"
+            variant={selectedSectionId === null ? "secondary" : "ghost"}
+            aria-current={selectedSectionId === null ? "location" : undefined}
+            className="justify-start"
+            onClick={() => onSelectSection(null)}
+          >
+            すべての要件
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            章に属さない要件も含みます。
+          </p>
+          {sectionList}
+        </nav>
+        {createDialog}
+      </section>
+    );
+  }
 
   if (layout === "compact" && onSelectSection) {
     return (
