@@ -338,12 +338,21 @@ function VerdictBody({
             ) : null}
           </div>
           <CardTitle>
-            <h1>{label(subject.title) || "固定要件の最終判断"}</h1>
+            <h1 className="break-words">
+              {label(subject.title) || "固定要件の最終判断"}
+            </h1>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             確認表 {row.plan_version}版 · 判定担当：{row.judge_name}
             {row.judge_id === user?.id ? "（あなた）" : ""}
           </CardDescription>
+          {row.can_review ? (
+            <Button asChild variant="outline" className="mt-2 self-start">
+              <a href={reviewed ? "#verdict-decision" : "#verdict-review"}>
+                {reviewed ? "判断入力へ" : "根拠の確認へ"}
+              </a>
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {changed ? (
@@ -378,7 +387,12 @@ function VerdictBody({
                 判断者：{row.judge_name} ·{" "}
                 {row.decided_at ? formatDateTime(row.decided_at) : "未確定"}
               </p>
-              <p className="whitespace-pre-wrap break-words">
+              <p
+                className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words"
+                role="region"
+                aria-label="保存した判断理由"
+                tabIndex={0}
+              >
                 {row.decision_reason}
               </p>
               {row.status === "cancelled" || row.status === "withdrawn" ? (
@@ -390,7 +404,11 @@ function VerdictBody({
           )}
           {row.can_review ? (
             <div className="flex flex-wrap items-center gap-3">
-              <Button disabled={busy} onClick={() => action.mutate("review")}>
+              <Button
+                id="verdict-review"
+                disabled={busy}
+                onClick={() => action.mutate("review")}
+              >
                 {reviewed ? "確認作業を再取得" : "根拠の確認を始める"}
               </Button>
               {reviewed ? (
@@ -505,7 +523,7 @@ function VerdictBody({
         </CardContent>
       </Card>
       {row.can_review && reviewed ? (
-        <Card>
+        <Card id="verdict-decision" tabIndex={-1}>
           <CardHeader>
             <CardTitle>判断を残す</CardTitle>
             <CardDescription>

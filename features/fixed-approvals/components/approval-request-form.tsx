@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -59,6 +59,7 @@ export function ApprovalRequestForm({
   originImport?: string;
 }) {
   const router = useRouter();
+  const confirmationButton = useRef<HTMLButtonElement>(null);
   const [targetSelection, setTargetSelection] = useState("");
   const [attachmentChoice, setAttachmentChoice] = useState("");
   const [approver, setApprover] = useState("");
@@ -268,8 +269,19 @@ export function ApprovalRequestForm({
               : "この内容への合意・正式承認を依頼"}
         </CardTitle>
         <CardDescription>
-          必要な内容と本人1名を指定します。設計や元の要件が後から変わっても、この依頼の対象は変わりません。
+          対象・添付と指定本人を入力し、申請する範囲を確認します。
         </CardDescription>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-2 self-start"
+          onClick={() => {
+            confirmationButton.current?.scrollIntoView({ block: "center" });
+            confirmationButton.current?.focus({ preventScroll: true });
+          }}
+        >
+          申請前の確認へ移動
+        </Button>
       </CardHeader>
       <CardContent>
         <form
@@ -305,7 +317,7 @@ export function ApprovalRequestForm({
         >
           <FieldGroup>
             <Alert>
-              <AlertTitle>
+              <AlertTitle className="min-w-0 break-words">
                 {metadata.data.title}・保存時の版 {metadata.data.source_version}
               </AlertTitle>
               <AlertDescription>
@@ -535,6 +547,8 @@ export function ApprovalRequestForm({
             ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
+                id="approval-request-confirmation"
+                ref={confirmationButton}
                 type="submit"
                 variant="outline"
                 disabled={
@@ -585,6 +599,14 @@ export function ApprovalRequestForm({
             ) : null}
           </FieldGroup>
         </form>
+        <details className="mt-4 border-t pt-3 text-sm text-muted-foreground">
+          <summary className="cursor-pointer rounded-sm focus-visible:outline-2">
+            固定内容と依頼の補足
+          </summary>
+          <p className="mt-2">
+            設計や元の要件が後から変わっても、この依頼の対象は変わりません。対象の本文・添付と指定本人を確認してから、依頼前の確認へ進みます。
+          </p>
+        </details>
         <ConfirmDialog {...guard.dialogProps} />
       </CardContent>
     </Card>
