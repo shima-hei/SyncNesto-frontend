@@ -4,6 +4,7 @@ import { z } from "zod";
 import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
 
 export const requirementDocumentSchema = z.object({
+  standardChapters: z.boolean().optional(),
   title: z.string().min(1, VALIDATION_MESSAGES.required("タイトル")),
   documentCode: z
     .string()

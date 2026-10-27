@@ -42,6 +42,9 @@ import { useListNavigation } from "@/hooks/use-list-navigation";
 type CommentTargetMode = "section" | "requirement";
 
 type RequirementDocumentRequirementsTabProps = {
+  document?: import("@/lib/api/generated/model").RequirementDocumentRead;
+  objectiveReferencesEnabled?: boolean;
+  onOpenDocumentInfo?: () => void;
   projectId: number;
   documentId: number;
   selectedSectionId: number | null;
@@ -53,6 +56,9 @@ type RequirementDocumentRequirementsTabProps = {
 };
 
 export function RequirementDocumentRequirementsTab({
+  document: requirementDocument,
+  objectiveReferencesEnabled,
+  onOpenDocumentInfo,
   projectId,
   documentId,
   selectedSectionId,
@@ -367,6 +373,21 @@ export function RequirementDocumentRequirementsTab({
           >
             <div className="flex min-w-0 flex-col gap-4">
               <SelectedRequirementSectionContent
+                document={requirementDocument}
+                objectiveReferencesEnabled={objectiveReferencesEnabled}
+                onOpenDocumentInfo={
+                  onOpenDocumentInfo
+                    ? () => {
+                        if (workbenchScope)
+                          captureWorkbenchReturnPoint(
+                            workbenchRef.current,
+                            workbenchScope.identity,
+                            workbenchScope.scope,
+                          );
+                        onOpenDocumentInfo();
+                      }
+                    : undefined
+                }
                 key={`section-${selectedSectionId ?? "all"}`}
                 projectId={projectId}
                 documentId={documentId}
