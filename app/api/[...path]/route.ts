@@ -70,6 +70,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 const proxyRequest = async (request: NextRequest, context: RouteContext) => {
   const upstreamPath = await getUpstreamPath(context);
   const privatePublication =
+    /^\/projects\/[^/]+\/(?:requirement-verification-plans|requirement-verification-requests|requirement-verdicts)(?:\/|$)/.test(
+      upstreamPath,
+    ) ||
     upstreamPath === "/notification-preferences" ||
     /^\/projects\/[^/]+\/requirement-agreements(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/requirement-trace(?:\/|$)/.test(upstreamPath) ||

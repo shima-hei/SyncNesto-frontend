@@ -33,7 +33,11 @@ const SEGMENT_LABELS: Record<string, string> = {
   users: "全体のユーザー管理",
 };
 
-const TECHNICAL_SEGMENTS = new Set(["items"]);
+const TECHNICAL_SEGMENTS = new Set([
+  "items",
+  "requirement-verifications",
+  "requirement-verdicts",
+]);
 const LINK_DISABLED_SEGMENTS = new Set(["projects"]);
 
 export const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
@@ -99,6 +103,18 @@ const getBreadcrumbItemForSegment = ({
 
   if (isNumericSegment(segment)) {
     return getDynamicBreadcrumbItem({ segment, previousSegment, href });
+  }
+  if (
+    previousSegment === "requirement-verifications" &&
+    /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(segment)
+  ) {
+    return { label: "要件の確認表" };
+  }
+  if (
+    previousSegment === "requirement-verdicts" &&
+    /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(segment)
+  ) {
+    return { label: "要件の最終判断" };
   }
   if (
     previousSegment === "fixed-approvals" &&

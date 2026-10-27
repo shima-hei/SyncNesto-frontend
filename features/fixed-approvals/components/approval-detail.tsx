@@ -19,6 +19,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -200,33 +201,96 @@ export function ApprovalDetail({
           </Button>
         }
       />
-      <Alert>
-        <AlertTitle>
-          <Badge variant="outline">
-            {statusLabels[row.status] ?? row.status}
-          </Badge>{" "}
-          保存時の版 {numberValue(row.scope_manifest.source_version)}
-        </AlertTitle>
-        <AlertDescription>
-          <p>
-            申請者：
-            {approvalUserLabel(
-              row.requester_name,
-              row.requester_id,
-              user?.id,
-            )}{" "}
-            ／ 承認者：
-            {approvalUserLabel(row.approver_name, row.approver_id, user?.id)}
-          </p>
-          <p>
-            申請日時 {formatDateTime(row.created_at)}
-            。現在の要件・設計・添付へ判断が自動的に引き継がれることはありません。
-          </p>
-          {row.request_note ? (
-            <p className="whitespace-pre-wrap">{row.request_note}</p>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline">
+              {statusLabels[row.status] ?? row.status}
+            </Badge>
+            保存時の版 {numberValue(row.scope_manifest.source_version)}
+          </CardTitle>
+          <CardDescription>
+            判断は保存時の内容に残ります。最新版へは引き継ぎません。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex min-w-0 flex-col gap-4">
+          <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
+            <div className="min-w-0">
+              <dt className="text-sm text-muted-foreground">承認者</dt>
+              <dd className="break-words">
+                {approvalUserLabel(
+                  row.approver_name,
+                  row.approver_id,
+                  user?.id,
+                )}
+              </dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-sm text-muted-foreground">申請者</dt>
+              <dd className="break-words">
+                {approvalUserLabel(
+                  row.requester_name,
+                  row.requester_id,
+                  user?.id,
+                )}
+              </dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-sm text-muted-foreground">申請日時</dt>
+              <dd>{formatDateTime(row.created_at)}</dd>
+            </div>
+          </dl>
+          {exceptionCount ? (
+            <Alert>
+              <AlertTitle>例外 {exceptionCount}件を含む依頼</AlertTitle>
+              <AlertDescription>
+                下の合意根拠と例外理由を確認してください。文書を承認しても、個別要件は未合意のまま残ります。
+              </AlertDescription>
+            </Alert>
           ) : null}
-        </AlertDescription>
-      </Alert>
+          {row.request_note ? (
+            <div className="flex min-w-0 flex-col gap-1">
+              <p className="text-sm text-muted-foreground">申請メモ</p>
+              <p
+                className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words text-sm"
+                tabIndex={0}
+              >
+                {row.request_note}
+              </p>
+            </div>
+          ) : null}
+          <FormApiError error={begin.error} />
+        </CardContent>
+        <CardFooter className="flex flex-wrap gap-2">
+          {row.can_decide ? (
+            <Button
+              type="button"
+              disabled={begin.isPending}
+              onClick={() => begin.mutate()}
+            >
+              対象を確認して判断する
+            </Button>
+          ) : row.status === "requested" ? (
+            <p className="text-sm text-muted-foreground">
+              {row.guest_context && !row.guest_context.can_access
+                ? "判断停止中。公開内容・共有先を確認してください。"
+                : "このアカウントでは判断できません。指定先と閲覧権限を確認してください。"}
+            </p>
+          ) : null}
+          {row.can_cancel ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setCancelOperationId(crypto.randomUUID());
+                setCancelOpen(true);
+              }}
+            >
+              申請を取り消す
+            </Button>
+          ) : null}
+        </CardFooter>
+      </Card>
       {process.env.NEXT_PUBLIC_FIXED_APPROVAL_NOTIFICATIONS_ENABLED ===
       "true" ? (
         <ApprovalNextActions
@@ -410,58 +474,43 @@ export function ApprovalDetail({
           </CardContent>
         </Card>
       ) : null}
-      <FormApiError error={begin.error} />
-      <div className="flex flex-wrap gap-2">
-        {row.can_decide ? (
-          <Button
-            type="button"
-            disabled={begin.isPending}
-            onClick={() => begin.mutate()}
-          >
-            対象を確認して判断する
-          </Button>
-        ) : row.status === "requested" ? (
-          <p className="text-sm text-muted-foreground">
-            指定された本人が、必要な権限を持つ状態で判断します。
-          </p>
-        ) : null}
-        {row.can_cancel ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setCancelOperationId(crypto.randomUUID());
-              setCancelOpen(true);
-            }}
-          >
-            申請を取り消す
-          </Button>
-        ) : null}
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>申請・判断の履歴</CardTitle>
-          <CardDescription>
-            誰が、いつ、どの内容について判断したかを残します。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {row.events?.map((event) => (
-            <div key={event.id} className="flex flex-col gap-1 border-b pb-3">
-              <p className="text-sm font-medium">
-                {statusLabels[event.action] ?? event.action}・
-                {event.actor_name ?? `ID ${event.actor_id}`}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDateTime(event.occurred_at)}
-              </p>
-              {event.reason ? (
-                <p className="whitespace-pre-wrap text-sm">{event.reason}</p>
-              ) : null}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <details open={row.status === "rejected" || row.status === "cancelled"}>
+        <summary className="cursor-pointer rounded-sm text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+          申請・判断の履歴（{row.events?.length ?? 0}件）
+        </summary>
+        <Card className="mt-3">
+          <CardHeader>
+            <CardTitle>申請・判断の履歴</CardTitle>
+            <CardDescription>
+              誰が、いつ、どの内容について判断したかを残します。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {row.events?.map((event) => (
+              <div key={event.id} className="flex flex-col gap-1 border-b pb-3">
+                <p className="text-sm font-medium">
+                  {statusLabels[event.action] ?? event.action}・
+                  {event.actor_name ?? `ID ${event.actor_id}`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDateTime(event.occurred_at)}
+                </p>
+                {event.reason ? (
+                  <p className="whitespace-pre-wrap text-sm">{event.reason}</p>
+                ) : null}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </details>
+      <details>
+        <summary className="cursor-pointer rounded-sm text-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+          記録の識別情報
+        </summary>
+        <p className="mt-3 break-all text-xs text-muted-foreground">
+          対象ID {row.source_id} ／ 承認記録ID {row.id}
+        </p>
+      </details>
       <Dialog
         open={review !== null}
         onOpenChange={(open) => {
