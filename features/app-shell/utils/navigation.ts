@@ -58,7 +58,7 @@ export const isNavigationItemActive = (
     return false;
   }
 
-  return item.href === "/"
+  return item.href === "/" || item.href === "/system"
     ? pathname === item.href
     : pathname.startsWith(item.href);
 };

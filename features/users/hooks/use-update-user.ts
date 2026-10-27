@@ -23,6 +23,9 @@ export function useUpdateUser(userId: number) {
         setUserDetailCache(queryClient, userId, user);
         toast.success(USER_MESSAGES.updateSuccess);
         await invalidateUserList(queryClient);
+        await queryClient.invalidateQueries({
+          queryKey: ["system-management"],
+        });
       },
       onError: (error) => {
         const current = getConflictCurrent<UserRead>(error);

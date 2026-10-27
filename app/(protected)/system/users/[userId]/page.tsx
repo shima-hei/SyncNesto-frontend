@@ -4,20 +4,32 @@ import { UserDetailPage } from "@/features/users/components/pages/user-detail-pa
 import { requireSystemAdmin } from "@/lib/auth/server";
 
 type PageProps = {
+  searchParams: Promise<{ fromTenant?: string }>;
   params: Promise<{
     userId: string;
   }>;
 };
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   await requireSystemAdmin();
 
   const { userId } = await params;
   const parsedUserId = Number(userId);
 
-  if (!Number.isInteger(parsedUserId)) {
+  if (!Number.isSafeInteger(parsedUserId) || parsedUserId <= 0) {
     notFound();
   }
 
-  return <UserDetailPage userId={parsedUserId} />;
+  const fromTenant = Number((await searchParams).fromTenant);
+  return (
+    <UserDetailPage
+      key={parsedUserId}
+      userId={parsedUserId}
+      fromTenant={
+        Number.isSafeInteger(fromTenant) && fromTenant > 0
+          ? fromTenant
+          : undefined
+      }
+    />
+  );
 }

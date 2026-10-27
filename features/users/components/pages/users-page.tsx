@@ -18,14 +18,22 @@ import {
 
 import { useUsers } from "../../hooks/use-users";
 import { UsersTable } from "../tables/users-table";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 
 const PAGE_SIZE = 20;
 
-export function UsersPage() {
+export function UsersPage({
+  withoutActiveMembership = false,
+}: {
+  withoutActiveMembership?: boolean;
+}) {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [q, setQ] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [membershipFilter, setMembershipFilter] = useState(
+    withoutActiveMembership ? "unassigned" : "all",
+  );
   const isActive = getIsActiveParam(activeFilter);
   const userListParams = useMemo(
     () => ({
@@ -33,10 +41,12 @@ export function UsersPage() {
       page_size: PAGE_SIZE,
       q: q || undefined,
       is_active: isActive,
+      without_active_membership: membershipFilter === "unassigned" || undefined,
     }),
-    [isActive, page, q],
+    [isActive, membershipFilter, page, q],
   );
-  const { users, total, isLoading, isFetching } = useUsers(userListParams);
+  const { users, total, isLoading, isFetching, error, refetch } =
+    useUsers(userListParams);
 
   const handleSearch = () => {
     setPage(1);
@@ -77,17 +87,40 @@ export function UsersPage() {
             </SelectGroup>
           </SelectContent>
         </Select>
+        <Select
+          value={membershipFilter}
+          onValueChange={(value) => {
+            setMembershipFilter(value);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger aria-label="組織への所属" className="w-full sm:w-56">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">所属を問わず表示</SelectItem>
+              <SelectItem value="unassigned">有効な組織所属なし</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </SearchFilterBar>
-      <UsersTable users={users} isLoading={isLoading} />
-      <DataPagination
-        page={page}
-        pageSize={PAGE_SIZE}
-        total={total}
-        currentCount={users.length}
-        isFetching={isFetching}
-        isLoading={isLoading}
-        onPageChange={setPage}
-      />
+      {error ? (
+        <DataLoadError resourceName="ユーザー" onRetry={() => void refetch()} />
+      ) : (
+        <UsersTable users={users} isLoading={isLoading} />
+      )}
+      {!error ? (
+        <DataPagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={total}
+          currentCount={users.length}
+          isFetching={isFetching}
+          isLoading={isLoading}
+          onPageChange={setPage}
+        />
+      ) : null}
     </div>
   );
 }

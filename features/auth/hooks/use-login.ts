@@ -38,7 +38,7 @@ export function useLogin(returnTo?: string) {
     router.replace(
       response.password_change_required
         ? `/initial-password${loginReturnPath(returnTo) ? `?next=${encodeURIComponent(loginReturnPath(returnTo)!)}` : ""}`
-        : (loginReturnPath(returnTo) ?? "/"),
+        : (loginReturnPath(returnTo) ?? "/entry"),
     );
   };
 
