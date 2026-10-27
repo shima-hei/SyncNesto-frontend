@@ -80,6 +80,8 @@ import {
   RequirementScheduleView,
   useScheduleAvailability,
 } from "./requirement-schedule";
+import { useRequirementVerdicts } from "@/features/projects/hooks/use-requirement-verdicts";
+import { RequirementVerdict } from "./requirement-verdict";
 
 export function RequirementTrace({ projectId }: { projectId: number }) {
   const params = useSearchParams();
@@ -125,6 +127,12 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
   const agreements = useRequirementAgreements(
     projectId,
     query.data?.state === "ready" && !query.isError && !scheduleRequested
+      ? (query.data.items ?? []).map((r) => r.id)
+      : [],
+  );
+  const verdicts = useRequirementVerdicts(
+    projectId,
+    query.data?.state === "ready" && !query.isError
       ? (query.data.items ?? []).map((r) => r.id)
       : [],
   );
@@ -407,6 +415,9 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
                 <TableHead>何を満たすか</TableHead>
                 <TableHead>編集状態</TableHead>
                 <TableHead>現在の内容への合意</TableHead>
+                {verdicts.data?.state !== "disabled" ? (
+                  <TableHead>検証と最終判断</TableHead>
+                ) : null}
                 <TableHead>設計</TableHead>
                 <TableHead>関連作業</TableHead>
                 <TableHead>テスト項目</TableHead>
@@ -440,6 +451,17 @@ export function RequirementTrace({ projectId }: { projectId: number }) {
                       projectId={projectId}
                     />
                   </TableCell>
+                  {verdicts.data?.state !== "disabled" ? (
+                    <TableCell className="whitespace-normal">
+                      <RequirementVerdict
+                        query={verdicts}
+                        requirementId={row.id}
+                        version={row.version}
+                        projectId={projectId}
+                        returnTo={returnTo}
+                      />
+                    </TableCell>
+                  ) : null}
                   <TableCell>
                     <FacetCount facet={row.designs} />
                   </TableCell>

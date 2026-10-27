@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
         "/api/projects/:projectId/objectives/:path*",
         "/api/projects/:projectId/requirement-trace/:path*",
         "/api/projects/:projectId/requirement-agreements/:path*",
+        "/api/projects/:projectId/requirement-verification-plans/:path*",
+        "/projects/joined/:projectId/requirement-verifications/:path*",
         "/api/projects/:projectId/fixed-approvals/:approvalId/next-actions",
         "/shared/publications/:path*",
         "/guest-invitations/:path*",
