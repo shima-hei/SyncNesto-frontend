@@ -23,6 +23,7 @@ export function useTasks(
     pageSize: tasksQuery.data?.page_size ?? params.page_size ?? 20,
     isLoading: tasksQuery.isPending,
     isFetching: tasksQuery.isFetching,
+    isPlaceholderData: tasksQuery.isPlaceholderData,
     error: tasksQuery.error,
     refetch: tasksQuery.refetch,
   };

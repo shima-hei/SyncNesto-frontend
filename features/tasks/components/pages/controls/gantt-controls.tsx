@@ -27,40 +27,28 @@ import {
   getTodayGanttRange,
   moveGanttRange,
 } from "../../../lib/gantt-range-controls";
-import { TaskRequirementSelectField } from "../../forms/task-requirement-select-field";
-import { TaskUserSelectField } from "../../forms/task-user-select-field";
 
 export function GanttControls({
-  projectId,
   canUpdate,
   startDate,
   endDate,
-  assigneeId,
-  requirementId,
   displayUnit,
   gantt,
   milestones,
   onStartDateChange,
   onEndDateChange,
-  onAssigneeIdChange,
-  onRequirementIdChange,
   onDisplayUnitChange,
   onOpenMilestoneList,
   onOpenMilestoneCreate,
 }: {
-  projectId: number;
   canUpdate: boolean;
   startDate: string;
   endDate: string;
-  assigneeId: string;
-  requirementId: string;
   displayUnit: string;
   gantt: GanttResponse | null;
   milestones: MilestoneRead[];
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
-  onAssigneeIdChange: (value: string) => void;
-  onRequirementIdChange: (value: string) => void;
   onDisplayUnitChange: (value: string) => void;
   onOpenMilestoneList: () => void;
   onOpenMilestoneCreate: () => void;
@@ -152,7 +140,7 @@ export function GanttControls({
           </div>
         </div>
         {isAdvancedOpen ? (
-          <div className="grid gap-3 border-t pt-3 md:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto] xl:items-end">
+          <div className="grid gap-3 border-t pt-3 md:grid-cols-2 xl:grid-cols-[repeat(2,minmax(0,1fr))_auto] xl:items-end">
             <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="gantt-start-date">開始日</Label>
               <Input
@@ -171,19 +159,6 @@ export function GanttControls({
                 onChange={(event) => onEndDateChange(event.target.value)}
               />
             </div>
-            <TaskUserSelectField
-              projectId={projectId}
-              label="担当者"
-              value={assigneeId}
-              placeholder="すべて"
-              onChange={onAssigneeIdChange}
-            />
-            <TaskRequirementSelectField
-              projectId={projectId}
-              value={requirementId}
-              placeholder="すべて"
-              onChange={onRequirementIdChange}
-            />
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
@@ -215,11 +190,9 @@ export function GanttControls({
                 onClick={() => {
                   onStartDateChange(ALL_GANTT_FILTERS);
                   onEndDateChange(ALL_GANTT_FILTERS);
-                  onAssigneeIdChange(ALL_GANTT_FILTERS);
-                  onRequirementIdChange(ALL_GANTT_FILTERS);
                 }}
               >
-                条件クリア
+                期間をクリア
               </Button>
             </div>
           </div>

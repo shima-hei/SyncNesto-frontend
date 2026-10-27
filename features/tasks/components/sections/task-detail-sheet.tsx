@@ -23,6 +23,7 @@ import {
   canUpdateTask,
 } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 import { formatDate, formatDateTime } from "@/lib/format/date";
 import type { TaskRead } from "@/lib/api/generated/model";
 
@@ -53,6 +54,9 @@ export function TaskDetailSheet({
   open,
   onOpenChange,
 }: TaskDetailSheetProps) {
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/tasks`,
+  );
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
   const { task, isLoading, error } = useTask(open ? taskId : null);
@@ -100,7 +104,11 @@ export function TaskDetailSheet({
                 </div>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/projects/joined/${projectId}/tasks/${task.id}`}>
+                <Link
+                  href={withReturn(
+                    `/projects/joined/${projectId}/tasks/${task.id}`,
+                  )}
+                >
                   <ExternalLinkIcon data-icon="inline-start" />
                   詳細ページ
                 </Link>

@@ -4,7 +4,7 @@ export const TASK_CONFLICT_FIELD_LABELS: Partial<
   Record<keyof TaskFormValues, string>
 > = {
   taskCode: "タスクID",
-  title: "タイトル",
+  title: "タスク名",
   description: "説明",
   taskType: "種別",
   status: "ステータス",
