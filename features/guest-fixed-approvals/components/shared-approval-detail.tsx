@@ -236,7 +236,7 @@ export function SharedApprovalDetail({
           閲覧許可と依頼を再確認
         </Button>
       </div>
-      <div ref={root} className="flex min-w-0 flex-col gap-6">
+      <div ref={root} className="flex min-w-0 flex-col gap-6 break-words">
         {data.error instanceof ApiError &&
         data.error.code === "MFA_REQUIRED" ? (
           <ApprovalMfa
@@ -257,16 +257,44 @@ export function SharedApprovalDetail({
               <p className="text-sm text-muted-foreground">
                 {approvalKindLabels[row.target_kind]}
               </p>
-              <h1 className="break-words text-2xl font-semibold tracking-tight">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant={
+                    row.status === "rejected" || row.status === "cancelled"
+                      ? "destructive"
+                      : "outline"
+                  }
+                >
+                  {statusLabels[row.status]}
+                </Badge>
+                {row.exception_count ? (
+                  <Badge variant="destructive">
+                    例外 {row.exception_count}件
+                  </Badge>
+                ) : null}
+                <span className="text-sm">承認者：あなた</span>
+                {row.status === "requested" && row.can_decide ? (
+                  <Button asChild size="sm">
+                    <a href="#shared-approval-decision">判断入力へ</a>
+                  </Button>
+                ) : null}
+              </div>
+              <p className="mt-2 break-words text-sm text-muted-foreground">
+                依頼元：{row.requester_name} · 固定日時：
+                {formatDateTime(row.captured_at)}
+              </p>
+              <h1 className="mt-3 break-words text-2xl font-semibold tracking-tight">
                 {row.title}
               </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{statusLabels[row.status]}</Badge>
-                <span className="text-sm">
-                  承認者：あなた ／ 依頼元：{row.requester_name}
-                </span>
-              </div>
             </div>
+            {row.status === "requested" && !row.can_decide ? (
+              <Alert>
+                <AlertTitle>判断操作は停止しています</AlertTitle>
+                <AlertDescription>
+                  現在、新しい判断は記録できません。依頼元へ確認してください。
+                </AlertDescription>
+              </Alert>
+            ) : null}
             <Card>
               <CardHeader>
                 <CardTitle>今回、確認していただきたいこと</CardTitle>
@@ -275,7 +303,12 @@ export function SharedApprovalDetail({
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
-                <p className="whitespace-pre-wrap text-sm">
+                <p
+                  className="max-h-40 overflow-y-auto break-words whitespace-pre-wrap text-sm"
+                  role="region"
+                  aria-label="依頼メモ"
+                  tabIndex={0}
+                >
                   {row.request_note ||
                     "この依頼の目的・確認観点が分からない場合は、依頼元へ確認してください。"}
                 </p>
@@ -288,8 +321,15 @@ export function SharedApprovalDetail({
                 </p>
                 <p className="text-sm text-muted-foreground">
                   閲覧期限 {formatDateTime(row.expires_at)}
-                  。最新版や他の対象への承認には引き継がれません。テスト設計を承認しても、テスト実行・合格が確定するわけではありません。
                 </p>
+                <details className="text-sm text-muted-foreground">
+                  <summary className="cursor-pointer rounded-sm focus-visible:outline-2">
+                    判断の対象・範囲について
+                  </summary>
+                  <p className="mt-2">
+                    最新版や他の対象への承認には引き継がれません。テスト設計を承認しても、テスト実行・合格が確定するわけではありません。
+                  </p>
+                </details>
                 <Button asChild variant="outline" size="sm">
                   <a href={`#public-node-${row.target_node_id}`}>
                     今回の対象へ移動
@@ -346,7 +386,7 @@ export function SharedApprovalDetail({
             ) : null}
             <FormApiError error={error} />
             {row.status === "requested" ? (
-              <Card>
+              <Card id="shared-approval-decision" tabIndex={-1}>
                 <CardHeader>
                   <CardTitle>内容を確認して判断する</CardTitle>
                   <CardDescription>
@@ -389,11 +429,6 @@ export function SharedApprovalDetail({
                         差し戻しの確認へ
                       </Button>
                     </div>
-                    {!row.can_decide ? (
-                      <p className="text-sm">
-                        現在、新しい判断操作は停止しています。依頼元へ確認してください。
-                      </p>
-                    ) : null}
                   </FieldGroup>
                 </CardContent>
               </Card>
@@ -409,7 +444,12 @@ export function SharedApprovalDetail({
                       : "次は依頼元が結果を確認して対応します。この固定内容への判断は保存されました。"}
                   </p>
                   {row.decision_reason ? (
-                    <p className="whitespace-pre-wrap">
+                    <p
+                      className="max-h-40 overflow-y-auto break-words whitespace-pre-wrap"
+                      role="region"
+                      aria-label="あなたの判断理由"
+                      tabIndex={0}
+                    >
                       あなたの判断理由：{row.decision_reason}
                     </p>
                   ) : null}

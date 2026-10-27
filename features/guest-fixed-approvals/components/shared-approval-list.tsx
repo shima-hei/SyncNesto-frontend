@@ -13,14 +13,7 @@ import {
   EmptyDescription,
 } from "@/components/ui/empty";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useFreshShared } from "@/features/artifact-publications/hooks/use-fresh-shared";
 import { formatDateTime } from "@/lib/format/date";
 import { ApiError } from "@/lib/api/error";
@@ -133,40 +126,72 @@ export function SharedApprovalList({
         ) : (
           <>
             <p className="text-sm">現在確認できる依頼 {value.total}件</p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>判断する内容</TableHead>
-                  <TableHead>状態・依頼元</TableHead>
-                  <TableHead>申請日時</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {value.items.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="whitespace-normal">
+            <div className="flex min-w-0 flex-col gap-3">
+              {value.items.map((row) => (
+                <Card key={row.id} className="min-w-0">
+                  <CardHeader className="min-w-0 gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge
+                        variant={
+                          row.status === "rejected" ||
+                          row.status === "cancelled"
+                            ? "destructive"
+                            : "outline"
+                        }
+                      >
+                        {statusLabels[row.status]}
+                      </Badge>
+                      <Button asChild variant="outline" size="sm">
+                        <Link
+                          href={sharedApprovalPath(row.publication_id, row.id)}
+                          prefetch={false}
+                        >
+                          内容を確認
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      <span className="min-w-0 max-w-full break-words">
+                        依頼元：{row.requester_name}
+                      </span>
+                      <span>固定日時：{formatDateTime(row.captured_at)}</span>
+                    </div>
+                    <CardTitle className="min-w-0 break-words text-base">
                       <Link
-                        className="font-medium underline underline-offset-4"
+                        className="underline underline-offset-4"
                         href={sharedApprovalPath(row.publication_id, row.id)}
                         prefetch={false}
                       >
                         {row.title}
                       </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {approvalKindLabels[row.target_kind]}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-1 text-sm">
+                    <p>
+                      {approvalKindLabels[row.target_kind]} · 申請{" "}
+                      {formatDateTime(row.created_at)}
+                    </p>
+                    {row.status === "requested" ? (
+                      <p
+                        className={
+                          row.can_decide
+                            ? "text-muted-foreground"
+                            : "font-medium text-destructive"
+                        }
+                      >
+                        {row.can_decide
+                          ? "次は固定内容を確認して、判断へ進みます。"
+                          : "現在、新しい判断操作は停止しています。依頼元へ確認してください。"}
                       </p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {statusLabels[row.status]}
-                      </Badge>
-                      <p className="text-sm">{row.requester_name}</p>
-                    </TableCell>
-                    <TableCell>{formatDateTime(row.created_at)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        保存された判断を確認できます。
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
             <div className="flex gap-2">
               {cursor ? (
                 <Button variant="outline" onClick={() => setCursor(undefined)}>
