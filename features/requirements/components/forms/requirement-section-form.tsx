@@ -31,6 +31,7 @@ import type {
   RequirementSectionFormValues,
 } from "../../types/requirement-section-form";
 import { MarkdownTextarea } from "@/components/shared/forms/markdown-textarea";
+import { RequirementSectionGuide } from "../sections/section-detail/requirement-section-guide";
 
 type RequirementSectionFormProps = {
   initialValues?: RequirementSectionFormValues;
@@ -133,13 +134,13 @@ export function RequirementSectionForm({
       <FieldGroup>
         {!initialValues ? (
           <Field>
-            <FieldLabel>テンプレート</FieldLabel>
+            <FieldLabel>本文へ取り込むテンプレート（既存）</FieldLabel>
             <Select
               value={selectedTemplateKey}
               onValueChange={handleTemplateChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder="テンプレートから追加" />
+                <SelectValue placeholder="選んだテンプレートを本文へ取り込む" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -151,6 +152,9 @@ export function RequirementSectionForm({
                 </SelectGroup>
               </SelectContent>
             </Select>
+            <p className="text-sm text-muted-foreground">
+              選ぶと入力中の章名・種別・本文を置き換えます。下のヒント表示とは別の操作です。
+            </p>
           </Field>
         ) : null}
 
@@ -229,6 +233,7 @@ export function RequirementSectionForm({
 
         <Field>
           <FieldLabel>本文</FieldLabel>
+          <RequirementSectionGuide sectionType={values.sectionType} />
           <MarkdownTextarea
             value={values.content}
             placeholder="Markdown形式で本文を入力"

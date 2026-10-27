@@ -6,6 +6,7 @@ import { useListRequirementDocumentsProjectsProjectIdRequirementDocumentsGet } f
 export function useRequirementDocuments(
   projectId: number,
   params: ListRequirementDocumentsProjectsProjectIdRequirementDocumentsGetParams,
+  enabled = true,
 ) {
   const documentsQuery =
     useListRequirementDocumentsProjectsProjectIdRequirementDocumentsGet(
@@ -13,6 +14,7 @@ export function useRequirementDocuments(
       params,
       {
         query: {
+          enabled,
           retry: false,
           placeholderData: (previousData) => previousData,
         },

@@ -30,8 +30,12 @@ import { RequirementSectionEditDialog } from "./section-detail/requirement-secti
 import { useSectionEdits } from "../../hooks/use-section-edits";
 import { sectionEditBuffer } from "../../lib/section-edit-buffer";
 import { SectionBodyEditor } from "./section-detail/section-body-editor";
+import { RequirementSectionGuide } from "./section-detail/requirement-section-guide";
 
 type SelectedRequirementSectionContentProps = {
+  document?: import("@/lib/api/generated/model").RequirementDocumentRead;
+  objectiveReferencesEnabled?: boolean;
+  onOpenDocumentInfo?: () => void;
   projectId: number;
   documentId: number;
   sectionId: number | null;
@@ -44,6 +48,9 @@ type SelectedRequirementSectionContentProps = {
 };
 
 export function SelectedRequirementSectionContent({
+  document: requirementDocument,
+  objectiveReferencesEnabled,
+  onOpenDocumentInfo,
   projectId,
   documentId,
   sectionId,
@@ -210,6 +217,12 @@ export function SelectedRequirementSectionContent({
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
+          <RequirementSectionGuide
+            sectionType={section.section_type}
+            document={requirementDocument}
+            objectiveReferencesEnabled={objectiveReferencesEnabled}
+            onOpenDocumentInfo={onOpenDocumentInfo}
+          />
           <h3
             data-requirement-section-field="title"
             tabIndex={-1}

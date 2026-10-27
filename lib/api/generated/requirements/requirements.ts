@@ -71,6 +71,8 @@ import type {
   RequirementTargetCommentStateUpdate,
   RequirementTargetCommentUpdate,
   RequirementUpdate,
+  StandardRequirementDocumentCreate,
+  StandardRequirementDocumentResult,
 } from "../model";
 
 import { apiClient } from "../../client";
@@ -907,6 +909,168 @@ export const useRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRej
   > => {
     return useMutation(
       getRejectRequirementApprovalProjectsProjectIdApprovalsApprovalIdRejectPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getCreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/requirement-documents/standard`;
+  };
+
+/**
+ * 文書・標準7章・履歴を保存し、同じ送信の結果を再利用する。
+ * @summary Create Standard Requirement Document
+ */
+export const createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost =
+  async (
+    projectId: number,
+    standardRequirementDocumentCreate: StandardRequirementDocumentCreate,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<StandardRequirementDocumentResult> => {
+    const getHeaders = (
+      h?: NonNullable<RequestInit["headers"]>,
+    ): Record<string, string | readonly string[]> => {
+      if (!h) return {};
+      if (h instanceof Headers) return Object.fromEntries(h.entries());
+      if (Symbol.iterator in h) {
+        return Object.fromEntries(
+          Array.from(
+            h as Iterable<Iterable<string>>,
+            (entry) => Array.from(entry) as [string, string],
+          ),
+        );
+      }
+      const headers: Record<string, string | readonly string[]> = {};
+      for (const [name, value] of Object.entries<
+        string | readonly string[] | undefined
+      >(h)) {
+        if (value !== undefined) headers[name] = value;
+      }
+      return headers;
+    };
+    return apiClient<StandardRequirementDocumentResult>(
+      getCreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getHeaders(options?.headers),
+        },
+        body: JSON.stringify(standardRequirementDocumentCreate),
+      },
+    );
+  };
+
+export const getCreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationKey =
+  () =>
+    [
+      "createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost",
+    ] as const;
+
+export const getCreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost
+        >
+      >,
+      TError,
+      CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost
+      >
+    >,
+    TError,
+    CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getCreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost
+        >
+      >,
+      CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationVariables
+    > = (props) => {
+      const { projectId, data } = props ?? {};
+
+      return createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost(
+        projectId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost
+      >
+    >
+  >;
+export type CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationBody =
+  BodyType<StandardRequirementDocumentCreate>;
+export type CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationVariables =
+  { projectId: number; data: BodyType<StandardRequirementDocumentCreate> };
+
+/**
+ * @summary Create Standard Requirement Document
+ */
+export const useCreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost
+          >
+        >,
+        TError,
+        CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof createStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPost
+      >
+    >,
+    TError,
+    CreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getCreateStandardRequirementDocumentProjectsProjectIdRequirementDocumentsStandardPostMutationOptions(
         options,
       ),
       queryClient,
