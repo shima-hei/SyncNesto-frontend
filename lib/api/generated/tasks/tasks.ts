@@ -27,13 +27,22 @@ import type {
   BoardCreate,
   BoardRead,
   BoardUpdate,
+  EffortSummary,
+  EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
   GanttResponse,
   HTTPValidationError,
+  ListPhasesProjectsProjectIdPhasesGetParams,
   ListTaskChangeLogsTasksTaskIdChangeLogsGetParams,
   ListTasksProjectsProjectIdTasksGetParams,
   MilestoneCreate,
   MilestoneRead,
   MilestoneUpdate,
+  PhaseCreate,
+  PhaseEventList,
+  PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+  PhaseList,
+  PhaseRead,
+  PhaseUpdate,
   ReadGanttProjectsProjectIdGanttGetParams,
   RequirementTaskCreate,
   RequirementTaskProgressRead,
@@ -5278,6 +5287,1039 @@ export function useReadGanttProjectsProjectIdGanttGet<
     params,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListPhasesProjectsProjectIdPhasesGetUrl = (
+  projectId: number,
+  params?: ListPhasesProjectsProjectIdPhasesGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/projects/${projectId}/phases?${stringifiedParams}`
+    : `/projects/${projectId}/phases`;
+};
+
+/**
+ * アーカイブ候補を明示してページ取得する。
+ * @summary List Phases
+ */
+export const listPhasesProjectsProjectIdPhasesGet = async (
+  projectId: number,
+  params?: ListPhasesProjectsProjectIdPhasesGetParams,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<PhaseList> => {
+  return apiClient<PhaseList>(
+    getListPhasesProjectsProjectIdPhasesGetUrl(projectId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListPhasesProjectsProjectIdPhasesGetQueryKey = (
+  projectId: number,
+  params?: ListPhasesProjectsProjectIdPhasesGetParams,
+) => {
+  return [
+    `/projects/${projectId}/phases`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListPhasesProjectsProjectIdPhasesGetQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: ListPhasesProjectsProjectIdPhasesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getListPhasesProjectsProjectIdPhasesGetQueryKey(projectId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>
+  > = ({ signal }) =>
+    listPhasesProjectsProjectIdPhasesGet(projectId, params, {
+      signal,
+      ...requestOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: projectId !== null && projectId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListPhasesProjectsProjectIdPhasesGetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>
+>;
+export type ListPhasesProjectsProjectIdPhasesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function useListPhasesProjectsProjectIdPhasesGet<
+  TData = Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params: undefined | ListPhasesProjectsProjectIdPhasesGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPhasesProjectsProjectIdPhasesGet<
+  TData = Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: ListPhasesProjectsProjectIdPhasesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPhasesProjectsProjectIdPhasesGet<
+  TData = Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: ListPhasesProjectsProjectIdPhasesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Phases
+ */
+
+export function useListPhasesProjectsProjectIdPhasesGet<
+  TData = Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: ListPhasesProjectsProjectIdPhasesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listPhasesProjectsProjectIdPhasesGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListPhasesProjectsProjectIdPhasesGetQueryOptions(
+    projectId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreatePhaseProjectsProjectIdPhasesPostUrl = (
+  projectId: number,
+) => {
+  return `/projects/${projectId}/phases`;
+};
+
+/**
+ * 工程を作成する。
+ * @summary Create Phase
+ */
+export const createPhaseProjectsProjectIdPhasesPost = async (
+  projectId: number,
+  phaseCreate: PhaseCreate,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<PhaseRead> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiClient<PhaseRead>(
+    getCreatePhaseProjectsProjectIdPhasesPostUrl(projectId),
+    {
+      ...options,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(phaseCreate),
+    },
+  );
+};
+
+export const getCreatePhaseProjectsProjectIdPhasesPostMutationKey = () =>
+  ["createPhaseProjectsProjectIdPhasesPost"] as const;
+
+export const getCreatePhaseProjectsProjectIdPhasesPostMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPhaseProjectsProjectIdPhasesPost>>,
+    TError,
+    CreatePhaseProjectsProjectIdPhasesPostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPhaseProjectsProjectIdPhasesPost>>,
+  TError,
+  CreatePhaseProjectsProjectIdPhasesPostMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreatePhaseProjectsProjectIdPhasesPostMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPhaseProjectsProjectIdPhasesPost>>,
+    CreatePhaseProjectsProjectIdPhasesPostMutationVariables
+  > = (props) => {
+    const { projectId, data } = props ?? {};
+
+    return createPhaseProjectsProjectIdPhasesPost(
+      projectId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePhaseProjectsProjectIdPhasesPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPhaseProjectsProjectIdPhasesPost>>
+>;
+export type CreatePhaseProjectsProjectIdPhasesPostMutationBody =
+  BodyType<PhaseCreate>;
+export type CreatePhaseProjectsProjectIdPhasesPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CreatePhaseProjectsProjectIdPhasesPostMutationVariables = {
+  projectId: number;
+  data: BodyType<PhaseCreate>;
+};
+
+/**
+ * @summary Create Phase
+ */
+export const useCreatePhaseProjectsProjectIdPhasesPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createPhaseProjectsProjectIdPhasesPost>>,
+      TError,
+      CreatePhaseProjectsProjectIdPhasesPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createPhaseProjectsProjectIdPhasesPost>>,
+  TError,
+  CreatePhaseProjectsProjectIdPhasesPostMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getCreatePhaseProjectsProjectIdPhasesPostMutationOptions(options),
+    queryClient,
+  );
+};
+export const getUpdatePhaseProjectsProjectIdPhasesPhaseIdPatchUrl = (
+  projectId: number,
+  phaseId: number,
+) => {
+  return `/projects/${projectId}/phases/${phaseId}`;
+};
+
+/**
+ * 改名・並び順・アーカイブをversion付きで保存する。
+ * @summary Update Phase
+ */
+export const updatePhaseProjectsProjectIdPhasesPhaseIdPatch = async (
+  projectId: number,
+  phaseId: number,
+  phaseUpdate: PhaseUpdate,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<PhaseRead> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiClient<PhaseRead>(
+    getUpdatePhaseProjectsProjectIdPhasesPhaseIdPatchUrl(projectId, phaseId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(phaseUpdate),
+    },
+  );
+};
+
+export const getUpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationKey =
+  () => ["updatePhaseProjectsProjectIdPhasesPhaseIdPatch"] as const;
+
+export const getUpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof updatePhaseProjectsProjectIdPhasesPhaseIdPatch>
+      >,
+      TError,
+      UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<ReturnType<typeof updatePhaseProjectsProjectIdPhasesPhaseIdPatch>>,
+    TError,
+    UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<typeof updatePhaseProjectsProjectIdPhasesPhaseIdPatch>
+      >,
+      UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationVariables
+    > = (props) => {
+      const { projectId, phaseId, data } = props ?? {};
+
+      return updatePhaseProjectsProjectIdPhasesPhaseIdPatch(
+        projectId,
+        phaseId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof updatePhaseProjectsProjectIdPhasesPhaseIdPatch>>
+  >;
+export type UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationBody =
+  BodyType<PhaseUpdate>;
+export type UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationError =
+  ErrorType<HTTPValidationError>;
+export type UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationVariables = {
+  projectId: number;
+  phaseId: number;
+  data: BodyType<PhaseUpdate>;
+};
+
+/**
+ * @summary Update Phase
+ */
+export const useUpdatePhaseProjectsProjectIdPhasesPhaseIdPatch = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof updatePhaseProjectsProjectIdPhasesPhaseIdPatch>
+      >,
+      TError,
+      UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updatePhaseProjectsProjectIdPhasesPhaseIdPatch>>,
+  TError,
+  UpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getUpdatePhaseProjectsProjectIdPhasesPhaseIdPatchMutationOptions(options),
+    queryClient,
+  );
+};
+export const getPhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetUrl = (
+  projectId: number,
+  phaseId: number,
+  params?: PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/projects/${projectId}/phases/${phaseId}/events?${stringifiedParams}`
+    : `/projects/${projectId}/phases/${phaseId}/events`;
+};
+
+/**
+ * 改名時点の名前を保持した履歴をページ取得する。
+ * @summary Phase Events
+ */
+export const phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet = async (
+  projectId: number,
+  phaseId: number,
+  params?: PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<PhaseEventList> => {
+  return apiClient<PhaseEventList>(
+    getPhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetUrl(
+      projectId,
+      phaseId,
+      params,
+    ),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getPhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetQueryKey = (
+  projectId: number,
+  phaseId: number,
+  params?: PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+) => {
+  return [
+    `/projects/${projectId}/phases/${phaseId}/events`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getPhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    phaseId: number,
+    params?: PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getPhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetQueryKey(
+        projectId,
+        phaseId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+      >
+    > = ({ signal }) =>
+      phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet(
+        projectId,
+        phaseId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        phaseId !== null &&
+        phaseId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+    >
+  >;
+export type PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function usePhaseEventsProjectsProjectIdPhasesPhaseIdEventsGet<
+  TData = Awaited<
+    ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  phaseId: number,
+  params: undefined | PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePhaseEventsProjectsProjectIdPhasesPhaseIdEventsGet<
+  TData = Awaited<
+    ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  phaseId: number,
+  params?: PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePhaseEventsProjectsProjectIdPhasesPhaseIdEventsGet<
+  TData = Awaited<
+    ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  phaseId: number,
+  params?: PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Phase Events
+ */
+
+export function usePhaseEventsProjectsProjectIdPhasesPhaseIdEventsGet<
+  TData = Awaited<
+    ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  phaseId: number,
+  params?: PhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof phaseEventsProjectsProjectIdPhasesPhaseIdEventsGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getPhaseEventsProjectsProjectIdPhasesPhaseIdEventsGetQueryOptions(
+      projectId,
+      phaseId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getEffortSummaryProjectsProjectIdTasksEffortSummaryGetUrl = (
+  projectId: number,
+  params?: EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/projects/${projectId}/tasks/effort-summary?${stringifiedParams}`
+    : `/projects/${projectId}/tasks/effort-summary`;
+};
+
+/**
+ * ページや折り畳みと独立した一意Task集計。
+ * @summary Effort Summary
+ */
+export const effortSummaryProjectsProjectIdTasksEffortSummaryGet = async (
+  projectId: number,
+  params?: EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<EffortSummary> => {
+  return apiClient<EffortSummary>(
+    getEffortSummaryProjectsProjectIdTasksEffortSummaryGetUrl(
+      projectId,
+      params,
+    ),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getEffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryKey = (
+  projectId: number,
+  params?: EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+) => {
+  return [
+    `/projects/${projectId}/tasks/effort-summary`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getEffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    params?: EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getEffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryKey(
+        projectId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+      >
+    > = ({ signal }) =>
+      effortSummaryProjectsProjectIdTasksEffortSummaryGet(projectId, params, {
+        signal,
+        ...requestOptions,
+      });
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type EffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+    >
+  >;
+export type EffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<
+  TData = Awaited<
+    ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params: undefined | EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<
+  TData = Awaited<
+    ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<
+  TData = Awaited<
+    ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Effort Summary
+ */
+
+export function useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<
+  TData = Awaited<
+    ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: EffortSummaryProjectsProjectIdTasksEffortSummaryGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof effortSummaryProjectsProjectIdTasksEffortSummaryGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getEffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryOptions(
+      projectId,
+      params,
+      options,
+    );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

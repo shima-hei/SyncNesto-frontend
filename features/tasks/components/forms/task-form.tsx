@@ -37,6 +37,10 @@ import { TaskRequirementSelectField } from "./task-requirement-select-field";
 import { TaskTagInput } from "./task-tag-input";
 import { TaskUserSelectField } from "./task-user-select-field";
 import { DateField, NumberField, TaskSelectField } from "./task-form-fields";
+import {
+  TaskPhaseSelectField,
+  EFFORT_BASIS_OPTIONS,
+} from "./task-phase-select-field";
 
 type TaskFormProps = {
   mode: "create" | "update";
@@ -102,6 +106,9 @@ export function TaskForm({
         progressPercent: fieldErrors.progressPercent?.[0],
         estimatedMinutes: fieldErrors.estimatedMinutes?.[0],
         actualMinutes: fieldErrors.actualMinutes?.[0],
+        phaseAssignment: fieldErrors.phaseAssignment?.[0],
+        estimatedBasis: fieldErrors.estimatedBasis?.[0],
+        actualBasis: fieldErrors.actualBasis?.[0],
         parentTaskId: fieldErrors.parentTaskId?.[0],
         requirementId: fieldErrors.requirementId?.[0],
         tags: fieldErrors.tags?.[0],
@@ -179,6 +186,41 @@ export function TaskForm({
               詳細設定
             </summary>
             <FieldGroup className="pt-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <TaskPhaseSelectField
+                  projectId={projectId}
+                  value={values.phaseAssignment}
+                  error={errors.phaseAssignment}
+                  onChange={(value) => updateValue("phaseAssignment", value)}
+                />
+                <TaskSelectField
+                  label="見積工数の根拠"
+                  value={values.estimatedBasis}
+                  error={errors.estimatedBasis}
+                  options={EFFORT_BASIS_OPTIONS}
+                  onChange={(value) =>
+                    updateValue(
+                      "estimatedBasis",
+                      value as TaskFormValues["estimatedBasis"],
+                    )
+                  }
+                />
+                <TaskSelectField
+                  label="実績工数の根拠"
+                  value={values.actualBasis}
+                  error={errors.actualBasis}
+                  options={EFFORT_BASIS_OPTIONS}
+                  onChange={(value) =>
+                    updateValue(
+                      "actualBasis",
+                      value as TaskFormValues["actualBasis"],
+                    )
+                  }
+                />
+              </div>
+              <FieldDescription>
+                「自身の作業」だけを合計に加えます。「子の集計枠」と「未確認」の保存値は保持し、合計には重ねて加えません。親の工程を変更しても子の所属は変わりません。
+              </FieldDescription>
               <Field data-invalid={errors.taskCode ? true : undefined}>
                 <FieldLabel htmlFor={taskCodeId}>
                   {mode === "create" ? "タスクID（任意）" : "タスクID"}

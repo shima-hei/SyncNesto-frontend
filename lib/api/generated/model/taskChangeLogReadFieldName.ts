@@ -10,6 +10,9 @@ export type TaskChangeLogReadFieldName =
   | null;
 
 export const TaskChangeLogReadFieldName = {
+  phase_assignment: "phase_assignment",
+  estimated_basis: "estimated_basis",
+  actual_basis: "actual_basis",
   task_code: "task_code",
   title: "title",
   description: "description",

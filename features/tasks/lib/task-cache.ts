@@ -12,6 +12,8 @@ import {
   getReadRequirementTaskProgressRequirementsRequirementIdTaskProgressGetQueryKey as getRequirementTaskProgressKey,
   getReadGanttProjectsProjectIdGanttGetQueryKey as getGanttKey,
   getReadTaskTasksTaskIdGetQueryKey as getTaskDetailKey,
+  getEffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryKey,
+  getListPhasesProjectsProjectIdPhasesGetQueryKey,
 } from "@/lib/api/generated/tasks/tasks";
 
 export const invalidateTaskList = (
@@ -111,6 +113,29 @@ export const invalidateTaskProjectSurfaces = (
   options: { includeBoard?: boolean } = {},
 ) => {
   const invalidations = [
+    queryClient.invalidateQueries({
+      queryKey:
+        getEffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryKey(
+          projectId,
+        ),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: getListPhasesProjectsProjectIdPhasesGetQueryKey(projectId),
+    }),
+    queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        const data = query.state.data as TaskRead | TaskRead[] | undefined;
+        return (
+          typeof key === "string" &&
+          (/^\/tasks\/\d+$/.test(key) ||
+            /^\/requirements\/\d+\/tasks$/.test(key)) &&
+          (Array.isArray(data)
+            ? data.some((task) => task.project_id === projectId)
+            : data?.project_id === projectId)
+        );
+      },
+    }),
     invalidateTaskList(queryClient, projectId),
     invalidateGantt(queryClient, projectId),
   ];

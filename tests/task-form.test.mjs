@@ -20,6 +20,71 @@ async function load(path) {
 const mapper = await load("../features/tasks/lib/task-mappers.ts");
 const draft = await load("../features/tasks/lib/task-form-draft.ts");
 const scope = await load("../features/tasks/lib/task-view-scope.ts");
+const effort = await load("../features/tasks/lib/task-effort.ts");
+
+test("phase and effort metadata are omitted from unrelated updates and old drafts", () => {
+  const task = {
+    id: 1,
+    project_id: 2,
+    version: 3,
+    task_code: "MANUAL",
+    title: "Before",
+    phase_scope: "phase",
+    phase_id: 9,
+    estimated_basis: "unreviewed",
+    actual_basis: "rollup",
+  };
+  const values = mapper.getTaskFormValues(task);
+  assert.deepEqual(
+    mapper.toTaskUpdate({ ...values, title: "After" }, 3, task),
+    { version: 3, title: "After" },
+  );
+  const old = { ...values };
+  for (const key of ["phaseAssignment", "estimatedBasis", "actualBasis"])
+    delete old[key];
+  const restored = draft.mergeTaskFormDraft(
+    { initialValues: old, values: { ...old, title: "Draft" } },
+    values,
+  );
+  assert.equal(restored.phaseAssignment, "phase:9");
+  assert.equal(restored.estimatedBasis, "unreviewed");
+  assert.deepEqual(
+    mapper.toTaskUpdate(
+      { ...values, phaseAssignment: "unclassified" },
+      3,
+      task,
+    ),
+    { version: 3, phase_assignment: { kind: "unclassified", phase_id: null } },
+  );
+});
+
+test("effort distinguishes explicit zero, missing and unreviewed values", () => {
+  assert.equal(
+    effort.formatEffortMetric({
+      minutes: 0,
+      complete: true,
+      missing_count: 0,
+      unreviewed_count: 0,
+    }),
+    "0 分",
+  );
+  const partial = effort.formatEffortMetric({
+    minutes: 120,
+    complete: false,
+    missing_count: 1,
+    unreviewed_count: 2,
+  });
+  assert.match(partial, /確認済み小計 120 分/);
+  assert.match(partial, /未入力1件・未確認2件/);
+  assert.equal(
+    effort.taskPhaseLabel({
+      phase_scope: "phase",
+      phase_name: "設計",
+      phase_archived: true,
+    }),
+    "設計（アーカイブ済み）",
+  );
+});
 
 test("board distinguishes the 100-item boundary, hidden cards, and incomplete results", () => {
   const rows = Array.from({ length: 100 }, () => ({ status: "todo" }));
