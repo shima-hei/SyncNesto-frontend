@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { SlidersHorizontalIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,20 +20,15 @@ import {
   BOARD_SWIMLANE_OPTIONS,
   SORT_OPTIONS,
 } from "../../../constants/task-view-options";
-import { TaskRequirementSelectField } from "../../forms/task-requirement-select-field";
-import { TaskUserSelectField } from "../../forms/task-user-select-field";
 import type { BoardSwimlane } from "../../sections/tasks-board-section";
 import { TaskFilterSelect } from "./task-filter-select";
 
 export function TaskBoardToolbar({
-  projectId,
   searchInput,
   status,
   priority,
   taskType,
   overdue,
-  assigneeId,
-  requirementId,
   tag,
   startDateFrom,
   dueDateTo,
@@ -45,8 +40,6 @@ export function TaskBoardToolbar({
   onStatusChange,
   onPriorityChange,
   onTaskTypeChange,
-  onAssigneeIdChange,
-  onRequirementIdChange,
   onTagChange,
   onStartDateFromChange,
   onDueDateToChange,
@@ -55,14 +48,11 @@ export function TaskBoardToolbar({
   onSwimlaneChange,
   onCompletedCollapsedChange,
 }: {
-  projectId: number;
   searchInput: string;
   status: string;
   priority: string;
   taskType: string;
   overdue: string;
-  assigneeId: string;
-  requirementId: string;
   tag: string;
   startDateFrom: string;
   dueDateTo: string;
@@ -74,8 +64,6 @@ export function TaskBoardToolbar({
   onStatusChange: (value: string) => void;
   onPriorityChange: (value: string) => void;
   onTaskTypeChange: (value: string) => void;
-  onAssigneeIdChange: (value: string) => void;
-  onRequirementIdChange: (value: string) => void;
   onTagChange: (value: string) => void;
   onStartDateFromChange: (value: string) => void;
   onDueDateToChange: (value: string) => void;
@@ -85,11 +73,20 @@ export function TaskBoardToolbar({
   onCompletedCollapsedChange: (value: boolean) => void;
 }) {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const advancedId = useId();
+  const advancedCount = [
+    priority !== ALL_PRIORITIES,
+    taskType !== ALL_TYPES,
+    overdue !== ALL_OVERDUE,
+    Boolean(tag),
+    Boolean(startDateFrom),
+    Boolean(dueDateTo),
+  ].filter(Boolean).length;
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
       <form
-        className="grid gap-3 xl:grid-cols-[minmax(16rem,1.3fr)_minmax(10rem,0.8fr)_minmax(12rem,1fr)_minmax(10rem,0.8fr)_minmax(12rem,1fr)_auto] xl:items-end"
+        className="grid gap-3 xl:grid-cols-[minmax(16rem,1.3fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_minmax(12rem,1fr)_auto] xl:items-end"
         onSubmit={(event) => {
           event.preventDefault();
           onSearch();
@@ -112,13 +109,6 @@ export function TaskBoardToolbar({
           allLabel="すべて"
           options={TASK_STATUS_OPTIONS}
           onValueChange={onStatusChange}
-        />
-        <TaskUserSelectField
-          projectId={projectId}
-          label="担当者"
-          value={assigneeId}
-          placeholder="すべて"
-          onChange={onAssigneeIdChange}
         />
         <Field>
           <FieldLabel htmlFor="task-board-tag">タグ</FieldLabel>
@@ -144,10 +134,12 @@ export function TaskBoardToolbar({
             type="button"
             variant="outline"
             size="sm"
+            aria-expanded={isAdvancedOpen}
+            aria-controls={advancedId}
             onClick={() => setIsAdvancedOpen((current) => !current)}
           >
             <SlidersHorizontalIcon data-icon="inline-start" />
-            詳細条件
+            詳細条件{advancedCount ? `（${advancedCount}件適用）` : ""}
           </Button>
           <Button
             type="button"
@@ -160,7 +152,10 @@ export function TaskBoardToolbar({
         </div>
       </form>
       {isAdvancedOpen ? (
-        <div className="grid gap-3 border-t pt-3 md:grid-cols-2 xl:grid-cols-6">
+        <div
+          id={advancedId}
+          className="grid gap-3 border-t pt-3 md:grid-cols-2 xl:grid-cols-6"
+        >
           <TaskFilterSelect
             label="優先度"
             value={priority}
@@ -187,12 +182,6 @@ export function TaskBoardToolbar({
             allLabel="すべて"
             options={[{ value: "overdue", label: "期限超過" }]}
             onValueChange={onOverdueChange}
-          />
-          <TaskRequirementSelectField
-            projectId={projectId}
-            value={requirementId}
-            placeholder="関連要件"
-            onChange={onRequirementIdChange}
           />
           <Field>
             <FieldLabel htmlFor="task-board-start-date">開始日</FieldLabel>

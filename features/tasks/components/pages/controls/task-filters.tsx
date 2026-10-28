@@ -20,19 +20,14 @@ import {
   ALL_TYPES,
   SORT_OPTIONS,
 } from "../../../constants/task-view-options";
-import { TaskRequirementSelectField } from "../../forms/task-requirement-select-field";
-import { TaskUserSelectField } from "../../forms/task-user-select-field";
 import { TaskFilterSelect } from "./task-filter-select";
 
 export function TaskFilters({
-  projectId,
   searchInput,
   status,
   priority,
   taskType,
   overdue,
-  assigneeId,
-  requirementId,
   tag,
   startDateFrom,
   dueDateTo,
@@ -42,22 +37,17 @@ export function TaskFilters({
   onStatusChange,
   onPriorityChange,
   onTaskTypeChange,
-  onAssigneeIdChange,
-  onRequirementIdChange,
   onTagChange,
   onStartDateFromChange,
   onDueDateToChange,
   onOverdueChange,
   onSortChange,
 }: {
-  projectId: number;
   searchInput: string;
   status: string;
   priority: string;
   taskType: string;
   overdue: string;
-  assigneeId: string;
-  requirementId: string;
   tag: string;
   startDateFrom: string;
   dueDateTo: string;
@@ -67,8 +57,6 @@ export function TaskFilters({
   onStatusChange: (value: string) => void;
   onPriorityChange: (value: string) => void;
   onTaskTypeChange: (value: string) => void;
-  onAssigneeIdChange: (value: string) => void;
-  onRequirementIdChange: (value: string) => void;
   onTagChange: (value: string) => void;
   onStartDateFromChange: (value: string) => void;
   onDueDateToChange: (value: string) => void;
@@ -81,7 +69,6 @@ export function TaskFilters({
     priority !== ALL_PRIORITIES,
     taskType !== ALL_TYPES,
     overdue !== ALL_OVERDUE,
-    Boolean(requirementId),
     Boolean(tag),
     Boolean(startDateFrom),
     Boolean(dueDateTo),
@@ -105,13 +92,6 @@ export function TaskFilters({
           allLabel="すべてのステータス"
           options={TASK_STATUS_OPTIONS}
           onValueChange={onStatusChange}
-        />
-        <TaskUserSelectField
-          projectId={projectId}
-          label="担当者"
-          value={assigneeId}
-          placeholder="担当者を選択"
-          onChange={onAssigneeIdChange}
         />
         <TaskFilterSelect
           label="並び順"
@@ -167,12 +147,6 @@ export function TaskFilters({
           allLabel="すべての期限"
           options={[{ value: "overdue", label: "期限超過" }]}
           onValueChange={onOverdueChange}
-        />
-        <TaskRequirementSelectField
-          projectId={projectId}
-          value={requirementId}
-          placeholder="関連要件を選択"
-          onChange={onRequirementIdChange}
         />
         <Field>
           <FieldLabel htmlFor="task-list-tag-filter">タグ</FieldLabel>

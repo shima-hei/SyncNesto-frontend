@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 
 import { useCreateTaskProjectsProjectIdTasksPost } from "@/lib/api/generated/tasks/tasks";
 
@@ -18,6 +19,9 @@ import type { TaskFormValues } from "../types/task-form";
 
 export function useCreateTask(projectId: number) {
   const router = useRouter();
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/tasks`,
+  );
   const queryClient = useQueryClient();
   const taskFormRequirementIdRef = useRef<number | null>(null);
   const shouldNavigateAfterCreateRef = useRef(true);
@@ -39,7 +43,9 @@ export function useCreateTask(projectId: number) {
         await Promise.all(invalidations);
         toast.success(TASK_MESSAGES.task.createSuccess);
         if (shouldNavigateAfterCreateRef.current) {
-          router.push(`/projects/joined/${projectId}/tasks/${task.id}`);
+          router.push(
+            withReturn(`/projects/joined/${projectId}/tasks/${task.id}`),
+          );
         }
       },
       onError: () => {

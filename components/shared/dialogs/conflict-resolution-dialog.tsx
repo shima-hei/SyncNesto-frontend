@@ -26,6 +26,9 @@ type ConflictResolutionDialogProps<TValues extends Record<string, unknown>> = {
     Record<keyof TValues & string, (value: unknown) => string>
   >;
   isPending?: boolean;
+  title?: string;
+  description?: string;
+  submitLabel?: string;
   onOpenChange: (open: boolean) => void;
   onResolve: (values: TValues) => Promise<unknown> | unknown;
 };
@@ -40,6 +43,9 @@ export function ConflictResolutionDialog<
   fieldLabels,
   valueFormatters,
   isPending = false,
+  title = "更新内容が競合しました",
+  description = "項目ごとに反映する内容を選択して、最新のversionで再度更新します。",
+  submitLabel = "再更新",
   onOpenChange,
   onResolve,
 }: ConflictResolutionDialogProps<TValues>) {
@@ -70,10 +76,8 @@ export function ConflictResolutionDialog<
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>更新内容が競合しました</DialogTitle>
-          <DialogDescription>
-            項目ごとに反映する内容を選択して、最新のversionで再度更新します。
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto">
@@ -147,7 +151,7 @@ export function ConflictResolutionDialog<
             キャンセル
           </Button>
           <Button type="button" disabled={isPending} onClick={handleResolve}>
-            再更新
+            {submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

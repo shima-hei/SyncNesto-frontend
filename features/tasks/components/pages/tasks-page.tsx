@@ -7,10 +7,13 @@ import { PlusIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import { LoadingState } from "@/components/shared/feedback/loading-state";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FieldGroup } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -47,7 +50,11 @@ import { useGantt } from "../../hooks/use-gantt";
 import { useMilestones } from "../../hooks/use-milestones";
 import { useTasks } from "../../hooks/use-tasks";
 import { defaultTaskFormValues } from "../../lib/task-mappers";
+import { BOARD_TASK_LIMIT, getBoardTaskScope } from "../../lib/task-view-scope";
+import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
 import { TaskForm } from "../forms/task-form";
+import { TaskUserSelectField } from "../forms/task-user-select-field";
+import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
 import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import {
   type BoardSwimlane,
@@ -78,13 +85,14 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [priority, setPriority] = useUrlFilterState("priority", ALL_PRIORITIES);
   const [taskType, setTaskType] = useUrlFilterState("taskType", ALL_TYPES);
   const [overdue, setOverdue] = useUrlFilterState("overdue", ALL_OVERDUE);
-  const [selectedAssigneeId, setAssigneeId] = useState<string | null>(null);
-  const assigneeId =
-    selectedAssigneeId ??
-    (searchParams.get("assignee") === "me" ? String(user?.id ?? "") : "");
+  const [assigneeId, setAssigneeId] = useUrlFilterState(
+    "assigneeId",
+    searchParams.get("ganttAssigneeId") ??
+      (searchParams.get("assignee") === "me" ? String(user?.id ?? "") : ""),
+  );
   const [requirementId, setRequirementId] = useUrlFilterState(
     "requirementId",
-    "",
+    searchParams.get("ganttRequirementId") ?? "",
   );
   const [tag, setTag] = useUrlFilterState("tag", "");
   const [startDateFrom, setStartDateFrom] = useUrlFilterState(
@@ -104,14 +112,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
     "",
   );
   const [ganttEndDate, setGanttEndDate] = useUrlFilterState("ganttEndDate", "");
-  const [ganttAssigneeId, setGanttAssigneeId] = useUrlFilterState(
-    "ganttAssigneeId",
-    "",
-  );
-  const [ganttRequirementId, setGanttRequirementId] = useUrlFilterState(
-    "ganttRequirementId",
-    "",
-  );
   const [ganttDisplayUnit, setGanttDisplayUnit] = useUrlFilterState<
     (typeof GANTT_DISPLAY_OPTIONS)[number]["value"]
   >("ganttDisplayUnit", "day");
@@ -119,8 +119,11 @@ export function TasksPage({ projectId }: TasksPageProps) {
     "boardSwimlane",
     "none",
   );
-  const [isBoardCompletedCollapsed, setIsBoardCompletedCollapsed] =
-    useState(true);
+  const [boardCompleted, setBoardCompleted] = useUrlFilterState(
+    "boardCompleted",
+    "collapsed",
+  );
+  const isBoardCompletedCollapsed = boardCompleted !== "expanded";
   const [milestoneCreateDialogOpen, setMilestoneCreateDialogOpen] =
     useState(false);
   const [milestoneListDialogOpen, setMilestoneListDialogOpen] = useState(false);
@@ -131,11 +134,19 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
-  const { tasks, total, isLoading, isFetching, error, refetch } = useTasks(
+  const {
+    tasks,
+    total,
+    isLoading,
+    isFetching,
+    isPlaceholderData,
+    error,
+    refetch,
+  } = useTasks(
     projectId,
     {
-      page,
-      page_size: PAGE_SIZE,
+      page: activeTab === "board" ? 1 : page,
+      page_size: activeTab === "board" ? BOARD_TASK_LIMIT : PAGE_SIZE,
       q: q || undefined,
       status: status === ALL_STATUSES ? undefined : status,
       task_type: taskType === ALL_TYPES ? undefined : taskType,
@@ -148,14 +159,36 @@ export function TasksPage({ projectId }: TasksPageProps) {
       overdue: overdue === ALL_OVERDUE ? undefined : overdue === "overdue",
       sort,
     },
-    searchParams.get("assignee") !== "me" || Boolean(user),
+    activeTab !== "gantt" &&
+      (searchParams.get("assignee") !== "me" || Boolean(user)),
   );
-  const { gantt, isLoading: isGanttLoading } = useGantt(projectId, {
-    start_date: ganttStartDate || undefined,
-    end_date: ganttEndDate || undefined,
-    assignee_id: ganttAssigneeId ? Number(ganttAssigneeId) : undefined,
-    requirement_id: ganttRequirementId ? Number(ganttRequirementId) : undefined,
-  });
+  const {
+    gantt,
+    isLoading: isGanttLoading,
+    isFetching: isGanttFetching,
+    isPlaceholderData: isGanttPlaceholder,
+    error: ganttError,
+    refetch: refetchGantt,
+  } = useGantt(
+    projectId,
+    {
+      start_date: ganttStartDate || undefined,
+      end_date: ganttEndDate || undefined,
+      assignee_id: assigneeId ? Number(assigneeId) : undefined,
+      requirement_id: requirementId ? Number(requirementId) : undefined,
+    },
+    activeTab === "gantt",
+  );
+  const boardScope = getBoardTaskScope(
+    tasks,
+    total,
+    isBoardCompletedCollapsed,
+    TASK_STATUS_OPTIONS.map((option) => option.value),
+  );
+  const currentGantt = isGanttPlaceholder || ganttError ? null : gantt;
+  const ganttUnscheduled =
+    currentGantt?.tasks.filter((task) => !task.start_date && !task.due_date)
+      .length ?? 0;
   const { milestones } = useMilestones(projectId);
   const {
     createTask,
@@ -227,6 +260,36 @@ export function TasksPage({ projectId }: TasksPageProps) {
         }
       />
 
+      <section
+        aria-label="すべての表示の共通条件"
+        className="flex flex-col gap-2"
+      >
+        <p className="text-sm text-muted-foreground">
+          担当者・関連要件は、一覧・ボード・ガントに共通で適用します。
+        </p>
+        <FieldGroup className="grid gap-3 md:grid-cols-2">
+          <TaskUserSelectField
+            projectId={projectId}
+            label="担当者"
+            value={assigneeId}
+            placeholder="すべて"
+            onChange={(value) => {
+              setPage(1);
+              setAssigneeId(value);
+            }}
+          />
+          <TaskRequirementSelectField
+            projectId={projectId}
+            value={requirementId}
+            placeholder="すべて"
+            onChange={(value) => {
+              setPage(1);
+              setRequirementId(value);
+            }}
+          />
+        </FieldGroup>
+      </section>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList
           variant="line"
@@ -238,15 +301,15 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </TabsList>
 
         <TabsContent value="list" className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            以下の条件は一覧・ボードに共通です。日付は開始日以降・終了予定日以前で絞り込みます。
+          </p>
           <TaskFilters
-            projectId={projectId}
             searchInput={searchInput}
             status={status}
             priority={priority}
             taskType={taskType}
             overdue={overdue}
-            assigneeId={assigneeId}
-            requirementId={requirementId}
             tag={tag}
             startDateFrom={startDateFrom}
             dueDateTo={dueDateTo}
@@ -264,14 +327,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
             onTaskTypeChange={(value) => {
               setPage(1);
               setTaskType(value);
-            }}
-            onAssigneeIdChange={(value) => {
-              setPage(1);
-              setAssigneeId(value);
-            }}
-            onRequirementIdChange={(value) => {
-              setPage(1);
-              setRequirementId(value);
             }}
             onTagChange={(value) => {
               setPage(1);
@@ -315,6 +370,17 @@ export function TasksPage({ projectId }: TasksPageProps) {
             />
           ) : (
             <>
+              <p role="status" className="text-sm text-muted-foreground">
+                {isLoading
+                  ? "タスクを読み込んでいます。"
+                  : isPlaceholderData
+                    ? "条件を更新中です。直前の結果を表示しています。"
+                    : total
+                      ? tasks.length
+                        ? `条件に合う全${total}件中 ${(page - 1) * PAGE_SIZE + 1}〜${Math.min((page - 1) * PAGE_SIZE + tasks.length, total)}件（1ページ${PAGE_SIZE}件）`
+                        : `条件に合う全${total}件。このページの対象は0件です。`
+                      : "条件に合うタスクは0件です。"}
+              </p>
               <TasksTable
                 projectId={projectId}
                 tasks={tasks}
@@ -339,15 +405,15 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </TabsContent>
 
         <TabsContent value="board" className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            以下の条件は一覧・ボードに共通です。ボードは条件に合う100件までを全件表示します。
+          </p>
           <TaskBoardToolbar
-            projectId={projectId}
             searchInput={searchInput}
             status={status}
             priority={priority}
             taskType={taskType}
             overdue={overdue}
-            assigneeId={assigneeId}
-            requirementId={requirementId}
             tag={tag}
             startDateFrom={startDateFrom}
             dueDateTo={dueDateTo}
@@ -365,14 +431,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
             onTaskTypeChange={(value) => {
               setPage(1);
               setTaskType(value);
-            }}
-            onAssigneeIdChange={(value) => {
-              setPage(1);
-              setAssigneeId(value);
-            }}
-            onRequirementIdChange={(value) => {
-              setPage(1);
-              setRequirementId(value);
             }}
             onTagChange={(value) => {
               setPage(1);
@@ -394,46 +452,113 @@ export function TasksPage({ projectId }: TasksPageProps) {
             swimlane={boardSwimlane}
             isCompletedCollapsed={isBoardCompletedCollapsed}
             onSwimlaneChange={(value) => setBoardSwimlane(value)}
-            onCompletedCollapsedChange={setIsBoardCompletedCollapsed}
+            onCompletedCollapsedChange={(collapsed) =>
+              setBoardCompleted(collapsed ? "collapsed" : "expanded")
+            }
           />
-          <TasksBoardSection
-            projectId={projectId}
-            tasks={tasks}
-            canUpdate={canUpdate}
-            swimlane={boardSwimlane}
-            isCompletedCollapsed={isBoardCompletedCollapsed}
-          />
+          {error ? (
+            <DataLoadError
+              resourceName="ボードのタスク"
+              isRetrying={isFetching}
+              onRetry={() => void refetch()}
+            />
+          ) : isLoading || isPlaceholderData ? (
+            <LoadingState message="ボードの対象範囲を確認しています。" />
+          ) : boardScope.overLimit ? (
+            <Alert>
+              <AlertTitle>
+                条件に合う全{total}件は、表示上限100件を超えています
+              </AlertTitle>
+              <AlertDescription>
+                <p>条件を絞り込むか、一覧で確認してください。</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveTab("list")}
+                >
+                  一覧で確認
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : !boardScope.complete ? (
+            <DataLoadError
+              resourceName="ボードの表示範囲"
+              isRetrying={isFetching}
+              onRetry={() => void refetch()}
+            />
+          ) : (
+            <>
+              <p role="status" className="text-sm text-muted-foreground">
+                条件に合う全{total}件 · カード表示{boardScope.visible}件
+                {boardScope.folded
+                  ? ` · 完了・中止${boardScope.folded}件を折り畳み`
+                  : ""}
+                {boardScope.unknown
+                  ? ` · 表示列のない状態${boardScope.unknown}件（一覧で確認）`
+                  : ""}
+                {isFetching ? " · 更新中" : ""}
+              </p>
+              <TasksBoardSection
+                projectId={projectId}
+                tasks={tasks}
+                canUpdate={canUpdate}
+                swimlane={boardSwimlane}
+                isCompletedCollapsed={isBoardCompletedCollapsed}
+              />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="gantt" className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            ガント固有の期間条件：期間に重なるタスクと日程未設定を取得します。一覧・ボードのキーワード・状態・優先度・タグ・期限条件は適用されません。
+          </p>
           <GanttControls
-            projectId={projectId}
             canUpdate={canUpdate}
             startDate={ganttStartDate}
             endDate={ganttEndDate}
-            assigneeId={ganttAssigneeId}
-            requirementId={ganttRequirementId}
             displayUnit={ganttDisplayUnit}
-            gantt={gantt}
+            gantt={currentGantt}
             milestones={milestones}
             onStartDateChange={setGanttStartDate}
             onEndDateChange={setGanttEndDate}
-            onAssigneeIdChange={setGanttAssigneeId}
-            onRequirementIdChange={setGanttRequirementId}
             onDisplayUnitChange={(value) =>
               setGanttDisplayUnit(value as typeof ganttDisplayUnit)
             }
             onOpenMilestoneList={() => setMilestoneListDialogOpen(true)}
             onOpenMilestoneCreate={() => setMilestoneCreateDialogOpen(true)}
           />
-          <TasksGanttSection
-            projectId={projectId}
-            gantt={gantt}
-            isLoading={isGanttLoading}
-            displayUnit={ganttDisplayUnit}
-            canUpdate={canUpdate}
-            onMilestoneSelect={setEditingMilestone}
-          />
+          <p className="text-sm text-muted-foreground">
+            対象期間：{ganttStartDate || "開始の制限なし"} 〜{" "}
+            {ganttEndDate || "終了の制限なし"}（日程未設定を含む）
+          </p>
+          {ganttError ? (
+            <DataLoadError
+              resourceName="ガント"
+              isRetrying={isGanttFetching}
+              onRetry={() => void refetchGantt()}
+            />
+          ) : (
+            <>
+              {currentGantt ? (
+                <p role="status" className="text-sm text-muted-foreground">
+                  共通条件・期間条件に合う取得{currentGantt.tasks.length}
+                  件（日程あり{currentGantt.tasks.length - ganttUnscheduled}
+                  件・日程未設定{ganttUnscheduled}件）
+                  {isGanttFetching ? " · 更新中" : ""}
+                </p>
+              ) : null}
+              <TasksGanttSection
+                projectId={projectId}
+                gantt={currentGantt}
+                isLoading={isGanttLoading || isGanttPlaceholder}
+                displayUnit={ganttDisplayUnit}
+                canUpdate={canUpdate}
+                onMilestoneSelect={setEditingMilestone}
+              />
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
