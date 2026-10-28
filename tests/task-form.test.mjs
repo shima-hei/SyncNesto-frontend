@@ -21,6 +21,39 @@ const mapper = await load("../features/tasks/lib/task-mappers.ts");
 const draft = await load("../features/tasks/lib/task-form-draft.ts");
 const scope = await load("../features/tasks/lib/task-view-scope.ts");
 const effort = await load("../features/tasks/lib/task-effort.ts");
+const phaseOptions = await load("../features/tasks/lib/task-phase-options.ts");
+
+test("only the persisted archived phase can be reselected before saving", () => {
+  const phases = [
+    { id: 9, name: "設計", archived_at: "2026-10-29T00:00:00Z" },
+    { id: 10, name: "旧工程", archived_at: "2026-10-29T00:00:00Z" },
+    { id: 11, name: "検証", archived_at: null },
+  ];
+  const editing = phaseOptions.getTaskPhaseOptions(
+    phases,
+    "phase:11",
+    "phase:9",
+  );
+  assert.equal(
+    editing.find((item) => item.value === "phase:9").disabled,
+    false,
+  );
+  assert.equal(
+    editing.find((item) => item.value === "phase:10").disabled,
+    true,
+  );
+  const creating = phaseOptions.getTaskPhaseOptions(phases, "phase:9");
+  assert.equal(
+    creating.find((item) => item.value === "phase:9").disabled,
+    true,
+  );
+  const anotherPage = phaseOptions.getTaskPhaseOptions(
+    [],
+    "unclassified",
+    "phase:9",
+  );
+  assert.ok(anotherPage.some((item) => item.value === "phase:9"));
+});
 
 test("phase and effort metadata are omitted from unrelated updates and old drafts", () => {
   const task = {

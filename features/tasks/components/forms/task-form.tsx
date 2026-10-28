@@ -190,6 +190,11 @@ export function TaskForm({
                 <TaskPhaseSelectField
                   projectId={projectId}
                   value={values.phaseAssignment}
+                  retainedValue={
+                    mode === "update"
+                      ? (conflictValues ?? initialValues).phaseAssignment
+                      : undefined
+                  }
                   error={errors.phaseAssignment}
                   onChange={(value) => updateValue("phaseAssignment", value)}
                 />

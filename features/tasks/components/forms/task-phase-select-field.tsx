@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useListPhasesProjectsProjectIdPhasesGet } from "@/lib/api/generated/tasks/tasks";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
+import { getTaskPhaseOptions } from "../../lib/task-phase-options";
 import { TaskSelectField } from "./task-form-fields";
 
 export const EFFORT_BASIS_OPTIONS = [
@@ -15,11 +16,13 @@ export const EFFORT_BASIS_OPTIONS = [
 export function TaskPhaseSelectField({
   projectId,
   value,
+  retainedValue,
   error,
   onChange,
 }: {
   projectId: number;
   value: string;
+  retainedValue?: string;
   error?: string;
   onChange: (value: string) => void;
 }) {
@@ -29,20 +32,11 @@ export function TaskPhaseSelectField({
     { page, page_size: 100, include_archived: true },
     { query: { retry: false } },
   );
-  const options = [
-    { value: "unclassified", label: "未分類" },
-    { value: "shared", label: "共通作業" },
-    ...(query.data?.items ?? []).map((phase) => ({
-      value: `phase:${phase.id}`,
-      label: `${phase.name}${phase.archived_at ? "（アーカイブ済み）" : ""}`,
-      disabled: Boolean(phase.archived_at) && value !== `phase:${phase.id}`,
-    })),
-  ];
-  if (
-    value.startsWith("phase:") &&
-    !options.some((option) => option.value === value)
-  )
-    options.push({ value, label: `現在の工程 #${value.slice(6)}（候補外）` });
+  const options = getTaskPhaseOptions(
+    query.data?.items ?? [],
+    value,
+    retainedValue,
+  );
   return (
     <div className="flex flex-col gap-2">
       <TaskSelectField
