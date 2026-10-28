@@ -7,6 +7,7 @@
 import type { EffortFilters } from "./effortFilters";
 import type { EffortTotals } from "./effortTotals";
 import type { PhaseEffortGroup } from "./phaseEffortGroup";
+import type { StatusEffortGroup } from "./statusEffortGroup";
 
 /**
  * 描画行や取得ページ数に左右されないProject集計。
@@ -17,4 +18,5 @@ export interface EffortSummary {
   filters: EffortFilters;
   totals: EffortTotals;
   groups: PhaseEffortGroup[];
+  status_groups: StatusEffortGroup[];
 }

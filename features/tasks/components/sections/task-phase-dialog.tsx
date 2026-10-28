@@ -34,6 +34,7 @@ import {
 } from "@/lib/api/generated/tasks/tasks";
 import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
 import { formatEffortMetric } from "../../lib/task-effort";
+import { getTaskStatusLabel } from "../../constants/task-options";
 
 type PhaseValues = { name: string; sortOrder: string; archived: string };
 const phaseValues = (phase: PhaseRead | null): PhaseValues => ({
@@ -140,6 +141,38 @@ function PhaseOverview({ projectId }: { projectId: number }) {
               ))}
             </TableBody>
           </Table>
+          <details className="min-w-0">
+            <summary className="cursor-pointer text-sm font-medium">
+              状態別の工数内訳
+            </summary>
+            <p className="my-2 text-sm text-muted-foreground">
+              完了・中止も全体に含めています。工程別と同じ対象を状態ごとに確認できます。
+            </p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>状態</TableHead>
+                  <TableHead>件数</TableHead>
+                  <TableHead>見積</TableHead>
+                  <TableHead>実績</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {summary.data.status_groups.map((group) => (
+                  <TableRow key={group.status}>
+                    <TableCell>{getTaskStatusLabel(group.status)}</TableCell>
+                    <TableCell>{group.totals.task_count}</TableCell>
+                    <TableCell>
+                      {formatEffortMetric(group.totals.estimated)}
+                    </TableCell>
+                    <TableCell>
+                      {formatEffortMetric(group.totals.actual)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </details>
         </>
       ) : null}
       <div className="flex items-center justify-between gap-2">
