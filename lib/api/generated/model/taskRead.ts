@@ -4,6 +4,10 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { EffortTotals } from "./effortTotals";
+import type { TaskReadActualBasis } from "./taskReadActualBasis";
+import type { TaskReadEstimatedBasis } from "./taskReadEstimatedBasis";
+import type { TaskReadPhaseScope } from "./taskReadPhaseScope";
 import type { TaskRequirementSummary } from "./taskRequirementSummary";
 
 /**
@@ -30,11 +34,18 @@ export interface TaskRead {
   progress_percent?: number;
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
+  estimated_basis?: TaskReadEstimatedBasis;
+  actual_basis?: TaskReadActualBasis;
   sort_order?: number;
   tags?: string[];
   id: number;
   project_id: number;
   version: number;
+  phase_scope?: TaskReadPhaseScope;
+  phase_id?: number | null;
+  phase_name?: string | null;
+  phase_archived?: boolean;
+  effort_totals?: EffortTotals | null;
   created_by?: number | null;
   updated_by?: number | null;
   created_at: string;

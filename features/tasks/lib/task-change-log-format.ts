@@ -43,6 +43,9 @@ const FIELD_LABELS: Record<string, string> = {
   actual_end_date: "実終了日",
   estimated_minutes: "見積時間",
   actual_minutes: "実績時間",
+  phase_assignment: "工程所属",
+  estimated_basis: "見積工数の根拠",
+  actual_basis: "実績工数の根拠",
   progress_percent: "進捗",
   parent_task_id: "親タスク",
   sort_order: "並び順",
@@ -138,6 +141,27 @@ export const formatTaskChangeLogValue = (
   value: unknown,
   fieldName?: string | null,
 ): string => {
+  if (
+    fieldName === "phase_assignment" &&
+    value &&
+    typeof value === "object" &&
+    "kind" in value
+  ) {
+    if (value.kind === "shared") return "共通作業";
+    if (value.kind === "unclassified") return "未分類";
+    return "name" in value && typeof value.name === "string"
+      ? value.name
+      : `工程 #${"phase_id" in value ? value.phase_id : "?"}`;
+  }
+  if (
+    (fieldName === "estimated_basis" || fieldName === "actual_basis") &&
+    typeof value === "string"
+  )
+    return value === "rollup"
+      ? "子の集計枠"
+      : value === "unreviewed"
+        ? "未確認"
+        : "自身の作業";
   if (isEmptyValue(value)) {
     return "-";
   }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,21 +22,26 @@ export function TaskSelectField({
 }: {
   label: string;
   value: string;
-  options: readonly { value: string; label: string }[];
+  options: readonly { value: string; label: string; disabled?: boolean }[];
   error?: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <Field data-invalid={error ? true : undefined}>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full" aria-invalid={Boolean(error)}>
+        <SelectTrigger id={id} className="w-full" aria-invalid={Boolean(error)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+              >
                 {option.label}
               </SelectItem>
             ))}

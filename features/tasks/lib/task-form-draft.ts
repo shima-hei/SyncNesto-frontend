@@ -26,7 +26,7 @@ export const mergeTaskFormDraft = (
   const merged = { ...current };
   for (const field of Object.keys(current) as (keyof TaskFormValues)[]) {
     if (draft.values[field] !== draft.initialValues[field]) {
-      merged[field] = draft.values[field];
+      Object.assign(merged, { [field]: draft.values[field] });
     }
   }
   return merged;

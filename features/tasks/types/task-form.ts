@@ -14,6 +14,9 @@ export type TaskFormValues = {
   progressPercent: string;
   estimatedMinutes: string;
   actualMinutes: string;
+  phaseAssignment: string;
+  estimatedBasis: "own" | "rollup" | "unreviewed";
+  actualBasis: "own" | "rollup" | "unreviewed";
   parentTaskId: string;
   requirementId: string;
   relationType: string;

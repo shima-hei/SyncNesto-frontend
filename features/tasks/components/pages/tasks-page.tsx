@@ -62,6 +62,7 @@ import {
 } from "../sections/tasks-board-section";
 import { TasksGanttSection } from "../sections/tasks-gantt-section";
 import { TasksTable } from "../tables/tasks-table";
+import { TaskPhaseDialog } from "../sections/task-phase-dialog";
 
 const PAGE_SIZE = 20;
 const TASK_TABS = ["list", "board", "gantt"] as const;
@@ -251,12 +252,15 @@ export function TasksPage({ projectId }: TasksPageProps) {
         title="タスク"
         description="プロジェクトのタスク、カンバン、ガントチャートを管理します。"
         actions={
-          canCreate ? (
-            <Button type="button" onClick={() => setCreateDialogOpen(true)}>
-              <PlusIcon data-icon="inline-start" />
-              タスク新規作成
-            </Button>
-          ) : null
+          <div className="flex flex-wrap gap-2">
+            <TaskPhaseDialog projectId={projectId} />
+            {canCreate ? (
+              <Button type="button" onClick={() => setCreateDialogOpen(true)}>
+                <PlusIcon data-icon="inline-start" />
+                タスク新規作成
+              </Button>
+            ) : null}
+          </div>
         }
       />
 

@@ -4,6 +4,9 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PhaseAssignment } from "./phaseAssignment";
+import type { RequirementTaskCreateActualBasis } from "./requirementTaskCreateActualBasis";
+import type { RequirementTaskCreateEstimatedBasis } from "./requirementTaskCreateEstimatedBasis";
 
 /**
  * 要件配下からタスクを作成するリクエストschema。
@@ -29,8 +32,11 @@ export interface RequirementTaskCreate {
   progress_percent?: number;
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
+  estimated_basis?: RequirementTaskCreateEstimatedBasis;
+  actual_basis?: RequirementTaskCreateActualBasis;
   sort_order?: number;
   tags?: string[];
+  phase_assignment?: PhaseAssignment | null;
   requirement_id?: number | null;
   relation_type?: string;
 }

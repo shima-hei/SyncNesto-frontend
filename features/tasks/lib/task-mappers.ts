@@ -3,6 +3,7 @@ import type {
   TaskCreate,
   TaskRead,
   TaskUpdate,
+  PhaseAssignment,
 } from "@/lib/api/generated/model";
 
 import type { TaskFormValues } from "../types/task-form";
@@ -23,6 +24,9 @@ export const defaultTaskFormValues: TaskFormValues = {
   progressPercent: "0",
   estimatedMinutes: "",
   actualMinutes: "",
+  phaseAssignment: "unclassified",
+  estimatedBasis: "own",
+  actualBasis: "own",
   parentTaskId: "",
   requirementId: "",
   relationType: "implements",
@@ -48,6 +52,12 @@ export const getTaskFormValues = (task: TaskRead): TaskFormValues => {
     progressPercent: String(task.progress_percent ?? 0),
     estimatedMinutes: toFormNumber(task.estimated_minutes),
     actualMinutes: toFormNumber(task.actual_minutes),
+    phaseAssignment:
+      task.phase_scope === "phase"
+        ? `phase:${task.phase_id}`
+        : (task.phase_scope ?? "unclassified"),
+    estimatedBasis: task.estimated_basis ?? "own",
+    actualBasis: task.actual_basis ?? "own",
     parentTaskId: toFormNumber(task.parent_task_id),
     requirementId: toFormNumber(task.requirements?.[0]?.id),
     relationType: task.requirements?.[0]?.relation_type ?? "implements",
@@ -77,6 +87,9 @@ export const toTaskCreate = (values: TaskFormValues): TaskCreate => {
     progress_percent: toOptionalNumber(values.progressPercent) ?? 0,
     estimated_minutes: toOptionalNumber(values.estimatedMinutes),
     actual_minutes: toOptionalNumber(values.actualMinutes),
+    phase_assignment: toPhaseAssignment(values.phaseAssignment),
+    estimated_basis: values.estimatedBasis,
+    actual_basis: values.actualBasis,
     sort_order: toOptionalNumber(values.sortOrder) ?? 0,
     tags: toTagArray(values.tags),
     requirement_id: toOptionalNumber(values.requirementId),
@@ -121,6 +134,9 @@ export const toTaskUpdate = (
 ): TaskUpdate => {
   const nextValues: TaskUpdate = {
     version,
+    phase_assignment: toPhaseAssignment(values.phaseAssignment),
+    estimated_basis: values.estimatedBasis,
+    actual_basis: values.actualBasis,
     parent_task_id: toOptionalNumber(values.parentTaskId),
     task_code: values.taskCode.trim(),
     title: values.title.trim(),
@@ -163,6 +179,9 @@ export const toTaskUpdate = (
 };
 
 const TASK_UPDATE_FIELDS = [
+  "phase_assignment",
+  "estimated_basis",
+  "actual_basis",
   "parent_task_id",
   "task_code",
   "title",
@@ -187,12 +206,20 @@ const areTaskUpdateValuesEqual = (
   left: TaskUpdate[(typeof TASK_UPDATE_FIELDS)[number]],
   right: TaskUpdate[(typeof TASK_UPDATE_FIELDS)[number]],
 ) => {
-  if (Array.isArray(left) || Array.isArray(right)) {
+  if (
+    (typeof left === "object" && left !== null) ||
+    (typeof right === "object" && right !== null)
+  ) {
     return JSON.stringify(left ?? []) === JSON.stringify(right ?? []);
   }
 
   return (left ?? null) === (right ?? null);
 };
+
+const toPhaseAssignment = (value: string): PhaseAssignment =>
+  value?.startsWith("phase:")
+    ? { kind: "phase", phase_id: Number(value.slice(6)) }
+    : { kind: value === "shared" ? "shared" : "unclassified", phase_id: null };
 
 const toFormNumber = (value: number | null | undefined) => {
   return value === null || value === undefined ? "" : String(value);

@@ -25,6 +25,11 @@ import {
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 import { formatDate, formatDateTime } from "@/lib/format/date";
+import {
+  formatEffortMetric,
+  taskPhaseLabel,
+  effortBasisLabel,
+} from "../../lib/task-effort";
 import type { TaskRead } from "@/lib/api/generated/model";
 
 import { useTask } from "../../hooks/use-task";
@@ -207,8 +212,21 @@ function TaskSheetOverview({
             value={formatDate(task.actual_end_date)}
           />
           <TaskInfo label="進捗率" value={`${task.progress_percent ?? 0}%`} />
+          <TaskInfo label="工程所属" value={taskPhaseLabel(task)} />
           <TaskInfo
-            label="見積/実績"
+            label="工数の根拠（見積 / 実績）"
+            value={`${effortBasisLabel(task.estimated_basis)} / ${effortBasisLabel(task.actual_basis)}`}
+          />
+          <TaskInfo
+            label="子を含む見積"
+            value={formatEffortMetric(task.effort_totals?.estimated)}
+          />
+          <TaskInfo
+            label="子を含む実績"
+            value={formatEffortMetric(task.effort_totals?.actual)}
+          />
+          <TaskInfo
+            label="見積/実績（入力値）"
             value={`${task.estimated_minutes ?? "-"} / ${
               task.actual_minutes ?? "-"
             } 分`}

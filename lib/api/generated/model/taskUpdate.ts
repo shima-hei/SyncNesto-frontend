@@ -4,12 +4,18 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PhaseAssignment } from "./phaseAssignment";
+import type { TaskUpdateActualBasis } from "./taskUpdateActualBasis";
+import type { TaskUpdateEstimatedBasis } from "./taskUpdateEstimatedBasis";
 
 /**
  * タスク更新リクエストで受け取るschema。
  */
 export interface TaskUpdate {
   version: number;
+  phase_assignment?: PhaseAssignment | null;
+  estimated_basis?: TaskUpdateEstimatedBasis;
+  actual_basis?: TaskUpdateActualBasis;
   parent_task_id?: number | null;
   task_code?: string | null;
   title?: string | null;
