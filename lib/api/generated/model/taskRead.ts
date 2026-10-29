@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { EffortTotals } from "./effortTotals";
+import type { TaskParentSummary } from "./taskParentSummary";
 import type { TaskReadActualBasis } from "./taskReadActualBasis";
 import type { TaskReadEstimatedBasis } from "./taskReadEstimatedBasis";
 import type { TaskReadPhaseScope } from "./taskReadPhaseScope";
@@ -41,6 +42,7 @@ export interface TaskRead {
   id: number;
   project_id: number;
   version: number;
+  parent_summary?: TaskParentSummary | null;
   phase_scope?: TaskReadPhaseScope;
   phase_id?: number | null;
   phase_name?: string | null;

@@ -1,5 +1,6 @@
 import type { TaskRead } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
+import { getTaskParentSummary } from "./task-list-scope";
 
 import {
   getTaskPriorityLabel,
@@ -144,11 +145,11 @@ const getSwimlaneLabel = (
         return "親タスクなし";
       }
 
-      const parentTask = tasksById.get(task.parent_task_id);
+      const parentTask = getTaskParentSummary(task, tasksById);
 
       return parentTask
-        ? `${parentTask.task_code} ${parentTask.title}`
-        : `親: ${task.parent_task_id}`;
+        ? `${parentTask.title}（${parentTask.task_code}）`
+        : `親の名称を確認できません（ID: ${task.parent_task_id}）`;
     }
     case "priority":
       return getTaskPriorityLabel(task.priority);

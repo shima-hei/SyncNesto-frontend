@@ -20,7 +20,15 @@ import type {
 } from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
 
-import { useUpdateTaskQuick } from "../../hooks/use-update-task-quick";
+import type { TaskPlanningController } from "../../hooks/use-task-planning";
+import {
+  getTaskPlanningValues,
+  overlayPlanningTask,
+} from "../../lib/task-planning";
+import {
+  TaskPlanningActions,
+  TaskPlanningFields,
+} from "../gantt/task-planning-editor";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { GanttDependenciesSummary } from "../gantt/gantt-dependencies-summary";
 import {
@@ -44,7 +52,6 @@ import {
   TaskTypeBadge,
 } from "../shared/task-badges";
 import {
-  GANTT_TASK_COLUMN_WIDTH,
   type DateRange,
   type GanttDisplayUnit,
   type GanttDragMode,
@@ -58,7 +65,6 @@ import {
   getPointerDate,
   getTimelineBarStyle,
   getTimelineWidth,
-  isScheduleDirty,
   toDateInputValue,
 } from "../../lib/gantt-timeline";
 import {
@@ -73,6 +79,7 @@ type TasksGanttSectionProps = {
   isLoading: boolean;
   displayUnit: GanttDisplayUnit;
   canUpdate: boolean;
+  planning: TaskPlanningController;
   onMilestoneSelect: (milestone: MilestoneRead) => void;
 };
 
@@ -82,6 +89,7 @@ export function TasksGanttSection({
   isLoading,
   displayUnit,
   canUpdate,
+  planning,
   onMilestoneSelect,
 }: TasksGanttSectionProps) {
   const [collapsedTaskIds, setCollapsedTaskIds] = useState<number[]>([]);
@@ -93,7 +101,7 @@ export function TasksGanttSection({
   const [highlightedDropDate, setHighlightedDropDate] = useState<string | null>(
     null,
   );
-  const { updateTaskQuick, isPending } = useUpdateTaskQuick(projectId);
+  const [dragRange, setDragRange] = useState<DateRange | null>(null);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
 
   if (isLoading) {
@@ -104,7 +112,11 @@ export function TasksGanttSection({
     );
   }
 
-  const tasks = gantt?.tasks ?? [];
+  const tasks = (gantt?.tasks ?? []).map((task) =>
+    planning.rows[task.id]
+      ? overlayPlanningTask(task, planning.rows[task.id].values)
+      : task,
+  );
   const dependencies = gantt?.dependencies ?? [];
   const milestones = gantt?.milestones ?? [];
   const visibleTasks = tasks.filter((task) => task.start_date || task.due_date);
@@ -115,6 +127,7 @@ export function TasksGanttSection({
     (milestone) => milestone.target_date,
   );
   const range =
+    dragRange ??
     getDateRange(visibleTasks, visibleMilestones, displayUnit) ??
     (unscheduledTasks.length ? getFallbackDateRange(displayUnit) : null);
   const parentTaskIds = new Set(
@@ -127,9 +140,8 @@ export function TasksGanttSection({
       !task.parent_task_id || !collapsedTaskIds.includes(task.parent_task_id),
   );
   const timelineWidth = range ? getTimelineWidth(range, displayUnit) : 0;
-  const ganttWidth = GANTT_TASK_COLUMN_WIDTH + timelineWidth;
   const ganttGridStyle = {
-    gridTemplateColumns: `${GANTT_TASK_COLUMN_WIDTH}px ${timelineWidth}px`,
+    gridTemplateColumns: `var(--gantt-task-width) ${timelineWidth}px`,
   };
   const dropUnscheduledTask = (
     task: TaskRead,
@@ -139,7 +151,8 @@ export function TasksGanttSection({
 
     setDraggingUnscheduledTaskId(null);
     setHighlightedDropDate(null);
-    return updateTaskQuick(task, { startDate, dueDate: startDate });
+    planning.edit(task, { startDate, dueDate: startDate });
+    return Promise.resolve();
   };
   const clearUnscheduledDragState = () => {
     setDraggingUnscheduledTaskId(null);
@@ -155,7 +168,12 @@ export function TasksGanttSection({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="@container flex flex-col gap-3">
+      {canUpdate ? (
+        <p className="text-sm text-muted-foreground">
+          担当・予定日・見積を編集できます。ドラッグ後も、各行の「保存」で確定します。
+        </p>
+      ) : null}
       {canUpdate && unscheduledTasks.length ? (
         <div className="flex justify-end">
           <Button
@@ -172,7 +190,8 @@ export function TasksGanttSection({
       <UnscheduledTasksPanel
         open={unscheduledPanelOpen}
         tasks={unscheduledTasks}
-        isPending={isPending}
+        isPending={Boolean(planning.pendingDraft)}
+        onEditPlanning={planning.openEditor}
         onClose={() => {
           setUnscheduledPanelOpen(false);
           clearUnscheduledDragState();
@@ -186,14 +205,18 @@ export function TasksGanttSection({
         }}
       />
       {range ? (
-        <div className="overflow-x-auto rounded-lg border">
-          <div style={{ width: `${ganttWidth}px` }}>
+        <div className="overflow-x-auto rounded-lg border [--gantt-task-width:320px] @min-[96rem]:[--gantt-task-width:1040px]">
+          <div
+            style={{
+              width: `calc(var(--gantt-task-width) + ${timelineWidth}px)`,
+            }}
+          >
             <div
               className="grid border-b bg-muted/40 text-xs text-muted-foreground"
               style={ganttGridStyle}
             >
               <div className="sticky left-0 z-20 border-r bg-muted/40 px-3 py-2">
-                タスク
+                タスク / 計画（行ごとに保存）
               </div>
               <GanttTimelineHeader
                 range={range}
@@ -220,7 +243,7 @@ export function TasksGanttSection({
             <div className="divide-y">
               {displayedTasks.map((task) => (
                 <GanttTaskRow
-                  key={`${task.id}-${task.version}-${task.start_date ?? "none"}-${task.due_date ?? "none"}`}
+                  key={task.id}
                   task={task}
                   range={range}
                   milestones={visibleMilestones}
@@ -230,8 +253,15 @@ export function TasksGanttSection({
                   unscheduledTasks={unscheduledTasks}
                   hasChildren={parentTaskIds.has(task.id)}
                   isCollapsed={collapsedTaskIds.includes(task.id)}
-                  canUpdate={canUpdate}
-                  isPending={isPending}
+                  canUpdate={
+                    canUpdate &&
+                    !planning.pendingDraft &&
+                    !["pending", "unknown"].includes(
+                      planning.rows[task.id]?.status ?? "",
+                    )
+                  }
+                  planning={planning}
+                  canEditPlanning={canUpdate}
                   onToggleCollapse={() =>
                     setCollapsedTaskIds((current) =>
                       current.includes(task.id)
@@ -239,7 +269,8 @@ export function TasksGanttSection({
                         : [...current, task.id],
                     )
                   }
-                  onScheduleUpdate={(values) => updateTaskQuick(task, values)}
+                  onScheduleUpdate={(values) => planning.edit(task, values)}
+                  onDragActive={(active) => setDragRange(active ? range : null)}
                   onOpenDetail={setSelectedTaskId}
                   onDropUnscheduledTask={(task, dropDate) =>
                     dropUnscheduledTask(task, dropDate)
@@ -321,9 +352,11 @@ function GanttTaskRow({
   hasChildren,
   isCollapsed,
   canUpdate,
-  isPending,
+  planning,
+  canEditPlanning,
   onToggleCollapse,
   onScheduleUpdate,
+  onDragActive,
   onOpenDetail,
   onDropUnscheduledTask,
   onDropDateHover,
@@ -339,20 +372,20 @@ function GanttTaskRow({
   hasChildren: boolean;
   isCollapsed: boolean;
   canUpdate: boolean;
-  isPending: boolean;
+  planning: TaskPlanningController;
+  canEditPlanning: boolean;
   onToggleCollapse: () => void;
-  onScheduleUpdate: (values: {
-    startDate?: string;
-    dueDate?: string;
-  }) => Promise<unknown>;
+  onScheduleUpdate: (values: { startDate?: string; dueDate?: string }) => void;
+  onDragActive: (active: boolean) => void;
   onOpenDetail: (taskId: number) => void;
   onDropUnscheduledTask: (task: TaskRead, dropDate: Date) => Promise<unknown>;
   onDropDateHover: (date: string | null) => void;
   onDropDateClear: () => void;
 }) {
-  const [startDate, setStartDate] = useState(task.start_date ?? "");
-  const [dueDate, setDueDate] = useState(task.due_date ?? "");
+  const { startDate, dueDate } =
+    planning.rows[task.id]?.values ?? getTaskPlanningValues(task);
   const [dragState, setDragState] = useState<GanttDragState | null>(null);
+  const beforeDragDates = useRef({ startDate, dueDate });
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const start = startDate ? new Date(startDate) : range.start;
   const end = dueDate ? new Date(dueDate) : start;
@@ -371,8 +404,7 @@ function GanttTaskRow({
 
     const nextRange = getDraggedDateRange(dragState, pointedDate);
 
-    setStartDate(nextRange.startDate);
-    setDueDate(nextRange.dueDate);
+    onScheduleUpdate(nextRange);
   };
   const finishDrag = (event: React.PointerEvent<HTMLElement>) => {
     if (!dragState) {
@@ -384,26 +416,19 @@ function GanttTaskRow({
       ? getDraggedDateRange(dragState, pointedDate)
       : { startDate, dueDate };
 
-    setStartDate(nextRange.startDate);
-    setDueDate(nextRange.dueDate);
+    onScheduleUpdate(nextRange);
     setDragState(null);
+    onDragActive(false);
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
-    if (isScheduleDirty(task, nextRange.startDate, nextRange.dueDate)) {
-      onScheduleUpdate({
-        startDate: nextRange.startDate,
-        dueDate: nextRange.dueDate,
-      }).catch(() => undefined);
     }
   };
   const startDrag = (
     event: React.PointerEvent<HTMLElement>,
     mode: GanttDragMode,
   ) => {
-    if (!canUpdate || isPending) {
+    if (!canUpdate) {
       return;
     }
 
@@ -416,6 +441,8 @@ function GanttTaskRow({
     event.preventDefault();
     event.stopPropagation();
     timelineRef.current?.setPointerCapture(event.pointerId);
+    beforeDragDates.current = { startDate, dueDate };
+    onDragActive(true);
     setDragState({
       mode,
       anchorDate: toDateInputValue(anchorDate),
@@ -426,87 +453,124 @@ function GanttTaskRow({
 
   return (
     <div className="grid" style={gridStyle}>
-      <HoverCard openDelay={150} closeDelay={120}>
-        <HoverCardTrigger asChild>
-          <div
-            className="sticky left-0 z-10 flex min-w-0 cursor-pointer items-center gap-2 border-r bg-background px-3 py-2 hover:bg-accent/60"
-            role="button"
-            tabIndex={0}
-            onClick={() => onOpenDetail(task.id)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                onOpenDetail(task.id);
-              }
-            }}
-          >
-            {hasChildren ? (
+      <div className="sticky left-0 z-10 flex flex-col gap-2 border-r bg-background px-3 py-2">
+        <div className="flex gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-2 @min-[96rem]:w-72 @min-[96rem]:flex-none">
+            <HoverCard openDelay={150} closeDelay={120}>
+              <HoverCardTrigger asChild>
+                <div
+                  className="flex min-w-0 cursor-pointer items-center gap-2 rounded hover:bg-accent/60"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onOpenDetail(task.id)}
+                  onKeyDown={(event) => {
+                    if (
+                      event.target === event.currentTarget &&
+                      event.key === "Enter" &&
+                      !event.nativeEvent.isComposing
+                    ) {
+                      onOpenDetail(task.id);
+                    }
+                  }}
+                >
+                  {hasChildren ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={
+                        isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onToggleCollapse();
+                      }}
+                    >
+                      {isCollapsed ? (
+                        <ChevronRightIcon data-icon="inline-start" />
+                      ) : (
+                        <ChevronDownIcon data-icon="inline-start" />
+                      )}
+                    </Button>
+                  ) : (
+                    <span className="size-8 shrink-0" />
+                  )}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    {task.parent_task_id ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        └
+                      </span>
+                    ) : null}
+                    <span className="line-clamp-3 break-words text-sm font-medium">
+                      {task.title}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {task.task_code}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <TaskStatusBadge status={task.status} />
+                    <TaskFlagBadges
+                      isOverdue={task.is_overdue}
+                      isBlocked={task.is_blocked}
+                    />
+                  </div>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent side="right" align="start" className="w-72">
+                <div className="flex flex-col gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.task_code}
+                    </p>
+                  </div>
+                  <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
+                    <dt className="text-muted-foreground">担当者</dt>
+                    <dd className="truncate">{assigneeLabel}</dd>
+                    <dt className="text-muted-foreground">進捗</dt>
+                    <dd>{task.progress_percent ?? 0}%</dd>
+                  </dl>
+                  <div className="flex flex-wrap gap-1">
+                    <TaskTypeBadge type={task.task_type} />
+                    <TaskPriorityBadge priority={task.priority} />
+                  </div>
+                  <TaskTags tags={task.tags} />
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+            {canEditPlanning ? (
               <Button
                 type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={
-                  isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"
-                }
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleCollapse();
-                }}
+                size="sm"
+                variant="outline"
+                className="@min-[96rem]:hidden"
+                onClick={() => planning.openEditor(task)}
               >
-                {isCollapsed ? (
-                  <ChevronRightIcon data-icon="inline-start" />
-                ) : (
-                  <ChevronDownIcon data-icon="inline-start" />
-                )}
+                計画を編集
               </Button>
-            ) : (
-              <span className="size-8 shrink-0" />
-            )}
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              {task.parent_task_id ? (
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  └
-                </span>
-              ) : null}
-              <span className="truncate text-sm font-medium">{task.title}</span>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {task.task_code}
-              </span>
-            </div>
-            <div className="flex shrink-0 gap-1">
-              <TaskStatusBadge status={task.status} />
-              <TaskFlagBadges
-                isOverdue={task.is_overdue}
-                isBlocked={task.is_blocked}
-              />
-            </div>
+            ) : null}
           </div>
-        </HoverCardTrigger>
-        <HoverCardContent side="right" align="start" className="w-72">
-          <div className="flex flex-col gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{task.title}</p>
-              <p className="text-xs text-muted-foreground">{task.task_code}</p>
+          {canEditPlanning ? (
+            <div className="hidden min-w-0 flex-1 @min-[96rem]:block">
+              <TaskPlanningFields task={task} planning={planning} inline />
             </div>
-            <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
-              <dt className="text-muted-foreground">担当者</dt>
-              <dd className="truncate">{assigneeLabel}</dd>
-              <dt className="text-muted-foreground">進捗</dt>
-              <dd>{task.progress_percent ?? 0}%</dd>
-            </dl>
-            <div className="flex flex-wrap gap-1">
-              <TaskTypeBadge type={task.task_type} />
-              <TaskPriorityBadge priority={task.priority} />
-            </div>
-            <TaskTags tags={task.tags} />
-          </div>
-        </HoverCardContent>
-      </HoverCard>
+          ) : null}
+        </div>
+        {canEditPlanning ? (
+          <TaskPlanningActions task={task} planning={planning} />
+        ) : null}
+      </div>
       <div
         ref={timelineRef}
-        className="relative py-4"
+        className="relative flex flex-col justify-center py-4"
         onPointerMove={updateDraggedRange}
         onPointerUp={finishDrag}
-        onPointerCancel={() => setDragState(null)}
+        onPointerCancel={() => {
+          if (dragState) onScheduleUpdate(beforeDragDates.current);
+          setDragState(null);
+          onDragActive(false);
+        }}
         onDragOver={(event) => {
           if (!canUpdate || !hasDraggedUnscheduledTask(event.dataTransfer)) {
             return;

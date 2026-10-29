@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 import { useTaskOrigin } from "@/hooks/use-task-origin";
-import { CopyIcon } from "lucide-react";
+import { CopyIcon, ListTreeIcon } from "lucide-react";
 
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
 import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
@@ -28,11 +28,13 @@ import {
 } from "@/components/ui/table";
 import type { TaskRead } from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
+import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 
 import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
 import { useDuplicateTask } from "../../hooks/use-duplicate-task";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useUpdateTaskStatus } from "../../hooks/use-update-task-status";
+import { getTaskParentSummary } from "../../lib/task-list-scope";
 import {
   TaskFlagBadges,
   TaskRequirementBadges,
@@ -50,6 +52,7 @@ type TasksTableProps = {
   selectedTaskIds: number[];
   onToggleTask: (taskId: number, checked: boolean) => void;
   onToggleAllTasks: (checked: boolean) => void;
+  onBrowseChildren: (taskId: number) => void;
 };
 
 export function TasksTable({
@@ -61,7 +64,10 @@ export function TasksTable({
   selectedTaskIds,
   onToggleTask,
   onToggleAllTasks,
+  onBrowseChildren,
 }: TasksTableProps) {
+  const [columns, setColumns] = useUrlFilterState("taskColumns", "summary");
+  const showDetails = columns === "details";
   const { withReturn } = useListNavigation(
     `/projects/joined/${projectId}/tasks`,
   );
@@ -87,169 +93,221 @@ export function TasksTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {canUpdate ? (
-            <TableHead className="w-10">
-              <Checkbox
-                aria-label="表示中のタスクを選択"
-                checked={selectionState}
-                onCheckedChange={(checked) =>
-                  onToggleAllTasks(checked === true)
-                }
-              />
-            </TableHead>
-          ) : null}
-          <TableHead>タスク</TableHead>
-          <TableHead>種別</TableHead>
-          <TableHead>担当</TableHead>
-          <TableHead>状態</TableHead>
-          <TableHead>開始日</TableHead>
-          <TableHead>終了予定日</TableHead>
-          <TableHead>進捗</TableHead>
-          <TableHead>関連要件</TableHead>
-          <TableHead>タグ</TableHead>
-          <TableHead>親タスク</TableHead>
-          {canCreate ? <TableHead className="w-24">操作</TableHead> : null}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {tasks.length ? (
-          tasks.map((task) => (
-            <ClickableTableRow
-              key={task.id}
-              href={withReturn(
-                `/projects/joined/${projectId}/tasks/${task.id}`,
-              )}
-            >
-              {canUpdate ? (
-                <TableCell
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
+    <div className="flex min-w-0 flex-col gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          名称の下に親タスクを表示します。列が収まらない場合は横にスクロールできます。
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-pressed={showDetails}
+          onClick={() => setColumns(showDetails ? "summary" : "details")}
+        >
+          {showDetails ? "基本の列に戻す" : "詳細の列を表示"}
+        </Button>
+      </div>
+      <Table className="min-w-[48rem]">
+        <TableHeader>
+          <TableRow>
+            {canUpdate ? (
+              <TableHead className="w-10">
+                <Checkbox
+                  aria-label="表示中のタスクを選択"
+                  checked={selectionState}
+                  onCheckedChange={(checked) =>
+                    onToggleAllTasks(checked === true)
+                  }
+                />
+              </TableHead>
+            ) : null}
+            <TableHead>タスク</TableHead>
+            {showDetails ? <TableHead>種別</TableHead> : null}
+            <TableHead>担当</TableHead>
+            <TableHead>状態</TableHead>
+            {showDetails ? <TableHead>開始日</TableHead> : null}
+            <TableHead>終了予定日</TableHead>
+            <TableHead>進捗</TableHead>
+            {showDetails ? <TableHead>関連要件</TableHead> : null}
+            {showDetails ? <TableHead>タグ</TableHead> : null}
+            <TableHead>操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tasks.length ? (
+            tasks.map((task) => {
+              const parent = getTaskParentSummary(task, tasksById);
+              return (
+                <ClickableTableRow
+                  key={task.id}
+                  href={withReturn(
+                    `/projects/joined/${projectId}/tasks/${task.id}`,
+                  )}
                 >
-                  <Checkbox
-                    aria-label={`${task.title}を選択`}
-                    checked={selectedTaskIds.includes(task.id)}
-                    onCheckedChange={(checked) =>
-                      onToggleTask(task.id, checked === true)
-                    }
-                  />
-                </TableCell>
-              ) : null}
-              <TableCell>
-                <div className="flex min-w-64 flex-col gap-1">
-                  <Link
-                    href={withReturn(
-                      `/projects/joined/${projectId}/tasks/${task.id}`,
+                  {canUpdate ? (
+                    <TableCell
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      <Checkbox
+                        aria-label={`${task.title}を選択`}
+                        checked={selectedTaskIds.includes(task.id)}
+                        onCheckedChange={(checked) =>
+                          onToggleTask(task.id, checked === true)
+                        }
+                      />
+                    </TableCell>
+                  ) : null}
+                  <TableCell className="min-w-64 max-w-md whitespace-normal">
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <Link
+                        href={withReturn(
+                          `/projects/joined/${projectId}/tasks/${task.id}`,
+                        )}
+                        className="min-w-0 break-words rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      >
+                        {task.title}
+                      </Link>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {task.task_code} · ID: {task.id}
+                        </span>
+                        <TaskFlagBadges
+                          isOverdue={task.is_overdue}
+                          isBlocked={task.is_blocked}
+                        />
+                      </div>
+                      {task.parent_task_id ? (
+                        <Link
+                          href={withReturn(
+                            `/projects/joined/${projectId}/tasks/${task.parent_task_id}`,
+                          )}
+                          className="break-words text-xs text-muted-foreground hover:underline"
+                        >
+                          親: {parent?.title ?? "名称を確認できません"}
+                          <span className="ml-1">
+                            （
+                            {parent?.task_code ? `${parent.task_code} · ` : ""}
+                            ID: {task.parent_task_id}）
+                          </span>
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          親タスクなし
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  {showDetails ? (
+                    <TableCell>
+                      <TaskTypeBadge type={task.task_type} />
+                    </TableCell>
+                  ) : null}
+                  <TableCell>{getTaskUserLabel(task.assignee_id)}</TableCell>
+                  <TableCell>
+                    {canUpdate ? (
+                      <div
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
+                      >
+                        <Select
+                          value={task.status ?? "todo"}
+                          disabled={isPending}
+                          onValueChange={(status) =>
+                            updateTaskStatus(task, status).catch(
+                              () => undefined,
+                            )
+                          }
+                        >
+                          <SelectTrigger
+                            className="h-8 w-32"
+                            aria-label={`${task.title}の状態を変更`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {TASK_STATUS_OPTIONS.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <TaskStatusBadge status={task.status} />
                     )}
-                    className="min-w-0 truncate rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  >
-                    {task.title}
-                  </Link>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {task.task_code}
-                    </span>
-                    <TaskFlagBadges
-                      isOverdue={task.is_overdue}
-                      isBlocked={task.is_blocked}
-                    />
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <TaskTypeBadge type={task.task_type} />
-              </TableCell>
-              <TableCell>{getTaskUserLabel(task.assignee_id)}</TableCell>
-              <TableCell>
-                {canUpdate ? (
-                  <div
+                  </TableCell>
+                  {showDetails ? (
+                    <TableCell className="tabular-nums">
+                      {formatDate(task.start_date)}
+                    </TableCell>
+                  ) : null}
+                  <TableCell className="tabular-nums">
+                    {formatDate(task.due_date)}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {task.progress_percent ?? 0}%
+                  </TableCell>
+                  {showDetails ? (
+                    <TableCell>
+                      <TaskRequirementBadges requirements={task.requirements} />
+                    </TableCell>
+                  ) : null}
+                  {showDetails ? (
+                    <TableCell>
+                      <TaskTags tags={task.tags} />
+                    </TableCell>
+                  ) : null}
+                  <TableCell
                     onClick={(event) => event.stopPropagation()}
                     onKeyDown={(event) => event.stopPropagation()}
                   >
-                    <Select
-                      value={task.status ?? "todo"}
-                      disabled={isPending}
-                      onValueChange={(status) =>
-                        updateTaskStatus(task, status).catch(() => undefined)
-                      }
-                    >
-                      <SelectTrigger
-                        className="h-8 w-32"
-                        aria-label={`${task.title}の状態を変更`}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        aria-label={`${task.title}の子を見る`}
+                        onClick={() => onBrowseChildren(task.id)}
                       >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {TASK_STATUS_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <TaskStatusBadge status={task.status} />
-                )}
-              </TableCell>
-              <TableCell className="tabular-nums">
-                {formatDate(task.start_date)}
-              </TableCell>
-              <TableCell className="tabular-nums">
-                {formatDate(task.due_date)}
-              </TableCell>
-              <TableCell className="tabular-nums">
-                {task.progress_percent ?? 0}%
-              </TableCell>
-              <TableCell>
-                <TaskRequirementBadges requirements={task.requirements} />
-              </TableCell>
-              <TableCell>
-                <TaskTags tags={task.tags} />
-              </TableCell>
-              <TableCell>
-                {task.parent_task_id ? (
-                  <span className="text-xs text-muted-foreground">
-                    {getParentTaskLabel(
-                      task.parent_task_id,
-                      tasksById.get(task.parent_task_id),
-                    )}
-                  </span>
-                ) : (
-                  "-"
-                )}
-              </TableCell>
-              {canCreate ? (
-                <TableCell
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isDuplicatePending}
-                    onClick={() => duplicateTask(task).catch(() => undefined)}
-                  >
-                    <CopyIcon data-icon="inline-start" />
-                    複製
-                  </Button>
-                </TableCell>
-              ) : null}
-            </ClickableTableRow>
-          ))
-        ) : (
-          <TableEmptyRow
-            colSpan={(canUpdate ? 1 : 0) + 10 + (canCreate ? 1 : 0)}
-            message="条件に一致するタスクがありません。"
-          />
-        )}
-      </TableBody>
-    </Table>
+                        <ListTreeIcon data-icon="inline-start" />
+                        子を見る
+                      </Button>
+                      {canCreate ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isDuplicatePending}
+                          onClick={() =>
+                            duplicateTask(task).catch(() => undefined)
+                          }
+                        >
+                          <CopyIcon data-icon="inline-start" />
+                          複製
+                        </Button>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                </ClickableTableRow>
+              );
+            })
+          ) : (
+            <TableEmptyRow
+              colSpan={(canUpdate ? 1 : 0) + 6 + (showDetails ? 4 : 0)}
+              message="条件に一致するタスクがありません。"
+            />
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
@@ -276,11 +334,3 @@ export function TaskDetailLink({
     </Button>
   );
 }
-
-const getParentTaskLabel = (parentTaskId: number, parentTask?: TaskRead) => {
-  if (!parentTask) {
-    return `親: ${parentTaskId}`;
-  }
-
-  return `${parentTask.task_code} ${parentTask.title}`;
-};

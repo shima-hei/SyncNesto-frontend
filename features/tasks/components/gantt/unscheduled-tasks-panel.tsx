@@ -20,6 +20,7 @@ type UnscheduledTasksPanelProps = {
   onDragStart: (taskId: number) => void;
   onDragEnd: () => void;
   onAddToday: (task: TaskRead) => Promise<unknown>;
+  onEditPlanning?: (task: TaskRead) => void;
 };
 
 export function UnscheduledTasksPanel({
@@ -31,6 +32,7 @@ export function UnscheduledTasksPanel({
   onDragStart,
   onDragEnd,
   onAddToday,
+  onEditPlanning,
 }: UnscheduledTasksPanelProps) {
   if (!open) {
     return null;
@@ -62,6 +64,7 @@ export function UnscheduledTasksPanel({
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
                 onAddToday={onAddToday}
+                onEditPlanning={onEditPlanning}
               />
             ))}
           </div>
@@ -82,6 +85,7 @@ function UnscheduledTaskDragItem({
   onDragStart,
   onDragEnd,
   onAddToday,
+  onEditPlanning,
 }: {
   task: TaskRead;
   isPending: boolean;
@@ -89,6 +93,7 @@ function UnscheduledTaskDragItem({
   onDragStart: (taskId: number) => void;
   onDragEnd: () => void;
   onAddToday: (task: TaskRead) => Promise<unknown>;
+  onEditPlanning?: (task: TaskRead) => void;
 }) {
   return (
     <div
@@ -135,6 +140,17 @@ function UnscheduledTaskDragItem({
           <CalendarPlusIcon data-icon="inline-start" />
           今日に追加
         </Button>
+        {onEditPlanning ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isPending}
+            onClick={() => onEditPlanning(task)}
+          >
+            計画を編集
+          </Button>
+        ) : null}
       </div>
     </div>
   );

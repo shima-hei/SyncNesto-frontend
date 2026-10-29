@@ -49,9 +49,18 @@ import { useCreateTask } from "../../hooks/use-create-task";
 import { useGantt } from "../../hooks/use-gantt";
 import { useMilestones } from "../../hooks/use-milestones";
 import { useTasks } from "../../hooks/use-tasks";
+import { useTaskListScope } from "../../hooks/use-task-list-scope";
+import {
+  clearTaskListFilters,
+  type TaskListScope,
+} from "../../lib/task-list-scope";
 import { defaultTaskFormValues } from "../../lib/task-mappers";
 import { BOARD_TASK_LIMIT, getBoardTaskScope } from "../../lib/task-view-scope";
-import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
+import {
+  TASK_STATUS_OPTIONS,
+  getTaskPriorityLabel,
+  getTaskTypeLabel,
+} from "../../constants/task-options";
 import { TaskForm } from "../forms/task-form";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
@@ -61,8 +70,12 @@ import {
   TasksBoardSection,
 } from "../sections/tasks-board-section";
 import { TasksGanttSection } from "../sections/tasks-gantt-section";
+import { useTaskPlanning } from "../../hooks/use-task-planning";
+import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
 import { TasksTable } from "../tables/tasks-table";
 import { TaskPhaseDialog } from "../sections/task-phase-dialog";
+import { TaskListScopeNav } from "./controls/task-list-scope-nav";
+import { TaskAppliedFilters } from "./controls/task-applied-filters";
 
 const PAGE_SIZE = 20;
 const TASK_TABS = ["list", "board", "gantt"] as const;
@@ -73,6 +86,7 @@ type TasksPageProps = {
 
 export function TasksPage({ projectId }: TasksPageProps) {
   const { user } = useAuth();
+  const planning = useTaskPlanning(projectId);
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useUrlTabState({
     values: TASK_TABS,
@@ -81,7 +95,9 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [page, setPage] = useUrlFilterState("page", 1);
   const [q, setQ] = useUrlFilterState("q", "");
-  const [searchInput, setSearchInput] = useState(q);
+  const [searchDraft, setSearchDraft] = useState({ query: q, text: q });
+  const searchInput = searchDraft.query === q ? searchDraft.text : q;
+  const setSearchInput = (text: string) => setSearchDraft({ query: q, text });
   const [status, setStatus] = useUrlFilterState("status", ALL_STATUSES);
   const [priority, setPriority] = useUrlFilterState("priority", ALL_PRIORITIES);
   const [taskType, setTaskType] = useUrlFilterState("taskType", ALL_TYPES);
@@ -135,6 +151,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
+  const taskListScope = useTaskListScope(projectId, activeTab !== "gantt");
   const {
     tasks,
     total,
@@ -149,6 +166,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
       page: activeTab === "board" ? 1 : page,
       page_size: activeTab === "board" ? BOARD_TASK_LIMIT : PAGE_SIZE,
       q: q || undefined,
+      ...taskListScope.query,
       status: status === ALL_STATUSES ? undefined : status,
       task_type: taskType === ALL_TYPES ? undefined : taskType,
       priority: priority === ALL_PRIORITIES ? undefined : priority,
@@ -209,6 +227,40 @@ export function TasksPage({ projectId }: TasksPageProps) {
     setPage(1);
     setQ(searchInput.trim());
   };
+
+  const handleScopeChange = (scope: TaskListScope) => {
+    taskListScope.setScope(scope);
+    setSelectedTaskIds([]);
+  };
+  const handleBrowseChildren = (taskId: number) =>
+    handleScopeChange({ kind: "children", parentTaskId: taskId });
+  const handleResetFilters = () => {
+    const url = new URL(window.location.href);
+    clearTaskListFilters(url.searchParams);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+    setSearchDraft({ query: "", text: "" });
+    setSelectedTaskIds([]);
+  };
+  const appliedFilters = [
+    q ? `検索:「${q}」` : "",
+    status !== ALL_STATUSES
+      ? `状態: ${TASK_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status}`
+      : "",
+    priority !== ALL_PRIORITIES
+      ? `優先度: ${getTaskPriorityLabel(priority)}`
+      : "",
+    taskType !== ALL_TYPES ? `種別: ${getTaskTypeLabel(taskType)}` : "",
+    assigneeId ? "担当者で絞り込み" : "",
+    requirementId ? "関連要件で絞り込み" : "",
+    overdue !== ALL_OVERDUE ? "期限超過" : "",
+    tag ? `タグ: ${tag}` : "",
+    startDateFrom ? `開始: ${startDateFrom}以降` : "",
+    dueDateTo ? `終了予定: ${dueDateTo}以前` : "",
+  ].filter(Boolean);
 
   const handleToggleTask = (taskId: number, checked: boolean) => {
     setSelectedTaskIds((current) => {
@@ -294,6 +346,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </FieldGroup>
       </section>
 
+      <TaskPlanningWorkspace planning={planning} canUpdate={canUpdate} />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList
           variant="line"
@@ -305,6 +358,12 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </TabsList>
 
         <TabsContent value="list" className="flex flex-col gap-4">
+          <TaskListScopeNav
+            projectId={projectId}
+            {...taskListScope}
+            onScopeChange={handleScopeChange}
+            onRetryParent={taskListScope.retryParent}
+          />
           <p className="text-sm text-muted-foreground">
             以下の条件は一覧・ボードに共通です。日付は開始日以降・終了予定日以前で絞り込みます。
           </p>
@@ -350,6 +409,11 @@ export function TasksPage({ projectId }: TasksPageProps) {
             }}
             onSortChange={(value) => setSort(value as typeof sort)}
           />
+          <TaskAppliedFilters
+            filters={appliedFilters}
+            hasUnappliedSearch={searchInput.trim() !== q}
+            onReset={handleResetFilters}
+          />
           {canUpdate ? (
             <TaskBulkActions
               projectId={projectId}
@@ -394,6 +458,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
                 selectedTaskIds={selectedTaskIds}
                 onToggleTask={handleToggleTask}
                 onToggleAllTasks={handleToggleAllTasks}
+                onBrowseChildren={handleBrowseChildren}
               />
               <DataPagination
                 page={page}
@@ -409,6 +474,12 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </TabsContent>
 
         <TabsContent value="board" className="flex flex-col gap-4">
+          <TaskListScopeNav
+            projectId={projectId}
+            {...taskListScope}
+            onScopeChange={handleScopeChange}
+            onRetryParent={taskListScope.retryParent}
+          />
           <p className="text-sm text-muted-foreground">
             以下の条件は一覧・ボードに共通です。ボードは条件に合う100件までを全件表示します。
           </p>
@@ -460,6 +531,11 @@ export function TasksPage({ projectId }: TasksPageProps) {
               setBoardCompleted(collapsed ? "collapsed" : "expanded")
             }
           />
+          <TaskAppliedFilters
+            filters={appliedFilters}
+            hasUnappliedSearch={searchInput.trim() !== q}
+            onReset={handleResetFilters}
+          />
           {error ? (
             <DataLoadError
               resourceName="ボードのタスク"
@@ -509,6 +585,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
                 canUpdate={canUpdate}
                 swimlane={boardSwimlane}
                 isCompletedCollapsed={isBoardCompletedCollapsed}
+                onBrowseChildren={handleBrowseChildren}
               />
             </>
           )}
@@ -554,6 +631,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
                 </p>
               ) : null}
               <TasksGanttSection
+                planning={planning}
                 projectId={projectId}
                 gantt={currentGantt}
                 isLoading={isGanttLoading || isGanttPlaceholder}

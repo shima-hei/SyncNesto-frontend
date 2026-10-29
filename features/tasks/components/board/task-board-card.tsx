@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ListTreeIcon } from "lucide-react";
 import type { TaskRead } from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ export function TaskBoardCard({
   assigneeLabel,
   onMove,
   onOpenDetail,
+  onBrowseChildren,
 }: {
   projectId: number;
   task: TaskRead;
@@ -35,6 +37,7 @@ export function TaskBoardCard({
   assigneeLabel: string;
   onMove: (status: string) => Promise<unknown>;
   onOpenDetail: (taskId: number) => void;
+  onBrowseChildren: (taskId: number) => void;
 }) {
   const statusIndex = TASK_STATUS_OPTIONS.findIndex(
     (option) => option.value === task.status,
@@ -74,9 +77,9 @@ export function TaskBoardCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{task.title}</p>
+          <p className="break-words text-sm font-medium">{task.title}</p>
           <p className="text-xs text-muted-foreground">
-            {task.task_code ?? "未採番"}
+            {task.task_code ?? "未採番"} · ID: {task.id}
           </p>
         </div>
         <TaskPriorityBadge priority={task.priority} />
@@ -110,6 +113,16 @@ export function TaskBoardCard({
       </dl>
       <div className="flex flex-wrap gap-2">
         <TaskDetailLink projectId={projectId} task={task} />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label={`${task.title}の子を見る`}
+          onClick={() => onBrowseChildren(task.id)}
+        >
+          <ListTreeIcon data-icon="inline-start" />
+          子を見る
+        </Button>
         {canUpdate && nextStatus ? (
           <Button
             type="button"

@@ -25,6 +25,7 @@ type TasksBoardSectionProps = {
   canUpdate: boolean;
   swimlane: BoardSwimlane;
   isCompletedCollapsed: boolean;
+  onBrowseChildren: (taskId: number) => void;
 };
 
 export function TasksBoardSection({
@@ -33,6 +34,7 @@ export function TasksBoardSection({
   canUpdate,
   swimlane,
   isCompletedCollapsed,
+  onBrowseChildren,
 }: TasksBoardSectionProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const { updateTaskStatus, isPending } = useUpdateTaskStatus(projectId);
@@ -82,7 +84,9 @@ export function TasksBoardSection({
           <section key={lane.key} className="flex flex-col gap-2">
             {swimlane !== "none" ? (
               <div className="flex items-center justify-between gap-3">
-                <h3 className="truncate text-sm font-semibold">{lane.label}</h3>
+                <h3 className="min-w-0 break-words text-sm font-semibold">
+                  {lane.label}
+                </h3>
                 <span className="text-xs text-muted-foreground">
                   {lane.tasks.length}件
                 </span>
@@ -139,6 +143,7 @@ export function TasksBoardSection({
                                 })
                               }
                               onOpenDetail={setSelectedTaskId}
+                              onBrowseChildren={onBrowseChildren}
                             />
                           ))
                         ) : (
