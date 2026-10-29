@@ -70,7 +70,12 @@ function setup({ cancel = async () => {} } = {}) {
     "next/navigation": { usePathname: () => "/account" },
     sonner: { toast: { error: (message) => toasts.push(message) } },
     "@/lib/api/error": { ApiError },
-    "@/lib/auth/return-path": { isGuestInvitationPath: () => false },
+    "@/lib/auth/return-path": load("../lib/auth/return-path.ts", {
+      "@/features/mcp/lib/navigation": load(
+        "../features/mcp/lib/navigation.ts",
+        {},
+      ),
+    }),
     "@/lib/demo/session": {
       clearDemoData: () => calls.push("demo-cleared"),
       subscribeDemoEnded: (callback) => {
@@ -98,7 +103,12 @@ function setup({ cancel = async () => {} } = {}) {
   });
   const previousWindow = global.window;
   global.window = {
-    location: { replace: (url) => urls.push(url) },
+    location: {
+      pathname: "/account",
+      search: "?tab=profile",
+      hash: "#security",
+      replace: (url) => urls.push(url),
+    },
     addEventListener: () => {},
     removeEventListener: () => {},
   };
@@ -159,7 +169,9 @@ test("ログアウトに失敗した後も通常のセッション切れを通�
     app.expire();
     await Promise.resolve();
     assert.deepEqual(app.toasts, ["expired"]);
-    assert.deepEqual(app.urls, ["/login?reason=session-expired"]);
+    assert.deepEqual(app.urls, [
+      "/login?reason=session-expired&next=%2Faccount%3Ftab%3Dprofile%23security",
+    ]);
   } finally {
     app.cleanup();
   }
@@ -174,7 +186,9 @@ test("ログアウト要求自体が認証エラーなら失敗後に期限切�
     await assert.rejects(completion, /TOKEN_EXPIRED/);
     await Promise.resolve();
     assert.deepEqual(app.toasts, ["expired"]);
-    assert.deepEqual(app.urls, ["/login?reason=session-expired"]);
+    assert.deepEqual(app.urls, [
+      "/login?reason=session-expired&next=%2Faccount%3Ftab%3Dprofile%23security",
+    ]);
   } finally {
     app.cleanup();
   }

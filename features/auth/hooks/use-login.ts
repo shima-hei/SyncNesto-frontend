@@ -9,7 +9,10 @@ import { getLoginApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { invalidateCurrentUser } from "../lib/current-user-cache";
 import type { LoginFormValues } from "../types/login";
-import { loginReturnPath } from "@/lib/auth/return-path";
+import {
+  loginReturnPathWithFragment,
+  withLoginReturnTo,
+} from "@/lib/auth/return-path";
 
 export function useLogin(returnTo?: string) {
   const router = useRouter();
@@ -19,6 +22,10 @@ export function useLogin(returnTo?: string) {
 
   const login = async (values: LoginFormValues) => {
     setFlowError(null);
+    const safeReturn = loginReturnPathWithFragment(
+      returnTo,
+      window.location.hash,
+    );
     const response = await loginMutation.mutateAsync({ data: values });
     if (response.next_step?.startsWith("mfa_")) {
       queryClient.clear();
@@ -28,17 +35,14 @@ export function useLogin(returnTo?: string) {
         );
         return;
       }
-      const safeReturn = loginReturnPath(returnTo);
-      router.replace(
-        safeReturn ? `/mfa?next=${encodeURIComponent(safeReturn)}` : "/mfa",
-      );
+      router.replace(withLoginReturnTo("/mfa", safeReturn));
       return;
     }
     await invalidateCurrentUser(queryClient);
     router.replace(
       response.password_change_required
-        ? `/initial-password${loginReturnPath(returnTo) ? `?next=${encodeURIComponent(loginReturnPath(returnTo)!)}` : ""}`
-        : (loginReturnPath(returnTo) ?? "/entry"),
+        ? withLoginReturnTo("/initial-password", safeReturn)
+        : (safeReturn ?? "/entry"),
     );
   };
 

@@ -8,6 +8,10 @@ import {
 import { ApiError } from "./error";
 import { announceSharedAuthChange } from "@/lib/auth/shared-access-events";
 import {
+  browserLoginReturnPath,
+  withLoginReturnTo,
+} from "@/lib/auth/return-path";
+import {
   getClientDataRealm,
   registerDemoStatus,
   registerDemoUser,
@@ -93,7 +97,12 @@ export async function apiClient<T>(
       typeof window !== "undefined" &&
       !["/login", "/mfa", "/mfa/recover"].includes(window.location.pathname)
     ) {
-      window.location.replace("/login?reason=mfa-required");
+      window.location.replace(
+        withLoginReturnTo(
+          "/login?reason=mfa-required",
+          browserLoginReturnPath(),
+        ),
+      );
     }
 
     if (
@@ -102,7 +111,9 @@ export async function apiClient<T>(
       typeof window !== "undefined" &&
       window.location.pathname !== "/initial-password"
     ) {
-      window.location.replace("/initial-password");
+      window.location.replace(
+        withLoginReturnTo("/initial-password", browserLoginReturnPath()),
+      );
     }
 
     if (isAuthSessionInvalidCode(code)) {

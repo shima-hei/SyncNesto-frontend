@@ -23,7 +23,9 @@ export function LoginSessionToast({
 
     hasShownToast.current = true;
     toast.error(CURRENT_USER_MESSAGES.sessionExpired);
-    router.replace("/login", { scroll: false });
+    const url = new URL(window.location.href);
+    url.searchParams.delete("reason");
+    router.replace(url.pathname + url.search + url.hash, { scroll: false });
   }, [router, showSessionExpiredToast]);
 
   return null;
