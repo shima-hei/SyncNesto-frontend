@@ -247,6 +247,7 @@ export * from "./listSystemTenantsSystemTenantsGetParams";
 export * from "./listSystemTenantsSystemTenantsGetStatus";
 export * from "./listTargetCommentsProjectsProjectIdCommentsGetParams";
 export * from "./listTaskChangeLogsTasksTaskIdChangeLogsGetParams";
+export * from "./listTasksProjectsProjectIdTasksGetHierarchy";
 export * from "./listTasksProjectsProjectIdTasksGetParams";
 export * from "./listTrashProjectsProjectIdTrashGetParams";
 export * from "./listUsersUsersGetParams";

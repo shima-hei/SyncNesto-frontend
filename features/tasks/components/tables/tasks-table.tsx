@@ -35,6 +35,7 @@ import { useDuplicateTask } from "../../hooks/use-duplicate-task";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useUpdateTaskStatus } from "../../hooks/use-update-task-status";
 import { getTaskParentSummary } from "../../lib/task-list-scope";
+import { TaskHierarchyBadge } from "../shared/task-hierarchy-badge";
 import {
   TaskFlagBadges,
   TaskRequirementBadges,
@@ -170,6 +171,7 @@ export function TasksTable({
                         {task.title}
                       </Link>
                       <div className="flex flex-wrap items-center gap-2">
+                        <TaskHierarchyBadge task={task} />
                         <span className="text-xs text-muted-foreground">
                           {task.task_code} · ID: {task.id}
                         </span>
@@ -192,11 +194,7 @@ export function TasksTable({
                             ID: {task.parent_task_id}）
                           </span>
                         </Link>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          親タスクなし
-                        </span>
-                      )}
+                      ) : null}
                     </div>
                   </TableCell>
                   {showDetails ? (

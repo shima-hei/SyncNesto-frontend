@@ -9,19 +9,19 @@ import { Input } from "@/components/ui/input";
 
 import {
   TASK_PRIORITY_OPTIONS,
-  TASK_STATUS_OPTIONS,
   TASK_TYPE_OPTIONS,
 } from "../../../constants/task-options";
 import {
   ALL_OVERDUE,
   ALL_PRIORITIES,
-  ALL_STATUSES,
   ALL_TYPES,
   BOARD_SWIMLANE_OPTIONS,
   SORT_OPTIONS,
 } from "../../../constants/task-view-options";
 import type { BoardSwimlane } from "../../sections/tasks-board-section";
 import { TaskFilterSelect } from "./task-filter-select";
+import { TaskStatusFilterControl } from "./task-status-filter";
+import type { TaskStatusFilter } from "../../../lib/task-list-filters";
 
 export function TaskBoardToolbar({
   searchInput,
@@ -49,7 +49,7 @@ export function TaskBoardToolbar({
   onCompletedCollapsedChange,
 }: {
   searchInput: string;
-  status: string;
+  status: TaskStatusFilter;
   priority: string;
   taskType: string;
   overdue: string;
@@ -61,7 +61,7 @@ export function TaskBoardToolbar({
   isCompletedCollapsed: boolean;
   onSearchInputChange: (value: string) => void;
   onSearch: () => void;
-  onStatusChange: (value: string) => void;
+  onStatusChange: (value: TaskStatusFilter) => void;
   onPriorityChange: (value: string) => void;
   onTaskTypeChange: (value: string) => void;
   onTagChange: (value: string) => void;
@@ -101,15 +101,7 @@ export function TaskBoardToolbar({
             onChange={(event) => onSearchInputChange(event.target.value)}
           />
         </Field>
-        <TaskFilterSelect
-          label="ステータス"
-          value={status}
-          placeholder="ステータス"
-          allValue={ALL_STATUSES}
-          allLabel="すべて"
-          options={TASK_STATUS_OPTIONS}
-          onValueChange={onStatusChange}
-        />
+        <TaskStatusFilterControl value={status} onChange={onStatusChange} />
         <Field>
           <FieldLabel htmlFor="task-board-tag">タグ</FieldLabel>
           <Input

@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListTasksProjectsProjectIdTasksGetHierarchy } from "./listTasksProjectsProjectIdTasksGetHierarchy";
 
 export type ListTasksProjectsProjectIdTasksGetParams = {
   /**
@@ -16,6 +17,9 @@ export type ListTasksProjectsProjectIdTasksGetParams = {
    */
   page_size?: number;
   status?: string | null;
+  statuses?: string[] | null;
+  exclude_statuses?: string[] | null;
+  hierarchy?: ListTasksProjectsProjectIdTasksGetHierarchy;
   assignee_id?: number | null;
   requirement_id?: number | null;
   parent_task_id?: number | null;

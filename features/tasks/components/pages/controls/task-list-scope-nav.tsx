@@ -7,24 +7,33 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 import type { TaskRead } from "@/lib/api/generated/model";
 import type { TaskListScope } from "../../../lib/task-list-scope";
+import {
+  TASK_HIERARCHY_OPTIONS,
+  type TaskHierarchyFilter,
+} from "../../../lib/task-list-filters";
+import { TaskFilterSelect } from "./task-filter-select";
 
 type TaskListScopeNavProps = {
   projectId: number;
   scope: TaskListScope;
+  hierarchy: TaskHierarchyFilter | "all";
   parentTask: TaskRead | null;
   isParentLoading: boolean;
   parentUnavailable: boolean;
   onScopeChange: (scope: TaskListScope) => void;
+  onHierarchyChange: (value: string) => void;
   onRetryParent: () => void;
 };
 
 export function TaskListScopeNav({
   projectId,
   scope,
+  hierarchy,
   parentTask,
   isParentLoading,
   parentUnavailable,
   onScopeChange,
+  onHierarchyChange,
   onRetryParent,
 }: TaskListScopeNavProps) {
   const { withReturn } = useListNavigation(
@@ -50,7 +59,7 @@ export function TaskListScopeNav({
           className="max-w-full flex-wrap"
         >
           <ToggleGroupItem value="all">すべて</ToggleGroupItem>
-          <ToggleGroupItem value="roots">親なしから探す</ToggleGroupItem>
+          <ToggleGroupItem value="roots">最上位から探す</ToggleGroupItem>
           <ToggleGroupItem
             value="children"
             disabled={scope.kind !== "children"}
@@ -58,16 +67,17 @@ export function TaskListScopeNav({
             選んだ親の子
           </ToggleGroupItem>
         </ToggleGroup>
-        {scope.kind !== "all" ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onScopeChange({ kind: "all" })}
-          >
-            全体へ
-          </Button>
-        ) : null}
+        <div className="w-full sm:w-56">
+          <TaskFilterSelect
+            label="階層の種類"
+            value={hierarchy}
+            placeholder="階層の種類を選択"
+            allValue="all"
+            allLabel="すべての種類"
+            options={TASK_HIERARCHY_OPTIONS}
+            onValueChange={onHierarchyChange}
+          />
+        </div>
       </div>
       <div aria-live="polite" className="flex min-w-0 flex-col gap-2">
         {scope.kind === "children" ? (
@@ -134,12 +144,18 @@ export function TaskListScopeNav({
         ) : (
           <p className="text-xs text-muted-foreground">
             {scope.kind === "roots"
-              ? "親を持たないタスクを表示します。"
+              ? "最上位の親タスクと、親も子も持たない単独タスクを表示します。"
               : "階層を問わず、条件に合うタスクを表示します。"}{" "}
             各行の「子を見る」で親ごとに辿れます。
           </p>
         )}
       </div>
+      {hierarchy === "parent" ? (
+        <p className="text-xs text-muted-foreground">
+          親タスクのみ:
+          最上位の親と中間の親を含みます。子の有無は検索・ステータス条件にかかわらず判定します。
+        </p>
+      ) : null}
     </section>
   );
 }
