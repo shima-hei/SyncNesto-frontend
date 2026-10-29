@@ -79,7 +79,7 @@ export function TaskFilters({
       <SearchFilterBar
         searchValue={searchInput}
         searchLabel="キーワード"
-        searchPlaceholder="タスクID、タイトル、説明で検索"
+        searchPlaceholder="コード・名称・説明で検索"
         variant="compact"
         onSearchValueChange={onSearchInputChange}
         onSearch={onSearch}

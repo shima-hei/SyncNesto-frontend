@@ -8,8 +8,8 @@ export const ALL_GANTT_FILTERS = "";
 export const SORT_OPTIONS = [
   { value: "updated_desc", label: "更新日時 新しい順" },
   { value: "updated_asc", label: "更新日時 古い順" },
-  { value: "code_asc", label: "タスクID 昇順" },
-  { value: "code_desc", label: "タスクID 降順" },
+  { value: "code_asc", label: "タスクコード 昇順" },
+  { value: "code_desc", label: "タスクコード 降順" },
   { value: "due_date_asc", label: "終了予定日 昇順" },
   { value: "due_date_desc", label: "終了予定日 降順" },
   { value: "progress_desc", label: "進捗率 高い順" },

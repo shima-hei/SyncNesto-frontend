@@ -97,7 +97,7 @@ export function TaskBoardToolbar({
           <Input
             id="task-board-keyword"
             value={searchInput}
-            placeholder="タスクID、タイトル、説明"
+            placeholder="コード・名称・説明で検索"
             onChange={(event) => onSearchInputChange(event.target.value)}
           />
         </Field>

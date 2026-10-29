@@ -582,6 +582,8 @@ export * from "./taskDependencyUpdate";
 export * from "./taskListResponse";
 export * from "./taskMoveRequest";
 export * from "./taskOverview";
+export * from "./taskParentSummary";
+export * from "./taskPlanningUpdate";
 export * from "./taskRead";
 export * from "./taskReadActualBasis";
 export * from "./taskReadEstimatedBasis";
