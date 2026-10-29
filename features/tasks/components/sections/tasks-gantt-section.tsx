@@ -456,7 +456,11 @@ function GanttTaskRow({
       <div className="sticky left-0 z-10 flex flex-col gap-2 border-r bg-background px-3 py-2">
         <div className="flex gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-2 @min-[96rem]:w-72 @min-[96rem]:flex-none">
-            <HoverCard openDelay={150} closeDelay={120}>
+            <HoverCard
+              open={canEditPlanning ? false : undefined}
+              openDelay={150}
+              closeDelay={120}
+            >
               <HoverCardTrigger asChild>
                 <div
                   className="flex min-w-0 cursor-pointer items-center gap-2 rounded hover:bg-accent/60"
