@@ -20,7 +20,11 @@ import {
   setCurrentUserCache,
 } from "../lib/current-user-cache";
 import { CURRENT_USER_MESSAGES } from "../constants/current-user-messages";
-import { isGuestInvitationPath } from "@/lib/auth/return-path";
+import {
+  browserLoginReturnPath,
+  isGuestInvitationPath,
+  withLoginReturnTo,
+} from "@/lib/auth/return-path";
 
 type AuthContextValue = {
   authQueryClient: QueryClient;
@@ -77,7 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(CURRENT_USER_MESSAGES.sessionExpired);
 
       queryClient.clear();
-      window.location.replace("/login?reason=session-expired");
+      window.location.replace(
+        withLoginReturnTo(
+          "/login?reason=session-expired",
+          browserLoginReturnPath(),
+        ),
+      );
     })();
   }, [pathname, queryClient]);
 
@@ -103,7 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (user?.password_change_required && !isPublicAuthPath(pathname)) {
-      window.location.replace("/initial-password");
+      window.location.replace(
+        withLoginReturnTo("/initial-password", browserLoginReturnPath()),
+      );
     }
   }, [user?.password_change_required, pathname]);
 

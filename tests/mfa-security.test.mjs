@@ -71,6 +71,7 @@ test("Server Guardは限定Cookieを業務認証として扱わず、追加認�
     }),
     "next/headers": {
       cookies: async () => ({ has: (name) => cookies.has(name) }),
+      headers: async () => new Headers(),
     },
     "next/navigation": {
       redirect: (url) => {
@@ -100,6 +101,7 @@ test("旧通常セッションのMFA_REQUIREDは再ログインを要求する",
       ),
     }),
     "next/headers": {
+      headers: async () => new Headers(),
       cookies: async () => ({
         has: (name) => name === "access_token",
         toString: () => "access_token=old",
