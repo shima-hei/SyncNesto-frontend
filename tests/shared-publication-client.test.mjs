@@ -19,7 +19,7 @@ function load(path, dependencies = {}) {
   return loaded.exports;
 }
 
-test("共有・本人招待・従来MCPだけをログイン後の戻り先に許可する", () => {
+test("共有・本人招待・従来MCPの戻り先は厳密な形式だけを許可する", () => {
   const navigation = load("../features/mcp/lib/navigation.ts");
   const { loginReturnPath } = load("../lib/auth/return-path.ts", {
     "@/features/mcp/lib/navigation": navigation,
@@ -121,6 +121,11 @@ test("本人変更の別tab通知には本文・token・本人情報を保存し
 
 test("外部判断のMFA不足は画面内で扱い、既存APIの再ログインは維持する", async () => {
   const { apiClient } = load("../lib/api/client.ts", {
+    "@/lib/auth/return-path": load("../lib/auth/return-path.ts", {
+      "@/features/mcp/lib/navigation": load(
+        "../features/mcp/lib/navigation.ts",
+      ),
+    }),
     "./tenant-context": { getApiTenant: () => null },
     "@/lib/demo/session": { getClientDataRealm: () => "normal" },
     "@/lib/auth/session-events": { isAuthSessionInvalidCode: () => false },
@@ -160,7 +165,17 @@ test("外部判断のMFA不足は画面内で扱い、既存APIの再ログイ�
       await assert.rejects(apiClient(path, {}));
     assert.deepEqual(redirects, []);
     await assert.rejects(apiClient("/projects/21", {}));
-    assert.deepEqual(redirects, ["/login?reason=mfa-required"]);
+    assert.deepEqual(redirects, [
+      "/login?reason=mfa-required&next=%2Fshared%2Fpublications",
+    ]);
+    globalThis.window.location.pathname = "/projects/joined/5/tasks/67";
+    globalThis.window.location.search = "?tab=comments";
+    globalThis.window.location.hash = "#comment-57";
+    await assert.rejects(apiClient("/projects/5/tasks", {}));
+    assert.equal(
+      redirects.at(-1),
+      "/login?reason=mfa-required&next=%2Fprojects%2Fjoined%2F5%2Ftasks%2F67%3Ftab%3Dcomments%23comment-57",
+    );
   } finally {
     globalThis.fetch = previousFetch;
     globalThis.window = previousWindow;

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { isSystemAdmin } from "@/features/auth/utils/authorization";
@@ -8,7 +8,11 @@ import type { CurrentUserRead } from "@/lib/api/generated/model";
 import { AUTH_ERROR_CODES } from "@/lib/auth/session-events";
 import { CSRF_COOKIE_NAME } from "@/lib/security/csrf";
 import { authenticateBackendRequest } from "@/lib/security/backend";
-import { loginReturnPath } from "@/lib/auth/return-path";
+import {
+  LOGIN_RETURN_HEADER,
+  loginReturnPath,
+  withLoginReturnTo,
+} from "@/lib/auth/return-path";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "access_token";
@@ -113,11 +117,10 @@ export const requireUser = async (options?: {
   returnTo?: string;
 }) => {
   const result = await getCurrentUserResultOnServer();
-  const returnTo = loginReturnPath(options?.returnTo);
-  const withReturn = (path: string) =>
-    returnTo
-      ? `${path}${path.includes("?") ? "&" : "?"}next=${encodeURIComponent(returnTo)}`
-      : path;
+  const returnTo = loginReturnPath(
+    options?.returnTo ?? (await headers()).get(LOGIN_RETURN_HEADER),
+  );
+  const withReturn = (path: string) => withLoginReturnTo(path, returnTo);
 
   if (!result.user) {
     if (result.failureReason === "mfa-pending") redirect(withReturn("/mfa"));
@@ -153,6 +156,10 @@ export const redirectIfAuthenticated = async (redirectTo = "/entry") => {
   const user = await getCurrentUserOnServer();
 
   if (user) {
-    redirect(user.password_change_required ? "/initial-password" : redirectTo);
+    redirect(
+      user.password_change_required
+        ? withLoginReturnTo("/initial-password", redirectTo)
+        : (loginReturnPath(redirectTo) ?? "/entry"),
+    );
   }
 };
