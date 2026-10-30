@@ -43,6 +43,7 @@ export interface TaskRead {
   project_id: number;
   version: number;
   parent_summary?: TaskParentSummary | null;
+  has_children?: boolean;
   phase_scope?: TaskReadPhaseScope;
   phase_id?: number | null;
   phase_name?: string | null;

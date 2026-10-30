@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useListNavigation } from "@/hooks/use-list-navigation";
 import { ListTreeIcon } from "lucide-react";
 import type { TaskRead } from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
@@ -19,6 +21,8 @@ import {
   TaskTypeBadge,
 } from "../shared/task-badges";
 import { TaskDetailLink } from "../tables/tasks-table";
+import { TaskHierarchyBadge } from "../shared/task-hierarchy-badge";
+import { getTaskParentSummary } from "../../lib/task-list-scope";
 
 export function TaskBoardCard({
   projectId,
@@ -39,6 +43,10 @@ export function TaskBoardCard({
   onOpenDetail: (taskId: number) => void;
   onBrowseChildren: (taskId: number) => void;
 }) {
+  const { withReturn } = useListNavigation(
+    `/projects/joined/${projectId}/tasks`,
+  );
+  const parent = getTaskParentSummary(task);
   const statusIndex = TASK_STATUS_OPTIONS.findIndex(
     (option) => option.value === task.status,
   );
@@ -85,6 +93,7 @@ export function TaskBoardCard({
         <TaskPriorityBadge priority={task.priority} />
       </div>
       <div className="flex flex-wrap gap-1">
+        <TaskHierarchyBadge task={task} />
         <TaskTypeBadge type={task.task_type} />
         <TaskFlagBadges
           isOverdue={task.is_overdue}
@@ -92,6 +101,16 @@ export function TaskBoardCard({
         />
       </div>
       <TaskRequirementBadges requirements={task.requirements} />
+      {task.parent_task_id ? (
+        <Link
+          href={withReturn(
+            `/projects/joined/${projectId}/tasks/${task.parent_task_id}`,
+          )}
+          className="break-words text-xs text-muted-foreground hover:underline"
+        >
+          親: {parent?.title ?? "名称を確認できません"}
+        </Link>
+      ) : null}
       <TaskTags tags={task.tags} />
       <dl className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
         <div>

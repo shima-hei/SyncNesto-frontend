@@ -65,7 +65,7 @@ test("invalid hierarchy URL cannot produce a malformed or contradictory API scop
 
 test("clearing search filters preserves the selected parent and view without legacy assignee defaults", () => {
   const params = new URLSearchParams(
-    "taskScope=children&parentTaskId=67&tab=list&page=4&q=old&assignee=me&assigneeId=1&ganttAssigneeId=2&requirementId=9&ganttRequirementId=8&tag=ux&status=todo&sort=code_asc&taskColumns=details",
+    "taskScope=children&parentTaskId=67&tab=list&page=4&q=old&assignee=me&assigneeId=1&ganttAssigneeId=2&requirementId=9&ganttRequirementId=8&tag=ux&status=todo&statuses=todo&statuses=in_progress&excludeStatuses=done&hierarchy=parent&sort=code_asc&taskColumns=details",
   );
   scope.clearTaskListFilters(params);
   assert.equal(

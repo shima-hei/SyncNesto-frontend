@@ -34,7 +34,6 @@ import type { MilestoneRead } from "@/lib/api/generated/model";
 import {
   ALL_OVERDUE,
   ALL_PRIORITIES,
-  ALL_STATUSES,
   ALL_TYPES,
   GANTT_DISPLAY_OPTIONS,
   GanttControls,
@@ -50,6 +49,12 @@ import { useGantt } from "../../hooks/use-gantt";
 import { useMilestones } from "../../hooks/use-milestones";
 import { useTasks } from "../../hooks/use-tasks";
 import { useTaskListScope } from "../../hooks/use-task-list-scope";
+import { useTaskStatusFilter } from "../../hooks/use-task-status-filter";
+import {
+  getTaskStatusQuery,
+  getTaskStatusFilterLabel,
+  TASK_HIERARCHY_OPTIONS,
+} from "../../lib/task-list-filters";
 import {
   clearTaskListFilters,
   type TaskListScope,
@@ -98,7 +103,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [searchDraft, setSearchDraft] = useState({ query: q, text: q });
   const searchInput = searchDraft.query === q ? searchDraft.text : q;
   const setSearchInput = (text: string) => setSearchDraft({ query: q, text });
-  const [status, setStatus] = useUrlFilterState("status", ALL_STATUSES);
+  const [status, setStatus] = useTaskStatusFilter();
   const [priority, setPriority] = useUrlFilterState("priority", ALL_PRIORITIES);
   const [taskType, setTaskType] = useUrlFilterState("taskType", ALL_TYPES);
   const [overdue, setOverdue] = useUrlFilterState("overdue", ALL_OVERDUE);
@@ -167,7 +172,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
       page_size: activeTab === "board" ? BOARD_TASK_LIMIT : PAGE_SIZE,
       q: q || undefined,
       ...taskListScope.query,
-      status: status === ALL_STATUSES ? undefined : status,
+      ...getTaskStatusQuery(status),
       task_type: taskType === ALL_TYPES ? undefined : taskType,
       priority: priority === ALL_PRIORITIES ? undefined : priority,
       assignee_id: assigneeId ? Number(assigneeId) : undefined,
@@ -247,8 +252,11 @@ export function TasksPage({ projectId }: TasksPageProps) {
   };
   const appliedFilters = [
     q ? `検索:「${q}」` : "",
-    status !== ALL_STATUSES
-      ? `状態: ${TASK_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status}`
+    status.kind !== "all"
+      ? `状態: ${getTaskStatusFilterLabel(status, TASK_STATUS_OPTIONS)}`
+      : "",
+    taskListScope.hierarchy !== "all"
+      ? `階層: ${TASK_HIERARCHY_OPTIONS.find((option) => option.value === taskListScope.hierarchy)?.label}`
       : "",
     priority !== ALL_PRIORITIES
       ? `優先度: ${getTaskPriorityLabel(priority)}`
@@ -362,6 +370,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
             projectId={projectId}
             {...taskListScope}
             onScopeChange={handleScopeChange}
+            onHierarchyChange={taskListScope.setHierarchy}
             onRetryParent={taskListScope.retryParent}
           />
           <p className="text-sm text-muted-foreground">
@@ -478,6 +487,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
             projectId={projectId}
             {...taskListScope}
             onScopeChange={handleScopeChange}
+            onHierarchyChange={taskListScope.setHierarchy}
             onRetryParent={taskListScope.retryParent}
           />
           <p className="text-sm text-muted-foreground">
