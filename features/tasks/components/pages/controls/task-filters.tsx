@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { SlidersHorizontalIcon } from "lucide-react";
 
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
@@ -42,6 +42,10 @@ export function TaskFilters({
   onDueDateToChange,
   onOverdueChange,
   onSortChange,
+  basicExtra,
+  advancedExtra,
+  extraAdvancedCount = 0,
+  compact = false,
 }: {
   searchInput: string;
   status: TaskStatusFilter;
@@ -62,20 +66,31 @@ export function TaskFilters({
   onDueDateToChange: (value: string) => void;
   onOverdueChange: (value: string) => void;
   onSortChange: (value: string) => void;
+  basicExtra?: ReactNode;
+  advancedExtra?: ReactNode;
+  extraAdvancedCount?: number;
+  compact?: boolean;
 }) {
   const advancedId = useId();
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const advancedCount = [
-    priority !== ALL_PRIORITIES,
-    taskType !== ALL_TYPES,
-    overdue !== ALL_OVERDUE,
-    Boolean(tag),
-    Boolean(startDateFrom),
-    Boolean(dueDateTo),
-  ].filter(Boolean).length;
+  const advancedCount =
+    [
+      priority !== ALL_PRIORITIES,
+      taskType !== ALL_TYPES,
+      overdue !== ALL_OVERDUE,
+      Boolean(tag),
+      Boolean(startDateFrom),
+      Boolean(dueDateTo),
+    ].filter(Boolean).length + extraAdvancedCount;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className="flex flex-col gap-2"
+      onKeyDown={(event) => {
+        if (compact && event.key === "Enter" && event.nativeEvent.isComposing)
+          event.preventDefault();
+      }}
+    >
       <SearchFilterBar
         searchValue={searchInput}
         searchLabel="キーワード"
@@ -85,13 +100,16 @@ export function TaskFilters({
         onSearch={onSearch}
       >
         <TaskStatusFilterControl value={status} onChange={onStatusChange} />
-        <TaskFilterSelect
-          label="並び順"
-          value={sort}
-          placeholder="並び順を選択"
-          options={SORT_OPTIONS}
-          onValueChange={onSortChange}
-        />
+        {basicExtra}
+        {!compact ? (
+          <TaskFilterSelect
+            label="並び順"
+            value={sort}
+            placeholder="並び順を選択"
+            options={SORT_OPTIONS}
+            onValueChange={onSortChange}
+          />
+        ) : null}
       </SearchFilterBar>
       <Button
         type="button"
@@ -113,6 +131,16 @@ export function TaskFilters({
             : "hidden"
         }
       >
+        {compact ? (
+          <TaskFilterSelect
+            label="並び順"
+            value={sort}
+            placeholder="並び順を選択"
+            options={SORT_OPTIONS}
+            onValueChange={onSortChange}
+          />
+        ) : null}
+        {advancedExtra}
         <TaskFilterSelect
           label="優先度"
           value={priority}
