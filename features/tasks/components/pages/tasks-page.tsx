@@ -2,13 +2,12 @@
 
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { PlusIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { LoadingState } from "@/components/shared/feedback/loading-state";
-import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -37,13 +36,10 @@ import {
   ALL_TYPES,
   GANTT_DISPLAY_OPTIONS,
   GanttControls,
-  NO_BULK_STATUS_CHANGE,
   SORT_OPTIONS,
   TaskBoardToolbar,
-  TaskBulkActions,
   TaskFilters,
 } from "./parts/task-page-controls";
-import { useBulkUpdateTasks } from "../../hooks/use-bulk-update-tasks";
 import { useCreateTask } from "../../hooks/use-create-task";
 import { useGantt } from "../../hooks/use-gantt";
 import { useMilestones } from "../../hooks/use-milestones";
@@ -77,7 +73,8 @@ import {
 import { TasksGanttSection } from "../sections/tasks-gantt-section";
 import { useTaskPlanning } from "../../hooks/use-task-planning";
 import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
-import { TasksTable } from "../tables/tasks-table";
+import { TaskListWorkbench } from "../sections/task-list-workbench";
+import { TaskFilterSelect } from "./controls/task-filter-select";
 import { TaskPhaseDialog } from "../sections/task-phase-dialog";
 import { TaskListScopeNav } from "./controls/task-list-scope-nav";
 import { TaskAppliedFilters } from "./controls/task-applied-filters";
@@ -98,6 +95,10 @@ export function TasksPage({ projectId }: TasksPageProps) {
     defaultValue: "list",
   });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const listNavigationGuard = useRef<(action: () => void) => void>((action) =>
+    action(),
+  );
+  const listSelectionResetRef = useRef<() => void>(() => {});
   const [page, setPage] = useUrlFilterState("page", 1);
   const [q, setQ] = useUrlFilterState("q", "");
   const [searchDraft, setSearchDraft] = useState({ query: q, text: q });
@@ -125,10 +126,10 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [sort, setSort] = useUrlFilterState<
     (typeof SORT_OPTIONS)[number]["value"]
   >("sort", "updated_desc");
-  const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
-  const [bulkStatus, setBulkStatus] = useState(NO_BULK_STATUS_CHANGE);
-  const [bulkAssigneeId, setBulkAssigneeId] = useState("");
-  const [bulkDueDate, setBulkDueDate] = useState("");
+  const [listLayout, setListLayout] = useUrlFilterState(
+    "taskListLayout",
+    "auto",
+  );
   const [ganttStartDate, setGanttStartDate] = useUrlFilterState(
     "ganttStartDate",
     "",
@@ -157,6 +158,25 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
   const taskListScope = useTaskListScope(projectId, activeTab !== "gantt");
+  const legacyList =
+    listLayout === "legacy" ||
+    (listLayout === "auto" && taskListScope.scope.kind === "children");
+  const taskQuery = {
+    page: activeTab === "board" ? 1 : page,
+    page_size: activeTab === "board" ? BOARD_TASK_LIMIT : PAGE_SIZE,
+    q: q || undefined,
+    ...taskListScope.query,
+    ...getTaskStatusQuery(status),
+    task_type: taskType === ALL_TYPES ? undefined : taskType,
+    priority: priority === ALL_PRIORITIES ? undefined : priority,
+    assignee_id: assigneeId ? Number(assigneeId) : undefined,
+    requirement_id: requirementId ? Number(requirementId) : undefined,
+    tag: tag.trim() || undefined,
+    start_date_from: startDateFrom || undefined,
+    due_date_to: dueDateTo || undefined,
+    overdue: overdue === ALL_OVERDUE ? undefined : overdue === "overdue",
+    sort,
+  };
   const {
     tasks,
     total,
@@ -167,23 +187,8 @@ export function TasksPage({ projectId }: TasksPageProps) {
     refetch,
   } = useTasks(
     projectId,
-    {
-      page: activeTab === "board" ? 1 : page,
-      page_size: activeTab === "board" ? BOARD_TASK_LIMIT : PAGE_SIZE,
-      q: q || undefined,
-      ...taskListScope.query,
-      ...getTaskStatusQuery(status),
-      task_type: taskType === ALL_TYPES ? undefined : taskType,
-      priority: priority === ALL_PRIORITIES ? undefined : priority,
-      assignee_id: assigneeId ? Number(assigneeId) : undefined,
-      requirement_id: requirementId ? Number(requirementId) : undefined,
-      tag: tag.trim() || undefined,
-      start_date_from: startDateFrom || undefined,
-      due_date_to: dueDateTo || undefined,
-      overdue: overdue === ALL_OVERDUE ? undefined : overdue === "overdue",
-      sort,
-    },
-    activeTab !== "gantt" &&
+    taskQuery,
+    activeTab === "board" &&
       (searchParams.get("assignee") !== "me" || Boolean(user)),
   );
   const {
@@ -219,15 +224,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
     isPending: isCreatePending,
     error: createError,
   } = useCreateTask(projectId);
-  const { bulkUpdateTasks, isPending: isBulkUpdatePending } =
-    useBulkUpdateTasks(projectId);
-  const selectedTasks = useMemo(() => {
-    return tasks.filter((task) => selectedTaskIds.includes(task.id));
-  }, [selectedTaskIds, tasks]);
-  const hasBulkChange =
-    bulkStatus !== NO_BULK_STATUS_CHANGE ||
-    Boolean(bulkAssigneeId || bulkDueDate);
-
   const handleSearch = () => {
     setPage(1);
     setQ(searchInput.trim());
@@ -235,7 +231,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
 
   const handleScopeChange = (scope: TaskListScope) => {
     taskListScope.setScope(scope);
-    setSelectedTaskIds([]);
+    listSelectionResetRef.current();
   };
   const handleBrowseChildren = (taskId: number) =>
     handleScopeChange({ kind: "children", parentTaskId: taskId });
@@ -248,7 +244,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
       `${url.pathname}${url.search}${url.hash}`,
     );
     setSearchDraft({ query: "", text: "" });
-    setSelectedTaskIds([]);
+    listSelectionResetRef.current();
   };
   const appliedFilters = [
     q ? `検索:「${q}」` : "",
@@ -270,41 +266,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
     dueDateTo ? `終了予定: ${dueDateTo}以前` : "",
   ].filter(Boolean);
 
-  const handleToggleTask = (taskId: number, checked: boolean) => {
-    setSelectedTaskIds((current) => {
-      if (checked) {
-        return current.includes(taskId) ? current : [...current, taskId];
-      }
-
-      return current.filter((currentTaskId) => currentTaskId !== taskId);
-    });
-  };
-
-  const handleToggleAllTasks = (checked: boolean) => {
-    if (!checked) {
-      setSelectedTaskIds((current) =>
-        current.filter((taskId) => !tasks.some((task) => task.id === taskId)),
-      );
-      return;
-    }
-
-    setSelectedTaskIds((current) =>
-      Array.from(new Set([...current, ...tasks.map((task) => task.id)])),
-    );
-  };
-
-  const handleBulkUpdate = async () => {
-    await bulkUpdateTasks(selectedTasks, {
-      status: bulkStatus === NO_BULK_STATUS_CHANGE ? undefined : bulkStatus,
-      assigneeId: bulkAssigneeId || undefined,
-      dueDate: bulkDueDate || undefined,
-    });
-    setSelectedTaskIds([]);
-    setBulkStatus(NO_BULK_STATUS_CHANGE);
-    setBulkAssigneeId("");
-    setBulkDueDate("");
-  };
-
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <OverviewReturn projectId={projectId} />
@@ -324,38 +285,47 @@ export function TasksPage({ projectId }: TasksPageProps) {
         }
       />
 
-      <section
-        aria-label="すべての表示の共通条件"
-        className="flex flex-col gap-2"
-      >
-        <p className="text-sm text-muted-foreground">
-          担当者・関連要件は、一覧・ボード・ガントに共通で適用します。
-        </p>
-        <FieldGroup className="grid gap-3 md:grid-cols-2">
-          <TaskUserSelectField
-            projectId={projectId}
-            label="担当者"
-            value={assigneeId}
-            placeholder="すべて"
-            onChange={(value) => {
-              setPage(1);
-              setAssigneeId(value);
-            }}
-          />
-          <TaskRequirementSelectField
-            projectId={projectId}
-            value={requirementId}
-            placeholder="すべて"
-            onChange={(value) => {
-              setPage(1);
-              setRequirementId(value);
-            }}
-          />
-        </FieldGroup>
-      </section>
+      {activeTab !== "list" ? (
+        <section
+          aria-label="すべての表示の共通条件"
+          className="flex flex-col gap-2"
+        >
+          <p className="text-sm text-muted-foreground">
+            担当者・関連要件は、一覧・ボード・ガントに共通で適用します。
+          </p>
+          <FieldGroup className="grid gap-3 md:grid-cols-2">
+            <TaskUserSelectField
+              projectId={projectId}
+              label="担当者"
+              value={assigneeId}
+              placeholder="すべて"
+              onChange={(value) => {
+                setPage(1);
+                setAssigneeId(value);
+              }}
+            />
+            <TaskRequirementSelectField
+              projectId={projectId}
+              value={requirementId}
+              placeholder="すべて"
+              onChange={(value) => {
+                setPage(1);
+                setRequirementId(value);
+              }}
+            />
+          </FieldGroup>
+        </section>
+      ) : null}
 
       <TaskPlanningWorkspace planning={planning} canUpdate={canUpdate} />
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          if (activeTab === "list")
+            listNavigationGuard.current(() => setActiveTab(value));
+          else setActiveTab(value);
+        }}
+      >
         <TabsList
           variant="line"
           className="flex h-auto w-full flex-wrap justify-start border-b"
@@ -365,18 +335,74 @@ export function TasksPage({ projectId }: TasksPageProps) {
           <TabsTrigger value="gantt">ガント</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="list" className="flex flex-col gap-4">
-          <TaskListScopeNav
-            projectId={projectId}
-            {...taskListScope}
-            onScopeChange={handleScopeChange}
-            onHierarchyChange={taskListScope.setHierarchy}
-            onRetryParent={taskListScope.retryParent}
-          />
-          <p className="text-sm text-muted-foreground">
-            以下の条件は一覧・ボードに共通です。日付は開始日以降・終了予定日以前で絞り込みます。
-          </p>
+        <TabsContent
+          forceMount
+          value="list"
+          className={activeTab === "list" ? "flex flex-col gap-4" : "hidden"}
+        >
           <TaskFilters
+            compact
+            extraAdvancedCount={
+              Number(Boolean(requirementId)) +
+              Number(taskListScope.hierarchy !== "all") +
+              Number(taskListScope.scope.kind !== "all")
+            }
+            basicExtra={
+              <TaskUserSelectField
+                projectId={projectId}
+                label="担当者"
+                value={assigneeId}
+                placeholder="すべて"
+                onChange={(value) => {
+                  setPage(1);
+                  setAssigneeId(value);
+                }}
+              />
+            }
+            advancedExtra={
+              <>
+                <TaskRequirementSelectField
+                  projectId={projectId}
+                  value={requirementId}
+                  placeholder="すべて"
+                  onChange={(value) => {
+                    setPage(1);
+                    setRequirementId(value);
+                  }}
+                />
+                <TaskFilterSelect
+                  label="閲覧方式"
+                  value={legacyList ? "legacy" : "tree"}
+                  placeholder="閲覧方式を選択"
+                  options={[
+                    { value: "tree", label: "親子テーブル" },
+                    { value: "legacy", label: "従来の探索" },
+                  ]}
+                  onValueChange={(value) => {
+                    listNavigationGuard.current(() => {
+                      if (value === "tree")
+                        taskListScope.setScope({ kind: "all" });
+                      setListLayout(value);
+                      setPage(1);
+                    });
+                  }}
+                />
+                {!legacyList ? (
+                  <TaskFilterSelect
+                    label="階層の種類"
+                    value={taskListScope.hierarchy}
+                    placeholder="階層の種類を選択"
+                    allValue="all"
+                    allLabel="すべての種類"
+                    options={TASK_HIERARCHY_OPTIONS}
+                    onValueChange={taskListScope.setHierarchy}
+                  />
+                ) : null}
+                <p className="col-span-full text-xs text-muted-foreground">
+                  状態内はOR、異なる条件同士はANDです。担当者・関連要件はボード・ガントにも共通で適用します。その他の条件は一覧・ボードに共通です。
+                </p>
+              </>
+            }
             searchInput={searchInput}
             status={status}
             priority={priority}
@@ -423,63 +449,31 @@ export function TasksPage({ projectId }: TasksPageProps) {
             hasUnappliedSearch={searchInput.trim() !== q}
             onReset={handleResetFilters}
           />
-          {canUpdate ? (
-            <TaskBulkActions
+          {legacyList ? (
+            <TaskListScopeNav
               projectId={projectId}
-              selectedCount={selectedTasks.length}
-              status={bulkStatus}
-              assigneeId={bulkAssigneeId}
-              dueDate={bulkDueDate}
-              isPending={isBulkUpdatePending}
-              disabled={!selectedTasks.length || !hasBulkChange}
-              onStatusChange={setBulkStatus}
-              onAssigneeIdChange={setBulkAssigneeId}
-              onDueDateChange={setBulkDueDate}
-              onApply={handleBulkUpdate}
-              onClearSelection={() => setSelectedTaskIds([])}
+              {...taskListScope}
+              onScopeChange={handleScopeChange}
+              onHierarchyChange={taskListScope.setHierarchy}
+              onRetryParent={taskListScope.retryParent}
             />
           ) : null}
-          {error && !isLoading ? (
-            <DataLoadError
-              resourceName="タスク"
-              isRetrying={isFetching}
-              onRetry={() => void refetch()}
-            />
-          ) : (
-            <>
-              <p role="status" className="text-sm text-muted-foreground">
-                {isLoading
-                  ? "タスクを読み込んでいます。"
-                  : isPlaceholderData
-                    ? "条件を更新中です。直前の結果を表示しています。"
-                    : total
-                      ? tasks.length
-                        ? `条件に合う全${total}件中 ${(page - 1) * PAGE_SIZE + 1}〜${Math.min((page - 1) * PAGE_SIZE + tasks.length, total)}件（1ページ${PAGE_SIZE}件）`
-                        : `条件に合う全${total}件。このページの対象は0件です。`
-                      : "条件に合うタスクは0件です。"}
-              </p>
-              <TasksTable
-                projectId={projectId}
-                tasks={tasks}
-                isLoading={isLoading}
-                canCreate={canCreate}
-                canUpdate={canUpdate}
-                selectedTaskIds={selectedTaskIds}
-                onToggleTask={handleToggleTask}
-                onToggleAllTasks={handleToggleAllTasks}
-                onBrowseChildren={handleBrowseChildren}
-              />
-              <DataPagination
-                page={page}
-                pageSize={PAGE_SIZE}
-                total={total}
-                currentCount={tasks.length}
-                isFetching={isFetching}
-                isLoading={isLoading}
-                onPageChange={setPage}
-              />
-            </>
-          )}
+          <TaskListWorkbench
+            selectionResetRef={listSelectionResetRef}
+            enabled={
+              activeTab === "list" &&
+              (searchParams.get("assignee") !== "me" || Boolean(user))
+            }
+            navigationGuardRef={listNavigationGuard}
+            key={projectId}
+            projectId={projectId}
+            query={{ ...taskQuery, page_size: PAGE_SIZE, page }}
+            legacy={legacyList}
+            canCreate={canCreate}
+            canUpdate={canUpdate}
+            onPageChange={setPage}
+            onBrowseChildren={handleBrowseChildren}
+          />
         </TabsContent>
 
         <TabsContent value="board" className="flex flex-col gap-4">

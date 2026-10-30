@@ -107,7 +107,7 @@ export function TaskStatusFilterControl({
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      <span id={descriptionId} className="sr-only">
+      <span id={descriptionId} className="sr-only max-w-px">
         複数選択できます。未選択はすべてのステータスを表示します。現在: {label}
       </span>
     </Field>
