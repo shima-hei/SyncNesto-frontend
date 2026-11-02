@@ -358,7 +358,6 @@ export function SharedPublicationDetail({ identity }: { identity: string }) {
               files={data.value.metadata.content.files}
               revision={data.value.metadata.authorization_revision}
               signal={data.operationSignal}
-              enabled
             />
           </>
         )}

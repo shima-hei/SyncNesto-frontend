@@ -347,7 +347,6 @@ export function SharedApprovalDetail({
               files={value.content.metadata.content.files}
               revision={row.authorization_revision}
               signal={data.operationSignal}
-              enabled
             />
             {row.target_kind === "requirement_document" ? (
               <Card>
