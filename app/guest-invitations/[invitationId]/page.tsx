@@ -15,10 +15,6 @@ export default async function Page({
   params: Promise<{ invitationId: string }>;
 }) {
   const { invitationId } = await params;
-  if (
-    process.env.GUEST_INVITATIONS_ENABLED !== "true" ||
-    !isGuestInvitationPath(`/guest-invitations/${invitationId}`)
-  )
-    notFound();
+  if (!isGuestInvitationPath(`/guest-invitations/${invitationId}`)) notFound();
   return <InvitationPage invitationId={invitationId} />;
 }

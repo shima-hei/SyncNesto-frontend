@@ -18,10 +18,10 @@ Header、通知一覧、HOME、案件概要は、Orvalクライアントと `fea
 
 # Phase 2B-3b: 承認メールの本人設定
 
-Server側 `FIXED_APPROVAL_EMAIL_ENABLED=true` のLOCALで、社内 `/notifications` と共有 `/shared/notifications` に同じshadcn設定欄を表示する。新page/permission/依存はない。
+社内 `/notifications` と共有 `/shared/notifications` に本人のメール受信設定欄を表示する。一時リリースフラグは使用せず、新page/permission/依存はない。
 
 初期OFFで保存後の新通知だけが対象。設定は全案件共通。概要は種類・固定名・出来事、本文/結果理由/添付なし。届いたメールには名称が残ることを説明する。
 
 `/notification-preferences` GET/PATCHはOrval生成クライアントを使用する。tenantを付けずno-store、本人変更/focus/再表示/接続復帰時は再認証して取得する。PATCHは設定versionと、画面に結び付いた `X-Syncnesto-Expected-User` を送る。古いCookie本人との不一致は403、古いversionは409で読み直す。読込失敗をOFFや保存成功と扱わず、楽観的ON・設定のlocalStorage保存は行わない。
 
-配送はBackendのLOCAL workerから既存Mailpitへ限定。UIにSMTP台帳や内部コードは出さない。招待/認証メールは別系統で、メール閲覧や既読で承認を保存しない。
+本番はBackendから既存メール配信設定を使い、保存後の応答に付けた処理と日次回収で配送する。LOCALは明示ダミーを既存Mailpitへ配送する。UIにSMTP台帳や内部コードは出さない。招待/認証メールは別系統で、メール閲覧や既読で承認を保存しない。

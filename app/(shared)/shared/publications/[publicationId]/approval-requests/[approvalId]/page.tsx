@@ -14,9 +14,6 @@ export default async function Page({
     <SharedApprovalDetail
       publicationId={publicationId}
       approvalId={approvalId}
-      downloadsEnabled={
-        process.env.SHARED_PUBLICATION_DOWNLOAD_ENABLED === "true"
-      }
     />
   );
 }

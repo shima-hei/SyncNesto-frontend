@@ -52,10 +52,7 @@ export function SharedShell({ children }: { children: React.ReactNode }) {
             Syncnesto · 共有された内容
           </Link>
           <div className="flex flex-wrap items-center gap-2">
-            {process.env.NEXT_PUBLIC_FIXED_APPROVAL_NOTIFICATIONS_ENABLED ===
-            "true" ? (
-              <SharedNotificationsLink />
-            ) : null}
+            <SharedNotificationsLink />
             <span className="min-w-0 break-words text-sm text-muted-foreground">
               {user?.name}
             </span>
@@ -288,13 +285,7 @@ type SharedDetail = {
   nodes: PublicationNodeRead[];
 };
 
-export function SharedPublicationDetail({
-  identity,
-  downloadsEnabled = false,
-}: {
-  identity: string;
-  downloadsEnabled?: boolean;
-}) {
+export function SharedPublicationDetail({ identity }: { identity: string }) {
   const load = useCallback(
     (signal: AbortSignal): Promise<SharedDetail> =>
       loadSharedContent(identity, signal),
@@ -367,7 +358,7 @@ export function SharedPublicationDetail({
               files={data.value.metadata.content.files}
               revision={data.value.metadata.authorization_revision}
               signal={data.operationSignal}
-              enabled={downloadsEnabled}
+              enabled
             />
           </>
         )}

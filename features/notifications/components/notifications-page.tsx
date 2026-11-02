@@ -20,33 +20,17 @@ import {
   useNotificationUnreadCount,
 } from "../hooks/use-notifications";
 
-export function NotificationsPage({
-  emailEnabled = false,
-}: {
-  emailEnabled?: boolean;
-}) {
+export function NotificationsPage() {
   const params = useSearchParams();
   const parsedProjectId = Number(params.get("project"));
   const projectId =
     Number.isSafeInteger(parsedProjectId) && parsedProjectId > 0
       ? parsedProjectId
       : undefined;
-  return (
-    <NotificationInbox
-      key={projectId ?? "all"}
-      projectId={projectId}
-      emailEnabled={emailEnabled}
-    />
-  );
+  return <NotificationInbox key={projectId ?? "all"} projectId={projectId} />;
 }
 
-function NotificationInbox({
-  projectId,
-  emailEnabled,
-}: {
-  projectId?: number;
-  emailEnabled: boolean;
-}) {
+function NotificationInbox({ projectId }: { projectId?: number }) {
   const [rawFilter, setFilter] = useUrlFilterState("filter", "all");
   const filter = rawFilter === "unread" ? "unread" : "all";
   const [page, setPage] = useUrlFilterState("page", 1);
@@ -86,7 +70,7 @@ function NotificationInbox({
           </Button>
         }
       />
-      {emailEnabled ? <EmailPreferences /> : null}
+      <EmailPreferences />
       {projectId ? (
         <Button variant="ghost" size="sm" className="self-start" asChild>
           <Link href="/notifications">全案件の通知を見る</Link>

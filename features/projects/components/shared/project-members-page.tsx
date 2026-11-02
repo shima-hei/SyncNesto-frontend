@@ -27,7 +27,6 @@ type ProjectMembersPageProps = {
   canManageMembers?: boolean;
   isPermissionLoading?: boolean;
   userSelectMode?: "directory" | "candidates";
-  guestInvitationsEnabled?: boolean;
 };
 
 type ProjectMemberRoleValues = {
@@ -44,7 +43,6 @@ export function ProjectMembersPage({
   canManageMembers = true,
   isPermissionLoading = false,
   userSelectMode = "directory",
-  guestInvitationsEnabled = false,
 }: ProjectMembersPageProps) {
   const { user: currentUser } = useAuth();
   const [updateAttempt, setUpdateAttempt] =
@@ -114,12 +112,10 @@ export function ProjectMembersPage({
         }
       />
 
-      {guestInvitationsEnabled ? (
-        <GuestInvitationsPanel
-          projectId={projectId}
-          canManage={canManageMembers}
-        />
-      ) : null}
+      <GuestInvitationsPanel
+        projectId={projectId}
+        canManage={canManageMembers}
+      />
       <GuestParticipationsPanel
         projectId={projectId}
         canManage={canManageMembers}
