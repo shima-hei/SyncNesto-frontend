@@ -1,12 +1,22 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { SlidersHorizontalIcon } from "lucide-react";
+import {
+  CircleHelpIcon,
+  SearchIcon,
+  SlidersHorizontalIcon,
+} from "lucide-react";
 
 import { SearchFilterBar } from "@/components/shared/filters/search-filter-bar";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
   TASK_PRIORITY_OPTIONS,
@@ -46,6 +56,7 @@ export function TaskFilters({
   advancedExtra,
   extraAdvancedCount = 0,
   compact = false,
+  help,
 }: {
   searchInput: string;
   status: TaskStatusFilter;
@@ -70,8 +81,10 @@ export function TaskFilters({
   advancedExtra?: ReactNode;
   extraAdvancedCount?: number;
   compact?: boolean;
+  help?: ReactNode;
 }) {
   const advancedId = useId();
+  const keywordId = useId();
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const advancedCount =
     [
@@ -83,6 +96,25 @@ export function TaskFilters({
       Boolean(dueDateTo),
     ].filter(Boolean).length + extraAdvancedCount;
 
+  const advancedTrigger = (
+    <Button
+      type="button"
+      variant={compact ? "outline" : "ghost"}
+      size="sm"
+      aria-expanded={isAdvancedOpen}
+      aria-controls={advancedId}
+      onClick={() => setIsAdvancedOpen((current) => !current)}
+    >
+      <SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
+      {compact ? "絞り込み" : "詳細条件"}
+      {advancedCount
+        ? compact
+          ? `（詳細${advancedCount}件）`
+          : `（${advancedCount}件適用中）`
+        : ""}
+    </Button>
+  );
+
   return (
     <div
       className="flex flex-col gap-2"
@@ -91,55 +123,91 @@ export function TaskFilters({
           event.preventDefault();
       }}
     >
-      <SearchFilterBar
-        searchValue={searchInput}
-        searchLabel="キーワード"
-        searchPlaceholder="コード・名称・説明で検索"
-        variant="compact"
-        onSearchValueChange={onSearchInputChange}
-        onSearch={onSearch}
-      >
-        <TaskStatusFilterControl value={status} onChange={onStatusChange} />
-        {basicExtra}
-        {!compact ? (
-          <TaskFilterSelect
-            label="並び順"
-            value={sort}
-            placeholder="並び順を選択"
-            options={SORT_OPTIONS}
-            onValueChange={onSortChange}
-          />
-        ) : null}
-      </SearchFilterBar>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="self-start"
-        aria-expanded={isAdvancedOpen}
-        aria-controls={advancedId}
-        onClick={() => setIsAdvancedOpen((current) => !current)}
-      >
-        <SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
-        詳細条件{advancedCount ? `（${advancedCount}件適用中）` : ""}
-      </Button>
-      <div
+      {compact ? (
+        <>
+          <form
+            aria-label="キーワード検索"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSearch();
+            }}
+          >
+            <FieldGroup className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+              <Field>
+                <FieldLabel htmlFor={keywordId}>キーワード</FieldLabel>
+                <Input
+                  id={keywordId}
+                  value={searchInput}
+                  placeholder="コード・名称・説明で検索"
+                  onChange={(event) => onSearchInputChange(event.target.value)}
+                />
+              </Field>
+              <Button type="submit" variant="outline">
+                <SearchIcon data-icon="inline-start" />
+                検索
+              </Button>
+              {advancedTrigger}
+              {help ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="絞り込みの使い方"
+                    >
+                      <CircleHelpIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    className="w-80 max-w-[calc(100vw-2rem)]"
+                  >
+                    <PopoverTitle>検索・絞り込みの使い方</PopoverTitle>
+                    {help}
+                  </PopoverContent>
+                </Popover>
+              ) : null}
+            </FieldGroup>
+          </form>
+          <FieldGroup className="grid gap-2 sm:grid-cols-2">
+            <TaskStatusFilterControl value={status} onChange={onStatusChange} />
+            {basicExtra}
+          </FieldGroup>
+        </>
+      ) : (
+        <SearchFilterBar
+          searchValue={searchInput}
+          searchLabel="キーワード"
+          searchPlaceholder="コード・名称・説明で検索"
+          variant="compact"
+          onSearchValueChange={onSearchInputChange}
+          onSearch={onSearch}
+        >
+          <TaskStatusFilterControl value={status} onChange={onStatusChange} />
+          {basicExtra}
+          {!compact ? (
+            <TaskFilterSelect
+              label="並び順"
+              value={sort}
+              placeholder="並び順を選択"
+              options={SORT_OPTIONS}
+              onValueChange={onSortChange}
+            />
+          ) : null}
+        </SearchFilterBar>
+      )}
+      {!compact ? <div className="self-start">{advancedTrigger}</div> : null}
+      <FieldGroup
         id={advancedId}
         className={
           isAdvancedOpen
-            ? "grid gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            ? compact
+              ? "grid gap-3 rounded-lg border p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              : "grid gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             : "hidden"
         }
       >
-        {compact ? (
-          <TaskFilterSelect
-            label="並び順"
-            value={sort}
-            placeholder="並び順を選択"
-            options={SORT_OPTIONS}
-            onValueChange={onSortChange}
-          />
-        ) : null}
         {advancedExtra}
         <TaskFilterSelect
           label="優先度"
@@ -197,7 +265,7 @@ export function TaskFilters({
             onChange={(event) => onDueDateToChange(event.target.value)}
           />
         </Field>
-      </div>
+      </FieldGroup>
     </div>
   );
 }
