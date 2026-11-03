@@ -66,11 +66,7 @@ export function SharedNotificationsLink() {
   );
 }
 
-export function SharedNotificationsPage({
-  emailEnabled = false,
-}: {
-  emailEnabled?: boolean;
-}) {
+export function SharedNotificationsPage() {
   const [page, setPage] = useUrlFilterState("page", 1);
   const [mode, setMode] = useUrlFilterState("filter", "all");
   const unreadOnly = mode === "unread";
@@ -154,7 +150,7 @@ export function SharedNotificationsPage({
           </Button>
         }
       />
-      {emailEnabled ? <EmailPreferences /> : null}
+      <EmailPreferences />
       {data.error instanceof ApiError && data.error.code === "MFA_REQUIRED" ? (
         <ApprovalMfa returnTo="/shared/notifications" />
       ) : error ? (

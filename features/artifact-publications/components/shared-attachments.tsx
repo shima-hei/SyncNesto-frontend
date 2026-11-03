@@ -13,13 +13,11 @@ export function SharedAttachments({
   files,
   revision,
   signal,
-  enabled,
 }: {
   publicationId: string;
   files: PublicFile[];
   revision: string;
   signal?: AbortSignal;
-  enabled: boolean;
 }) {
   const [active, setActive] = useState<string | null>(null);
   const [phase, setPhase] = useState("");
@@ -132,24 +130,22 @@ export function SharedAttachments({
               <span className="min-w-0 break-all text-sm">
                 {file.filename} · {displayBytes(file.byte_size)}
               </span>
-              {enabled ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={active !== null || !signal}
-                  onClick={() => void start(file)}
-                  aria-label={`${file.filename}をダウンロード`}
-                >
-                  {active === file.id ? (
-                    <>
-                      <Spinner data-icon="inline-start" />
-                      {phase}
-                    </>
-                  ) : (
-                    "ダウンロード"
-                  )}
-                </Button>
-              ) : null}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={active !== null || !signal}
+                onClick={() => void start(file)}
+                aria-label={`${file.filename}をダウンロード`}
+              >
+                {active === file.id ? (
+                  <>
+                    <Spinner data-icon="inline-start" />
+                    {phase}
+                  </>
+                ) : (
+                  "ダウンロード"
+                )}
+              </Button>
               {active === file.id ? (
                 <Button variant="ghost" size="sm" onClick={() => cancel(file)}>
                   取消
@@ -165,9 +161,7 @@ export function SharedAttachments({
       <p className="text-sm text-muted-foreground">
         {!files.length
           ? "添付なし"
-          : enabled
-            ? "共有された固定内容の添付です。保存したファイルは公開停止後も手元に残ります。"
-            : "この段階では添付の一覧を確認できます。ダウンロードは後続工程です。"}
+          : "共有された固定内容の添付です。保存したファイルは公開停止後も手元に残ります。"}
       </p>
     </section>
   );

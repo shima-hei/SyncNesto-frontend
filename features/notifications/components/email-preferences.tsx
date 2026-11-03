@@ -32,7 +32,8 @@ import { announceSharedAuthChange } from "@/lib/auth/shared-access-events";
 
 export function EmailPreferences() {
   const { user } = useAuth();
-  return user ? <PreferencePanel key={user.id} userId={user.id} /> : null;
+  if (!user || user.demo || user.review_access_expires_at) return null;
+  return <PreferencePanel key={user.id} userId={user.id} />;
 }
 
 function PreferencePanel({ userId }: { userId: number }) {

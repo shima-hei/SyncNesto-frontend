@@ -129,7 +129,7 @@ export function GuestInvitationsPanel({
                 disabled={mutation.isPending}
               />
               <FieldDescription>
-                LOCALで許可されたダミー宛先のみ送信できます。
+                招待するご本人のメールアドレスを入力してください。
               </FieldDescription>
             </Field>
             <Field>

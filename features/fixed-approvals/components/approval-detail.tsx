@@ -291,14 +291,11 @@ export function ApprovalDetail({
           ) : null}
         </CardFooter>
       </Card>
-      {process.env.NEXT_PUBLIC_FIXED_APPROVAL_NOTIFICATIONS_ENABLED ===
-      "true" ? (
-        <ApprovalNextActions
-          projectId={projectId}
-          approvalId={approvalId}
-          version={row.version}
-        />
-      ) : null}
+      <ApprovalNextActions
+        projectId={projectId}
+        approvalId={approvalId}
+        version={row.version}
+      />
       {row.guest_context ? (
         <Alert>
           <AlertTitle>
