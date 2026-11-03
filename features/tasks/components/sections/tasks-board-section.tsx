@@ -149,7 +149,7 @@ export function TasksBoardSection({
                             />
                           ))
                         ) : (
-                          <div className="rounded-lg border border-dashed border-current/25 bg-background/60 p-3 text-xs text-muted-foreground">
+                          <div className="rounded-lg border border-dashed border-current/25 bg-background/60 p-3 text-xs text-foreground">
                             タスクはありません。
                           </div>
                         )}
