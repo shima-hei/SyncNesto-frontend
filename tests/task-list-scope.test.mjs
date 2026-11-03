@@ -144,3 +144,49 @@ test("parent selection resolves an existing readable task in the same project wi
   assert.equal(scope.readTaskId("26"), 26);
   assert.equal(scope.readTaskId("not-an-id"), null);
 });
+
+test("individual status removal clears legacy and set aliases while preserving list context", () => {
+  const params = new URLSearchParams(
+    "status=todo&statuses=blocked&statuses=done&excludeStatuses=cancelled&page=3&q=申請&sort=code_asc&tab=list&taskTreeExpanded=10,20&taskSelection=30&taskColumns=details&taskProgress=hidden&returnTo=%2Fhome",
+  );
+  scope.clearTaskListFilter(params, "status");
+  for (const key of ["status", "statuses", "excludeStatuses", "page"])
+    assert.equal(params.has(key), false);
+  assert.deepEqual(Object.fromEntries(params), {
+    q: "申請",
+    sort: "code_asc",
+    tab: "list",
+    taskTreeExpanded: "10,20",
+    taskSelection: "30",
+    taskColumns: "details",
+    taskProgress: "hidden",
+    returnTo: "/home",
+  });
+});
+
+test("individual member and requirement removal cannot reactivate their old URL aliases", () => {
+  const params = new URLSearchParams(
+    "assigneeId=12&assignee=me&ganttAssigneeId=13&requirementId=21&ganttRequirementId=22&tag=検索QA&page=2",
+  );
+  scope.clearTaskListFilter(params, "assigneeId");
+  for (const key of ["assigneeId", "assignee", "ganttAssigneeId", "page"])
+    assert.equal(params.has(key), false);
+  assert.equal(params.get("requirementId"), "21");
+  scope.clearTaskListFilter(params, "requirementId");
+  assert.equal(params.has("requirementId"), false);
+  assert.equal(params.has("ganttRequirementId"), false);
+  assert.equal(params.get("tag"), "検索QA");
+});
+
+test("individual date removal preserves other conditions and unknown controls cannot erase URL state", () => {
+  const params = new URLSearchParams(
+    "q=API&startDateFrom=2026-11-01&dueDateTo=2026-11-20&hierarchy=parent&sort=code_asc&page=2",
+  );
+  scope.clearTaskListFilter(params, "startDateFrom");
+  assert.equal(params.has("startDateFrom"), false);
+  assert.equal(params.get("dueDateTo"), "2026-11-20");
+  assert.equal(params.get("hierarchy"), "parent");
+  const current = params.toString();
+  scope.clearTaskListFilter(params, "sort");
+  assert.equal(params.toString(), current);
+});

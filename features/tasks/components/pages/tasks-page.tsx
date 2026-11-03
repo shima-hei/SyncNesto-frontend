@@ -53,6 +53,7 @@ import {
 } from "../../lib/task-list-filters";
 import {
   clearTaskListFilters,
+  clearTaskListFilter,
   type TaskListScope,
 } from "../../lib/task-list-scope";
 import { defaultTaskFormValues } from "../../lib/task-mappers";
@@ -78,6 +79,8 @@ import { TaskFilterSelect } from "./controls/task-filter-select";
 import { TaskPhaseDialog } from "../sections/task-phase-dialog";
 import { TaskListScopeNav } from "./controls/task-list-scope-nav";
 import { TaskAppliedFilters } from "./controls/task-applied-filters";
+import { useTaskUserMap } from "../../hooks/use-task-user-map";
+import { useRequirement } from "@/features/requirements/hooks/use-requirement";
 
 const PAGE_SIZE = 20;
 const TASK_TABS = ["list", "board", "gantt"] as const;
@@ -158,6 +161,19 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
   const taskListScope = useTaskListScope(projectId, activeTab !== "gantt");
+  const { usersById } = useTaskUserMap(projectId);
+  const selectedRequirementId = Number(requirementId);
+  const { requirement: selectedRequirement } = useRequirement(
+    projectId,
+    selectedRequirementId || 0,
+    {
+      enabled:
+        activeTab === "list" &&
+        Number.isSafeInteger(selectedRequirementId) &&
+        selectedRequirementId > 0 &&
+        selectedRequirementId <= 2147483647,
+    },
+  );
   const legacyList =
     listLayout === "legacy" ||
     (listLayout === "auto" && taskListScope.scope.kind === "children");
@@ -246,25 +262,69 @@ export function TasksPage({ projectId }: TasksPageProps) {
     setSearchDraft({ query: "", text: "" });
     listSelectionResetRef.current();
   };
+  const handleRemoveFilter = (key: string) => {
+    const url = new URL(window.location.href);
+    clearTaskListFilter(url.searchParams, key);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+    if (key === "q") setSearchDraft({ query: "", text: "" });
+  };
   const appliedFilters = [
-    q ? `検索:「${q}」` : "",
-    status.kind !== "all"
-      ? `状態: ${getTaskStatusFilterLabel(status, TASK_STATUS_OPTIONS)}`
-      : "",
-    taskListScope.hierarchy !== "all"
-      ? `階層: ${TASK_HIERARCHY_OPTIONS.find((option) => option.value === taskListScope.hierarchy)?.label}`
-      : "",
-    priority !== ALL_PRIORITIES
-      ? `優先度: ${getTaskPriorityLabel(priority)}`
-      : "",
-    taskType !== ALL_TYPES ? `種別: ${getTaskTypeLabel(taskType)}` : "",
-    assigneeId ? "担当者で絞り込み" : "",
-    requirementId ? "関連要件で絞り込み" : "",
-    overdue !== ALL_OVERDUE ? "期限超過" : "",
-    tag ? `タグ: ${tag}` : "",
-    startDateFrom ? `開始: ${startDateFrom}以降` : "",
-    dueDateTo ? `終了予定: ${dueDateTo}以前` : "",
-  ].filter(Boolean);
+    { key: "q", label: q ? `検索:「${q}」` : "" },
+    {
+      key: "status",
+      label:
+        status.kind !== "all"
+          ? `状態: ${getTaskStatusFilterLabel(status, TASK_STATUS_OPTIONS)}`
+          : "",
+    },
+    {
+      key: "hierarchy",
+      label:
+        taskListScope.hierarchy !== "all"
+          ? `階層: ${TASK_HIERARCHY_OPTIONS.find((option) => option.value === taskListScope.hierarchy)?.label}`
+          : "",
+    },
+    {
+      key: "priority",
+      label:
+        priority !== ALL_PRIORITIES
+          ? `優先度: ${getTaskPriorityLabel(priority)}`
+          : "",
+    },
+    {
+      key: "taskType",
+      label:
+        taskType !== ALL_TYPES ? `種別: ${getTaskTypeLabel(taskType)}` : "",
+    },
+    {
+      key: "assigneeId",
+      label: assigneeId
+        ? `担当: ${usersById.get(Number(assigneeId))?.name ?? "名称を確認できません"}`
+        : "",
+    },
+    {
+      key: "requirementId",
+      label: requirementId
+        ? `関連要件: ${selectedRequirement?.id === selectedRequirementId ? `${selectedRequirement.requirement_code} ${selectedRequirement.title}` : "内容を確認できません"}`
+        : "",
+    },
+    { key: "overdue", label: overdue !== ALL_OVERDUE ? "期限超過" : "" },
+    { key: "tag", label: tag ? `タグ: ${tag}` : "" },
+    {
+      key: "startDateFrom",
+      label: startDateFrom ? `開始: ${startDateFrom}以降` : "",
+    },
+    { key: "dueDateTo", label: dueDateTo ? `終了予定: ${dueDateTo}以前` : "" },
+  ]
+    .filter((filter) => filter.label)
+    .map((filter) => ({
+      ...filter,
+      onRemove: () => handleRemoveFilter(filter.key),
+    }));
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -344,8 +404,12 @@ export function TasksPage({ projectId }: TasksPageProps) {
             compact
             extraAdvancedCount={
               Number(Boolean(requirementId)) +
-              Number(taskListScope.hierarchy !== "all") +
-              Number(taskListScope.scope.kind !== "all")
+              Number(taskListScope.hierarchy !== "all")
+            }
+            help={
+              <p className="text-muted-foreground">
+                キーワードはEnterまたは「検索」で適用し、ほかの条件は選択時に適用します。状態内はOR、異なる条件同士はANDです。担当者・関連要件はボード・ガントにも共通で適用し、その他は一覧・ボードに共通です。すべて解除すると並び順も標準に戻ります。
+              </p>
             }
             basicExtra={
               <TaskUserSelectField
@@ -370,23 +434,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
                     setRequirementId(value);
                   }}
                 />
-                <TaskFilterSelect
-                  label="閲覧方式"
-                  value={legacyList ? "legacy" : "tree"}
-                  placeholder="閲覧方式を選択"
-                  options={[
-                    { value: "tree", label: "親子テーブル" },
-                    { value: "legacy", label: "従来の探索" },
-                  ]}
-                  onValueChange={(value) => {
-                    listNavigationGuard.current(() => {
-                      if (value === "tree")
-                        taskListScope.setScope({ kind: "all" });
-                      setListLayout(value);
-                      setPage(1);
-                    });
-                  }}
-                />
                 {!legacyList ? (
                   <TaskFilterSelect
                     label="階層の種類"
@@ -398,9 +445,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
                     onValueChange={taskListScope.setHierarchy}
                   />
                 ) : null}
-                <p className="col-span-full text-xs text-muted-foreground">
-                  状態内はOR、異なる条件同士はANDです。担当者・関連要件はボード・ガントにも共通で適用します。その他の条件は一覧・ボードに共通です。
-                </p>
               </>
             }
             searchInput={searchInput}
@@ -459,6 +503,40 @@ export function TasksPage({ projectId }: TasksPageProps) {
             />
           ) : null}
           <TaskListWorkbench
+            toolbar={
+              <>
+                <div className="w-40 max-w-full">
+                  <TaskFilterSelect
+                    compact
+                    label="並び順"
+                    value={sort}
+                    placeholder="並び順を選択"
+                    options={SORT_OPTIONS}
+                    onValueChange={(value) => setSort(value as typeof sort)}
+                  />
+                </div>
+                <div className="w-40 max-w-full">
+                  <TaskFilterSelect
+                    compact
+                    label="閲覧方式"
+                    value={legacyList ? "legacy" : "tree"}
+                    placeholder="閲覧方式を選択"
+                    options={[
+                      { value: "tree", label: "親子テーブル" },
+                      { value: "legacy", label: "従来の探索" },
+                    ]}
+                    onValueChange={(value) => {
+                      listNavigationGuard.current(() => {
+                        if (value === "tree")
+                          taskListScope.setScope({ kind: "all" });
+                        setListLayout(value);
+                        setPage(1);
+                      });
+                    }}
+                  />
+                </div>
+              </>
+            }
             selectionResetRef={listSelectionResetRef}
             enabled={
               activeTab === "list" &&

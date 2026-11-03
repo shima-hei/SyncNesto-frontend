@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+  type ReactNode,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { TaskListDraftNotice } from "./task-list-quick-edit";
@@ -35,6 +41,7 @@ export function TaskListWorkbench({
   navigationGuardRef,
   enabled,
   selectionResetRef,
+  toolbar,
 }: {
   projectId: number;
   query: ListTasksProjectsProjectIdTasksGetParams;
@@ -46,6 +53,7 @@ export function TaskListWorkbench({
   navigationGuardRef: RefObject<(action: () => void) => void>;
   enabled: boolean;
   selectionResetRef: RefObject<() => void>;
+  toolbar?: ReactNode;
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -234,6 +242,54 @@ export function TaskListWorkbench({
             </Button>
           </p>
         ) : null}
+        <div
+          role="group"
+          aria-label="一覧の表示設定"
+          className="flex flex-wrap items-end justify-between gap-2"
+        >
+          {!error && !busy ? (
+            <p
+              role="status"
+              data-task-counts
+              className="text-sm text-muted-foreground"
+            >
+              {legacy || filtered
+                ? `条件一致 ${total}件 · このページ ${tasks.length}件`
+                : `${query.parent_task_id ? "直属の子" : "最上位"} ${total}件`}
+              {!legacy
+                ? ` · ${contextCount ? `文脈 ${contextCount}行 · ` : ""}表示 ${taskRows.length}行`
+                : ""}
+              {isFetching ? " · 更新中" : ""}
+            </p>
+          ) : null}
+          <div className="flex max-w-full flex-wrap items-end gap-2">
+            {toolbar}
+            {!legacy ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={columns === "details"}
+                  onClick={() =>
+                    setColumns(columns === "details" ? "summary" : "details")
+                  }
+                >
+                  {columns === "details" ? "基本の列に戻す" : "詳細の列を表示"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={progress === "shown"}
+                  onClick={() =>
+                    setProgress(progress === "shown" ? "hidden" : "shown")
+                  }
+                >
+                  進捗列
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
         {error ? (
           <DataLoadError
             resourceName="タスク"
@@ -244,47 +300,6 @@ export function TaskListWorkbench({
           <LoadingState message="タスクの表示範囲を確認しています。" />
         ) : (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p
-                role="status"
-                data-task-counts
-                className="text-sm text-muted-foreground"
-              >
-                {legacy || filtered
-                  ? `条件一致 ${total}件 · このページ ${tasks.length}件`
-                  : `${query.parent_task_id ? "直属の子" : "最上位"} ${total}件`}
-                {!legacy
-                  ? ` · ${contextCount ? `文脈 ${contextCount}行 · ` : ""}表示 ${taskRows.length}行`
-                  : ""}
-                {isFetching ? " · 更新中" : ""}
-              </p>
-              {!legacy ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-pressed={columns === "details"}
-                    onClick={() =>
-                      setColumns(columns === "details" ? "summary" : "details")
-                    }
-                  >
-                    {columns === "details"
-                      ? "基本の列に戻す"
-                      : "詳細の列を表示"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-pressed={progress === "shown"}
-                    onClick={() =>
-                      setProgress(progress === "shown" ? "hidden" : "shown")
-                    }
-                  >
-                    進捗列
-                  </Button>
-                </div>
-              ) : null}
-            </div>
             {tree.parentLoading ? (
               <p role="status" className="text-sm text-muted-foreground">
                 親の文脈を読み込んでいます…

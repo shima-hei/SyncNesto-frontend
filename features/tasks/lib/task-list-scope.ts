@@ -77,6 +77,28 @@ export function clearTaskListFilters(params: URLSearchParams) {
     params.delete(key);
 }
 
+export function clearTaskListFilter(params: URLSearchParams, key: string) {
+  const aliases: Record<string, string[]> = {
+    status: ["status", "statuses", "excludeStatuses"],
+    assigneeId: ["assigneeId", "assignee", "ganttAssigneeId"],
+    requirementId: ["requirementId", "ganttRequirementId"],
+  };
+  const keys = [
+    "q",
+    "hierarchy",
+    "priority",
+    "taskType",
+    "overdue",
+    "tag",
+    "startDateFrom",
+    "dueDateTo",
+  ];
+  const targets = aliases[key] ?? (keys.includes(key) ? [key] : []);
+  if (!targets.length) return;
+  params.delete("page");
+  for (const target of targets) params.delete(target);
+}
+
 export function getTaskParentSummary(
   task: TaskRead,
   tasksById?: Map<number, TaskRead>,

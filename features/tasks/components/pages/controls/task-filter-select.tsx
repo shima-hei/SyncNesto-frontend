@@ -19,6 +19,7 @@ type TaskFilterSelectProps = {
   options: readonly { value: string; label: string }[];
   allValue?: string;
   allLabel?: string;
+  compact?: boolean;
   onValueChange: (value: string) => void;
 };
 
@@ -29,15 +30,25 @@ export function TaskFilterSelect({
   options,
   allValue,
   allLabel,
+  compact = false,
   onValueChange,
 }: TaskFilterSelectProps) {
   const triggerId = useId();
 
   return (
     <Field>
-      <FieldLabel htmlFor={triggerId}>{label}</FieldLabel>
+      <FieldLabel
+        htmlFor={triggerId}
+        className={compact ? "sr-only max-w-px" : undefined}
+      >
+        {label}
+      </FieldLabel>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger id={triggerId} className="w-full">
+        <SelectTrigger
+          id={triggerId}
+          className="w-full"
+          title={compact ? label : undefined}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
