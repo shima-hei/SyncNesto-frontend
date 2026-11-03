@@ -4,7 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export type StatusTone =
-  "neutral" | "info" | "progress" | "warning" | "success" | "danger";
+  | "neutral"
+  | "info"
+  | "progress"
+  | "warning"
+  | "success"
+  | "danger"
+  | "resolved"
+  | "returned";
 
 const toneClasses: Record<StatusTone, string> = {
   neutral:
@@ -18,6 +25,10 @@ const toneClasses: Record<StatusTone, string> = {
     "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
   danger:
     "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]",
+  resolved:
+    "border-[var(--status-resolved-border)] bg-[var(--status-resolved-bg)] text-[var(--status-resolved-fg)]",
+  returned:
+    "border-[var(--status-returned-border)] bg-[var(--status-returned-bg)] text-[var(--status-returned-fg)]",
 };
 
 export function StatusBadge({

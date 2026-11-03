@@ -113,7 +113,7 @@ export function TasksBoardSection({
                         <h4 className="text-sm font-semibold">
                           {status.label}
                         </h4>
-                        <span className="rounded-full border border-current/20 bg-background/70 px-2 py-0.5 text-xs font-medium">
+                        <span className="rounded-full border border-current/20 bg-background/70 px-2 py-0.5 text-xs font-medium text-foreground">
                           {columnTasks.length}
                         </span>
                       </div>

@@ -67,7 +67,7 @@ export const getNextTaskBoardSortOrder = (
 export const getBoardStatusClassName = (status?: string | null) => {
   return cn(
     "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--status-neutral-fg)]",
-    (status === "todo" || status === "resolved") &&
+    status === "todo" &&
       "border-[var(--status-info-border)] bg-[var(--status-info-bg)] text-[var(--status-info-fg)]",
     status === "in_progress" &&
       "border-[var(--status-progress-border)] bg-[var(--status-progress-bg)] text-[var(--status-progress-fg)]",
@@ -75,21 +75,25 @@ export const getBoardStatusClassName = (status?: string | null) => {
       "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]",
     status === "done" &&
       "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
-    (status === "blocked" || status === "returned") &&
+    status === "blocked" &&
       "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]",
+    status === "resolved" &&
+      "border-[var(--status-resolved-border)] bg-[var(--status-resolved-bg)] text-[var(--status-resolved-fg)]",
+    status === "returned" &&
+      "border-[var(--status-returned-border)] bg-[var(--status-returned-bg)] text-[var(--status-returned-fg)]",
   );
 };
 
 export const getBoardCardClassName = (status?: string | null) => {
   return cn(
     "border-l-[var(--status-neutral-border)]",
-    (status === "todo" || status === "resolved") &&
-      "border-l-[var(--status-info-border)]",
+    status === "todo" && "border-l-[var(--status-info-border)]",
     status === "in_progress" && "border-l-[var(--status-progress-border)]",
     status === "in_review" && "border-l-[var(--status-warning-border)]",
     status === "done" && "border-l-[var(--status-success-border)]",
-    (status === "blocked" || status === "returned") &&
-      "border-l-[var(--status-danger-border)]",
+    status === "blocked" && "border-l-[var(--status-danger-border)]",
+    status === "resolved" && "border-l-[var(--status-resolved-border)]",
+    status === "returned" && "border-l-[var(--status-returned-border)]",
   );
 };
 
