@@ -47,6 +47,16 @@ export const MILESTONE_STATUS_OPTIONS = [
 
 export type TaskStatus = (typeof TASK_STATUS_OPTIONS)[number]["value"];
 
+export const getNextTaskBoardStatus = (status?: string | null) => {
+  if (status === "returned")
+    return TASK_STATUS_OPTIONS.find((option) => option.value === "in_progress");
+  const forward = TASK_STATUS_OPTIONS.filter(
+    (option) => option.value !== "returned",
+  );
+  const index = forward.findIndex((option) => option.value === status);
+  return index < 0 ? undefined : forward[index + 1];
+};
+
 export const getTaskTypeLabel = (
   value?: string | null,
   name?: string | null,
