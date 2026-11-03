@@ -1,5 +1,6 @@
 "use client";
 
+import { useTaskTypes } from "../../hooks/use-task-types";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 
 import { useRef, useState } from "react";
@@ -61,7 +62,6 @@ import { BOARD_TASK_LIMIT, getBoardTaskScope } from "../../lib/task-view-scope";
 import {
   TASK_STATUS_OPTIONS,
   getTaskPriorityLabel,
-  getTaskTypeLabel,
 } from "../../constants/task-options";
 import { TaskForm } from "../forms/task-form";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
@@ -97,6 +97,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
     values: TASK_TABS,
     defaultValue: "list",
   });
+  const taskTypes = useTaskTypes(projectId);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const listNavigationGuard = useRef<(action: () => void) => void>((action) =>
     action(),
@@ -290,8 +291,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
     },
     {
       key: "taskType",
-      label:
-        taskType !== ALL_TYPES ? `種別: ${getTaskTypeLabel(taskType)}` : "",
+      label: taskType !== ALL_TYPES ? `種別: ${taskTypes.name(taskType)}` : "",
     },
     {
       key: "assigneeId",

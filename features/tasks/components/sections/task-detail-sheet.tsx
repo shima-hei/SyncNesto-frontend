@@ -99,7 +99,10 @@ export function TaskDetailSheet({
                 <SheetDescription>{task.task_code}</SheetDescription>
                 <SheetTitle className="truncate">{task.title}</SheetTitle>
                 <div className="flex flex-wrap gap-2">
-                  <TaskTypeBadge type={task.task_type} />
+                  <TaskTypeBadge
+                    type={task.task_type}
+                    name={task.task_type_name}
+                  />
                   <TaskStatusBadge status={task.status} />
                   <TaskPriorityBadge priority={task.priority} />
                   <TaskFlagBadges

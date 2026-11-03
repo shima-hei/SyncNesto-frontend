@@ -94,7 +94,7 @@ export function TaskBoardCard({
       </div>
       <div className="flex flex-wrap gap-1">
         <TaskHierarchyBadge task={task} />
-        <TaskTypeBadge type={task.task_type} />
+        <TaskTypeBadge type={task.task_type} name={task.task_type_name} />
         <TaskFlagBadges
           isOverdue={task.is_overdue}
           isBlocked={task.is_blocked}

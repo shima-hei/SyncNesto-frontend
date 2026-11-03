@@ -15,6 +15,7 @@ export type ListEditValues = {
   priority: string;
   assigneeId: string;
   dueDate: string;
+  changeReason?: string;
 };
 export type ListEditDraft = { baseline: TaskRead; values: ListEditValues };
 export function getListEditValues(task: TaskRead): ListEditValues {
@@ -38,7 +39,10 @@ export function rebaseListEdit(
   const values = getListEditValues(current);
   for (const field of listEditChanges(draft))
     values[field] = draft.values[field];
-  return { baseline: current, values };
+  return {
+    baseline: current,
+    values: { ...values, changeReason: draft.values.changeReason },
+  };
 }
 export function isListEditReflected(draft: ListEditDraft, current: TaskRead) {
   return (
@@ -50,6 +54,12 @@ export function isListEditReflected(draft: ListEditDraft, current: TaskRead) {
   );
 }
 export function validateListEdit(draft: ListEditDraft) {
+  if (
+    draft.values.status === "returned" &&
+    draft.baseline.status !== "returned" &&
+    !draft.values.changeReason?.trim()
+  )
+    return "差し戻し理由を入力してください。";
   if (
     listEditChanges(draft).includes("priority") &&
     !["low", "medium", "high", "critical"].includes(draft.values.priority)
@@ -96,6 +106,9 @@ export function toListEditMutation(
         contract: "task",
         data: {
           ...data,
+          ...(fields.includes("status") && draft.values.status === "returned"
+            ? { change_reason: draft.values.changeReason?.trim() }
+            : {}),
           ...(fields.includes("priority")
             ? { priority: draft.values.priority }
             : {}),

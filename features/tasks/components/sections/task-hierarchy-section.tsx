@@ -226,7 +226,7 @@ function TaskTreeNode({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-        <TaskTypeBadge type={task.task_type} />
+        <TaskTypeBadge type={task.task_type} name={task.task_type_name} />
         <TaskStatusBadge status={task.status} />
         <TaskPriorityBadge priority={task.priority} />
         <TaskTags tags={task.tags} />

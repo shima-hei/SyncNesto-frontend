@@ -72,7 +72,8 @@ export function TasksTable({
   const { withReturn } = useListNavigation(
     `/projects/joined/${projectId}/tasks`,
   );
-  const { updateTaskStatus, isPending } = useUpdateTaskStatus(projectId);
+  const { updateTaskStatus, isPending, returnDialog } =
+    useUpdateTaskStatus(projectId);
   const { duplicateTask, isPending: isDuplicatePending } =
     useDuplicateTask(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
@@ -95,6 +96,7 @@ export function TasksTable({
 
   return (
     <div className="flex min-w-0 flex-col gap-2">
+      {returnDialog}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           名称の下に親タスクを表示します。列が収まらない場合は横にスクロールできます。
@@ -199,7 +201,10 @@ export function TasksTable({
                   </TableCell>
                   {showDetails ? (
                     <TableCell>
-                      <TaskTypeBadge type={task.task_type} />
+                      <TaskTypeBadge
+                        type={task.task_type}
+                        name={task.task_type_name}
+                      />
                     </TableCell>
                   ) : null}
                   <TableCell>{getTaskUserLabel(task.assignee_id)}</TableCell>

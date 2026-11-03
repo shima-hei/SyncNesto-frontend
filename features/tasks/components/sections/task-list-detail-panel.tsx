@@ -182,7 +182,7 @@ export function TaskListDetailPanel({
                 </>
               ) : null}
               <dt>種別</dt>
-              <dd>{getTaskTypeLabel(task.task_type)}</dd>
+              <dd>{getTaskTypeLabel(task.task_type, task.task_type_name)}</dd>
               <dt>階層</dt>
               <dd>
                 <TaskHierarchyBadge task={task} />

@@ -11,8 +11,14 @@ import {
   getTaskTypeLabel,
 } from "../../constants/task-options";
 
-export function TaskTypeBadge({ type }: { type?: string | null }) {
-  return <Badge variant="outline">{getTaskTypeLabel(type)}</Badge>;
+export function TaskTypeBadge({
+  type,
+  name,
+}: {
+  type?: string | null;
+  name?: string | null;
+}) {
+  return <Badge variant="outline">{getTaskTypeLabel(type, name)}</Badge>;
 }
 
 export function TaskStatusBadge({ status }: { status?: string | null }) {
@@ -89,6 +95,7 @@ const taskStatusTones: Record<string, StatusTone> = {
   todo: "info",
   in_progress: "progress",
   in_review: "warning",
+  returned: "danger",
   done: "success",
   blocked: "danger",
 };

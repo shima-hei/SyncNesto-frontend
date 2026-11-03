@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -86,6 +87,22 @@ export function TaskListQuickEdit({
       }}
     >
       <FieldGroup className="grid gap-3 sm:grid-cols-2">
+        {values.status === "returned" && task.status !== "returned" ? (
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor={`task-list-return-${task.id}`}>
+              差し戻し理由（必須）
+            </FieldLabel>
+            <Textarea
+              id={`task-list-return-${task.id}`}
+              required
+              disabled={disabled}
+              value={values.changeReason ?? ""}
+              onChange={(event) =>
+                editor.edit(task, { changeReason: event.target.value })
+              }
+            />
+          </Field>
+        ) : null}
         <Field>
           <FieldLabel htmlFor={`task-list-status-${task.id}`}>状態</FieldLabel>
           <Select

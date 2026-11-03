@@ -18,10 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import {
-  TASK_PRIORITY_OPTIONS,
-  TASK_TYPE_OPTIONS,
-} from "../../../constants/task-options";
+import { TASK_PRIORITY_OPTIONS } from "../../../constants/task-options";
 import {
   ALL_OVERDUE,
   ALL_PRIORITIES,
@@ -31,6 +28,7 @@ import {
 import { TaskFilterSelect } from "./task-filter-select";
 import { TaskStatusFilterControl } from "./task-status-filter";
 import type { TaskStatusFilter } from "../../../lib/task-list-filters";
+import { useTaskTypes } from "../../../hooks/use-task-types";
 
 export function TaskFilters({
   searchInput,
@@ -84,6 +82,7 @@ export function TaskFilters({
   help?: ReactNode;
 }) {
   const advancedId = useId();
+  const taskTypes = useTaskTypes();
   const keywordId = useId();
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const advancedCount =
@@ -224,7 +223,10 @@ export function TaskFilters({
           placeholder="種別を選択"
           allValue={ALL_TYPES}
           allLabel="すべての種別"
-          options={TASK_TYPE_OPTIONS}
+          options={taskTypes.options(
+            taskType === ALL_TYPES ? undefined : taskType,
+            true,
+          )}
           onValueChange={onTaskTypeChange}
         />
         <TaskFilterSelect

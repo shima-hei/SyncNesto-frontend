@@ -12,4 +12,5 @@ export interface TaskMoveRequest {
   status: string;
   sort_order: number;
   version: number;
+  change_reason?: string | null;
 }

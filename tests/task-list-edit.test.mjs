@@ -39,6 +39,28 @@ const draft = (changes = {}, baseline = task) => ({
   values: { ...edit.getListEditValues(baseline), ...changes },
 });
 
+test("returned requires a reason, sends no automatic progress and preserves the reason after a conflict", () => {
+  const row = draft({ status: "returned" });
+  assert.match(edit.validateListEdit(row), /理由/);
+  row.values.changeReason = "境界値を確認してください";
+  assert.equal(edit.validateListEdit(row), null);
+  assert.deepEqual(edit.toListEditMutation(row), {
+    contract: "task",
+    data: {
+      version: 3,
+      status: "returned",
+      change_reason: row.values.changeReason,
+    },
+  });
+  const rebased = edit.rebaseListEdit(row, {
+    ...task,
+    version: 4,
+    priority: "high",
+  });
+  assert.equal(rebased.values.changeReason, row.values.changeReason);
+  assert.equal(edit.toListEditMutation(rebased).data.version, 4);
+});
+
 test("assignee or due-only changes use planning with only changed fields, protecting actuals, effort and state", () => {
   const before = structuredClone(task);
   assert.deepEqual(edit.toListEditMutation(draft({ dueDate: "2026-11-12" })), {

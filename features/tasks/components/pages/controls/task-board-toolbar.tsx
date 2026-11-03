@@ -7,10 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-import {
-  TASK_PRIORITY_OPTIONS,
-  TASK_TYPE_OPTIONS,
-} from "../../../constants/task-options";
+import { TASK_PRIORITY_OPTIONS } from "../../../constants/task-options";
 import {
   ALL_OVERDUE,
   ALL_PRIORITIES,
@@ -22,6 +19,7 @@ import type { BoardSwimlane } from "../../sections/tasks-board-section";
 import { TaskFilterSelect } from "./task-filter-select";
 import { TaskStatusFilterControl } from "./task-status-filter";
 import type { TaskStatusFilter } from "../../../lib/task-list-filters";
+import { useTaskTypes } from "../../../hooks/use-task-types";
 
 export function TaskBoardToolbar({
   searchInput,
@@ -74,6 +72,7 @@ export function TaskBoardToolbar({
 }) {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const advancedId = useId();
+  const taskTypes = useTaskTypes();
   const advancedCount = [
     priority !== ALL_PRIORITIES,
     taskType !== ALL_TYPES,
@@ -163,7 +162,10 @@ export function TaskBoardToolbar({
             placeholder="種別"
             allValue={ALL_TYPES}
             allLabel="すべて"
-            options={TASK_TYPE_OPTIONS}
+            options={taskTypes.options(
+              taskType === ALL_TYPES ? undefined : taskType,
+              true,
+            )}
             onValueChange={onTaskTypeChange}
           />
           <TaskFilterSelect

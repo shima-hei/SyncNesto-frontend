@@ -62,6 +62,10 @@ import type {
   TaskPlanningUpdate,
   TaskRead,
   TaskTagListResponse,
+  TaskTypeCreate,
+  TaskTypeList,
+  TaskTypeRead,
+  TaskTypeUpdate,
   TaskUpdate,
 } from "../model";
 
@@ -6476,6 +6480,497 @@ export function useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getListTaskTypesProjectsProjectIdTaskTypesGetUrl = (
+  projectId: number,
+) => {
+  return `/projects/${projectId}/task-types`;
+};
+
+/**
+ * 過去の非表示/自由文字列も表示できるカタログを取得する。
+ * @summary List Task Types
+ */
+export const listTaskTypesProjectsProjectIdTaskTypesGet = async (
+  projectId: number,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<TaskTypeList> => {
+  return apiClient<TaskTypeList>(
+    getListTaskTypesProjectsProjectIdTaskTypesGetUrl(projectId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListTaskTypesProjectsProjectIdTaskTypesGetQueryKey = (
+  projectId: number,
+) => {
+  return [`/projects/${projectId}/task-types`] as const;
+};
+
+export const getListTaskTypesProjectsProjectIdTaskTypesGetQueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getListTaskTypesProjectsProjectIdTaskTypesGetQueryKey(projectId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>
+  > = ({ signal }) =>
+    listTaskTypesProjectsProjectIdTaskTypesGet(projectId, {
+      signal,
+      ...requestOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: projectId !== null && projectId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListTaskTypesProjectsProjectIdTaskTypesGetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>
+>;
+export type ListTaskTypesProjectsProjectIdTaskTypesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+export function useListTaskTypesProjectsProjectIdTaskTypesGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>
+          >,
+          TError,
+          Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListTaskTypesProjectsProjectIdTaskTypesGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>
+          >,
+          TError,
+          Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListTaskTypesProjectsProjectIdTaskTypesGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Task Types
+ */
+
+export function useListTaskTypesProjectsProjectIdTaskTypesGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof listTaskTypesProjectsProjectIdTaskTypesGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getListTaskTypesProjectsProjectIdTaskTypesGetQueryOptions(
+      projectId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateTaskTypeProjectsProjectIdTaskTypesPostUrl = (
+  projectId: number,
+) => {
+  return `/projects/${projectId}/task-types`;
+};
+
+/**
+ * 案件の独自種別を作成する。
+ * @summary Create Task Type
+ */
+export const createTaskTypeProjectsProjectIdTaskTypesPost = async (
+  projectId: number,
+  taskTypeCreate: TaskTypeCreate,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<TaskTypeRead> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiClient<TaskTypeRead>(
+    getCreateTaskTypeProjectsProjectIdTaskTypesPostUrl(projectId),
+    {
+      ...options,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(taskTypeCreate),
+    },
+  );
+};
+
+export const getCreateTaskTypeProjectsProjectIdTaskTypesPostMutationKey = () =>
+  ["createTaskTypeProjectsProjectIdTaskTypesPost"] as const;
+
+export const getCreateTaskTypeProjectsProjectIdTaskTypesPostMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaskTypeProjectsProjectIdTaskTypesPost>>,
+    TError,
+    CreateTaskTypeProjectsProjectIdTaskTypesPostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTaskTypeProjectsProjectIdTaskTypesPost>>,
+  TError,
+  CreateTaskTypeProjectsProjectIdTaskTypesPostMutationVariables,
+  TContext
+> => {
+  const mutationKey =
+    getCreateTaskTypeProjectsProjectIdTaskTypesPostMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTaskTypeProjectsProjectIdTaskTypesPost>>,
+    CreateTaskTypeProjectsProjectIdTaskTypesPostMutationVariables
+  > = (props) => {
+    const { projectId, data } = props ?? {};
+
+    return createTaskTypeProjectsProjectIdTaskTypesPost(
+      projectId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTaskTypeProjectsProjectIdTaskTypesPostMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof createTaskTypeProjectsProjectIdTaskTypesPost>>
+  >;
+export type CreateTaskTypeProjectsProjectIdTaskTypesPostMutationBody =
+  BodyType<TaskTypeCreate>;
+export type CreateTaskTypeProjectsProjectIdTaskTypesPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CreateTaskTypeProjectsProjectIdTaskTypesPostMutationVariables = {
+  projectId: number;
+  data: BodyType<TaskTypeCreate>;
+};
+
+/**
+ * @summary Create Task Type
+ */
+export const useCreateTaskTypeProjectsProjectIdTaskTypesPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createTaskTypeProjectsProjectIdTaskTypesPost>>,
+      TError,
+      CreateTaskTypeProjectsProjectIdTaskTypesPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createTaskTypeProjectsProjectIdTaskTypesPost>>,
+  TError,
+  CreateTaskTypeProjectsProjectIdTaskTypesPostMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getCreateTaskTypeProjectsProjectIdTaskTypesPostMutationOptions(options),
+    queryClient,
+  );
+};
+export const getUpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchUrl = (
+  projectId: number,
+  typeKey: string,
+) => {
+  return `/projects/${projectId}/task-types/${typeKey}`;
+};
+
+/**
+ * 名前と選択可否を保存し、使用済みのキーは削除しない。
+ * @summary Update Task Type
+ */
+export const updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch = async (
+  projectId: number,
+  typeKey: string,
+  taskTypeUpdate: TaskTypeUpdate,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<TaskTypeRead> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiClient<TaskTypeRead>(
+    getUpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchUrl(
+      projectId,
+      typeKey,
+    ),
+    {
+      ...options,
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(taskTypeUpdate),
+    },
+  );
+};
+
+export const getUpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationKey =
+  () => ["updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch"] as const;
+
+export const getUpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch>
+      >,
+      TError,
+      UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<typeof updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch>
+    >,
+    TError,
+    UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<typeof updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch>
+      >,
+      UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationVariables
+    > = (props) => {
+      const { projectId, typeKey, data } = props ?? {};
+
+      return updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch(
+        projectId,
+        typeKey,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch>
+    >
+  >;
+export type UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationBody =
+  BodyType<TaskTypeUpdate>;
+export type UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationError =
+  ErrorType<HTTPValidationError>;
+export type UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationVariables =
+  { projectId: number; typeKey: string; data: BodyType<TaskTypeUpdate> };
+
+/**
+ * @summary Update Task Type
+ */
+export const useUpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch>
+      >,
+      TError,
+      UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<
+    ReturnType<typeof updateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatch>
+  >,
+  TError,
+  UpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getUpdateTaskTypeProjectsProjectIdTaskTypesTypeKeyPatchMutationOptions(
+      options,
+    ),
+    queryClient,
+  );
+};
 export const getListMilestonesProjectsProjectIdMilestonesGetUrl = (
   projectId: number,
 ) => {

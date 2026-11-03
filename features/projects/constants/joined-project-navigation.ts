@@ -1,5 +1,18 @@
 import type { CurrentProjectRoleRead } from "@/lib/api/generated/model";
 import {
+  BookOpenCheckIcon,
+  ClipboardListIcon,
+  FileCheck2Icon,
+  FileStackIcon,
+  LayoutDashboardIcon,
+  ListChecksIcon,
+  PanelsTopLeftIcon,
+  ShieldCheckIcon,
+  Trash2Icon,
+  UsersIcon,
+  type LucideIcon,
+} from "lucide-react";
+import {
   canViewProjectFeature,
   canUpdateDocument,
 } from "@/features/auth/utils/authorization";
@@ -8,6 +21,7 @@ export type JoinedProjectNavigationItem = {
   group: string;
   purpose: string;
   label: string;
+  icon: LucideIcon;
   href: (projectId: number) => string;
   canShow: (role: CurrentProjectRoleRead | null) => boolean;
 };
@@ -15,6 +29,7 @@ export type JoinedProjectNavigationItem = {
 export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   {
     label: "概要",
+    icon: LayoutDashboardIcon,
     group: "目標・現在地",
     purpose: "プロジェクトの目的と状況",
     href: (projectId) => `/projects/joined/${projectId}`,
@@ -22,6 +37,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "メンバー",
+    icon: UsersIcon,
     group: "管理・その他",
     purpose: "参加者を確認する",
     href: (projectId) => `/projects/joined/${projectId}/members`,
@@ -29,6 +45,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "要件定義書",
+    icon: BookOpenCheckIcon,
     group: "何を満たすか",
     purpose: "要件と受け入れ条件を確認する",
     href: (projectId) => `/projects/joined/${projectId}/requirements`,
@@ -36,6 +53,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "タスク",
+    icon: ClipboardListIcon,
     group: "誰が・いつ進めるか",
     purpose: "作業・担当・日程を確認する",
     href: (projectId) => `/projects/joined/${projectId}/tasks`,
@@ -43,6 +61,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "合意・承認",
+    icon: ShieldCheckIcon,
     group: "何を満たすか",
     purpose: "判断が必要な内容と合意履歴を確認する",
     href: (projectId) => `/projects/joined/${projectId}/fixed-approvals`,
@@ -50,6 +69,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "画面・API設計",
+    icon: PanelsTopLeftIcon,
     group: "どう作るか",
     purpose: "画面やAPIの設計を確認する",
     href: (projectId) => `/projects/joined/${projectId}/specifications`,
@@ -57,6 +77,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "テスト設計書",
+    icon: FileCheck2Icon,
     group: "どう確かめるか",
     purpose: "テスト項目と組み合わせを設計する",
     href: (projectId) => `/projects/joined/${projectId}/test-designs`,
@@ -64,6 +85,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "テストケース",
+    icon: ListChecksIcon,
     group: "どう確かめるか",
     purpose: "テストを実行し、結果を確認する",
     href: (projectId) => `/projects/joined/${projectId}/test-cases`,
@@ -71,6 +93,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "ドキュメント",
+    icon: FileStackIcon,
     group: "補足の文書・添付",
     purpose: "文書と添付ファイルを確認する",
     href: (projectId) => `/projects/joined/${projectId}/documents`,
@@ -78,6 +101,7 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
   },
   {
     label: "ごみ箱",
+    icon: Trash2Icon,
     group: "管理・その他",
     purpose: "削除した情報を確認・復元する",
     href: (projectId) => `/projects/joined/${projectId}/trash`,

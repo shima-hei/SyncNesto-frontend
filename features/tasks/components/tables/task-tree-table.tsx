@@ -329,7 +329,10 @@ export function TaskTreeTable({
                         <TaskPriorityBadge priority={task.priority} />
                       </TableCell>
                       <TableCell>
-                        <TaskTypeBadge type={task.task_type} />
+                        <TaskTypeBadge
+                          type={task.task_type}
+                          name={task.task_type_name}
+                        />
                       </TableCell>
                       <TableCell>{formatDate(task.start_date)}</TableCell>
                       <TableCell>

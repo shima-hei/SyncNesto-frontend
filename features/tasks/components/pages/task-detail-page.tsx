@@ -175,7 +175,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
         }
       />
       <div className="flex flex-wrap gap-2">
-        <TaskTypeBadge type={task.task_type} />
+        <TaskTypeBadge type={task.task_type} name={task.task_type_name} />
         <TaskStatusBadge status={task.status} />
         <TaskPriorityBadge priority={task.priority} />
         <TaskFlagBadges

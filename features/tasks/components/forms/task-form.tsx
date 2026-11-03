@@ -23,7 +23,6 @@ import {
   TASK_PRIORITY_OPTIONS,
   TASK_RELATION_TYPE_OPTIONS,
   TASK_STATUS_OPTIONS,
-  TASK_TYPE_OPTIONS,
 } from "../../constants/task-options";
 import { useTaskFormDraft } from "../../hooks/use-task-form-draft";
 import { mergeTaskFormDraft } from "../../lib/task-form-draft";
@@ -33,6 +32,7 @@ import { TaskParentSelectField } from "./task-parent-select-field";
 import { TaskRequirementSelectField } from "./task-requirement-select-field";
 import { TaskTagInput } from "./task-tag-input";
 import { TaskUserSelectField } from "./task-user-select-field";
+import { TaskTypeField } from "./task-type-field";
 import { DateField, NumberField, TaskSelectField } from "./task-form-fields";
 import {
   TaskPhaseSelectField,
@@ -207,17 +207,22 @@ export function TaskForm({
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-3">
-            <TaskSelectField
-              label="種別"
+            <TaskTypeField
+              projectId={projectId}
               value={values.taskType}
-              options={TASK_TYPE_OPTIONS}
               error={errors.taskType}
               onChange={(value) => updateValue("taskType", value)}
             />
             <TaskSelectField
               label="ステータス"
               value={values.status}
-              options={TASK_STATUS_OPTIONS}
+              options={
+                mode === "create"
+                  ? TASK_STATUS_OPTIONS.filter(
+                      (option) => option.value !== "returned",
+                    )
+                  : TASK_STATUS_OPTIONS
+              }
               error={errors.status}
               onChange={(value) => updateValue("status", value)}
             />
@@ -263,9 +268,18 @@ export function TaskForm({
           />
           {mode === "update" ? (
             <Field>
-              <FieldLabel htmlFor={reasonId}>更新理由（任意）</FieldLabel>
+              <FieldLabel htmlFor={reasonId}>
+                {values.status === "returned" &&
+                initialValues.status !== "returned"
+                  ? "差し戻し理由（必須）"
+                  : "更新理由（任意）"}
+              </FieldLabel>
               <Textarea
                 id={reasonId}
+                required={
+                  values.status === "returned" &&
+                  initialValues.status !== "returned"
+                }
                 value={values.changeReason}
                 onChange={(event) =>
                   updateValue("changeReason", event.target.value)
