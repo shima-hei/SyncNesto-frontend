@@ -31,3 +31,13 @@ export const mergeTaskFormDraft = (
   }
   return merged;
 };
+
+export const hasUnreflectedTaskFormDraft = (
+  draft: TaskFormDraft,
+  current: TaskFormValues,
+): boolean =>
+  (Object.keys(current) as (keyof TaskFormValues)[]).some(
+    (field) =>
+      draft.values[field] !== draft.initialValues[field] &&
+      draft.values[field] !== current[field],
+  );

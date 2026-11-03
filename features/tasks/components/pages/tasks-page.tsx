@@ -129,10 +129,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [sort, setSort] = useUrlFilterState<
     (typeof SORT_OPTIONS)[number]["value"]
   >("sort", "updated_desc");
-  const [listLayout, setListLayout] = useUrlFilterState(
-    "taskListLayout",
-    "auto",
-  );
   const [ganttStartDate, setGanttStartDate] = useUrlFilterState(
     "ganttStartDate",
     "",
@@ -174,9 +170,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
         selectedRequirementId <= 2147483647,
     },
   );
-  const legacyList =
-    listLayout === "legacy" ||
-    (listLayout === "auto" && taskListScope.scope.kind === "children");
   const taskQuery = {
     page: activeTab === "board" ? 1 : page,
     page_size: activeTab === "board" ? BOARD_TASK_LIMIT : PAGE_SIZE,
@@ -434,17 +427,15 @@ export function TasksPage({ projectId }: TasksPageProps) {
                     setRequirementId(value);
                   }}
                 />
-                {!legacyList ? (
-                  <TaskFilterSelect
-                    label="階層の種類"
-                    value={taskListScope.hierarchy}
-                    placeholder="階層の種類を選択"
-                    allValue="all"
-                    allLabel="すべての種類"
-                    options={TASK_HIERARCHY_OPTIONS}
-                    onValueChange={taskListScope.setHierarchy}
-                  />
-                ) : null}
+                <TaskFilterSelect
+                  label="階層の種類"
+                  value={taskListScope.hierarchy}
+                  placeholder="階層の種類を選択"
+                  allValue="all"
+                  allLabel="すべての種類"
+                  options={TASK_HIERARCHY_OPTIONS}
+                  onValueChange={taskListScope.setHierarchy}
+                />
               </>
             }
             searchInput={searchInput}
@@ -493,7 +484,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
             hasUnappliedSearch={searchInput.trim() !== q}
             onReset={handleResetFilters}
           />
-          {legacyList ? (
+          {taskListScope.scope.kind === "children" ? (
             <TaskListScopeNav
               projectId={projectId}
               {...taskListScope}
@@ -515,26 +506,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
                     onValueChange={(value) => setSort(value as typeof sort)}
                   />
                 </div>
-                <div className="w-40 max-w-full">
-                  <TaskFilterSelect
-                    compact
-                    label="閲覧方式"
-                    value={legacyList ? "legacy" : "tree"}
-                    placeholder="閲覧方式を選択"
-                    options={[
-                      { value: "tree", label: "親子テーブル" },
-                      { value: "legacy", label: "従来の探索" },
-                    ]}
-                    onValueChange={(value) => {
-                      listNavigationGuard.current(() => {
-                        if (value === "tree")
-                          taskListScope.setScope({ kind: "all" });
-                        setListLayout(value);
-                        setPage(1);
-                      });
-                    }}
-                  />
-                </div>
               </>
             }
             selectionResetRef={listSelectionResetRef}
@@ -546,11 +517,8 @@ export function TasksPage({ projectId }: TasksPageProps) {
             key={projectId}
             projectId={projectId}
             query={{ ...taskQuery, page_size: PAGE_SIZE, page }}
-            legacy={legacyList}
-            canCreate={canCreate}
             canUpdate={canUpdate}
             onPageChange={setPage}
-            onBrowseChildren={handleBrowseChildren}
           />
         </TabsContent>
 
@@ -740,7 +708,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
             initialValues={defaultTaskFormValues}
             isPending={isCreatePending}
             error={createError}
-            onSubmit={createTask}
+            onSubmit={(values) => createTask(values)}
             onSuccess={() => setCreateDialogOpen(false)}
           />
         </DialogContent>

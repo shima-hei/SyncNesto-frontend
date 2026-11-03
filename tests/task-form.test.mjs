@@ -254,3 +254,27 @@ test("draft scopes isolate projects, create contexts, and edit resources", () =>
   ];
   assert.equal(new Set(keys).size, keys.length);
 });
+
+test("a saved response may remount the form before draft cleanup without prompting to restore saved input", () => {
+  const initial = { ...mapper.defaultTaskFormValues, title: "before" };
+  const values = { ...initial, title: "saved title", priority: "high" };
+  const stored = { initialValues: initial, values };
+  const current = { ...values, assigneeId: "8", progressPercent: "100" };
+  assert.equal(draft.hasUnreflectedTaskFormDraft(stored, current), false);
+  assert.equal(draft.hasUnreflectedTaskFormDraft(stored, initial), true);
+  // 保存失敗・競合や、追加の未保存変更がある場合は復元を残す。
+  assert.equal(
+    draft.hasUnreflectedTaskFormDraft(stored, { ...current, priority: "low" }),
+    true,
+  );
+  assert.equal(
+    draft.hasUnreflectedTaskFormDraft(
+      {
+        ...stored,
+        values: { ...values, description: "unsaved notes" },
+      },
+      current,
+    ),
+    true,
+  );
+});

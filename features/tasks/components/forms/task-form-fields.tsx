@@ -66,11 +66,13 @@ export function NumberField({
   suffix?: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <Field data-invalid={error ? true : undefined}>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <div className="flex items-center gap-2">
         <Input
+          id={id}
           inputMode="numeric"
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -94,10 +96,12 @@ export function DateField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <Field>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Input
+        id={id}
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}

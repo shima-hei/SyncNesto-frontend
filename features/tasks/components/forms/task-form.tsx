@@ -24,9 +24,6 @@ import {
   TASK_RELATION_TYPE_OPTIONS,
   TASK_STATUS_OPTIONS,
   TASK_TYPE_OPTIONS,
-  getTaskPriorityLabel,
-  getTaskStatusLabel,
-  getTaskTypeLabel,
 } from "../../constants/task-options";
 import { useTaskFormDraft } from "../../hooks/use-task-form-draft";
 import { mergeTaskFormDraft } from "../../lib/task-form-draft";
@@ -42,6 +39,11 @@ import {
   EFFORT_BASIS_OPTIONS,
 } from "./task-phase-select-field";
 
+type TaskFormSubmit = (
+  values: TaskFormValues,
+  onSaved?: () => void,
+) => Promise<unknown>;
+
 type TaskFormProps = {
   mode: "create" | "update";
   projectId: number;
@@ -52,8 +54,8 @@ type TaskFormProps = {
   error?: Error | null;
   conflictValues?: TaskFormValues | null;
   onCloseConflict?: () => void;
-  onResolveConflict?: (values: TaskFormValues) => Promise<unknown>;
-  onSubmit: (values: TaskFormValues) => Promise<unknown>;
+  onResolveConflict?: TaskFormSubmit;
+  onSubmit: TaskFormSubmit;
   onSuccess?: () => void;
 };
 
@@ -73,9 +75,12 @@ export function TaskForm({
 }: TaskFormProps) {
   const taskCodeId = useId();
   const titleId = useId();
+  const descriptionId = useId();
+  const reasonId = useId();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<TaskFormErrors>({});
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  const planningRef = useRef<HTMLDetailsElement>(null);
   const draft = useTaskFormDraft({
     projectId,
     mode,
@@ -84,11 +89,23 @@ export function TaskForm({
     values,
     onRestore: setValues,
   });
+  const save = async (next: TaskFormValues, submit: TaskFormSubmit) => {
+    let completed = false;
+    const complete = () => {
+      if (completed) return;
+      completed = true;
+      draft.clearDraft();
+      onSuccess?.();
+    };
+    await submit(next, complete);
+    complete();
+  };
 
   const handleSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
+    if (isPending) return;
 
     const result = taskSchema.safeParse(values);
 
@@ -120,16 +137,22 @@ export function TaskForm({
       ) {
         detailsRef.current.open = true;
       }
+      if (
+        [
+          "phaseAssignment",
+          "estimatedBasis",
+          "actualBasis",
+          "estimatedMinutes",
+          "actualMinutes",
+        ].some((field) => field in fieldErrors) &&
+        planningRef.current
+      )
+        planningRef.current.open = true;
       return;
     }
 
     setErrors({});
-    await onSubmit(result.data)
-      .then(() => {
-        draft.clearDraft();
-        onSuccess?.();
-      })
-      .catch(() => undefined);
+    await save(result.data, onSubmit).catch(() => undefined);
   };
 
   const updateValue = <TKey extends keyof TaskFormValues>(
@@ -174,58 +197,87 @@ export function TaskForm({
             </FieldDescription>
             {errors.title ? <FieldError>{errors.title}</FieldError> : null}
           </Field>
-          <p className="text-sm text-muted-foreground">
-            {getTaskStatusLabel(values.status)} ·{" "}
-            {getTaskTypeLabel(values.taskType)} · 優先度
-            {getTaskPriorityLabel(values.priority)}
-            {values.parentTaskId ? " · 親タスク設定済み" : ""}
-            {values.requirementId ? " · 関連要件設定済み" : ""}
-          </p>
+          <Field className="[&_textarea]:min-h-28">
+            <FieldLabel htmlFor={descriptionId}>説明（任意）</FieldLabel>
+            <MarkdownTextarea
+              id={descriptionId}
+              value={values.description}
+              placeholder="作業内容や完了の条件を入力"
+              onChange={(value) => updateValue("description", value)}
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <TaskSelectField
+              label="種別"
+              value={values.taskType}
+              options={TASK_TYPE_OPTIONS}
+              error={errors.taskType}
+              onChange={(value) => updateValue("taskType", value)}
+            />
+            <TaskSelectField
+              label="ステータス"
+              value={values.status}
+              options={TASK_STATUS_OPTIONS}
+              error={errors.status}
+              onChange={(value) => updateValue("status", value)}
+            />
+            <TaskSelectField
+              label="優先度"
+              value={values.priority}
+              options={TASK_PRIORITY_OPTIONS}
+              error={errors.priority}
+              onChange={(value) => updateValue("priority", value)}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TaskUserSelectField
+              projectId={projectId}
+              label="担当者（任意）"
+              value={values.assigneeId}
+              error={errors.assigneeId}
+              onChange={(value) => updateValue("assigneeId", value)}
+            />
+            <DateField
+              label="終了予定日（任意）"
+              value={values.dueDate}
+              onChange={(value) => updateValue("dueDate", value)}
+            />
+            <DateField
+              label="開始日（任意）"
+              value={values.startDate}
+              onChange={(value) => updateValue("startDate", value)}
+            />
+            <NumberField
+              label="進捗率"
+              value={values.progressPercent}
+              error={errors.progressPercent}
+              suffix="%"
+              onChange={(value) => updateValue("progressPercent", value)}
+            />
+          </div>
+          <TaskTagInput
+            projectId={projectId}
+            value={values.tags}
+            error={errors.tags}
+            onChange={(value) => updateValue("tags", value)}
+          />
+          {mode === "update" ? (
+            <Field>
+              <FieldLabel htmlFor={reasonId}>更新理由（任意）</FieldLabel>
+              <Textarea
+                id={reasonId}
+                value={values.changeReason}
+                onChange={(event) =>
+                  updateValue("changeReason", event.target.value)
+                }
+              />
+            </Field>
+          ) : null}
           <details ref={detailsRef} className="rounded-lg border p-4">
             <summary className="cursor-pointer font-medium focus-visible:outline-2 focus-visible:outline-ring">
-              詳細設定
+              関連・管理項目
             </summary>
             <FieldGroup className="pt-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <TaskPhaseSelectField
-                  projectId={projectId}
-                  value={values.phaseAssignment}
-                  retainedValue={
-                    mode === "update"
-                      ? (conflictValues ?? initialValues).phaseAssignment
-                      : undefined
-                  }
-                  error={errors.phaseAssignment}
-                  onChange={(value) => updateValue("phaseAssignment", value)}
-                />
-                <TaskSelectField
-                  label="見積工数の根拠"
-                  value={values.estimatedBasis}
-                  error={errors.estimatedBasis}
-                  options={EFFORT_BASIS_OPTIONS}
-                  onChange={(value) =>
-                    updateValue(
-                      "estimatedBasis",
-                      value as TaskFormValues["estimatedBasis"],
-                    )
-                  }
-                />
-                <TaskSelectField
-                  label="実績工数の根拠"
-                  value={values.actualBasis}
-                  error={errors.actualBasis}
-                  options={EFFORT_BASIS_OPTIONS}
-                  onChange={(value) =>
-                    updateValue(
-                      "actualBasis",
-                      value as TaskFormValues["actualBasis"],
-                    )
-                  }
-                />
-              </div>
-              <FieldDescription>
-                「自身の作業」だけを合計に加えます。「子の集計枠」と「未確認」の保存値は保持し、合計には重ねて加えません。親の工程を変更しても子の所属は変わりません。
-              </FieldDescription>
               <Field data-invalid={errors.taskCode ? true : undefined}>
                 <FieldLabel htmlFor={taskCodeId}>
                   {mode === "create" ? "タスクID（任意）" : "タスクID"}
@@ -252,54 +304,7 @@ export function TaskForm({
                 ) : null}
               </Field>
 
-              <Field>
-                <FieldLabel>説明</FieldLabel>
-                <MarkdownTextarea
-                  value={values.description}
-                  placeholder="Markdown形式で説明を入力"
-                  onChange={(value) => updateValue("description", value)}
-                />
-              </Field>
-
-              <TaskTagInput
-                projectId={projectId}
-                value={values.tags}
-                error={errors.tags}
-                onChange={(value) => updateValue("tags", value)}
-              />
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <TaskSelectField
-                  label="種別"
-                  value={values.taskType}
-                  options={TASK_TYPE_OPTIONS}
-                  error={errors.taskType}
-                  onChange={(value) => updateValue("taskType", value)}
-                />
-                <TaskSelectField
-                  label="ステータス"
-                  value={values.status}
-                  options={TASK_STATUS_OPTIONS}
-                  error={errors.status}
-                  onChange={(value) => updateValue("status", value)}
-                />
-                <TaskSelectField
-                  label="優先度"
-                  value={values.priority}
-                  options={TASK_PRIORITY_OPTIONS}
-                  error={errors.priority}
-                  onChange={(value) => updateValue("priority", value)}
-                />
-              </div>
-
               <div className="grid gap-4 lg:grid-cols-2">
-                <TaskUserSelectField
-                  projectId={projectId}
-                  label="担当者"
-                  value={values.assigneeId}
-                  error={errors.assigneeId}
-                  onChange={(value) => updateValue("assigneeId", value)}
-                />
                 <TaskUserSelectField
                   projectId={projectId}
                   label="報告者"
@@ -331,16 +336,76 @@ export function TaskForm({
                 )}
               </div>
 
-              <div className="grid gap-4 md:grid-cols-4">
-                <DateField
-                  label="開始日"
-                  value={values.startDate}
-                  onChange={(value) => updateValue("startDate", value)}
+              <NumberField
+                label="並び順"
+                value={values.sortOrder}
+                error={errors.sortOrder}
+                onChange={(value) => updateValue("sortOrder", value)}
+              />
+              {mode === "create" ? (
+                <TaskSelectField
+                  label="関連種別"
+                  value={values.relationType}
+                  options={TASK_RELATION_TYPE_OPTIONS}
+                  onChange={(value) => updateValue("relationType", value)}
                 />
-                <DateField
-                  label="終了予定日"
-                  value={values.dueDate}
-                  onChange={(value) => updateValue("dueDate", value)}
+              ) : null}
+            </FieldGroup>
+          </details>
+          <details ref={planningRef} className="rounded-lg border p-4">
+            <summary className="cursor-pointer font-medium focus-visible:outline-2 focus-visible:outline-ring">
+              工程・工数・実績
+            </summary>
+            <FieldGroup className="pt-4">
+              <TaskPhaseSelectField
+                projectId={projectId}
+                value={values.phaseAssignment}
+                retainedValue={
+                  mode === "update"
+                    ? (conflictValues ?? initialValues).phaseAssignment
+                    : undefined
+                }
+                error={errors.phaseAssignment}
+                onChange={(value) => updateValue("phaseAssignment", value)}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TaskSelectField
+                  label="見積工数の根拠"
+                  value={values.estimatedBasis}
+                  error={errors.estimatedBasis}
+                  options={EFFORT_BASIS_OPTIONS}
+                  onChange={(value) =>
+                    updateValue(
+                      "estimatedBasis",
+                      value as TaskFormValues["estimatedBasis"],
+                    )
+                  }
+                />
+                <NumberField
+                  label="見積時間"
+                  value={values.estimatedMinutes}
+                  error={errors.estimatedMinutes}
+                  suffix="分"
+                  onChange={(value) => updateValue("estimatedMinutes", value)}
+                />
+                <TaskSelectField
+                  label="実績工数の根拠"
+                  value={values.actualBasis}
+                  error={errors.actualBasis}
+                  options={EFFORT_BASIS_OPTIONS}
+                  onChange={(value) =>
+                    updateValue(
+                      "actualBasis",
+                      value as TaskFormValues["actualBasis"],
+                    )
+                  }
+                />
+                <NumberField
+                  label="実績時間"
+                  value={values.actualMinutes}
+                  error={errors.actualMinutes}
+                  suffix="分"
+                  onChange={(value) => updateValue("actualMinutes", value)}
                 />
                 <DateField
                   label="実績開始日"
@@ -353,55 +418,9 @@ export function TaskForm({
                   onChange={(value) => updateValue("actualEndDate", value)}
                 />
               </div>
-
-              <div className="grid gap-4 md:grid-cols-4">
-                <NumberField
-                  label="進捗率"
-                  value={values.progressPercent}
-                  error={errors.progressPercent}
-                  suffix="%"
-                  onChange={(value) => updateValue("progressPercent", value)}
-                />
-                <NumberField
-                  label="見積時間"
-                  value={values.estimatedMinutes}
-                  error={errors.estimatedMinutes}
-                  suffix="分"
-                  onChange={(value) => updateValue("estimatedMinutes", value)}
-                />
-                <NumberField
-                  label="実績時間"
-                  value={values.actualMinutes}
-                  error={errors.actualMinutes}
-                  suffix="分"
-                  onChange={(value) => updateValue("actualMinutes", value)}
-                />
-                <NumberField
-                  label="並び順"
-                  value={values.sortOrder}
-                  error={errors.sortOrder}
-                  onChange={(value) => updateValue("sortOrder", value)}
-                />
-              </div>
-
-              {mode === "create" ? (
-                <TaskSelectField
-                  label="関連種別"
-                  value={values.relationType}
-                  options={TASK_RELATION_TYPE_OPTIONS}
-                  onChange={(value) => updateValue("relationType", value)}
-                />
-              ) : (
-                <Field>
-                  <FieldLabel>更新理由</FieldLabel>
-                  <Textarea
-                    value={values.changeReason}
-                    onChange={(event) =>
-                      updateValue("changeReason", event.target.value)
-                    }
-                  />
-                </Field>
-              )}
+              <FieldDescription>
+                工数を合計するのは「自身の作業」だけです。親の工程を変えても子の所属は変わりません。
+              </FieldDescription>
             </FieldGroup>
           </details>
 
@@ -411,9 +430,11 @@ export function TaskForm({
               下書きを保存できません。画面を閉じる前に入力内容を控えてください。
             </p>
           ) : null}
-          <FormSubmitButton isPending={isPending}>
-            {mode === "create" ? "タスクを作成" : "更新"}
-          </FormSubmitButton>
+          <div className="sticky bottom-0 border-t bg-background py-3">
+            <FormSubmitButton isPending={isPending}>
+              {mode === "create" ? "タスクを作成" : "更新"}
+            </FormSubmitButton>
+          </div>
         </FieldGroup>
       </form>
 
@@ -457,7 +478,7 @@ export function TaskForm({
           onResolve={async (resolvedValues) => {
             setValues(resolvedValues);
             draft.persist(resolvedValues);
-            await onResolveConflict(resolvedValues);
+            await save(resolvedValues, onResolveConflict);
           }}
         />
       ) : null}

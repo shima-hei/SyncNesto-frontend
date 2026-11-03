@@ -20,17 +20,9 @@ import type { TaskFormValues } from "../types/task-form";
 export function useUpdateTask(projectId: number, taskId: number) {
   const queryClient = useQueryClient();
   const [conflictCurrent, setConflictCurrent] = useState<TaskRead | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const updateTaskMutation = useUpdateTaskTasksTaskIdPatch({
     mutation: {
-      onSuccess: async (task) => {
-        setConflictCurrent(null);
-        setTaskDetailCache(queryClient, taskId, task);
-        await Promise.all([
-          invalidateTaskProjectSurfaces(queryClient, projectId),
-          invalidateTaskChangeLogs(queryClient, taskId),
-        ]);
-        toast.success(TASK_MESSAGES.task.updateSuccess);
-      },
       onError: (error) => {
         const current = getConflictCurrent<TaskRead>(error);
 
@@ -49,11 +41,27 @@ export function useUpdateTask(projectId: number, taskId: number) {
     values: TaskFormValues,
     version: number,
     currentTask?: TaskRead,
+    onSaved?: () => void,
   ) => {
-    return updateTaskMutation.mutateAsync({
-      taskId,
-      data: toTaskUpdate(values, version, currentTask),
-    });
+    setIsSaving(true);
+    try {
+      const task = await updateTaskMutation.mutateAsync({
+        taskId,
+        data: toTaskUpdate(values, version, currentTask),
+      });
+      // 新versionを表示する前に、成功したフォームの下書きを完了する。
+      onSaved?.();
+      setConflictCurrent(null);
+      setTaskDetailCache(queryClient, taskId, task);
+      await Promise.all([
+        invalidateTaskProjectSurfaces(queryClient, projectId),
+        invalidateTaskChangeLogs(queryClient, taskId),
+      ]);
+      toast.success(TASK_MESSAGES.task.updateSuccess);
+      return task;
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const resetConflict = () => {
@@ -65,7 +73,7 @@ export function useUpdateTask(projectId: number, taskId: number) {
     conflictCurrent,
     resetConflict,
     isConflict: Boolean(conflictCurrent),
-    isPending: updateTaskMutation.isPending,
+    isPending: isSaving || updateTaskMutation.isPending,
     error: updateTaskMutation.error,
   };
 }

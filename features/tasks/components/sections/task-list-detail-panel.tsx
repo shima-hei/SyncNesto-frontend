@@ -24,6 +24,10 @@ import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { TaskStatusBadge, TaskRequirementBadges } from "../shared/task-badges";
 import { TaskHierarchyBadge } from "../shared/task-hierarchy-badge";
 import { effortBasisLabel } from "../../lib/task-effort";
+import {
+  getTaskPriorityLabel,
+  getTaskTypeLabel,
+} from "../../constants/task-options";
 import { TaskListQuickEdit, TaskListDraftNotice } from "./task-list-quick-edit";
 import type { TaskListEditingController } from "../../hooks/use-task-list-editing";
 
@@ -141,6 +145,17 @@ export function TaskListDetailPanel({
                 editor={editor}
               />
             ) : null}
+            <section aria-label="タスクの説明" className="flex flex-col gap-2">
+              <h3 className="text-sm font-medium">説明</h3>
+              <div className="max-h-64 overflow-y-auto">
+                <MarkdownPreview
+                  className="min-h-0"
+                  value={task.description ?? ""}
+                  emptyMessage="説明はありません。"
+                />
+              </div>
+            </section>
+            <Separator />
             <dl className="grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-x-3 gap-y-3 text-sm [&>dt]:text-muted-foreground [&>dd]:min-w-0 [&>dd]:break-words">
               {!canUpdate ? (
                 <>
@@ -148,6 +163,8 @@ export function TaskListDetailPanel({
                   <dd>
                     <TaskStatusBadge status={task.status} />
                   </dd>
+                  <dt>優先度</dt>
+                  <dd>{getTaskPriorityLabel(task.priority)}</dd>
                   <dt>担当</dt>
                   <dd>
                     {task.assignee_id
@@ -164,6 +181,8 @@ export function TaskListDetailPanel({
                   </dd>
                 </>
               ) : null}
+              <dt>種別</dt>
+              <dd>{getTaskTypeLabel(task.task_type)}</dd>
               <dt>階層</dt>
               <dd>
                 <TaskHierarchyBadge task={task} />
@@ -200,20 +219,6 @@ export function TaskListDetailPanel({
                 （{effortBasisLabel(task.estimated_basis)}）
               </dd>
             </dl>
-            <Separator />
-            <section
-              aria-label="タスクの説明"
-              className="max-h-64 overflow-y-auto"
-            >
-              <MarkdownPreview
-                className="min-h-0"
-                value={task.description ?? ""}
-                emptyMessage="説明はありません。"
-              />
-            </section>
-            <p className="text-xs text-muted-foreground">
-              詳しい編集・コメント・変更履歴・依存関係は詳細ページで確認できます。
-            </p>
           </>
         )}
       </div>
