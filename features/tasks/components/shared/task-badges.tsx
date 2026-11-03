@@ -94,6 +94,7 @@ export function TaskRequirementBadges({
 const taskStatusTones: Record<string, StatusTone> = {
   todo: "info",
   in_progress: "progress",
+  resolved: "info",
   in_review: "warning",
   returned: "danger",
   done: "success",

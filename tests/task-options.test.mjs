@@ -20,7 +20,8 @@ const { getNextTaskBoardStatus } = await import(
 );
 
 test("board forward action completes a review while returned work resumes instead of completing", () => {
-  assert.equal(getNextTaskBoardStatus("in_progress")?.value, "in_review");
+  assert.equal(getNextTaskBoardStatus("in_progress")?.value, "resolved");
+  assert.equal(getNextTaskBoardStatus("resolved")?.value, "in_review");
   assert.equal(getNextTaskBoardStatus("in_review")?.value, "done");
   assert.equal(getNextTaskBoardStatus("returned")?.value, "in_progress");
   assert.equal(getNextTaskBoardStatus("unknown"), undefined);

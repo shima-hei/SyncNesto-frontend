@@ -67,7 +67,7 @@ export const getNextTaskBoardSortOrder = (
 export const getBoardStatusClassName = (status?: string | null) => {
   return cn(
     "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--status-neutral-fg)]",
-    status === "todo" &&
+    (status === "todo" || status === "resolved") &&
       "border-[var(--status-info-border)] bg-[var(--status-info-bg)] text-[var(--status-info-fg)]",
     status === "in_progress" &&
       "border-[var(--status-progress-border)] bg-[var(--status-progress-bg)] text-[var(--status-progress-fg)]",
@@ -83,7 +83,8 @@ export const getBoardStatusClassName = (status?: string | null) => {
 export const getBoardCardClassName = (status?: string | null) => {
   return cn(
     "border-l-[var(--status-neutral-border)]",
-    status === "todo" && "border-l-[var(--status-info-border)]",
+    (status === "todo" || status === "resolved") &&
+      "border-l-[var(--status-info-border)]",
     status === "in_progress" && "border-l-[var(--status-progress-border)]",
     status === "in_review" && "border-l-[var(--status-warning-border)]",
     status === "done" && "border-l-[var(--status-success-border)]",

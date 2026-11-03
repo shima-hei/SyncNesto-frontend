@@ -16,6 +16,7 @@ export const TASK_STATUS_OPTIONS = [
   { value: "backlog", label: "バックログ" },
   { value: "todo", label: "未着手" },
   { value: "in_progress", label: "作業中" },
+  { value: "resolved", label: "対応済" },
   { value: "in_review", label: "レビュー中" },
   { value: "returned", label: "差し戻し" },
   { value: "done", label: "完了" },
