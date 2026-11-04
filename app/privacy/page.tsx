@@ -19,7 +19,7 @@ export default function PrivacyPage() {
     >
       <PublicInformationSection title="運営者と提供範囲">
         <p>
-          shime-hei（以下「運営者」）が本サービスを運営します。問い合わせ先は{" "}
+          shima-hei（以下「運営者」）が本サービスを運営します。問い合わせ先は{" "}
           <a href="mailto:syncnesto@gmail.com">syncnesto@gmail.com</a>{" "}
           です。運営者に関する法令上の開示事項も同じ窓口へお問い合わせいただけます。
         </p>

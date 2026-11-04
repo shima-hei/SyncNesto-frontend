@@ -22,7 +22,7 @@ export default function SupportPage() {
           <a href="mailto:syncnesto@gmail.com">syncnesto@gmail.com</a>
         </p>
         <p>
-          運営者は shime-hei
+          運営者は shima-hei
           です。個人のポートフォリオとして運営しているため、返信までの日数や継続的なサポートは保証していません。
         </p>
       </PublicInformationSection>
