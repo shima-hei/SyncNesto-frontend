@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import {
+  NOTIFICATION_STALE_TIME,
+  refreshActiveQueryIfStale,
+} from "@/lib/query/cache-policy";
+import { notificationUnreadCountKey } from "../lib/notification-query-keys";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { NotificationList } from "@/components/shared/notifications/notification-list";
@@ -29,10 +36,17 @@ export function NotificationCenter() {
   const unread = useNotificationUnreadCount();
   const query = useNotifications({ page: 1, page_size: 8 }, open);
   const { markAllRead } = useNotificationMutations();
-  const { refetch } = unread;
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.id;
   useEffect(() => {
-    void refetch();
-  }, [pathname, refetch]);
+    if (userId)
+      void refreshActiveQueryIfStale(
+        queryClient,
+        notificationUnreadCountKey(userId),
+        NOTIFICATION_STALE_TIME,
+      );
+  }, [pathname, queryClient, userId]);
   const count = unread.data?.count ?? 0;
   const markAll = async () => {
     try {

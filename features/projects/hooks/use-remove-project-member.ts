@@ -7,11 +7,7 @@ import { useRemoveProjectMemberProjectsProjectIdMembersUserIdDelete } from "@/li
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 
 import { PROJECT_MESSAGES } from "../constants/project-messages";
-import {
-  invalidateProjectMemberCandidateList,
-  invalidateProjectMemberList,
-  invalidateProjectMemberUserList,
-} from "../lib/project-cache";
+import { invalidateProjectMemberList } from "../lib/project-cache";
 
 export function useRemoveProjectMember(projectId: number) {
   const queryClient = useQueryClient();
@@ -20,11 +16,7 @@ export function useRemoveProjectMember(projectId: number) {
       mutation: {
         onSuccess: async () => {
           toast.success(PROJECT_MESSAGES.member.removeSuccess);
-          await Promise.all([
-            invalidateProjectMemberList(queryClient, projectId),
-            invalidateProjectMemberUserList(queryClient, projectId),
-            invalidateProjectMemberCandidateList(queryClient, projectId),
-          ]);
+          await invalidateProjectMemberList(queryClient, projectId);
         },
         onError: (error) => {
           toast.error(

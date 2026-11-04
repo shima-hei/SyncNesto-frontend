@@ -1,12 +1,13 @@
 "use client";
 
 import { useListBoardsProjectsProjectIdBoardsGet } from "@/lib/api/generated/tasks/tasks";
+import { REFERENCE_STALE_TIME } from "@/lib/query/cache-policy";
 
 export function useProjectBoards(projectId: number) {
   const boardsQuery = useListBoardsProjectsProjectIdBoardsGet(projectId, {
     query: {
       retry: false,
-      staleTime: 60_000,
+      staleTime: REFERENCE_STALE_TIME,
     },
   });
 

@@ -54,6 +54,7 @@ next-env.d.ts
 !/docs/system-administration.md
 !/docs/development-workflow-ux.md
 !/docs/notifications.md
+!/docs/query-cache-policy.md
 !/docs/home-workspace.md
 !/docs/file-upload-request.md
 !/docs/documents.md
