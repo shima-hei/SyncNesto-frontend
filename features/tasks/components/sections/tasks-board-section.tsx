@@ -37,7 +37,8 @@ export function TasksBoardSection({
   onBrowseChildren,
 }: TasksBoardSectionProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const { updateTaskStatus, isPending } = useUpdateTaskStatus(projectId);
+  const { updateTaskStatus, isPending, returnDialog } =
+    useUpdateTaskStatus(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
   const { defaultBoard } = useProjectBoards(projectId);
   const tasksById = useMemo(
@@ -79,6 +80,7 @@ export function TasksBoardSection({
 
   return (
     <div className="flex flex-col gap-3">
+      {returnDialog}
       <div className="flex flex-col gap-5">
         {swimlanes.map((lane) => (
           <section key={lane.key} className="flex flex-col gap-2">
@@ -111,7 +113,7 @@ export function TasksBoardSection({
                         <h4 className="text-sm font-semibold">
                           {status.label}
                         </h4>
-                        <span className="rounded-full border border-current/20 bg-background/70 px-2 py-0.5 text-xs font-medium">
+                        <span className="rounded-full border border-current/20 bg-background/70 px-2 py-0.5 text-xs font-medium text-foreground">
                           {columnTasks.length}
                         </span>
                       </div>
@@ -147,7 +149,7 @@ export function TasksBoardSection({
                             />
                           ))
                         ) : (
-                          <div className="rounded-lg border border-dashed border-current/25 bg-background/60 p-3 text-xs text-muted-foreground">
+                          <div className="rounded-lg border border-dashed border-current/25 bg-background/60 p-3 text-xs text-foreground">
                             タスクはありません。
                           </div>
                         )}

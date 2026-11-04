@@ -9,6 +9,7 @@ import { writeStoredDraft } from "@/lib/draft/draft-storage";
 
 import {
   getTaskFormDraftScope,
+  hasUnreflectedTaskFormDraft,
   mergeTaskFormDraft,
   type TaskFormDraft,
 } from "../lib/task-form-draft";
@@ -65,6 +66,19 @@ export function useTaskFormDraft({
 
   return {
     ...draft,
+    clearDraft: () => {
+      try {
+        draft.clearDraft();
+      } catch {
+        setStorageError(true);
+      }
+    },
+    // 保存応答のversion更新で再マウントしても、反映済みの入力は復元しない。
+    pendingDraft:
+      draft.pendingDraft &&
+      hasUnreflectedTaskFormDraft(draft.pendingDraft.values, initialValues)
+        ? draft.pendingDraft
+        : null,
     persist,
     storageError,
     restoreConflict,

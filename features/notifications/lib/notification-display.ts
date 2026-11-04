@@ -7,6 +7,8 @@ export function notificationMessage(notification: NotificationRead) {
       return `${actor_name}さんがあなたを「${target_title}」の${notification.target_type === "requirement" ? "オーナー" : "担当者"}に設定しました`;
     case "mentioned":
       return `${actor_name}さんが「${target_title}」のコメントであなたをメンションしました`;
+    case "task_returned":
+      return `${actor_name}さんが「${target_title}」を差し戻しました`;
     case "fixed_approval_requested": {
       const kind =
         notification.context.target_kind === "requirement"

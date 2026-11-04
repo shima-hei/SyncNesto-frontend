@@ -12,6 +12,7 @@ import type { TaskChangeLogRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 
 import { useTaskChangeLogs } from "../../hooks/use-task-change-logs";
+import { useTaskTypes } from "../../hooks/use-task-types";
 import {
   formatTaskChangeLogAction,
   formatTaskChangeLogActor,
@@ -29,6 +30,7 @@ type TaskChangeLogsSectionProps = {
 
 export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
   const [page, setPage] = useState(1);
+  const { name: typeName } = useTaskTypes();
   const { changeLogs, total, pageSize, isLoading, isFetching } =
     useTaskChangeLogs(taskId, page);
   const visibleChangeLogs = getVisibleChangeLogs(changeLogs);
@@ -39,7 +41,11 @@ export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
       items={visibleChangeLogs}
       isLoading={isLoading}
       renderItem={(changeLog) => (
-        <TaskChangeLogItem key={changeLog.id} changeLog={changeLog} />
+        <TaskChangeLogItem
+          key={changeLog.id}
+          changeLog={changeLog}
+          typeName={typeName}
+        />
       )}
       pagination={{
         page,
@@ -53,9 +59,22 @@ export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
   );
 }
 
-function TaskChangeLogItem({ changeLog }: { changeLog: TaskChangeLogRead }) {
+function TaskChangeLogItem({
+  changeLog,
+  typeName,
+}: {
+  changeLog: TaskChangeLogRead;
+  typeName: (key: string) => string;
+}) {
+  const formatValue = (value: unknown, fieldName?: string | null) =>
+    fieldName === "task_type" && typeof value === "string" && value
+      ? typeName(value)
+      : formatTaskChangeLogValue(value, fieldName);
   const updatedFieldLabels = getTaskChangeLogUpdatedFieldLabels(changeLog);
-  const snapshotDiffRows = getTaskChangeLogSnapshotDiffRows(changeLog);
+  const snapshotDiffRows = getTaskChangeLogSnapshotDiffRows(
+    changeLog,
+    formatValue,
+  );
   const missingSnapshotFieldLabels =
     getTaskChangeLogMissingSnapshotFieldLabels(changeLog);
   const headerFieldLabel = getChangeLogHeaderFieldLabel(
@@ -80,7 +99,7 @@ function TaskChangeLogItem({ changeLog }: { changeLog: TaskChangeLogRead }) {
       showRawValues={shouldShowChangeValues(changeLog)}
       diffRows={snapshotDiffRows}
       missingFieldLabels={missingSnapshotFieldLabels}
-      formatValue={formatTaskChangeLogValue}
+      formatValue={formatValue}
     />
   );
 }

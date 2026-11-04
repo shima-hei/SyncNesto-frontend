@@ -77,6 +77,10 @@ export const getBoardStatusClassName = (status?: string | null) => {
       "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success-fg)]",
     status === "blocked" &&
       "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]",
+    status === "resolved" &&
+      "border-[var(--status-resolved-border)] bg-[var(--status-resolved-bg)] text-[var(--status-resolved-fg)]",
+    status === "returned" &&
+      "border-[var(--status-returned-border)] bg-[var(--status-returned-bg)] text-[var(--status-returned-fg)]",
   );
 };
 
@@ -88,6 +92,8 @@ export const getBoardCardClassName = (status?: string | null) => {
     status === "in_review" && "border-l-[var(--status-warning-border)]",
     status === "done" && "border-l-[var(--status-success-border)]",
     status === "blocked" && "border-l-[var(--status-danger-border)]",
+    status === "resolved" && "border-l-[var(--status-resolved-border)]",
+    status === "returned" && "border-l-[var(--status-returned-border)]",
   );
 };
 
@@ -154,7 +160,7 @@ const getSwimlaneLabel = (
     case "priority":
       return getTaskPriorityLabel(task.priority);
     case "task_type":
-      return getTaskTypeLabel(task.task_type);
+      return getTaskTypeLabel(task.task_type, task.task_type_name);
     case "none":
     default:
       return "すべて";

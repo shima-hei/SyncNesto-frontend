@@ -175,7 +175,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
         }
       />
       <div className="flex flex-wrap gap-2">
-        <TaskTypeBadge type={task.task_type} />
+        <TaskTypeBadge type={task.task_type} name={task.task_type_name} />
         <TaskStatusBadge status={task.status} />
         <TaskPriorityBadge priority={task.priority} />
         <TaskFlagBadges
@@ -367,7 +367,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
               conflictCurrent ? getTaskFormValues(conflictCurrent) : null
             }
             onCloseConflict={resetConflict}
-            onResolveConflict={(values) => {
+            onResolveConflict={(values, onSaved) => {
               if (!conflictCurrent) {
                 return Promise.resolve();
               }
@@ -376,9 +376,12 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
                 values,
                 conflictCurrent.version,
                 conflictCurrent,
+                onSaved,
               );
             }}
-            onSubmit={(values) => updateTask(values, task.version, task)}
+            onSubmit={(values, onSaved) =>
+              updateTask(values, task.version, task, onSaved)
+            }
             onSuccess={() => setEditDialogOpen(false)}
           />
         </DialogContent>

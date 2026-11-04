@@ -2,6 +2,9 @@
 
 import {
   Children,
+  createContext,
+  useContext,
+  type ComponentProps,
   type ReactNode,
   useEffect,
   useId,
@@ -27,7 +30,7 @@ import {
   TableIcon,
   WorkflowIcon,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type ExtraProps } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "next-themes";
 
@@ -41,6 +44,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import {
+  rehypeMarkdownTaskPositions,
+  setMarkdownTaskChecked,
+} from "@/lib/markdown-task-list";
 
 type MarkdownTextareaProps = {
   id?: string;
@@ -215,7 +222,10 @@ export function MarkdownTextarea({
           onChange={(event) => onChange(event.target.value)}
         />
       ) : (
-        <MarkdownPreview value={value} />
+        <MarkdownPreview
+          value={value}
+          onChange={disabled ? undefined : onChange}
+        />
       )}
     </fieldset>
   );
@@ -269,14 +279,85 @@ function MarkdownToolbarMenu({
 
 type MarkdownPreviewProps = {
   value: string;
+  onChange?: (value: string) => void;
   emptyMessage?: string;
   className?: string;
   highlightQuotes?: string[];
   inert?: boolean;
 };
 
+const MarkdownContext = createContext<{
+  value: string;
+  onChange?: (value: string) => void;
+  highlightQuotes: string[];
+  inert: boolean;
+}>({ value: "", highlightQuotes: [], inert: false });
+
+// Stable component identities keep the focused checkbox mounted on any form rerender.
+function MarkdownTaskCheckbox({
+  checked,
+  node,
+}: ComponentProps<"input"> & ExtraProps) {
+  const { value, onChange, inert } = useContext(MarkdownContext);
+  const offset = node?.properties["data-task-offset"];
+  const label = String(node?.properties["data-task-label"] ?? "チェック項目");
+  const editable = !inert && Boolean(onChange) && typeof offset === "number";
+  return (
+    <input
+      type="checkbox"
+      checked={Boolean(checked)}
+      data-task-offset={offset}
+      disabled={!editable}
+      aria-label={editable ? label : `${label}（閲覧専用）`}
+      title={editable ? undefined : "閲覧用の本文は変更できません。"}
+      className="mr-1 align-middle"
+      onChange={(event) => {
+        if (editable && typeof offset === "number")
+          onChange?.(
+            setMarkdownTaskChecked(value, offset, event.target.checked),
+          );
+      }}
+    />
+  );
+}
+
+function MarkdownParagraph({ children }: { children?: ReactNode }) {
+  const { highlightQuotes } = useContext(MarkdownContext);
+  return (
+    <p className="my-2 whitespace-pre-wrap">
+      {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+    </p>
+  );
+}
+function MarkdownListItem({ children }: { children?: ReactNode }) {
+  const { highlightQuotes } = useContext(MarkdownContext);
+  return (
+    <li className="pl-1">
+      {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+    </li>
+  );
+}
+function MarkdownUnorderedList({ children }: { children?: ReactNode }) {
+  return (
+    <ul className="my-2 flex list-disc flex-col gap-1 pl-5">{children}</ul>
+  );
+}
+function MarkdownOrderedList({ children }: { children?: ReactNode }) {
+  return (
+    <ol className="my-2 flex list-decimal flex-col gap-1 pl-5">{children}</ol>
+  );
+}
+function MarkdownBlockquote({ children }: { children?: ReactNode }) {
+  return (
+    <blockquote className="my-3 border-l-4 border-border pl-3 text-muted-foreground">
+      {children}
+    </blockquote>
+  );
+}
+
 export function MarkdownPreview({
   value,
+  onChange,
   emptyMessage = "プレビューする本文がありません。",
   className,
   highlightQuotes = [],
@@ -302,144 +383,130 @@ export function MarkdownPreview({
         className,
       )}
     >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          h1: ({ children }) => (
-            <h1 className="mb-3 mt-1 text-2xl font-semibold leading-tight">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </h1>
-          ),
-          h2: ({ children }) => (
-            <h2 className="mb-3 mt-5 text-xl font-semibold leading-tight">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </h2>
-          ),
-          h3: ({ children }) => (
-            <h3 className="mb-2 mt-4 text-lg font-semibold leading-tight">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </h3>
-          ),
-          h4: ({ children }) => (
-            <h4 className="mb-2 mt-3 text-base font-semibold leading-tight">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </h4>
-          ),
-          h5: ({ children }) => (
-            <h5 className="mb-2 mt-3 text-sm font-semibold leading-tight">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </h5>
-          ),
-          h6: ({ children }) => (
-            <h6 className="mb-2 mt-3 text-xs font-semibold leading-tight text-muted-foreground">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </h6>
-          ),
-          p: ({ children }) => (
-            <p className="my-2 whitespace-pre-wrap">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </p>
-          ),
-          img: inert
-            ? ({ alt, src }) => (
-                <span>
-                  画像: {alt}（{typeof src === "string" ? src : ""}）
-                </span>
-              )
-            : undefined,
-          a: ({ children, href }) =>
-            inert ? (
-              <span>
-                {children}
-                {href ? `（${href}）` : ""}
-              </span>
-            ) : (
-              <a
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-primary underline underline-offset-4"
-              >
-                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-              </a>
-            ),
-          strong: ({ children }) => (
-            <strong>
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </strong>
-          ),
-          em: ({ children }) => (
-            <em>
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </em>
-          ),
-          blockquote: ({ children }) => (
-            <blockquote className="my-3 border-l-4 border-border pl-3 text-muted-foreground">
-              {children}
-            </blockquote>
-          ),
-          hr: () => <hr className="my-4 border-border" />,
-          ul: ({ children }) => (
-            <ul className="my-2 flex list-disc flex-col gap-1 pl-5">
-              {children}
-            </ul>
-          ),
-          ol: ({ children }) => (
-            <ol className="my-2 flex list-decimal flex-col gap-1 pl-5">
-              {children}
-            </ol>
-          ),
-          li: ({ children }) => (
-            <li className="pl-1">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </li>
-          ),
-          table: ({ children }) => (
-            <div className="my-3 overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                {children}
-              </table>
-            </div>
-          ),
-          th: ({ children }) => (
-            <th className="border bg-muted px-2 py-1 text-left font-semibold">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </th>
-          ),
-          td: ({ children }) => (
-            <td className="border px-2 py-1 align-top">
-              {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-            </td>
-          ),
-          pre: ({ children }) => <>{children}</>,
-          code: ({ className, children }) => {
-            const language = getCodeLanguage(className);
-            const rawContent = String(children);
-            const isCodeBlock = rawContent.includes("\n");
-            const content = rawContent.replace(/\n$/, "");
-
-            if (language === "mermaid" && !inert) {
-              return <MermaidDiagram chart={content} />;
-            }
-
-            if (language || isCodeBlock) {
-              return (
-                <pre className="my-3 overflow-x-auto rounded-md bg-muted p-3 text-xs leading-6">
-                  <code className={className}>{content}</code>
-                </pre>
-              );
-            }
-
-            return (
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                {children}
-              </code>
-            );
-          },
-        }}
+      <MarkdownContext.Provider
+        value={{ value, onChange, highlightQuotes, inert }}
       >
-        {value}
-      </ReactMarkdown>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[[rehypeMarkdownTaskPositions, { value }]]}
+          components={{
+            input: MarkdownTaskCheckbox,
+            h1: ({ children }) => (
+              <h1 className="mb-3 mt-1 text-2xl font-semibold leading-tight">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </h1>
+            ),
+            h2: ({ children }) => (
+              <h2 className="mb-3 mt-5 text-xl font-semibold leading-tight">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </h2>
+            ),
+            h3: ({ children }) => (
+              <h3 className="mb-2 mt-4 text-lg font-semibold leading-tight">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </h3>
+            ),
+            h4: ({ children }) => (
+              <h4 className="mb-2 mt-3 text-base font-semibold leading-tight">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </h4>
+            ),
+            h5: ({ children }) => (
+              <h5 className="mb-2 mt-3 text-sm font-semibold leading-tight">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </h5>
+            ),
+            h6: ({ children }) => (
+              <h6 className="mb-2 mt-3 text-xs font-semibold leading-tight text-muted-foreground">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </h6>
+            ),
+            p: MarkdownParagraph,
+            img: inert
+              ? ({ alt, src }) => (
+                  <span>
+                    画像: {alt}（{typeof src === "string" ? src : ""}）
+                  </span>
+                )
+              : undefined,
+            a: ({ children, href }) =>
+              inert ? (
+                <span>
+                  {children}
+                  {href ? `（${href}）` : ""}
+                </span>
+              ) : (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-primary underline underline-offset-4"
+                >
+                  {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+                </a>
+              ),
+            strong: ({ children }) => (
+              <strong>
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </strong>
+            ),
+            em: ({ children }) => (
+              <em>
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </em>
+            ),
+            blockquote: MarkdownBlockquote,
+            hr: () => <hr className="my-4 border-border" />,
+            ul: MarkdownUnorderedList,
+            ol: MarkdownOrderedList,
+            li: MarkdownListItem,
+            table: ({ children }) => (
+              <div className="my-3 overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  {children}
+                </table>
+              </div>
+            ),
+            th: ({ children }) => (
+              <th className="border bg-muted px-2 py-1 text-left font-semibold">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </th>
+            ),
+            td: ({ children }) => (
+              <td className="border px-2 py-1 align-top">
+                {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+              </td>
+            ),
+            pre: ({ children }) => <>{children}</>,
+            code: ({ className, children }) => {
+              const language = getCodeLanguage(className);
+              const rawContent = String(children);
+              const isCodeBlock = rawContent.includes("\n");
+              const content = rawContent.replace(/\n$/, "");
+
+              if (language === "mermaid" && !inert) {
+                return <MermaidDiagram chart={content} />;
+              }
+
+              if (language || isCodeBlock) {
+                return (
+                  <pre className="my-3 overflow-x-auto rounded-md bg-muted p-3 text-xs leading-6">
+                    <code className={className}>{content}</code>
+                  </pre>
+                );
+              }
+
+              return (
+                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+                  {children}
+                </code>
+              );
+            },
+          }}
+        >
+          {value}
+        </ReactMarkdown>
+      </MarkdownContext.Provider>
     </div>
   );
 }

@@ -78,7 +78,9 @@ export function TaskCommentsSection({
       values.status !== TASK_COMMENT_STATUS_UNCHANGED &&
       values.status !== task.status
     ) {
-      await updateTaskStatus(task, values.status);
+      await updateTaskStatus(task, values.status, {
+        changeReason: values.body,
+      });
     }
   };
 

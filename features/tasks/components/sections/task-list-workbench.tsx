@@ -24,7 +24,6 @@ import { useBulkUpdateTasks } from "../../hooks/use-bulk-update-tasks";
 import { taskQueryHasFilters } from "../../lib/task-tree";
 import { NO_BULK_STATUS_CHANGE } from "../../constants/task-view-options";
 import { TaskBulkActions } from "../pages/controls/task-bulk-actions";
-import { TasksTable } from "../tables/tasks-table";
 import { TaskTreeTable } from "../tables/task-tree-table";
 import { TaskListDetailPanel } from "./task-list-detail-panel";
 import { useTaskListEditing } from "../../hooks/use-task-list-editing";
@@ -33,11 +32,8 @@ import { TaskListEditDialogs } from "./task-list-edit-dialogs";
 export function TaskListWorkbench({
   projectId,
   query,
-  legacy,
-  canCreate,
   canUpdate,
   onPageChange,
-  onBrowseChildren,
   navigationGuardRef,
   enabled,
   selectionResetRef,
@@ -45,11 +41,8 @@ export function TaskListWorkbench({
 }: {
   projectId: number;
   query: ListTasksProjectsProjectIdTasksGetParams;
-  legacy: boolean;
-  canCreate: boolean;
   canUpdate: boolean;
   onPageChange: (page: number) => void;
-  onBrowseChildren: (id: number) => void;
   navigationGuardRef: RefObject<(action: () => void) => void>;
   enabled: boolean;
   selectionResetRef: RefObject<() => void>;
@@ -60,9 +53,7 @@ export function TaskListWorkbench({
   const { withOrigin } = useTaskOrigin(projectId);
   const filtered = taskQueryHasFilters(query);
   const rootOnly =
-    !legacy && !filtered && query.parent_task_id == null
-      ? true
-      : query.root_only;
+    !filtered && query.parent_task_id == null ? true : query.root_only;
   const {
     tasks,
     total,
@@ -77,14 +68,12 @@ export function TaskListWorkbench({
     isPlaceholderData || error ? [] : tasks,
     query,
     filtered,
-    enabled && !legacy && !isLoading && !isPlaceholderData && !error,
+    enabled && !isLoading && !isPlaceholderData && !error,
   );
   const [activeId, setActiveId] = useUrlFilterState<number | null>(
     "taskSelection",
     null,
   );
-  const [columns, setColumns] = useUrlFilterState("taskColumns", "summary");
-  const [progress, setProgress] = useUrlFilterState("taskProgress", "shown");
   const editor = useTaskListEditing(projectId, activeId);
   useEffect(() => {
     navigationGuardRef.current = editor.guard;
@@ -104,9 +93,9 @@ export function TaskListWorkbench({
   const [bulkDueDate, setBulkDueDate] = useState("");
   const { bulkUpdateTasks, isPending } = useBulkUpdateTasks(projectId);
   const taskRows = tree.rows.filter((row) => row.kind === "task");
-  const selectable = legacy
-    ? tasks
-    : taskRows.filter((row) => row.source === "match").map((row) => row.task);
+  const selectable = taskRows
+    .filter((row) => row.source === "match")
+    .map((row) => row.task);
   const selected = selectable.filter((task) => selectedIds.includes(task.id));
   const outside = selectedIds.length - selected.length;
   const contextCount = taskRows.filter((row) => row.source !== "match").length;
@@ -198,7 +187,7 @@ export function TaskListWorkbench({
     <div
       className={cn(
         "grid min-w-0 items-start gap-4",
-        !legacy && activeId && "xl:grid-cols-[minmax(0,1fr)_22rem]",
+        activeId && "xl:grid-cols-[minmax(0,1fr)_26rem]",
       )}
     >
       <div
@@ -207,9 +196,7 @@ export function TaskListWorkbench({
         aria-label="タスク一覧"
         className="flex min-w-0 flex-col gap-3"
       >
-        {!activeId || legacy || error ? (
-          <TaskListDraftNotice editor={editor} />
-        ) : null}
+        {!activeId || error ? <TaskListDraftNotice editor={editor} /> : null}
         {canUpdate && !busy && !error ? (
           <TaskBulkActions
             projectId={projectId}
@@ -253,41 +240,15 @@ export function TaskListWorkbench({
               data-task-counts
               className="text-sm text-muted-foreground"
             >
-              {legacy || filtered
+              {filtered
                 ? `条件一致 ${total}件 · このページ ${tasks.length}件`
                 : `${query.parent_task_id ? "直属の子" : "最上位"} ${total}件`}
-              {!legacy
-                ? ` · ${contextCount ? `文脈 ${contextCount}行 · ` : ""}表示 ${taskRows.length}行`
-                : ""}
+              {` · ${contextCount ? `文脈 ${contextCount}行 · ` : ""}表示 ${taskRows.length}行`}
               {isFetching ? " · 更新中" : ""}
             </p>
           ) : null}
           <div className="flex max-w-full flex-wrap items-end gap-2">
             {toolbar}
-            {!legacy ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-pressed={columns === "details"}
-                  onClick={() =>
-                    setColumns(columns === "details" ? "summary" : "details")
-                  }
-                >
-                  {columns === "details" ? "基本の列に戻す" : "詳細の列を表示"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-pressed={progress === "shown"}
-                  onClick={() =>
-                    setProgress(progress === "shown" ? "hidden" : "shown")
-                  }
-                >
-                  進捗列
-                </Button>
-              </div>
-            ) : null}
           </div>
         </div>
         {error ? (
@@ -305,55 +266,41 @@ export function TaskListWorkbench({
                 親の文脈を読み込んでいます…
               </p>
             ) : null}
-            {!legacy && tree.parentErrors.length ? (
+            {tree.parentErrors.length ? (
               <DataLoadError
                 resourceName="親の文脈"
                 onRetry={tree.retryParents}
               />
             ) : null}
             <p className="text-xs text-muted-foreground xl:hidden">
-              横にスクロールすると、状態・担当・期限を確認できます。
+              横にスクロールすると、状態・進捗・担当・期限などを確認できます。
             </p>
-            {legacy ? (
-              <TasksTable
-                projectId={projectId}
-                tasks={tasks}
-                isLoading={false}
-                canCreate={canCreate}
-                canUpdate={canUpdate}
-                selectedTaskIds={selectedIds}
-                onToggleTask={check}
-                onToggleAllTasks={checkAll}
-                onBrowseChildren={onBrowseChildren}
-              />
-            ) : (
-              <TaskTreeTable
-                projectId={projectId}
-                rows={tree.rows}
-                expanded={tree.expanded}
-                contextIds={tree.state.context}
-                filtered={filtered}
-                canUpdate={canUpdate}
-                selectedIds={selectedIds}
-                activeId={activeId}
-                showDetails={columns === "details"}
-                showProgress={progress === "shown"}
-                onSelect={selectTask}
-                onToggle={tree.toggle}
-                onContext={tree.context}
-                onMore={tree.more}
-                onRetry={tree.retry}
-                onCheck={check}
-                onCheckAll={checkAll}
-              />
-            )}
-            {!legacy ? (
-              <p className="text-xs text-muted-foreground">
-                {filtered
-                  ? "条件に一致したタスク20件単位。文脈行は一致件数に加算しません。"
+            <TaskTreeTable
+              projectId={projectId}
+              rows={tree.rows}
+              expanded={tree.expanded}
+              contextIds={tree.state.context}
+              filtered={filtered}
+              canUpdate={canUpdate}
+              selectedIds={selectedIds}
+              activeId={activeId}
+              showDetails
+              showProgress
+              onSelect={selectTask}
+              onToggle={tree.toggle}
+              onContext={tree.context}
+              onMore={tree.more}
+              onRetry={tree.retry}
+              onCheck={check}
+              onCheckAll={checkAll}
+            />
+            <p className="text-xs text-muted-foreground">
+              {filtered
+                ? "条件に一致したタスク20件単位。文脈行は一致件数に加算しません。"
+                : query.parent_task_id
+                  ? "直属の子20件単位。展開した子は別に20件ずつ表示します。"
                   : "最上位・単独20件単位。展開した子は別に20件ずつ表示します。"}
-              </p>
-            ) : null}
+            </p>
             <DataPagination
               page={query.page ?? 1}
               pageSize={20}
@@ -366,7 +313,7 @@ export function TaskListWorkbench({
           </>
         )}
       </div>
-      {enabled && !legacy ? (
+      {enabled ? (
         <TaskListDetailPanel
           projectId={projectId}
           taskId={error ? null : activeId}

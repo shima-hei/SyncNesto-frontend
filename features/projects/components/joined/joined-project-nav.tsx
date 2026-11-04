@@ -47,14 +47,14 @@ export function JoinedProjectNav({ projectId }: { projectId: number }) {
   return (
     <nav aria-label="プロジェクト内ナビゲーション">
       <SidebarSeparator />
-      <p className="px-4 pt-3 pb-1 text-sm font-semibold break-words">
+      <p className="px-4 pt-3 pb-2 text-sm font-semibold break-words">
         {project?.name ?? "このプロジェクト"}
       </p>
       {joinedProjectNavigationGroups.map((group) => {
         const items = visibleItems.filter((item) => item.group === group);
         if (!items.length) return null;
         return (
-          <SidebarGroup key={group} className="py-1">
+          <SidebarGroup key={group} className="py-2">
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -65,6 +65,7 @@ export function JoinedProjectNav({ projectId }: { projectId: number }) {
                     href,
                     projectId,
                   );
+                  const Icon = item.icon;
                   return (
                     <SidebarMenuItem key={href}>
                       <SidebarMenuButton asChild isActive={active}>
@@ -85,6 +86,7 @@ export function JoinedProjectNav({ projectId }: { projectId: number }) {
                             }
                           }}
                         >
+                          <Icon aria-hidden="true" />
                           <span>{item.label}</span>
                         </Link>
                       </SidebarMenuButton>

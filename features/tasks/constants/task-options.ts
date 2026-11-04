@@ -1,4 +1,5 @@
 export const TASK_TYPE_OPTIONS = [
+  { value: "other", label: "タスク（一般）" },
   { value: "bug", label: "不具合" },
   { value: "frontend", label: "フロントエンド" },
   { value: "backend", label: "バックエンド" },
@@ -9,14 +10,15 @@ export const TASK_TYPE_OPTIONS = [
   { value: "review", label: "レビュー" },
   { value: "investigation", label: "調査" },
   { value: "documentation", label: "ドキュメント" },
-  { value: "other", label: "その他" },
 ] as const;
 
 export const TASK_STATUS_OPTIONS = [
   { value: "backlog", label: "バックログ" },
   { value: "todo", label: "未着手" },
   { value: "in_progress", label: "作業中" },
+  { value: "resolved", label: "対応済" },
   { value: "in_review", label: "レビュー中" },
+  { value: "returned", label: "差し戻し" },
   { value: "done", label: "完了" },
   { value: "blocked", label: "ブロック中" },
   { value: "cancelled", label: "中止" },
@@ -46,9 +48,25 @@ export const MILESTONE_STATUS_OPTIONS = [
 
 export type TaskStatus = (typeof TASK_STATUS_OPTIONS)[number]["value"];
 
-export const getTaskTypeLabel = (value?: string | null) => {
+export const getNextTaskBoardStatus = (status?: string | null) => {
+  if (status === "returned")
+    return TASK_STATUS_OPTIONS.find((option) => option.value === "in_progress");
+  const forward = TASK_STATUS_OPTIONS.filter(
+    (option) => option.value !== "returned",
+  );
+  const index = forward.findIndex((option) => option.value === status);
+  return index < 0 ? undefined : forward[index + 1];
+};
+
+export const getTaskTypeLabel = (
+  value?: string | null,
+  name?: string | null,
+) => {
   return (
-    TASK_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? "-"
+    name ??
+    TASK_TYPE_OPTIONS.find((option) => option.value === value)?.label ??
+    value ??
+    "-"
   );
 };
 

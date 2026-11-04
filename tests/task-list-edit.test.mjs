@@ -22,6 +22,7 @@ const task = {
   project_id: 5,
   version: 3,
   status: "in_progress",
+  priority: "medium",
   assignee_id: 12,
   start_date: "2026-11-01",
   due_date: "2026-11-10",
@@ -36,6 +37,28 @@ const task = {
 const draft = (changes = {}, baseline = task) => ({
   baseline,
   values: { ...edit.getListEditValues(baseline), ...changes },
+});
+
+test("returned requires a reason, sends no automatic progress and preserves the reason after a conflict", () => {
+  const row = draft({ status: "returned" });
+  assert.match(edit.validateListEdit(row), /理由/);
+  row.values.changeReason = "境界値を確認してください";
+  assert.equal(edit.validateListEdit(row), null);
+  assert.deepEqual(edit.toListEditMutation(row), {
+    contract: "task",
+    data: {
+      version: 3,
+      status: "returned",
+      change_reason: row.values.changeReason,
+    },
+  });
+  const rebased = edit.rebaseListEdit(row, {
+    ...task,
+    version: 4,
+    priority: "high",
+  });
+  assert.equal(rebased.values.changeReason, row.values.changeReason);
+  assert.equal(edit.toListEditMutation(rebased).data.version, 4);
 });
 
 test("assignee or due-only changes use planning with only changed fields, protecting actuals, effort and state", () => {
@@ -78,6 +101,39 @@ test("unchanged done values never invoke a status transition in a due-only edit"
     "due_date",
     "version",
   ]);
+});
+test("priority-only editing never invokes the done transition or overwrites effort and actuals", () => {
+  const current = { ...task, status: "done", progress_percent: 66 };
+  assert.deepEqual(
+    edit.toListEditMutation(draft({ priority: "high" }, current)),
+    {
+      contract: "task",
+      data: { version: 3, priority: "high" },
+    },
+  );
+  assert.deepEqual(
+    edit.toListEditMutation(draft({ priority: "critical", dueDate: "" })),
+    {
+      contract: "task",
+      data: { version: 3, priority: "critical", due_date: null },
+    },
+  );
+  assert.match(edit.validateListEdit(draft({ priority: "unknown" })), /優先度/);
+});
+test("pre-priority stored drafts remain restorable and rebase keeps concurrent priority changes", () => {
+  const old = draft({ dueDate: "" });
+  delete old.values.priority;
+  const restored = edit.readListEditDrafts({ 10: old }, 5)[10];
+  assert.equal(restored.values.priority, "medium");
+  const rebased = edit.rebaseListEdit(restored, {
+    ...task,
+    version: 4,
+    priority: "high",
+  });
+  assert.deepEqual(edit.toListEditMutation(rebased), {
+    contract: "planning",
+    data: { version: 4, due_date: null },
+  });
 });
 test("rebase keeps unrelated concurrent edits and resends only local differences with the new version", () => {
   const current = {

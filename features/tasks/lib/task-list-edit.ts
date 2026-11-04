@@ -4,16 +4,24 @@ import type {
   TaskPlanningUpdate,
 } from "@/lib/api/generated/model";
 
-export const LIST_EDIT_FIELDS = ["status", "assigneeId", "dueDate"] as const;
+export const LIST_EDIT_FIELDS = [
+  "status",
+  "priority",
+  "assigneeId",
+  "dueDate",
+] as const;
 export type ListEditValues = {
   status: string;
+  priority: string;
   assigneeId: string;
   dueDate: string;
+  changeReason?: string;
 };
 export type ListEditDraft = { baseline: TaskRead; values: ListEditValues };
 export function getListEditValues(task: TaskRead): ListEditValues {
   return {
     status: task.status ?? "todo",
+    priority: task.priority ?? "medium",
     assigneeId: task.assignee_id ? String(task.assignee_id) : "",
     dueDate: task.due_date ?? "",
   };
@@ -31,7 +39,10 @@ export function rebaseListEdit(
   const values = getListEditValues(current);
   for (const field of listEditChanges(draft))
     values[field] = draft.values[field];
-  return { baseline: current, values };
+  return {
+    baseline: current,
+    values: { ...values, changeReason: draft.values.changeReason },
+  };
 }
 export function isListEditReflected(draft: ListEditDraft, current: TaskRead) {
   return (
@@ -43,6 +54,17 @@ export function isListEditReflected(draft: ListEditDraft, current: TaskRead) {
   );
 }
 export function validateListEdit(draft: ListEditDraft) {
+  if (
+    draft.values.status === "returned" &&
+    draft.baseline.status !== "returned" &&
+    !draft.values.changeReason?.trim()
+  )
+    return "差し戻し理由を入力してください。";
+  if (
+    listEditChanges(draft).includes("priority") &&
+    !["low", "medium", "high", "critical"].includes(draft.values.priority)
+  )
+    return "優先度を選び直してください。";
   if (
     draft.values.assigneeId &&
     (!/^\d+$/.test(draft.values.assigneeId) ||
@@ -79,13 +101,25 @@ export function toListEditMutation(
       ? Number(draft.values.assigneeId)
       : null;
   if (fields.includes("dueDate")) data.due_date = draft.values.dueDate || null;
-  return fields.includes("status")
+  return fields.includes("status") || fields.includes("priority")
     ? {
         contract: "task",
         data: {
           ...data,
-          status: draft.values.status,
-          ...(draft.values.status === "done" ? { progress_percent: 100 } : {}),
+          ...(fields.includes("status") && draft.values.status === "returned"
+            ? { change_reason: draft.values.changeReason?.trim() }
+            : {}),
+          ...(fields.includes("priority")
+            ? { priority: draft.values.priority }
+            : {}),
+          ...(fields.includes("status")
+            ? {
+                status: draft.values.status,
+                ...(draft.values.status === "done"
+                  ? { progress_percent: 100 }
+                  : {}),
+              }
+            : {}),
         },
       }
     : { contract: "planning", data };
@@ -94,22 +128,32 @@ export function readListEditDrafts(raw: unknown, projectId: number) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
     return {} as Record<number, ListEditDraft & { uncertain?: boolean }>;
   return Object.fromEntries(
-    Object.entries(raw).filter(([id, row]) => {
-      if (!row || typeof row !== "object") return false;
+    Object.entries(raw).flatMap(([id, row]) => {
+      if (!row || typeof row !== "object") return [];
       const draft = row as ListEditDraft;
-      return (
-        draft.baseline?.project_id === projectId &&
-        draft.baseline.id === Number(id) &&
-        Number.isSafeInteger(draft.baseline.id) &&
-        draft.baseline.id > 0 &&
-        Number.isSafeInteger(draft.baseline.version) &&
-        draft.baseline.version > 0 &&
-        LIST_EDIT_FIELDS.every(
-          (field) =>
-            typeof draft.values?.[field] === "string" &&
-            draft.values[field].length <= 200,
-        )
-      );
+      if (
+        draft.baseline?.project_id !== projectId ||
+        draft.baseline.id !== Number(id) ||
+        !Number.isSafeInteger(draft.baseline.id) ||
+        draft.baseline.id <= 0 ||
+        !Number.isSafeInteger(draft.baseline.version) ||
+        draft.baseline.version <= 0
+      )
+        return [];
+      const values = {
+        ...draft.values,
+        // 以前の一覧下書きには優先度がない。保存時の値を引き継ぐ。
+        priority:
+          draft.values?.priority === undefined
+            ? getListEditValues(draft.baseline).priority
+            : draft.values.priority,
+      };
+      return LIST_EDIT_FIELDS.every(
+        (field) =>
+          typeof values[field] === "string" && values[field].length <= 200,
+      )
+        ? [[id, { ...row, values }]]
+        : [];
     }),
   ) as Record<number, ListEditDraft & { uncertain?: boolean }>;
 }

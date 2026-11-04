@@ -536,7 +536,10 @@ function GanttTaskRow({
                     <dd>{task.progress_percent ?? 0}%</dd>
                   </dl>
                   <div className="flex flex-wrap gap-1">
-                    <TaskTypeBadge type={task.task_type} />
+                    <TaskTypeBadge
+                      type={task.task_type}
+                      name={task.task_type_name}
+                    />
                     <TaskPriorityBadge priority={task.priority} />
                   </div>
                   <TaskTags tags={task.tags} />

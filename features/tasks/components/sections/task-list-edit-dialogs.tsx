@@ -18,7 +18,10 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { getTaskStatusLabel } from "../../constants/task-options";
+import {
+  getTaskPriorityLabel,
+  getTaskStatusLabel,
+} from "../../constants/task-options";
 import {
   LIST_EDIT_FIELDS,
   getListEditValues,
@@ -40,11 +43,13 @@ export function TaskListEditDialogs({
   const label = (field: keyof ListEditValues, value: string) =>
     field === "status"
       ? getTaskStatusLabel(value)
-      : field === "assigneeId"
-        ? value
-          ? (usersById.get(Number(value))?.name ?? "担当者を確認できません")
-          : "未割当"
-        : value || "未設定";
+      : field === "priority"
+        ? getTaskPriorityLabel(value)
+        : field === "assigneeId"
+          ? value
+            ? (usersById.get(Number(value))?.name ?? "担当者を確認できません")
+            : "未割当"
+          : value || "未設定";
   return (
     <>
       <ConfirmDialog
@@ -86,9 +91,12 @@ export function TaskListEditDialogs({
                   <TableRow key={field}>
                     <TableCell>
                       {
-                        { status: "状態", assigneeId: "担当", dueDate: "期限" }[
-                          field
-                        ]
+                        {
+                          status: "状態",
+                          priority: "優先度",
+                          assigneeId: "担当",
+                          dueDate: "期限",
+                        }[field]
                       }
                       {listEditChanges(comparison.draft).includes(field)
                         ? "（変更）"

@@ -138,7 +138,7 @@ export function TaskListScopeNav({
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              この親の直属の子を表示します。孫以降は各行の「子を見る」から辿れます。検索・絞り込み条件も適用されます。
+              この親の直属の子を表示します。孫以降は各行で子タスクを開いて辿れます。検索・絞り込み条件も適用されます。
             </p>
           </>
         ) : (

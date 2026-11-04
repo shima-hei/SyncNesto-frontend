@@ -142,7 +142,10 @@ export function RequirementRelatedTasksSection({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <TaskTypeBadge type={task.task_type} />
+                          <TaskTypeBadge
+                            type={task.task_type}
+                            name={task.task_type_name}
+                          />
                         </TableCell>
                         <TableCell>
                           {getTaskUserLabel(task.assignee_id)}

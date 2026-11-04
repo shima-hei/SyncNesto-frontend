@@ -117,12 +117,13 @@ export const getTaskChangeLogUpdatedFieldLabels = (
 
 export const getTaskChangeLogSnapshotDiffRows = (
   changeLog: TaskChangeLogRead,
+  formatValue = formatTaskChangeLogValue,
 ) => {
   return getChangeLogDiffRows({
     oldValue: changeLog.old_value,
     newValue: changeLog.new_value,
     formatField: formatTaskChangeLogField,
-    formatValue: formatTaskChangeLogValue,
+    formatValue,
     ignoredFields: IGNORED_DIFF_FIELDS,
   });
 };

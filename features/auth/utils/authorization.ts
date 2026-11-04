@@ -132,6 +132,8 @@ export const canCreateTask = (role: MaybeCurrentProjectRole) => {
 };
 
 export const canUpdateTask = canCreateTask;
+export const canManageTaskTypes = (role: MaybeCurrentProjectRole) =>
+  canManageProject(toProjectRoleKey(role));
 
 export const canCommentTask = canCreateTask;
 

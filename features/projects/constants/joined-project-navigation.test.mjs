@@ -3,19 +3,26 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { createRequire } from "node:module";
 import ts from "typescript";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const require = createRequire(import.meta.url);
 function load(file) {
   const mod = { exports: {} };
   const code = ts.transpileModule(readFileSync(file, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS },
   }).outputText;
-  new Function("module", "exports", "require", code)(mod, mod.exports, (name) =>
-    load(
-      name.startsWith("@/")
-        ? resolve(root, `${name.slice(2)}.ts`)
-        : resolve(dirname(file), `${name}.ts`),
-    ),
+  new Function("module", "exports", "require", code)(
+    mod,
+    mod.exports,
+    (name) =>
+      name === "lucide-react"
+        ? require(name)
+        : load(
+            name.startsWith("@/")
+              ? resolve(root, `${name.slice(2)}.ts`)
+              : resolve(dirname(file), `${name}.ts`),
+          ),
   );
   return mod.exports;
 }

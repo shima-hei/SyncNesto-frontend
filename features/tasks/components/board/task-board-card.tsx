@@ -8,7 +8,7 @@ import type { TaskRead } from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
+import { getNextTaskBoardStatus } from "../../constants/task-options";
 import {
   getBoardCardClassName,
   isTaskBoardInteractiveTarget,
@@ -47,10 +47,7 @@ export function TaskBoardCard({
     `/projects/joined/${projectId}/tasks`,
   );
   const parent = getTaskParentSummary(task);
-  const statusIndex = TASK_STATUS_OPTIONS.findIndex(
-    (option) => option.value === task.status,
-  );
-  const nextStatus = TASK_STATUS_OPTIONS[statusIndex + 1];
+  const nextStatus = getNextTaskBoardStatus(task.status);
   const handleOpenDetail = (event: React.MouseEvent<HTMLElement>) => {
     if (isTaskBoardInteractiveTarget(event.target)) {
       return;
@@ -94,7 +91,7 @@ export function TaskBoardCard({
       </div>
       <div className="flex flex-wrap gap-1">
         <TaskHierarchyBadge task={task} />
-        <TaskTypeBadge type={task.task_type} />
+        <TaskTypeBadge type={task.task_type} name={task.task_type_name} />
         <TaskFlagBadges
           isOverdue={task.is_overdue}
           isBlocked={task.is_blocked}
@@ -153,6 +150,17 @@ export function TaskBoardCard({
             }}
           >
             {nextStatus.label}へ
+          </Button>
+        ) : null}
+        {canUpdate && task.status === "in_review" ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isPending}
+            onClick={() => void onMove("returned").catch(() => undefined)}
+          >
+            差し戻す
           </Button>
         ) : null}
       </div>

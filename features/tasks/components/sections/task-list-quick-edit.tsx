@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -13,7 +14,10 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { TaskRead } from "@/lib/api/generated/model";
-import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
+import {
+  TASK_PRIORITY_OPTIONS,
+  TASK_STATUS_OPTIONS,
+} from "../../constants/task-options";
 import { getListEditValues, listEditChanges } from "../../lib/task-list-edit";
 import type { TaskListEditingController } from "../../hooks/use-task-list-editing";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
@@ -82,7 +86,23 @@ export function TaskListQuickEdit({
         void editor.save(task);
       }}
     >
-      <FieldGroup className="gap-3">
+      <FieldGroup className="grid gap-3 sm:grid-cols-2">
+        {values.status === "returned" && task.status !== "returned" ? (
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor={`task-list-return-${task.id}`}>
+              差し戻し理由（必須）
+            </FieldLabel>
+            <Textarea
+              id={`task-list-return-${task.id}`}
+              required
+              disabled={disabled}
+              value={values.changeReason ?? ""}
+              onChange={(event) =>
+                editor.edit(task, { changeReason: event.target.value })
+              }
+            />
+          </Field>
+        ) : null}
         <Field>
           <FieldLabel htmlFor={`task-list-status-${task.id}`}>状態</FieldLabel>
           <Select
@@ -112,15 +132,50 @@ export function TaskListQuickEdit({
             </SelectContent>
           </Select>
         </Field>
-        <TaskUserSelectField
-          projectId={projectId}
-          label="担当者"
-          value={values.assigneeId}
-          placeholder="未割当"
-          disabled={disabled}
-          onChange={(assigneeId) => editor.edit(task, { assigneeId })}
-        />
         <Field>
+          <FieldLabel htmlFor={`task-list-priority-${task.id}`}>
+            優先度
+          </FieldLabel>
+          <Select
+            value={values.priority}
+            disabled={disabled}
+            onValueChange={(priority) => editor.edit(task, { priority })}
+          >
+            <SelectTrigger
+              id={`task-list-priority-${task.id}`}
+              className="w-full"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {!TASK_PRIORITY_OPTIONS.some(
+                  (option) => option.value === values.priority,
+                ) ? (
+                  <SelectItem value={values.priority}>
+                    {values.priority}
+                  </SelectItem>
+                ) : null}
+                {TASK_PRIORITY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+        <div className="min-w-0 sm:col-span-2">
+          <TaskUserSelectField
+            projectId={projectId}
+            label="担当者"
+            value={values.assigneeId}
+            placeholder="未割当"
+            disabled={disabled}
+            onChange={(assigneeId) => editor.edit(task, { assigneeId })}
+          />
+        </div>
+        <Field className="sm:col-span-2">
           <FieldLabel htmlFor={`task-list-due-${task.id}`}>期限</FieldLabel>
           <Input
             id={`task-list-due-${task.id}`}
