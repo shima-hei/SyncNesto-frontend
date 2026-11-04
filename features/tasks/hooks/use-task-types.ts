@@ -1,5 +1,7 @@
 "use client";
 
+import { REFERENCE_STALE_TIME } from "@/lib/query/cache-policy";
+
 import { usePathname } from "next/navigation";
 import { useListTaskTypesProjectsProjectIdTaskTypesGet } from "@/lib/api/generated/tasks/tasks";
 import type { TaskTypeRead } from "@/lib/api/generated/model";
@@ -20,7 +22,7 @@ export function useTaskTypes(projectId?: number) {
   const pathname = usePathname();
   const id = projectId ?? getJoinedProjectId(pathname);
   const query = useListTaskTypesProjectsProjectIdTaskTypesGet(id ?? 0, {
-    query: { enabled: Boolean(id), staleTime: 60_000 },
+    query: { enabled: Boolean(id), staleTime: REFERENCE_STALE_TIME },
   });
   const types = query.data?.items ?? standardTypes;
   const options = (current?: string, includeInactive = false) => {

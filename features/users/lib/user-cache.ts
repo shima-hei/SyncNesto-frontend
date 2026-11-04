@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { isProjectUserChoiceQuery } from "@/lib/query/cache-policy";
 
 import type { UserRead } from "@/lib/api/generated/model";
 import {
@@ -7,9 +8,12 @@ import {
 } from "@/lib/api/generated/users/users";
 
 export const invalidateUserList = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({
-    queryKey: getUserListKey(),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: getUserListKey() }),
+    queryClient.invalidateQueries({
+      predicate: (query) => isProjectUserChoiceQuery(query.queryKey),
+    }),
+  ]);
 };
 
 export const setUserDetailCache = (

@@ -3,6 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import {
+  NOTIFICATION_POLL_INTERVAL,
+  NOTIFICATION_STALE_TIME,
+} from "@/lib/query/cache-policy";
+import { notificationUnreadCountKey } from "../lib/notification-query-keys";
 import type { ListNotificationsNotificationsGetParams } from "@/lib/api/generated/model";
 import {
   listNotificationsNotificationsGet,
@@ -21,8 +26,8 @@ export function useNotifications(
     queryFn: ({ signal }) =>
       listNotificationsNotificationsGet(params, { signal }),
     enabled: Boolean(user) && enabled,
-    staleTime: 15_000,
-    refetchInterval: 45_000,
+    staleTime: NOTIFICATION_STALE_TIME,
+    refetchInterval: NOTIFICATION_POLL_INTERVAL,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
@@ -31,15 +36,15 @@ export function useNotifications(
 export function useNotificationUnreadCount(projectId?: number) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["notifications", user?.id, "unread-count", projectId],
+    queryKey: notificationUnreadCountKey(user?.id, projectId),
     queryFn: ({ signal }) =>
       unreadCountNotificationsUnreadCountGet(
         { project_id: projectId },
         { signal },
       ),
     enabled: Boolean(user),
-    staleTime: 15_000,
-    refetchInterval: 45_000,
+    staleTime: NOTIFICATION_STALE_TIME,
+    refetchInterval: NOTIFICATION_POLL_INTERVAL,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });

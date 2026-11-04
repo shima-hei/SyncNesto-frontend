@@ -41,6 +41,8 @@ export const invalidateProjectMemberList = (
     queryClient.invalidateQueries({
       queryKey: getProjectMemberListKey(projectId),
     }),
+    invalidateProjectMemberCandidateList(queryClient, projectId),
+    invalidateProjectMemberUserList(queryClient, projectId),
     queryClient.invalidateQueries({ queryKey: ["home"] }),
   ]);
 };
