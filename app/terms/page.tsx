@@ -19,7 +19,7 @@ export default function TermsPage() {
     >
       <PublicInformationSection title="1. 提供者と目的">
         <p>
-          shime-hei（以下「運営者」）は、要件定義、テスト設計、タスク、文書等を扱うSyncnesto（以下「本サービス」）を個人のポートフォリオとして無料で提供します。通常アカウントは運営者による招待制です。継続提供、稼働時間、業務での利用に必要な水準を保証するものではありません。
+          shima-hei（以下「運営者」）は、要件定義、テスト設計、タスク、文書等を扱うSyncnesto（以下「本サービス」）を個人のポートフォリオとして無料で提供します。通常アカウントは運営者による招待制です。継続提供、稼働時間、業務での利用に必要な水準を保証するものではありません。
         </p>
       </PublicInformationSection>
       <PublicInformationSection title="2. アカウントと認証">

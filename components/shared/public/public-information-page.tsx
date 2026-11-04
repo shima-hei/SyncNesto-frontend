@@ -98,7 +98,7 @@ export function PublicInformationPage({
             </div>
             <Separator />
             <footer className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span>運営者: shime-hei</span>
+              <span>運営者: shima-hei</span>
               <span>制定・更新日: 2026年10月13日</span>
             </footer>
           </div>
