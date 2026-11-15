@@ -7,8 +7,10 @@ import {
   UserSelect,
 } from "@/components/shared/forms/user-select";
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { useProjectMemberUsers } from "@/features/projects";
+
+import { TaskFieldError } from "./task-form-fields";
 
 type TaskUserSelectFieldProps = {
   projectId: number;
@@ -63,6 +65,8 @@ export function TaskUserSelectField({
         <div className="min-w-0 flex-1">
           <UserSelect
             triggerId={triggerId}
+            triggerInvalid={Boolean(error)}
+            triggerDescriptionId={error ? `${triggerId}-error` : undefined}
             users={users}
             selectedUser={selectedValue}
             open={open}
@@ -85,7 +89,7 @@ export function TaskUserSelectField({
           解除
         </Button>
       </div>
-      {error ? <FieldError>{error}</FieldError> : null}
+      <TaskFieldError id={triggerId} error={error} />
     </Field>
   );
 }

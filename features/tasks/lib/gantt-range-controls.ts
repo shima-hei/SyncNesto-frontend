@@ -1,3 +1,5 @@
+import { toCalendarDate, toCalendarDateInput } from "@/lib/format/date";
+
 export const getCurrentGanttRange = (
   startDate: string,
   endDate: string,
@@ -16,14 +18,14 @@ export const getCurrentGanttRange = (
 };
 
 export const getTodayGanttRange = (displayUnit: string) => {
-  const today = new Date();
+  const today = toCalendarDate(new Date());
   const days = getGanttWindowDays(displayUnit);
   const start = addDays(today, -Math.floor(days / 3));
   const end = addDays(start, days);
 
   return {
-    startDate: toDateInputValue(start),
-    endDate: toDateInputValue(end),
+    startDate: toCalendarDateInput(start),
+    endDate: toCalendarDateInput(end),
   };
 };
 
@@ -34,23 +36,23 @@ export const moveGanttRange = (
 ) => {
   if (displayUnit === "month") {
     return {
-      startDate: toDateInputValue(addMonths(range.start, direction)),
-      endDate: toDateInputValue(addMonths(range.end, direction)),
+      startDate: toCalendarDateInput(addMonths(range.start, direction)),
+      endDate: toCalendarDateInput(addMonths(range.end, direction)),
     };
   }
 
   if (displayUnit === "quarter") {
     return {
-      startDate: toDateInputValue(addMonths(range.start, direction * 3)),
-      endDate: toDateInputValue(addMonths(range.end, direction * 3)),
+      startDate: toCalendarDateInput(addMonths(range.start, direction * 3)),
+      endDate: toCalendarDateInput(addMonths(range.end, direction * 3)),
     };
   }
 
   const days = getGanttWindowDays(displayUnit) * direction;
 
   return {
-    startDate: toDateInputValue(addDays(range.start, days)),
-    endDate: toDateInputValue(addDays(range.end, days)),
+    startDate: toCalendarDateInput(addDays(range.start, days)),
+    endDate: toCalendarDateInput(addDays(range.end, days)),
   };
 };
 
@@ -71,7 +73,7 @@ const getGanttWindowDays = (displayUnit: string) => {
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
 
-  next.setDate(next.getDate() + days);
+  next.setUTCDate(next.getUTCDate() + days);
 
   return next;
 };
@@ -79,11 +81,9 @@ const addDays = (date: Date, days: number) => {
 const addMonths = (date: Date, months: number) => {
   const next = new Date(date);
 
-  next.setMonth(next.getMonth() + months);
+  const day = next.getUTCDate();
+  next.setUTCMonth(next.getUTCMonth() + months + 1, 0);
+  next.setUTCDate(Math.min(day, next.getUTCDate()));
 
   return next;
-};
-
-const toDateInputValue = (date: Date) => {
-  return date.toISOString().slice(0, 10);
 };

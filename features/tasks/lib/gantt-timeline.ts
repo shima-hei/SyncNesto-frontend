@@ -1,5 +1,7 @@
 import type { MilestoneRead, TaskRead } from "@/lib/api/generated/model";
+import { toCalendarDate, toCalendarDateInput } from "@/lib/format/date";
 
+// ガント内の Date は暦日の UTC 0時として保持する。
 export type DateRange = {
   start: Date;
   end: Date;
@@ -55,7 +57,7 @@ export const getDateRange = (
 export const getFallbackDateRange = (
   displayUnit: GanttDisplayUnit,
 ): DateRange => {
-  const start = getLocalToday();
+  const start = toCalendarDate(new Date());
   const end = new Date(start);
   const days = {
     day: 30,
@@ -64,7 +66,7 @@ export const getFallbackDateRange = (
     quarter: 365,
   }[displayUnit];
 
-  end.setDate(start.getDate() + days);
+  end.setUTCDate(start.getUTCDate() + days);
 
   return {
     start,
@@ -102,22 +104,22 @@ export const getDateCells = (range: DateRange) => {
     isToday: boolean;
   }> = [];
   const date = new Date(range.start);
-  const today = getLocalToday();
+  const today = toCalendarDate(new Date());
 
   while (date <= range.end) {
     const cellDate = new Date(date);
-    const isMonthStart = cellDate.getDate() === 1;
+    const isMonthStart = cellDate.getUTCDate() === 1;
 
     cells.push({
-      key: toDateInputValue(cellDate),
+      key: toCalendarDateInput(cellDate),
       date: cellDate,
       isMonthStart,
       showMonthLabel: isMonthStart || cells.length === 0,
-      isWeekend: cellDate.getDay() === 0 || cellDate.getDay() === 6,
-      isToday: toDateInputValue(cellDate) === toDateInputValue(today),
+      isWeekend: cellDate.getUTCDay() === 0 || cellDate.getUTCDay() === 6,
+      isToday: toCalendarDateInput(cellDate) === toCalendarDateInput(today),
     });
 
-    date.setDate(date.getDate() + 1);
+    date.setUTCDate(date.getUTCDate() + 1);
   }
 
   return cells;
@@ -126,7 +128,7 @@ export const getDateCells = (range: DateRange) => {
 export const daysBetween = (start: Date, end: Date) => {
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
-  return Math.round((end.getTime() - start.getTime()) / millisecondsPerDay);
+  return (end.getTime() - start.getTime()) / millisecondsPerDay;
 };
 
 export const getInclusiveDays = (range: DateRange) => {
@@ -155,12 +157,14 @@ export const getClientDate = (
   }
 
   const rect = timeline.getBoundingClientRect();
+  if (rect.width <= 0) return null;
+
   const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
   const totalDays = getInclusiveDays(range);
   const dayOffset = Math.min(Math.floor(ratio * totalDays), totalDays - 1);
   const date = new Date(range.start);
 
-  date.setDate(range.start.getDate() + dayOffset);
+  date.setUTCDate(range.start.getUTCDate() + dayOffset);
 
   return date;
 };
@@ -201,14 +205,6 @@ export const isScheduleDirty = (
   );
 };
 
-export const toDateInputValue = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
 export const getTimelineBarStyle = (
   start: Date,
   end: Date,
@@ -247,11 +243,11 @@ export const getWeekendBands = (range: DateRange) => {
   const date = new Date(range.start);
 
   while (date <= range.end) {
-    const day = date.getDay();
+    const day = date.getUTCDay();
 
     if (day === 0 || day === 6) {
       const offset = Math.max(daysBetween(range.start, date), 0);
-      const key = toDateInputValue(date);
+      const key = toCalendarDateInput(date);
 
       bands.push({
         key,
@@ -260,7 +256,7 @@ export const getWeekendBands = (range: DateRange) => {
       });
     }
 
-    date.setDate(date.getDate() + 1);
+    date.setUTCDate(date.getUTCDate() + 1);
   }
 
   return bands;
@@ -281,7 +277,7 @@ export const getDateColumnStyle = (dateInput: string, range: DateRange) => {
 };
 
 export const getTodayLeft = (range: DateRange) => {
-  const today = new Date();
+  const today = toCalendarDate(new Date());
 
   if (today < range.start || today > range.end) {
     return null;
@@ -307,27 +303,21 @@ export const getMilestoneLeft = (
 const shiftDateInput = (dateInput: string, days: number) => {
   const date = new Date(dateInput);
 
-  date.setDate(date.getDate() + days);
+  date.setUTCDate(date.getUTCDate() + days);
 
-  return toDateInputValue(date);
+  return toCalendarDateInput(date);
 };
 
 const minDateInput = (date: Date, maxDateInput: string) => {
   const maxDate = new Date(maxDateInput);
 
-  return toDateInputValue(date > maxDate ? maxDate : date);
+  return toCalendarDateInput(date > maxDate ? maxDate : date);
 };
 
 const maxDateInput = (date: Date, minDateInput: string) => {
   const minDate = new Date(minDateInput);
 
-  return toDateInputValue(date < minDate ? minDate : date);
-};
-
-const getLocalToday = () => {
-  const today = new Date();
-
-  return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return toCalendarDateInput(date < minDate ? minDate : date);
 };
 
 const getDateLabels = (
@@ -335,26 +325,26 @@ const getDateLabels = (
   end: Date,
   displayUnit: GanttDisplayUnit,
 ) => {
-  const labelCount = getLabelCount(displayUnit);
-  const rangeDays = Math.max(daysBetween(start, end), 1);
+  const rangeDays = daysBetween(start, end);
+  const labelCount = Math.min(getLabelCount(displayUnit), rangeDays + 1);
 
   return Array.from({ length: labelCount }).map((_, index) => {
     const date = new Date(start);
-    date.setDate(
-      start.getDate() +
+    date.setUTCDate(
+      start.getUTCDate() +
         Math.round((rangeDays / Math.max(labelCount - 1, 1)) * index),
     );
 
     switch (displayUnit) {
       case "week":
-        return `${date.getFullYear()}/W${getWeekNumber(date)}`;
+        return `${date.getUTCFullYear()}/W${getWeekNumber(date)}`;
       case "month":
-        return `${date.getFullYear()}/${date.getMonth() + 1}`;
+        return `${date.getUTCFullYear()}/${date.getUTCMonth() + 1}`;
       case "quarter":
-        return `${date.getFullYear()}/Q${Math.floor(date.getMonth() / 3) + 1}`;
+        return `${date.getUTCFullYear()}/Q${Math.floor(date.getUTCMonth() / 3) + 1}`;
       case "day":
       default:
-        return `${date.getMonth() + 1}/${date.getDate()}`;
+        return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
     }
   });
 };
@@ -373,10 +363,9 @@ const getLabelCount = (displayUnit: GanttDisplayUnit) => {
 };
 
 const getWeekNumber = (date: Date) => {
-  const firstDay = new Date(date.getFullYear(), 0, 1);
-  const days = Math.floor(
-    (date.getTime() - firstDay.getTime()) / (24 * 60 * 60 * 1000),
-  );
+  const firstDay = new Date(date);
+  firstDay.setUTCMonth(0, 1);
+  const days = daysBetween(firstDay, date);
 
-  return Math.ceil((days + firstDay.getDay() + 1) / 7);
+  return Math.ceil((days + firstDay.getUTCDay() + 1) / 7);
 };

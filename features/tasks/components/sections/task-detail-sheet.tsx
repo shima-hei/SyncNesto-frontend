@@ -50,6 +50,7 @@ type TaskDetailSheetProps = {
   projectId: number;
   taskId: number | null;
   open: boolean;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -57,6 +58,7 @@ export function TaskDetailSheet({
   projectId,
   taskId,
   open,
+  triggerRef,
   onOpenChange,
 }: TaskDetailSheetProps) {
   const { withReturn } = useListNavigation(
@@ -71,7 +73,16 @@ export function TaskDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[min(96vw,720px)] gap-0 overflow-hidden p-0 sm:max-w-none">
+      <SheetContent
+        className="w-[min(96vw,720px)] gap-0 overflow-hidden p-0 sm:max-w-none"
+        onCloseAutoFocus={(event) => {
+          const trigger = triggerRef.current;
+          if (trigger?.isConnected) {
+            event.preventDefault();
+            trigger.focus();
+          }
+        }}
+      >
         {isLoading ? (
           <>
             <SheetHeader className="border-b p-4 pr-14">

@@ -16,7 +16,7 @@ type UnscheduledTasksPanelProps = {
   tasks: TaskRead[];
   isPending: boolean;
   onClose: () => void;
-  onOpenDetail: (taskId: number) => void;
+  onOpenDetail: (taskId: number, trigger: HTMLButtonElement) => void;
   onDragStart: (taskId: number) => void;
   onDragEnd: () => void;
   onAddToday: (task: TaskRead) => Promise<unknown>;
@@ -89,7 +89,7 @@ function UnscheduledTaskDragItem({
 }: {
   task: TaskRead;
   isPending: boolean;
-  onOpenDetail: (taskId: number) => void;
+  onOpenDetail: (taskId: number, trigger: HTMLButtonElement) => void;
   onDragStart: (taskId: number) => void;
   onDragEnd: () => void;
   onAddToday: (task: TaskRead) => Promise<unknown>;
@@ -112,7 +112,8 @@ function UnscheduledTaskDragItem({
         <button
           type="button"
           className="min-w-0 text-left"
-          onClick={() => onOpenDetail(task.id)}
+          aria-haspopup="dialog"
+          onClick={(event) => onOpenDetail(task.id, event.currentTarget)}
         >
           <span className="block truncate text-sm font-medium">
             {task.title}

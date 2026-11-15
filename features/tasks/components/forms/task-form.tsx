@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { DraftRestoreDialog } from "@/components/shared/dialogs/draft-restore-dialog";
@@ -10,7 +10,6 @@ import { MarkdownTextarea } from "@/components/shared/forms/markdown-textarea";
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
@@ -33,7 +32,12 @@ import { TaskRequirementSelectField } from "./task-requirement-select-field";
 import { TaskTagInput } from "./task-tag-input";
 import { TaskUserSelectField } from "./task-user-select-field";
 import { TaskTypeField } from "./task-type-field";
-import { DateField, NumberField, TaskSelectField } from "./task-form-fields";
+import {
+  DateField,
+  NumberField,
+  TaskFieldError,
+  TaskSelectField,
+} from "./task-form-fields";
 import {
   TaskPhaseSelectField,
   EFFORT_BASIS_OPTIONS,
@@ -79,8 +83,33 @@ export function TaskForm({
   const reasonId = useId();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<TaskFormErrors>({});
-  const detailsRef = useRef<HTMLDetailsElement>(null);
-  const planningRef = useRef<HTMLDetailsElement>(null);
+  const submittedForm = useRef<HTMLFormElement | null>(null);
+  const errorStatus = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const form = submittedForm.current;
+    if (!form) return;
+    submittedForm.current = null;
+    const invalid = form.querySelectorAll<HTMLElement>(
+      '[aria-invalid="true"]:not(:disabled):not([readonly])',
+    );
+    invalid.forEach((control) => {
+      const details = control.closest("details");
+      if (details) details.open = true;
+    });
+    const first = invalid[0];
+    if (!first) return;
+    if (first === document.activeElement) {
+      const message = form.ownerDocument.getElementById(`${first.id}-error`);
+      if (message?.textContent && errorStatus.current) {
+        // Enter で同じ欄から送信したときも、入力エラーを知らせる。
+        errorStatus.current.textContent = message.textContent;
+      }
+    } else {
+      first.focus({ preventScroll: true });
+    }
+    first.scrollIntoView({ block: "center" });
+  }, [errors]);
   const draft = useTaskFormDraft({
     projectId,
     mode,
@@ -106,12 +135,14 @@ export function TaskForm({
   ) => {
     event.preventDefault();
     if (isPending) return;
+    if (errorStatus.current) errorStatus.current.textContent = "";
 
     const result = taskSchema.safeParse(values);
 
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
 
+      submittedForm.current = event.currentTarget;
       setErrors({
         taskCode: fieldErrors.taskCode?.[0],
         title: fieldErrors.title?.[0],
@@ -131,23 +162,6 @@ export function TaskForm({
         tags: fieldErrors.tags?.[0],
         sortOrder: fieldErrors.sortOrder?.[0],
       });
-      if (
-        Object.keys(fieldErrors).some((field) => field !== "title") &&
-        detailsRef.current
-      ) {
-        detailsRef.current.open = true;
-      }
-      if (
-        [
-          "phaseAssignment",
-          "estimatedBasis",
-          "actualBasis",
-          "estimatedMinutes",
-          "actualMinutes",
-        ].some((field) => field in fieldErrors) &&
-        planningRef.current
-      )
-        planningRef.current.open = true;
       return;
     }
 
@@ -159,6 +173,7 @@ export function TaskForm({
     field: TKey,
     value: TaskFormValues[TKey],
   ) => {
+    if (errorStatus.current) errorStatus.current.textContent = "";
     const next = { ...values, [field]: value };
     setValues(next);
     draft.persist(next);
@@ -178,6 +193,7 @@ export function TaskForm({
         className={fullWidth ? "w-full" : "mx-auto w-full max-w-4xl"}
         onSubmit={handleSubmit}
       >
+        <div ref={errorStatus} role="status" className="sr-only" />
         <FieldGroup>
           <Field data-invalid={errors.title ? true : undefined}>
             <FieldLabel htmlFor={titleId}>タスク名</FieldLabel>
@@ -187,15 +203,20 @@ export function TaskForm({
               placeholder="例：ログイン画面を確認する"
               onChange={(event) => updateValue("title", event.target.value)}
               aria-invalid={Boolean(errors.title)}
+              aria-describedby={
+                errors.title
+                  ? `${titleId}-hint ${titleId}-error`
+                  : `${titleId}-hint`
+              }
               aria-required
               autoFocus={mode === "create"}
             />
-            <FieldDescription>
+            <FieldDescription id={`${titleId}-hint`}>
               {mode === "create"
                 ? "タスク名だけで作成できます。ほかの項目は後から設定できます。"
                 : "変更する項目だけ編集してください。"}
             </FieldDescription>
-            {errors.title ? <FieldError>{errors.title}</FieldError> : null}
+            <TaskFieldError id={titleId} error={errors.title} />
           </Field>
           <Field className="[&_textarea]:min-h-28">
             <FieldLabel htmlFor={descriptionId}>説明（任意）</FieldLabel>
@@ -287,7 +308,7 @@ export function TaskForm({
               />
             </Field>
           ) : null}
-          <details ref={detailsRef} className="rounded-lg border p-4">
+          <details className="rounded-lg border p-4">
             <summary className="cursor-pointer font-medium focus-visible:outline-2 focus-visible:outline-ring">
               関連・管理項目
             </summary>
@@ -307,15 +328,16 @@ export function TaskForm({
                     }
                   }}
                   aria-invalid={Boolean(errors.taskCode)}
+                  aria-describedby={
+                    errors.taskCode ? `${taskCodeId}-error` : undefined
+                  }
                 />
                 {mode === "create" ? (
                   <FieldDescription>
                     未入力の場合は自動採番されます。
                   </FieldDescription>
                 ) : null}
-                {errors.taskCode ? (
-                  <FieldError>{errors.taskCode}</FieldError>
-                ) : null}
+                <TaskFieldError id={taskCodeId} error={errors.taskCode} />
               </Field>
 
               <div className="grid gap-4 lg:grid-cols-2">
@@ -366,7 +388,7 @@ export function TaskForm({
               ) : null}
             </FieldGroup>
           </details>
-          <details ref={planningRef} className="rounded-lg border p-4">
+          <details className="rounded-lg border p-4">
             <summary className="cursor-pointer font-medium focus-visible:outline-2 focus-visible:outline-ring">
               工程・工数・実績
             </summary>

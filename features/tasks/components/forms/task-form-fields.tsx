@@ -13,6 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export function TaskFieldError({ id, error }: { id: string; error?: string }) {
+  return error ? (
+    <FieldError id={`${id}-error`} role={undefined}>
+      {error}
+    </FieldError>
+  ) : null;
+}
+
 export function TaskSelectField({
   label,
   value,
@@ -31,7 +39,12 @@ export function TaskSelectField({
     <Field data-invalid={error ? true : undefined}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={id} className="w-full" aria-invalid={Boolean(error)}>
+        <SelectTrigger
+          id={id}
+          className="w-full"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -48,7 +61,7 @@ export function TaskSelectField({
           </SelectGroup>
         </SelectContent>
       </Select>
-      {error ? <FieldError>{error}</FieldError> : null}
+      <TaskFieldError id={id} error={error} />
     </Field>
   );
 }
@@ -77,12 +90,13 @@ export function NumberField({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
         />
         {suffix ? (
           <span className="text-sm text-muted-foreground">{suffix}</span>
         ) : null}
       </div>
-      {error ? <FieldError>{error}</FieldError> : null}
+      <TaskFieldError id={id} error={error} />
     </Field>
   );
 }

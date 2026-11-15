@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import type { TaskRead } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,8 @@ export function TasksBoardSection({
   onBrowseChildren,
 }: TasksBoardSectionProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const detailTrigger = useRef<HTMLButtonElement | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
   const { updateTaskStatus, isPending, returnDialog } =
     useUpdateTaskStatus(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
@@ -54,13 +56,40 @@ export function TasksBoardSection({
     return getTaskBoardSwimlanes(tasks, swimlane, getTaskUserLabel, tasksById);
   }, [getTaskUserLabel, swimlane, tasks, tasksById]);
 
+  const moveTask = async (
+    task: TaskRead,
+    status: string,
+    restoreFocus = false,
+  ) => {
+    if (!canUpdate || isPending || task.status === status) return;
+
+    try {
+      await updateTaskStatus(task, status, {
+        boardId: defaultBoard?.id,
+        sortOrder: getNextTaskBoardSortOrder(tasks, status),
+      });
+    } finally {
+      if (restoreFocus) {
+        requestAnimationFrame(() => {
+          const board = boardRef.current;
+          if (!board || document.activeElement !== document.body) return;
+
+          // 状態が変わるとカードは別の列に再マウントされる。
+          const trigger = board.querySelector<HTMLButtonElement>(
+            `[data-board-task-id="${task.id}"]`,
+          );
+          (trigger ?? board).focus();
+        });
+      }
+    }
+  };
   const handleDrop = (
     event: React.DragEvent<HTMLDivElement>,
     status: string,
   ) => {
     event.preventDefault();
 
-    if (!canUpdate) {
+    if (!canUpdate || isPending) {
       return;
     }
 
@@ -68,18 +97,17 @@ export function TasksBoardSection({
       Number(event.dataTransfer.getData("text/plain")),
     );
 
-    if (!task || task.status === status) {
-      return;
-    }
-
-    updateTaskStatus(task, status, {
-      boardId: defaultBoard?.id,
-      sortOrder: getNextTaskBoardSortOrder(tasks, status),
-    }).catch(() => undefined);
+    if (task) void moveTask(task, status).catch(() => undefined);
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      ref={boardRef}
+      role="region"
+      aria-label="タスクボード"
+      tabIndex={-1}
+      className="flex flex-col gap-3"
+    >
       {returnDialog}
       <div className="flex flex-col gap-5">
         {swimlanes.map((lane) => (
@@ -120,7 +148,7 @@ export function TasksBoardSection({
                       <div
                         className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
                         onDragOver={(event) => {
-                          if (canUpdate) {
+                          if (canUpdate && !isPending) {
                             event.preventDefault();
                           }
                         }}
@@ -129,22 +157,20 @@ export function TasksBoardSection({
                         {columnTasks.length ? (
                           columnTasks.map((task) => (
                             <TaskBoardCard
-                              key={`${task.id}-${task.version}-${task.assignee_id ?? "none"}-${task.due_date ?? "none"}`}
+                              key={task.id}
                               projectId={projectId}
                               task={task}
                               canUpdate={canUpdate}
                               isPending={isPending}
+                              moveStatuses={visibleStatuses}
                               assigneeLabel={getTaskUserLabel(task.assignee_id)}
                               onMove={(targetStatus) =>
-                                updateTaskStatus(task, targetStatus, {
-                                  boardId: defaultBoard?.id,
-                                  sortOrder: getNextTaskBoardSortOrder(
-                                    tasks,
-                                    targetStatus,
-                                  ),
-                                })
+                                moveTask(task, targetStatus, true)
                               }
-                              onOpenDetail={setSelectedTaskId}
+                              onOpenDetail={(taskId, trigger) => {
+                                detailTrigger.current = trigger;
+                                setSelectedTaskId(taskId);
+                              }}
                               onBrowseChildren={onBrowseChildren}
                             />
                           ))
@@ -165,6 +191,7 @@ export function TasksBoardSection({
       <TaskDetailSheet
         projectId={projectId}
         taskId={selectedTaskId}
+        triggerRef={detailTrigger}
         open={Boolean(selectedTaskId)}
         onOpenChange={(open) => {
           if (!open) {
