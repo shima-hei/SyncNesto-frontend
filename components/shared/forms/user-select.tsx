@@ -29,6 +29,8 @@ export type SelectableUser = Pick<
 
 type UserSelectProps = {
   triggerId?: string;
+  triggerInvalid?: boolean;
+  triggerDescriptionId?: string;
   users: SelectableUser[];
   selectedUser: SelectableUser | null;
   open: boolean;
@@ -47,6 +49,8 @@ type UserSelectProps = {
 
 export function UserSelect({
   triggerId,
+  triggerInvalid,
+  triggerDescriptionId,
   users,
   selectedUser,
   open,
@@ -74,6 +78,8 @@ export function UserSelect({
           type="button"
           variant="outline"
           aria-expanded={open}
+          aria-invalid={triggerInvalid}
+          aria-describedby={triggerDescriptionId}
           disabled={disabled}
           className={cn(
             "w-full justify-between",

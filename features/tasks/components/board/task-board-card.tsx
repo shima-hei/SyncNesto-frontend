@@ -1,7 +1,15 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 import { ListTreeIcon } from "lucide-react";
 import type { TaskRead } from "@/lib/api/generated/model";
@@ -29,6 +37,7 @@ export function TaskBoardCard({
   task,
   canUpdate,
   isPending,
+  moveStatuses,
   assigneeLabel,
   onMove,
   onOpenDetail,
@@ -38,9 +47,10 @@ export function TaskBoardCard({
   task: TaskRead;
   canUpdate: boolean;
   isPending: boolean;
+  moveStatuses: readonly { value: string; label: string }[];
   assigneeLabel: string;
   onMove: (status: string) => Promise<unknown>;
-  onOpenDetail: (taskId: number) => void;
+  onOpenDetail: (taskId: number, trigger: HTMLButtonElement | null) => void;
   onBrowseChildren: (taskId: number) => void;
 }) {
   const { withReturn } = useListNavigation(
@@ -48,12 +58,17 @@ export function TaskBoardCard({
   );
   const parent = getTaskParentSummary(task);
   const nextStatus = getNextTaskBoardStatus(task.status);
+  const detailTrigger = useRef<HTMLButtonElement>(null);
+  const selectedStatus = useRef<string | null>(null);
+  const otherStatuses = moveStatuses.filter(
+    (status) => status.value !== task.status,
+  );
   const handleOpenDetail = (event: React.MouseEvent<HTMLElement>) => {
     if (isTaskBoardInteractiveTarget(event.target)) {
       return;
     }
 
-    onOpenDetail(task.id);
+    onOpenDetail(task.id, detailTrigger.current);
   };
 
   return (
@@ -64,17 +79,7 @@ export function TaskBoardCard({
         "flex flex-col gap-2 rounded-lg border border-l-4 bg-card p-3 text-card-foreground shadow-sm data-[draggable=true]:cursor-grab",
         getBoardCardClassName(task.status),
       )}
-      role="button"
-      tabIndex={0}
       onClick={handleOpenDetail}
-      onKeyDown={(event) => {
-        if (
-          event.key === "Enter" &&
-          !isTaskBoardInteractiveTarget(event.target)
-        ) {
-          onOpenDetail(task.id);
-        }
-      }}
       onDragStart={(event) => {
         event.dataTransfer.setData("text/plain", String(task.id));
         event.dataTransfer.effectAllowed = "move";
@@ -82,7 +87,16 @@ export function TaskBoardCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="break-words text-sm font-medium">{task.title}</p>
+          <button
+            ref={detailTrigger}
+            data-board-task-id={task.id}
+            type="button"
+            aria-haspopup="dialog"
+            className="rounded text-left text-sm font-medium break-words hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            onClick={(event) => onOpenDetail(task.id, event.currentTarget)}
+          >
+            {task.title}
+          </button>
           <p className="text-xs text-muted-foreground">
             {task.task_code ?? "未採番"} · ID: {task.id}
           </p>
@@ -151,6 +165,46 @@ export function TaskBoardCard({
           >
             {nextStatus.label}へ
           </Button>
+        ) : null}
+        {canUpdate && otherStatuses.length ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-label={`${task.title}の状態を変更`}
+                disabled={isPending}
+              >
+                状態を変更
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              onCloseAutoFocus={() => {
+                const status = selectedStatus.current;
+                selectedStatus.current = null;
+                if (status) {
+                  requestAnimationFrame(
+                    () => void onMove(status).catch(() => undefined),
+                  );
+                }
+              }}
+            >
+              <DropdownMenuGroup>
+                {otherStatuses.map((status) => (
+                  <DropdownMenuItem
+                    key={status.value}
+                    onSelect={() => {
+                      selectedStatus.current = status.value;
+                    }}
+                  >
+                    {status.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
         {canUpdate && task.status === "in_review" ? (
           <Button

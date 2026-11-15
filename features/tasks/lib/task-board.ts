@@ -98,8 +98,10 @@ export const getBoardCardClassName = (status?: string | null) => {
 };
 
 export const isTaskBoardInteractiveTarget = (target: EventTarget | null) => {
-  return target instanceof HTMLElement
-    ? Boolean(target.closest("a,button,input,select,textarea"))
+  return target instanceof Element
+    ? Boolean(
+        target.closest('a,button,input,select,textarea,[role="menuitem"]'),
+      )
     : false;
 };
 

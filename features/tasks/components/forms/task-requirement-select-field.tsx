@@ -12,7 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Popover,
   PopoverContent,
@@ -22,6 +22,8 @@ import type { RequirementRead } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 
 import { useRequirements } from "@/features/requirements/hooks/use-requirements";
+
+import { TaskFieldError } from "./task-form-fields";
 
 type TaskRequirementSelectFieldProps = {
   projectId: number;
@@ -82,6 +84,7 @@ export function TaskRequirementSelectField({
                 variant="outline"
                 aria-expanded={open}
                 aria-invalid={Boolean(error)}
+                aria-describedby={error ? `${triggerId}-error` : undefined}
                 className={cn(
                   "w-full justify-between",
                   !selectedValue && "text-muted-foreground",
@@ -142,7 +145,7 @@ export function TaskRequirementSelectField({
           解除
         </Button>
       </div>
-      {error ? <FieldError>{error}</FieldError> : null}
+      <TaskFieldError id={triggerId} error={error} />
     </Field>
   );
 }

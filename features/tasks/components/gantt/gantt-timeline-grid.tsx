@@ -3,6 +3,7 @@
 import { useRef } from "react";
 
 import type { MilestoneRead, TaskRead } from "@/lib/api/generated/model";
+import { toCalendarDateInput } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import {
@@ -11,7 +12,6 @@ import {
   type GanttGridStyle,
   getClientDate,
   getDateCells,
-  toDateInputValue,
 } from "../../lib/gantt-timeline";
 import {
   getDraggedUnscheduledTaskId,
@@ -114,7 +114,7 @@ export function GanttDroppableTimeline({
         event.preventDefault();
         event.dataTransfer.dropEffect = "copy";
         onDropDateHover?.(
-          toDateInputValue(
+          toCalendarDateInput(
             getClientDate(event.clientX, range, timelineRef.current) ??
               range.start,
           ),
@@ -186,8 +186,8 @@ export function GanttTimelineHeader({
           canUpdate={canUpdate}
           onSelect={onMilestoneSelect}
         />
-        {range.labels.map((label) => (
-          <span key={label} className="relative">
+        {range.labels.map((label, index) => (
+          <span key={`${label}-${index}`} className="relative">
             {label}
           </span>
         ))}
@@ -220,7 +220,7 @@ export function GanttTimelineHeader({
               date.isMonthStart && "font-medium text-foreground",
             )}
           >
-            {date.showMonthLabel ? `${date.date.getMonth() + 1}月` : ""}
+            {date.showMonthLabel ? `${date.date.getUTCMonth() + 1}月` : ""}
           </div>
         ))}
         {dates.map((date) => (
@@ -232,7 +232,7 @@ export function GanttTimelineHeader({
               date.isToday && "font-semibold text-foreground",
             )}
           >
-            {date.date.getDate()}
+            {date.date.getUTCDate()}
           </div>
         ))}
       </div>

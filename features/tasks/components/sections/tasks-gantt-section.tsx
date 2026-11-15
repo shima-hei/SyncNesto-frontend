@@ -18,7 +18,11 @@ import type {
   MilestoneRead,
   TaskRead,
 } from "@/lib/api/generated/model";
-import { formatDate } from "@/lib/format/date";
+import {
+  formatDate,
+  toCalendarDate,
+  toCalendarDateInput,
+} from "@/lib/format/date";
 
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import {
@@ -65,7 +69,6 @@ import {
   getPointerDate,
   getTimelineBarStyle,
   getTimelineWidth,
-  toDateInputValue,
 } from "../../lib/gantt-timeline";
 import {
   getDraggedUnscheduledTaskId,
@@ -94,6 +97,11 @@ export function TasksGanttSection({
 }: TasksGanttSectionProps) {
   const [collapsedTaskIds, setCollapsedTaskIds] = useState<number[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const detailTrigger = useRef<HTMLButtonElement | null>(null);
+  const openTaskDetail = (taskId: number, trigger: HTMLButtonElement) => {
+    detailTrigger.current = trigger;
+    setSelectedTaskId(taskId);
+  };
   const [unscheduledPanelOpen, setUnscheduledPanelOpen] = useState(false);
   const [draggingUnscheduledTaskId, setDraggingUnscheduledTaskId] = useState<
     number | null
@@ -147,7 +155,7 @@ export function TasksGanttSection({
     task: TaskRead,
     dropDate: Date,
   ): Promise<unknown> => {
-    const startDate = toDateInputValue(dropDate);
+    const startDate = toCalendarDateInput(dropDate);
 
     setDraggingUnscheduledTaskId(null);
     setHighlightedDropDate(null);
@@ -196,13 +204,12 @@ export function TasksGanttSection({
           setUnscheduledPanelOpen(false);
           clearUnscheduledDragState();
         }}
-        onOpenDetail={setSelectedTaskId}
+        onOpenDetail={openTaskDetail}
         onDragStart={setDraggingUnscheduledTaskId}
         onDragEnd={clearUnscheduledDragState}
-        onAddToday={(task) => {
-          const today = new Date();
-          return dropUnscheduledTask(task, today);
-        }}
+        onAddToday={(task) =>
+          dropUnscheduledTask(task, toCalendarDate(new Date()))
+        }
       />
       {range ? (
         <div className="overflow-x-auto rounded-lg border [--gantt-task-width:320px] @min-[96rem]:[--gantt-task-width:1040px]">
@@ -271,7 +278,7 @@ export function TasksGanttSection({
                   }
                   onScheduleUpdate={(values) => planning.edit(task, values)}
                   onDragActive={(active) => setDragRange(active ? range : null)}
-                  onOpenDetail={setSelectedTaskId}
+                  onOpenDetail={openTaskDetail}
                   onDropUnscheduledTask={(task, dropDate) =>
                     dropUnscheduledTask(task, dropDate)
                   }
@@ -330,6 +337,7 @@ export function TasksGanttSection({
       <TaskDetailSheet
         projectId={projectId}
         taskId={selectedTaskId}
+        triggerRef={detailTrigger}
         open={Boolean(selectedTaskId)}
         onOpenChange={(open) => {
           if (!open) {
@@ -377,7 +385,7 @@ function GanttTaskRow({
   onToggleCollapse: () => void;
   onScheduleUpdate: (values: { startDate?: string; dueDate?: string }) => void;
   onDragActive: (active: boolean) => void;
-  onOpenDetail: (taskId: number) => void;
+  onOpenDetail: (taskId: number, trigger: HTMLButtonElement) => void;
   onDropUnscheduledTask: (task: TaskRead, dropDate: Date) => Promise<unknown>;
   onDropDateHover: (date: string | null) => void;
   onDropDateClear: () => void;
@@ -445,9 +453,9 @@ function GanttTaskRow({
     onDragActive(true);
     setDragState({
       mode,
-      anchorDate: toDateInputValue(anchorDate),
-      originalStartDate: startDate || toDateInputValue(range.start),
-      originalDueDate: dueDate || startDate || toDateInputValue(range.start),
+      anchorDate: toCalendarDateInput(anchorDate),
+      originalStartDate: startDate || toCalendarDateInput(range.start),
+      originalDueDate: dueDate || startDate || toCalendarDateInput(range.start),
     });
   };
 
@@ -456,50 +464,41 @@ function GanttTaskRow({
       <div className="sticky left-0 z-10 flex flex-col gap-2 border-r bg-background px-3 py-2">
         <div className="flex gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-2 @min-[96rem]:w-72 @min-[96rem]:flex-none">
-            <HoverCard
-              open={canEditPlanning ? false : undefined}
-              openDelay={150}
-              closeDelay={120}
-            >
-              <HoverCardTrigger asChild>
-                <div
-                  className="flex min-w-0 cursor-pointer items-center gap-2 rounded hover:bg-accent/60"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onOpenDetail(task.id)}
-                  onKeyDown={(event) => {
-                    if (
-                      event.target === event.currentTarget &&
-                      event.key === "Enter" &&
-                      !event.nativeEvent.isComposing
-                    ) {
-                      onOpenDetail(task.id);
-                    }
-                  }}
+            <div className="flex min-w-0 items-center gap-2">
+              {hasChildren ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={
+                    isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"
+                  }
+                  aria-expanded={!isCollapsed}
+                  onClick={onToggleCollapse}
                 >
-                  {hasChildren ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={
-                        isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"
-                      }
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onToggleCollapse();
-                      }}
-                    >
-                      {isCollapsed ? (
-                        <ChevronRightIcon data-icon="inline-start" />
-                      ) : (
-                        <ChevronDownIcon data-icon="inline-start" />
-                      )}
-                    </Button>
+                  {isCollapsed ? (
+                    <ChevronRightIcon data-icon="inline-start" />
                   ) : (
-                    <span className="size-8 shrink-0" />
+                    <ChevronDownIcon data-icon="inline-start" />
                   )}
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                </Button>
+              ) : (
+                <span className="size-8 shrink-0" />
+              )}
+              <HoverCard
+                open={canEditPlanning ? false : undefined}
+                openDelay={150}
+                closeDelay={120}
+              >
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    className="flex min-w-0 flex-1 flex-col gap-1 rounded text-left hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-ring"
+                    onClick={(event) =>
+                      onOpenDetail(task.id, event.currentTarget)
+                    }
+                  >
                     {task.parent_task_id ? (
                       <span className="shrink-0 text-xs text-muted-foreground">
                         └
@@ -511,41 +510,43 @@ function GanttTaskRow({
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {task.task_code}
                     </span>
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent side="right" align="start" className="w-72">
+                  <div className="flex flex-col gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {task.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {task.task_code}
+                      </p>
+                    </div>
+                    <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
+                      <dt className="text-muted-foreground">担当者</dt>
+                      <dd className="truncate">{assigneeLabel}</dd>
+                      <dt className="text-muted-foreground">進捗</dt>
+                      <dd>{task.progress_percent ?? 0}%</dd>
+                    </dl>
+                    <div className="flex flex-wrap gap-1">
+                      <TaskTypeBadge
+                        type={task.task_type}
+                        name={task.task_type_name}
+                      />
+                      <TaskPriorityBadge priority={task.priority} />
+                    </div>
+                    <TaskTags tags={task.tags} />
                   </div>
-                  <div className="flex shrink-0 flex-col gap-1">
-                    <TaskStatusBadge status={task.status} />
-                    <TaskFlagBadges
-                      isOverdue={task.is_overdue}
-                      isBlocked={task.is_blocked}
-                    />
-                  </div>
-                </div>
-              </HoverCardTrigger>
-              <HoverCardContent side="right" align="start" className="w-72">
-                <div className="flex flex-col gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{task.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {task.task_code}
-                    </p>
-                  </div>
-                  <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
-                    <dt className="text-muted-foreground">担当者</dt>
-                    <dd className="truncate">{assigneeLabel}</dd>
-                    <dt className="text-muted-foreground">進捗</dt>
-                    <dd>{task.progress_percent ?? 0}%</dd>
-                  </dl>
-                  <div className="flex flex-wrap gap-1">
-                    <TaskTypeBadge
-                      type={task.task_type}
-                      name={task.task_type_name}
-                    />
-                    <TaskPriorityBadge priority={task.priority} />
-                  </div>
-                  <TaskTags tags={task.tags} />
-                </div>
-              </HoverCardContent>
-            </HoverCard>
+                </HoverCardContent>
+              </HoverCard>
+              <div className="flex shrink-0 flex-col gap-1">
+                <TaskStatusBadge status={task.status} />
+                <TaskFlagBadges
+                  isOverdue={task.is_overdue}
+                  isBlocked={task.is_blocked}
+                />
+              </div>
+            </div>
             {canEditPlanning ? (
               <Button
                 type="button"
@@ -592,7 +593,7 @@ function GanttTaskRow({
           );
 
           if (hoverDate) {
-            onDropDateHover(toDateInputValue(hoverDate));
+            onDropDateHover(toCalendarDateInput(hoverDate));
           }
         }}
         onDrop={(event) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { PlusIcon, TagIcon, XIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +13,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   Popover,
   PopoverContent,
@@ -27,6 +22,8 @@ import {
 import { cn } from "@/lib/utils";
 
 import { useTaskTags } from "../../hooks/use-task-tags";
+
+import { TaskFieldError } from "./task-form-fields";
 
 type TaskTagInputProps = {
   projectId: number;
@@ -43,6 +40,7 @@ export function TaskTagInput({
 }: TaskTagInputProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const triggerId = useId();
   const { tags: tagOptions, isLoading } = useTaskTags(projectId);
   const selectedTags = useMemo(() => parseTags(value), [value]);
   const normalizedSelectedTags = useMemo(
@@ -90,7 +88,7 @@ export function TaskTagInput({
 
   return (
     <Field data-invalid={error ? true : undefined}>
-      <FieldLabel>タグ</FieldLabel>
+      <FieldLabel htmlFor={triggerId}>タグ</FieldLabel>
       <div className="flex flex-col gap-2">
         <div
           className={cn(
@@ -124,7 +122,13 @@ export function TaskTagInput({
               type="button"
               variant="outline"
               className="w-fit"
+              id={triggerId}
               aria-invalid={Boolean(error)}
+              aria-describedby={
+                error
+                  ? `${triggerId}-hint ${triggerId}-error`
+                  : `${triggerId}-hint`
+              }
             >
               <TagIcon data-icon="inline-start" />
               タグを選択・追加
@@ -171,10 +175,10 @@ export function TaskTagInput({
           </PopoverContent>
         </Popover>
       </div>
-      <FieldDescription>
+      <FieldDescription id={`${triggerId}-hint`}>
         既存タグを選択するか、新しいタグを入力して追加できます。
       </FieldDescription>
-      {error ? <FieldError>{error}</FieldError> : null}
+      <TaskFieldError id={triggerId} error={error} />
     </Field>
   );
 }

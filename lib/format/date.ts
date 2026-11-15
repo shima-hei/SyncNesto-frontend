@@ -1,3 +1,17 @@
+// 予定日の暦日計算では、端末の「今日」を UTC 0時の Date に写して扱う。
+export const toCalendarDate = (localTime: Date) => {
+  const date = new Date(0);
+  date.setUTCFullYear(
+    localTime.getFullYear(),
+    localTime.getMonth(),
+    localTime.getDate(),
+  );
+  return date;
+};
+
+export const toCalendarDateInput = (date: Date) =>
+  date.toISOString().slice(0, 10);
+
 export const formatDate = (date?: string | null) => {
   if (!date) {
     return "-";
@@ -5,6 +19,7 @@ export const formatDate = (date?: string | null) => {
 
   return new Intl.DateTimeFormat("ja-JP", {
     dateStyle: "medium",
+    timeZone: /^\d{4}-\d{2}-\d{2}$/.test(date) ? "UTC" : undefined,
   }).format(new Date(date));
 };
 

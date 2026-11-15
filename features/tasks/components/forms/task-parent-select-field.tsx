@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ChevronsUpDownIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Popover,
   PopoverContent,
@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { useTasks } from "../../hooks/use-tasks";
 import { useTask } from "../../hooks/use-task";
 import { readTaskId, resolveTaskReference } from "../../lib/task-list-scope";
+
+import { TaskFieldError } from "./task-form-fields";
 
 type TaskParentSelectFieldProps = {
   projectId: number;
@@ -46,6 +48,7 @@ export function TaskParentSelectField({
   excludedTaskIds = [],
   onChange,
 }: TaskParentSelectFieldProps) {
+  const triggerId = useId();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTask, setSelectedTask] = useState<TaskRead | null>(null);
@@ -97,7 +100,7 @@ export function TaskParentSelectField({
 
   return (
     <Field data-invalid={error ? true : undefined}>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel htmlFor={triggerId}>{label}</FieldLabel>
       <div className="flex min-w-0 gap-2">
         <div className="min-w-0 flex-1">
           <Popover open={open} onOpenChange={setOpen}>
@@ -105,7 +108,10 @@ export function TaskParentSelectField({
               <Button
                 type="button"
                 variant="outline"
+                id={triggerId}
                 aria-expanded={open}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? `${triggerId}-error` : undefined}
                 className={cn(
                   "h-auto min-h-9 w-full justify-between",
                   !selectedValue && "text-muted-foreground",
@@ -184,7 +190,7 @@ export function TaskParentSelectField({
           解除
         </Button>
       </div>
-      {error ? <FieldError>{error}</FieldError> : null}
+      <TaskFieldError id={triggerId} error={error} />
     </Field>
   );
 }
