@@ -2,6 +2,7 @@
 
 import { useReadCurrentUserAuthMeGet } from "@/lib/api/generated/auth/auth";
 import { ApiError } from "@/lib/api/error";
+import { AUTH_ERROR_CODES } from "@/lib/auth/session-events";
 import type { CurrentUserRead } from "@/lib/api/generated/model";
 
 export function useCurrentUser(enabled = true) {
@@ -32,6 +33,8 @@ export function useCurrentUser(enabled = true) {
 const isUnauthorizedError = (error: unknown) => {
   return (
     error instanceof ApiError &&
-    (error.status === 401 || error.code === "MFA_REQUIRED")
+    ((error.status === 401 &&
+      error.code !== AUTH_ERROR_CODES.staleSessionToken) ||
+      error.code === "MFA_REQUIRED")
   );
 };

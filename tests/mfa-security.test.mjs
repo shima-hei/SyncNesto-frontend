@@ -121,6 +121,7 @@ test("旧通常セッションのMFA_REQUIREDは再ログインを要求する",
   try {
     globalThis.fetch = async (_url, options) => {
       assert.equal(options.headers.get("Cookie"), "access_token=old");
+      assert.equal(options.headers.get("X-Syncnesto-Session-Refresh"), "skip");
       assert.equal(options.cache, "no-store");
       return Response.json({ code: "MFA_REQUIRED" }, { status: 403 });
     };
@@ -131,6 +132,17 @@ test("旧通常セッションのMFA_REQUIREDは再ログインを要求する",
   } finally {
     globalThis.fetch = oldFetch;
   }
+});
+
+test("古いセッションJWTへの401では現在の画面をログアウトさせない", () => {
+  const { AUTH_ERROR_CODES, isAuthSessionInvalidCode } = load(
+    "../lib/auth/session-events.ts",
+  );
+  assert.equal(
+    isAuthSessionInvalidCode(AUTH_ERROR_CODES.staleSessionToken),
+    false,
+  );
+  assert.equal(isAuthSessionInvalidCode(AUTH_ERROR_CODES.tokenExpired), true);
 });
 
 test("BFFはMFAの限定Cookieと通常Cookieへの切り替えを中継する", async () => {

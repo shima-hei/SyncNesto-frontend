@@ -84,6 +84,7 @@ const fetchCurrentUser = async (cookieHeader: string) => {
           // Server GuardはFastAPIを直接呼ぶため、ブラウザから受け取ったCookieを手動で転送する。
           Cookie: cookieHeader,
           Accept: "application/json",
+          "X-Syncnesto-Session-Refresh": "skip",
         }),
       ),
       cache: "no-store",
@@ -107,6 +108,7 @@ const getAuthErrorCode = async (response: Response) => {
 const isSessionExpiredCode = (code: string | undefined) => {
   return (
     code === AUTH_ERROR_CODES.tokenExpired ||
+    code === AUTH_ERROR_CODES.staleSessionToken ||
     code === AUTH_ERROR_CODES.invalidToken ||
     code === AUTH_ERROR_CODES.authenticationRequired
   );
