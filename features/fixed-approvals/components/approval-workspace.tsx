@@ -33,6 +33,8 @@ import { ApprovalRequestForm } from "./approval-request-form";
 import { LegacyMigrationPanel } from "./legacy-migration-panel";
 import { ChoiceField } from "./choice-field";
 
+const APPROVAL_WRITES_ENABLED = false;
+
 export function ApprovalWorkspace({
   projectId,
   releaseId,
@@ -51,6 +53,7 @@ export function ApprovalWorkspace({
   const { user } = useAuth();
   const role = useCurrentProjectRole(projectId);
   const canManage =
+    APPROVAL_WRITES_ENABLED &&
     user?.user_type === "internal" &&
     !user.demo &&
     ["project_admin", "manager"].includes(
