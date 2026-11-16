@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -25,7 +27,12 @@ import {
 } from "@/components/ui/table";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { getConflictCurrent, getConflictFields } from "@/lib/api/conflict";
-import type { PhaseRead, PhaseUpdate } from "@/lib/api/generated/model";
+import type {
+  EffortMetric,
+  EffortTotals,
+  PhaseRead,
+  PhaseUpdate,
+} from "@/lib/api/generated/model";
 import {
   createPhaseProjectsProjectIdPhasesPost,
   updatePhaseProjectsProjectIdPhasesPhaseIdPatch,
@@ -45,33 +52,61 @@ const phaseValues = (phase: PhaseRead | null): PhaseValues => ({
 
 export function TaskPhaseDialog({
   projectId,
-  label = "工程・工数",
+  summaryOnly = false,
 }: {
   projectId: number;
-  label?: string;
+  summaryOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const label = summaryOnly ? "工数集計" : "工程・工数";
   return (
-    <>
-      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
-        {label}
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="min-w-0 max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>工程・工数</DialogTitle>
-            <DialogDescription>
-              プロジェクト全体の工数です。一覧・ボード・ガントの表示条件やページ、折り畳みとは独立しています。
-            </DialogDescription>
-          </DialogHeader>
-          {open ? <PhaseOverview projectId={projectId} /> : null}
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline">
+          {label}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="min-w-0 max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>{label}</DialogTitle>
+          <DialogDescription>
+            プロジェクト全体の見積・実績を集計します。
+          </DialogDescription>
+        </DialogHeader>
+        {open ? (
+          <>
+            <ProjectEffortSummary projectId={projectId} />
+            {summaryOnly ? null : <PhaseManagement projectId={projectId} />}
+          </>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function PhaseOverview({ projectId }: { projectId: number }) {
+export function PhaseManagementDialog({ projectId }: { projectId: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" size="sm">
+          工程を管理
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="min-w-0 max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>工程を管理</DialogTitle>
+          <DialogDescription>
+            名称・表示順を変更し、完了した工程をアーカイブできます。
+          </DialogDescription>
+        </DialogHeader>
+        {open ? <PhaseManagement projectId={projectId} /> : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PhaseManagement({ projectId }: { projectId: number }) {
   const [page, setPage] = useState(1);
   const [editor, setEditor] = useState<{
     phase: PhaseRead | null;
@@ -82,111 +117,31 @@ function PhaseOverview({ projectId }: { projectId: number }) {
     { page, page_size: 20, include_archived: true },
     { query: { retry: false } },
   );
-  const summary = useEffortSummaryProjectsProjectIdTasksEffortSummaryGet(
-    projectId,
-    undefined,
-    { query: { retry: false } },
-  );
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const canManage = currentProjectRole?.role?.key === "project_admin";
-  const errors = phases.error ?? summary.error;
+  const editorTrigger = useRef<HTMLButtonElement | null>(null);
+  const listHeading = useRef<HTMLHeadingElement>(null);
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {errors ? <FormApiError error={errors} /> : null}
-      {phases.isPending || summary.isPending ? (
-        <p role="status">工程・工数を取得しています。</p>
+      {phases.error ? (
+        <DataLoadError
+          resourceName="工程"
+          isRetrying={phases.isFetching}
+          onRetry={() => void phases.refetch()}
+        />
       ) : null}
-      {summary.isFetching && !summary.isPending ? (
-        <p role="status">工数を更新しています。</p>
-      ) : null}
-      {summary.data && !summary.isError ? (
-        <>
-          <dl className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <dt>全体の見積</dt>
-              <dd>{formatEffortMetric(summary.data.totals.estimated)}</dd>
-            </div>
-            <div>
-              <dt>全体の実績</dt>
-              <dd>{formatEffortMetric(summary.data.totals.actual)}</dd>
-            </div>
-          </dl>
-          <p className="text-sm text-muted-foreground">
-            未分類・共通作業・アーカイブ済み工程も合計に含みます。未入力や未確認があれば確定総工数として扱いません。
-          </p>
-          <p className="text-xs text-muted-foreground sm:hidden">
-            表は横にスクロールできます。
-          </p>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>所属</TableHead>
-                <TableHead>件数</TableHead>
-                <TableHead>見積</TableHead>
-                <TableHead>実績</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {summary.data.groups.map((group) => (
-                <TableRow key={`${group.kind}:${group.phase?.id ?? "none"}`}>
-                  <TableCell>
-                    {group.phase
-                      ? `${group.phase.name}${group.phase.archived_at ? "（アーカイブ済み）" : ""}`
-                      : group.kind === "shared"
-                        ? "共通作業"
-                        : "未分類"}
-                  </TableCell>
-                  <TableCell>{group.totals.task_count}</TableCell>
-                  <TableCell>
-                    {formatEffortMetric(group.totals.estimated)}
-                  </TableCell>
-                  <TableCell>
-                    {formatEffortMetric(group.totals.actual)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <details className="min-w-0">
-            <summary className="cursor-pointer text-sm font-medium">
-              状態別の工数内訳
-            </summary>
-            <p className="my-2 text-sm text-muted-foreground">
-              完了・中止も全体に含めています。工程別と同じ対象を状態ごとに確認できます。
-            </p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>状態</TableHead>
-                  <TableHead>件数</TableHead>
-                  <TableHead>見積</TableHead>
-                  <TableHead>実績</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {summary.data.status_groups.map((group) => (
-                  <TableRow key={group.status}>
-                    <TableCell>{getTaskStatusLabel(group.status)}</TableCell>
-                    <TableCell>{group.totals.task_count}</TableCell>
-                    <TableCell>
-                      {formatEffortMetric(group.totals.estimated)}
-                    </TableCell>
-                    <TableCell>
-                      {formatEffortMetric(group.totals.actual)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </details>
-        </>
-      ) : null}
+      {phases.isPending ? <p role="status">工程を取得しています。</p> : null}
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-medium">工程一覧</h3>
+        <h3 ref={listHeading} tabIndex={-1} className="font-medium">
+          工程一覧
+        </h3>
         {canManage ? (
           <Button
             type="button"
-            onClick={() => setEditor({ phase: null, action: "edit" })}
+            onClick={(event) => {
+              editorTrigger.current = event.currentTarget;
+              setEditor({ phase: null, action: "edit" });
+            }}
           >
             工程を追加
           </Button>
@@ -209,7 +164,11 @@ function PhaseOverview({ projectId }: { projectId: number }) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setEditor({ phase, action: "edit" })}
+                  aria-label={`${phase.name}を編集`}
+                  onClick={(event) => {
+                    editorTrigger.current = event.currentTarget;
+                    setEditor({ phase, action: "edit" });
+                  }}
                 >
                   編集
                 </Button>
@@ -217,12 +176,14 @@ function PhaseOverview({ projectId }: { projectId: number }) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() =>
+                  aria-label={`${phase.name}を${phase.archived_at ? "復元" : "アーカイブ"}`}
+                  onClick={(event) => {
+                    editorTrigger.current = event.currentTarget;
                     setEditor({
                       phase,
                       action: phase.archived_at ? "restore" : "archive",
-                    })
-                  }
+                    });
+                  }}
                 >
                   {phase.archived_at ? "復元" : "アーカイブ"}
                 </Button>
@@ -232,7 +193,7 @@ function PhaseOverview({ projectId }: { projectId: number }) {
         ))}
       </ul>
       {phases.data?.total === 0 ? <p>工程はまだありません。</p> : null}
-      {phases.data ? (
+      {phases.data && phases.data.total > 20 ? (
         <DataPagination
           page={page}
           pageSize={20}
@@ -247,9 +208,139 @@ function PhaseOverview({ projectId }: { projectId: number }) {
           phase={editor.phase}
           action={editor.action}
           onClose={() => setEditor(null)}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const trigger = editorTrigger.current;
+            (trigger?.isConnected ? trigger : listHeading.current)?.focus();
+          }}
         />
       ) : null}
     </div>
+  );
+}
+
+function ProjectEffortSummary({ projectId }: { projectId: number }) {
+  const summary = useEffortSummaryProjectsProjectIdTasksEffortSummaryGet(
+    projectId,
+    undefined,
+    { query: { retry: false } },
+  );
+  if (summary.error) {
+    return (
+      <DataLoadError
+        resourceName="工数集計"
+        isRetrying={summary.isFetching}
+        onRetry={() => void summary.refetch()}
+      />
+    );
+  }
+  if (!summary.data) return <p role="status">工数集計を取得しています。</p>;
+  const { totals, groups, status_groups } = summary.data;
+  return (
+    <>
+      {summary.isFetching ? (
+        <p role="status">工数集計を更新しています。</p>
+      ) : null}
+      <dl className="grid gap-3 sm:grid-cols-2">
+        <EffortTotal label="見積" metric={totals.estimated} />
+        <EffortTotal label="実績" metric={totals.actual} />
+      </dl>
+      {totals.task_count ? (
+        <>
+          <details className="min-w-0">
+            <summary className="cursor-pointer py-2 text-sm font-medium">
+              工程別の内訳
+            </summary>
+            <EffortBreakdown
+              rows={groups.map((group) => ({
+                label: group.phase
+                  ? `${group.phase.name}${group.phase.archived_at ? "（アーカイブ済み）" : ""}`
+                  : group.kind === "shared"
+                    ? "共通作業"
+                    : "未分類",
+                id: `${group.kind}:${group.phase?.id ?? "none"}`,
+                totals: group.totals,
+              }))}
+            />
+          </details>
+          <details className="min-w-0">
+            <summary className="cursor-pointer py-2 text-sm font-medium">
+              状態別の内訳
+            </summary>
+            <EffortBreakdown
+              rows={status_groups.map((group) => ({
+                label: getTaskStatusLabel(group.status),
+                id: group.status,
+                totals: group.totals,
+              }))}
+            />
+          </details>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          集計対象のタスクはありません。
+        </p>
+      )}
+    </>
+  );
+}
+
+function EffortTotal({
+  label,
+  metric,
+}: {
+  label: string;
+  metric?: EffortMetric;
+}) {
+  return (
+    <div className="rounded-lg border p-3">
+      <dt className="text-sm font-medium">
+        {label}
+        {metric && !metric.complete ? "（確認済み小計）" : ""}
+      </dt>
+      <dd className="text-lg font-semibold tabular-nums">
+        {metric ? `${metric.minutes ?? 0} 分` : "未取得"}
+      </dd>
+      {metric && !metric.complete ? (
+        <dd className="mt-1 flex flex-wrap gap-x-3 text-sm text-muted-foreground">
+          {metric.missing_count ? (
+            <span>未入力 {metric.missing_count}件</span>
+          ) : null}
+          {metric.unreviewed_count ? (
+            <span>未確認 {metric.unreviewed_count}件</span>
+          ) : null}
+        </dd>
+      ) : null}
+    </div>
+  );
+}
+
+function EffortBreakdown({
+  rows,
+}: {
+  rows: { id: string; label: string; totals: EffortTotals }[];
+}) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>区分</TableHead>
+          <TableHead>件数</TableHead>
+          <TableHead>見積</TableHead>
+          <TableHead>実績</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map(({ id, label, totals }) => (
+          <TableRow key={id}>
+            <TableCell>{label}</TableCell>
+            <TableCell className="tabular-nums">{totals.task_count}</TableCell>
+            <TableCell>{formatEffortMetric(totals.estimated)}</TableCell>
+            <TableCell>{formatEffortMetric(totals.actual)}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -276,6 +367,7 @@ export function PhaseEditor({
   const [pending, setPending] = useState(false);
   const [current, setCurrent] = useState<PhaseRead | null>(null);
   const client = useQueryClient();
+  const cancelButton = useRef<HTMLButtonElement>(null);
   const save = async (
     next: PhaseValues,
     baseline: PhaseRead | null = phase,
@@ -318,7 +410,14 @@ export function PhaseEditor({
   return (
     <>
       <Dialog open onOpenChange={(open) => !open && !pending && onClose()}>
-        <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
+        <DialogContent
+          onOpenAutoFocus={(event) => {
+            if (action === "edit") return;
+            event.preventDefault();
+            cancelButton.current?.focus();
+          }}
+          onCloseAutoFocus={onCloseAutoFocus}
+        >
           <DialogHeader>
             <DialogTitle>
               {action === "archive"
@@ -377,20 +476,31 @@ export function PhaseEditor({
                 />
               </Field>
               <FormApiError error={error} />
-              <Button
-                type="submit"
-                disabled={
-                  pending || !values.name.trim() || values.sortOrder === ""
-                }
-              >
-                {pending
-                  ? "保存中…"
-                  : action === "archive"
-                    ? "アーカイブする"
-                    : action === "restore"
-                      ? "復元する"
-                      : "保存する"}
-              </Button>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  ref={cancelButton}
+                  type="button"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={onClose}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    pending || !values.name.trim() || values.sortOrder === ""
+                  }
+                >
+                  {pending
+                    ? "保存中…"
+                    : action === "archive"
+                      ? "アーカイブする"
+                      : action === "restore"
+                        ? "復元する"
+                        : "保存する"}
+                </Button>
+              </div>
             </FieldGroup>
           </form>
         </DialogContent>

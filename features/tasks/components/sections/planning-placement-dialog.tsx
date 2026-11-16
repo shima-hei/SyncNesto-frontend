@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { ApiError } from "@/lib/api/error";
 import type {
   GanttResponse,
+  PhaseAssignment,
   PhaseRead,
   TaskRead,
 } from "@/lib/api/generated/model";
@@ -38,7 +39,8 @@ import {
 
 const selectClass =
   "h-9 min-w-0 w-full rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-2 focus-visible:outline-ring";
-type Attempt = { task: TaskRead; phase: PhaseRead; uncertain: boolean };
+type Destination = { key: string; label: string; assignment: PhaseAssignment };
+type Attempt = { task: TaskRead; destination: Destination; uncertain: boolean };
 
 export function PlanningPlacementDialog({
   projectId,
@@ -59,10 +61,12 @@ export function PlanningPlacementDialog({
   canUpdate: boolean;
   onClose: () => void;
   onCloseAutoFocus: (event: Event) => void;
-  onSaved: (task: TaskRead, phase: PhaseRead) => void;
+  onSaved: (task: TaskRead, destination: Destination) => void;
 }) {
   const client = useQueryClient();
-  const [phaseId, setPhaseId] = useState(String(initialPhaseId ?? ""));
+  const [destinationKey, setDestinationKey] = useState(
+    initialPhaseId ? `phase:${initialPhaseId}` : "",
+  );
   const [taskId, setTaskId] = useState("");
   const [search, setSearch] = useState("");
   const [onlyUnclassified, setOnlyUnclassified] = useState(false);
@@ -87,9 +91,25 @@ export function PlanningPlacementDialog({
     reviewedTask.version >= candidate.version
       ? reviewedTask
       : candidate;
-  const phase = phases.find(
-    (phase) => String(phase.id) === phaseId && !phase.archived_at,
+  const phaseDestinations = phases
+    .filter((phase) => !phase.archived_at)
+    .map((phase): Destination => ({
+      key: `phase:${phase.id}`,
+      label: phase.name,
+      assignment: { kind: "phase", phase_id: phase.id },
+    }));
+  const otherDestinations: Destination[] = [
+    { key: "shared", label: "共通作業", assignment: { kind: "shared" } },
+    {
+      key: "unclassified",
+      label: "未分類",
+      assignment: { kind: "unclassified" },
+    },
+  ];
+  const destination = [...phaseDestinations, ...otherDestinations].find(
+    ({ key }) => key === destinationKey,
   );
+  const unchanged = task && getPlanningPhaseKey(task) === destinationKey;
   const hasDraft = Boolean(
     planning.pendingDraft || (task && planning.rows[task.id]),
   );
@@ -113,11 +133,11 @@ export function PlanningPlacementDialog({
     if (
       !canUpdate ||
       !task ||
-      !phase ||
+      !destination ||
       hasDraft ||
       working ||
       attempt ||
-      task.phase_id === phase.id
+      unchanged
     )
       return;
     setWorking(true);
@@ -125,10 +145,10 @@ export function PlanningPlacementDialog({
     try {
       const saved = await updateTaskTasksTaskIdPatch(task.id, {
         version: task.version,
-        phase_assignment: { kind: "phase", phase_id: phase.id },
+        phase_assignment: destination.assignment,
       });
       publish(saved);
-      onSaved(saved, phase);
+      onSaved(saved, destination);
     } catch (error) {
       if (
         !(error instanceof ApiError) ||
@@ -137,7 +157,7 @@ export function PlanningPlacementDialog({
       ) {
         setAttempt({
           task,
-          phase,
+          destination,
           uncertain: !(error instanceof ApiError && error.status === 409),
         });
       } else {
@@ -160,8 +180,8 @@ export function PlanningPlacementDialog({
         throw new Error("所属を確認できませんでした。");
       setTaskDetailCache(client, current.id, current);
       void invalidateTaskProjectSurfaces(client, projectId);
-      if (current.phase_id === attempt.phase.id) {
-        onSaved(current, attempt.phase);
+      if (getPlanningPhaseKey(current) === attempt.destination.key) {
+        onSaved(current, attempt.destination);
       } else {
         setReviewedTask(current);
         setAttempt(undefined);
@@ -180,9 +200,9 @@ export function PlanningPlacementDialog({
         onCloseAutoFocus={onCloseAutoFocus}
       >
         <DialogHeader>
-          <DialogTitle>工程に配置</DialogTitle>
+          <DialogTitle>タスクの所属を変更</DialogTitle>
           <DialogDescription>
-            ガントの表示対象からタスクを選び、所属する工程を指定します。
+            ガントの表示対象からタスクを選び、所属先を指定します。
           </DialogDescription>
         </DialogHeader>
         <form
@@ -253,26 +273,35 @@ export function PlanningPlacementDialog({
               ) : null}
             </Field>
             <Field>
-              <FieldLabel htmlFor="placement-phase">配置先の工程</FieldLabel>
+              <FieldLabel htmlFor="placement-phase">変更先の所属</FieldLabel>
               <select
                 id="placement-phase"
                 required
                 className={selectClass}
-                value={phase?.id ?? ""}
+                value={destination?.key ?? ""}
                 onChange={(event) => {
-                  setPhaseId(event.target.value);
+                  setDestinationKey(event.target.value);
                   setError(null);
                 }}
                 disabled={working || Boolean(attempt)}
               >
-                <option value="">工程を選択</option>
-                {phases
-                  .filter((phase) => !phase.archived_at)
-                  .map((phase) => (
-                    <option key={phase.id} value={phase.id}>
-                      {phase.name}
+                <option value="">所属先を選択</option>
+                {phaseDestinations.length ? (
+                  <optgroup label="工程">
+                    {phaseDestinations.map(({ key, label }) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                <optgroup label="工程外">
+                  {otherDestinations.map(({ key, label }) => (
+                    <option key={key} value={key}>
+                      {label}
                     </option>
                   ))}
+                </optgroup>
               </select>
             </Field>
             {hasDraft ? (
@@ -302,10 +331,10 @@ export function PlanningPlacementDialog({
                 disabled={
                   !canUpdate ||
                   !task ||
-                  !phase ||
+                  !destination ||
                   hasDraft ||
                   working ||
-                  task.phase_id === phase.id
+                  unchanged
                 }
               >
                 {working ? "配置中…" : "配置を保存"}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { FolderPlusIcon, PlusIcon } from "lucide-react";
 
@@ -11,13 +12,14 @@ import type { usePlanningPhases } from "../../hooks/use-planning-phases";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import { getPlanningPhaseKey } from "../../lib/planning-phases";
 import { PlanningPlacementDialog } from "./planning-placement-dialog";
-import { PhaseEditor } from "./task-phase-dialog";
+import { PhaseEditor, PhaseManagementDialog } from "./task-phase-dialog";
 
 export function PlanningPhaseActions({
   projectId,
   phases,
   tasks,
   canManage,
+  canCreate,
   canUpdate,
   planning,
 }: {
@@ -25,6 +27,7 @@ export function PlanningPhaseActions({
   phases: ReturnType<typeof usePlanningPhases>;
   tasks: TaskRead[] | undefined;
   canManage: boolean;
+  canCreate: boolean;
   canUpdate: boolean;
   planning: TaskPlanningController;
 }) {
@@ -38,8 +41,8 @@ export function PlanningPhaseActions({
   const activePhases = phases.data?.filter((phase) => !phase.archived_at) ?? [];
   const canPlace =
     canUpdate &&
+    Boolean(phases.data) &&
     !phases.isError &&
-    activePhases.length > 0 &&
     Boolean(tasks?.length);
 
   const phaseCreated = (phase: PhaseRead) => {
@@ -81,6 +84,16 @@ export function PlanningPhaseActions({
               {phases.data?.length === 0 ? "最初の工程を追加" : "工程を追加"}
             </Button>
           ) : null}
+          {canManage && phases.data?.length ? (
+            <PhaseManagementDialog projectId={projectId} />
+          ) : null}
+          {canCreate ? (
+            <Button asChild type="button" variant="outline" size="sm">
+              <Link href={`/projects/joined/${projectId}/tasks`}>
+                タスク一覧で登録
+              </Link>
+            </Button>
+          ) : null}
           {canUpdate ? (
             <Button
               ref={placementTrigger}
@@ -91,7 +104,7 @@ export function PlanningPhaseActions({
               onClick={() => setPlacementOpen(true)}
             >
               <FolderPlusIcon data-icon="inline-start" />
-              工程に配置
+              所属を変更
             </Button>
           ) : null}
         </div>
@@ -147,12 +160,12 @@ export function PlanningPhaseActions({
             event.preventDefault();
             (canPlace ? placementTrigger : createTrigger).current?.focus();
           }}
-          onSaved={(task, phase) => {
+          onSaved={(task, destination) => {
             setResult({
-              message: `「${task.title}」を工程「${phase.name}」に配置しました。`,
+              message: `「${task.title}」の所属を「${destination.label}」に変更しました。`,
               task,
             });
-            setNewPhaseId(phase.id);
+            setNewPhaseId(destination.assignment.phase_id ?? undefined);
             setPlacementOpen(false);
           }}
         />

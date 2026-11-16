@@ -7,7 +7,10 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { FieldGroup } from "@/components/ui/field";
-import { canUpdateTask } from "@/features/auth/utils/authorization";
+import {
+  canCreateTask,
+  canUpdateTask,
+} from "@/features/auth/utils/authorization";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
@@ -83,18 +86,20 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     !ownTasks || Boolean(user),
   );
   const currentGantt = isGanttPlaceholder || ganttError ? null : gantt;
+  const tasks = currentGantt?.tasks;
   const ganttUnscheduled =
-    currentGantt?.tasks.filter((task) => !task.start_date && !task.due_date)
-      .length ?? 0;
+    tasks?.filter((task) => !task.start_date && !task.due_date).length ?? 0;
+  const missingEstimate =
+    tasks?.filter((task) => task.estimated_minutes == null).length ?? 0;
+  const unassigned =
+    tasks?.filter((task) => task.assignee_id == null).length ?? 0;
 
   return (
     <div className="@container flex min-w-0 flex-col gap-4">
       <OverviewReturn projectId={projectId} />
       <PageHeader
         title="計画"
-        actions={
-          <TaskPhaseDialog projectId={projectId} label="集計・工程管理" />
-        }
+        actions={<TaskPhaseDialog projectId={projectId} summaryOnly />}
       />
       <PlanningPhaseActions
         projectId={projectId}
@@ -102,6 +107,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
         tasks={currentGantt?.tasks}
         canManage={currentProjectRole?.role?.key === "project_admin"}
         canUpdate={canUpdate}
+        canCreate={canCreateTask(currentProjectRole)}
         planning={planning}
       />
       <TaskPlanningWorkspace planning={planning} canUpdate={canUpdate} />
@@ -154,8 +160,8 @@ export function PlanningPage({ projectId }: { projectId: number }) {
             <p role="status" className="text-sm text-muted-foreground">
               表示対象 {currentGantt.tasks.length}
               件（日程あり{currentGantt.tasks.length - ganttUnscheduled}
-              件・未日程{ganttUnscheduled}件）
-              {isGanttFetching ? " · 更新中" : ""}
+              件・未日程{ganttUnscheduled}件） · 担当未設定 {unassigned}件 ·
+              見積未入力 {missingEstimate}件{isGanttFetching ? " · 更新中" : ""}
             </p>
           ) : null}
           <TasksGanttSection
