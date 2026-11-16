@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import Link from "next/link";
 import { ExternalLinkIcon } from "lucide-react";
 
@@ -249,6 +249,14 @@ function TaskSheetOverview({
             label="親タスク"
             value={getTaskReferenceLabel(parentTask, task.parent_task_id)}
           />
+          <TaskInfo
+            label="登録日時"
+            value={
+              <time dateTime={task.created_at}>
+                {formatDateTime(task.created_at)}
+              </time>
+            }
+          />
           <TaskInfo label="更新日時" value={formatDateTime(task.updated_at)} />
         </CardContent>
       </Card>
@@ -356,7 +364,7 @@ function TaskSheetQuickEdit({
   );
 }
 
-function TaskInfo({ label, value }: { label: string; value: string | number }) {
+function TaskInfo({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
