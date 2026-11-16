@@ -91,7 +91,7 @@ export function withOverviewOrigin(
       return href;
     const path = url.pathname.slice(prefix.length);
     if (
-      !/^\/(?:requirements\/[1-9]\d*\/items\/[1-9]\d*|tasks(?:\/[1-9]\d*)?|specifications\/[1-9]\d*|test-designs\/[1-9]\d*|fixed-approvals(?:\/[a-f0-9-]{36})?)$/.test(
+      !/^\/(?:requirements\/[1-9]\d*\/items\/[1-9]\d*|tasks(?:\/[1-9]\d*)?|planning|specifications\/[1-9]\d*|test-designs\/[1-9]\d*|fixed-approvals(?:\/[a-f0-9-]{36})?)$/.test(
         path,
       )
     )

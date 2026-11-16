@@ -23,6 +23,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   organization: "組織",
   tenants: "全体の組織管理",
   projects: "プロジェクト",
+  planning: "計画",
   requirements: "要件定義書",
   search: "横断検索",
   system: "システム管理",

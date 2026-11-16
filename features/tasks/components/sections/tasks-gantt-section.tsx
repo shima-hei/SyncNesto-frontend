@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -16,6 +16,7 @@ import {
 import type {
   GanttResponse,
   MilestoneRead,
+  PhaseRead,
   TaskRead,
 } from "@/lib/api/generated/model";
 import {
@@ -24,6 +25,11 @@ import {
   toCalendarDateInput,
 } from "@/lib/format/date";
 
+import {
+  groupPlanningTasks,
+  getPlanningPhaseKey,
+  getPlanningPhaseLabels,
+} from "../../lib/planning-phases";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import {
   getTaskPlanningValues,
@@ -79,6 +85,7 @@ import { TaskDetailSheet } from "./task-detail-sheet";
 type TasksGanttSectionProps = {
   projectId: number;
   gantt: GanttResponse | null;
+  phases: PhaseRead[];
   isLoading: boolean;
   displayUnit: GanttDisplayUnit;
   canUpdate: boolean;
@@ -89,6 +96,7 @@ type TasksGanttSectionProps = {
 export function TasksGanttSection({
   projectId,
   gantt,
+  phases,
   isLoading,
   displayUnit,
   canUpdate,
@@ -102,6 +110,7 @@ export function TasksGanttSection({
     detailTrigger.current = trigger;
     setSelectedTaskId(taskId);
   };
+  const unscheduledTrigger = useRef<HTMLButtonElement>(null);
   const [unscheduledPanelOpen, setUnscheduledPanelOpen] = useState(false);
   const [draggingUnscheduledTaskId, setDraggingUnscheduledTaskId] = useState<
     number | null
@@ -147,6 +156,8 @@ export function TasksGanttSection({
     (task) =>
       !task.parent_task_id || !collapsedTaskIds.includes(task.parent_task_id),
   );
+  const groups = groupPlanningTasks(displayedTasks, phases);
+  const phaseLabels = getPlanningPhaseLabels(phases);
   const timelineWidth = range ? getTimelineWidth(range, displayUnit) : 0;
   const ganttGridStyle = {
     gridTemplateColumns: `var(--gantt-task-width) ${timelineWidth}px`,
@@ -182,16 +193,21 @@ export function TasksGanttSection({
           担当・予定日・見積を編集できます。ドラッグ後も、各行の「保存」で確定します。
         </p>
       ) : null}
-      {canUpdate && unscheduledTasks.length ? (
+      {unscheduledTasks.length ? (
         <div className="flex justify-end">
           <Button
             type="button"
             variant="outline"
             size="sm"
+            ref={unscheduledTrigger}
             onClick={() => setUnscheduledPanelOpen(true)}
+            aria-expanded={unscheduledPanelOpen}
+            aria-controls={
+              unscheduledPanelOpen ? "planning-unscheduled" : undefined
+            }
           >
             <PanelRightOpenIcon data-icon="inline-start" />
-            未配置タスク {unscheduledTasks.length}
+            未日程タスク {unscheduledTasks.length}
           </Button>
         </div>
       ) : null}
@@ -199,10 +215,15 @@ export function TasksGanttSection({
         open={unscheduledPanelOpen}
         tasks={unscheduledTasks}
         isPending={Boolean(planning.pendingDraft)}
-        onEditPlanning={planning.openEditor}
+        canUpdate={canUpdate}
+        getPhaseLabel={(task) =>
+          phaseLabels.get(getPlanningPhaseKey(task)) ?? `工程 #${task.phase_id}`
+        }
+        onEditPlanning={canUpdate ? planning.openEditor : undefined}
         onClose={() => {
           setUnscheduledPanelOpen(false);
           clearUnscheduledDragState();
+          unscheduledTrigger.current?.focus();
         }}
         onOpenDetail={openTaskDetail}
         onDragStart={setDraggingUnscheduledTaskId}
@@ -212,7 +233,7 @@ export function TasksGanttSection({
         }
       />
       {range ? (
-        <div className="overflow-x-auto rounded-lg border [--gantt-task-width:320px] @min-[96rem]:[--gantt-task-width:1040px]">
+        <div className="overflow-x-auto rounded-lg border [--gantt-task-width:min(20rem,65cqi)] @min-[96rem]:[--gantt-task-width:1040px]">
           <div
             style={{
               width: `calc(var(--gantt-task-width) + ${timelineWidth}px)`,
@@ -248,43 +269,57 @@ export function TasksGanttSection({
               />
             ) : null}
             <div className="divide-y">
-              {displayedTasks.map((task) => (
-                <GanttTaskRow
-                  key={task.id}
-                  task={task}
-                  range={range}
-                  milestones={visibleMilestones}
-                  gridStyle={ganttGridStyle}
-                  assigneeLabel={getTaskUserLabel(task.assignee_id)}
-                  highlightedDropDate={highlightedDropDate}
-                  unscheduledTasks={unscheduledTasks}
-                  hasChildren={parentTaskIds.has(task.id)}
-                  isCollapsed={collapsedTaskIds.includes(task.id)}
-                  canUpdate={
-                    canUpdate &&
-                    !planning.pendingDraft &&
-                    !["pending", "unknown"].includes(
-                      planning.rows[task.id]?.status ?? "",
-                    )
-                  }
-                  planning={planning}
-                  canEditPlanning={canUpdate}
-                  onToggleCollapse={() =>
-                    setCollapsedTaskIds((current) =>
-                      current.includes(task.id)
-                        ? current.filter((taskId) => taskId !== task.id)
-                        : [...current, task.id],
-                    )
-                  }
-                  onScheduleUpdate={(values) => planning.edit(task, values)}
-                  onDragActive={(active) => setDragRange(active ? range : null)}
-                  onOpenDetail={openTaskDetail}
-                  onDropUnscheduledTask={(task, dropDate) =>
-                    dropUnscheduledTask(task, dropDate)
-                  }
-                  onDropDateHover={setHighlightedDropDate}
-                  onDropDateClear={() => setHighlightedDropDate(null)}
-                />
+              {groups.map((group) => (
+                <Fragment key={group.key}>
+                  <div
+                    className="grid border-b bg-muted/40"
+                    style={ganttGridStyle}
+                  >
+                    <h3 className="sticky left-0 z-10 min-w-0 break-words border-r bg-muted px-3 py-2 text-sm font-medium">
+                      {group.label}
+                    </h3>
+                  </div>
+                  {group.tasks.map((task) => (
+                    <GanttTaskRow
+                      key={task.id}
+                      task={task}
+                      range={range}
+                      milestones={visibleMilestones}
+                      gridStyle={ganttGridStyle}
+                      assigneeLabel={getTaskUserLabel(task.assignee_id)}
+                      highlightedDropDate={highlightedDropDate}
+                      unscheduledTasks={unscheduledTasks}
+                      hasChildren={parentTaskIds.has(task.id)}
+                      isCollapsed={collapsedTaskIds.includes(task.id)}
+                      canUpdate={
+                        canUpdate &&
+                        !planning.pendingDraft &&
+                        !["pending", "unknown"].includes(
+                          planning.rows[task.id]?.status ?? "",
+                        )
+                      }
+                      planning={planning}
+                      canEditPlanning={canUpdate}
+                      onToggleCollapse={() =>
+                        setCollapsedTaskIds((current) =>
+                          current.includes(task.id)
+                            ? current.filter((taskId) => taskId !== task.id)
+                            : [...current, task.id],
+                        )
+                      }
+                      onScheduleUpdate={(values) => planning.edit(task, values)}
+                      onDragActive={(active) =>
+                        setDragRange(active ? range : null)
+                      }
+                      onOpenDetail={openTaskDetail}
+                      onDropUnscheduledTask={(task, dropDate) =>
+                        dropUnscheduledTask(task, dropDate)
+                      }
+                      onDropDateHover={setHighlightedDropDate}
+                      onDropDateClear={() => setHighlightedDropDate(null)}
+                    />
+                  ))}
+                </Fragment>
               ))}
               {visibleMilestones.length ? (
                 <div className="grid bg-muted/20" style={ganttGridStyle}>
@@ -553,7 +588,9 @@ function GanttTaskRow({
                 size="sm"
                 variant="outline"
                 className="@min-[96rem]:hidden"
-                onClick={() => planning.openEditor(task)}
+                onClick={(event) =>
+                  planning.openEditor(task, event.currentTarget)
+                }
               >
                 計画を編集
               </Button>

@@ -1,6 +1,7 @@
 import type { CurrentProjectRoleRead } from "@/lib/api/generated/model";
 import {
   BookOpenCheckIcon,
+  CalendarRangeIcon,
   ClipboardListIcon,
   FileCheck2Icon,
   FileStackIcon,
@@ -57,6 +58,14 @@ export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
     group: "誰が・いつ進めるか",
     purpose: "作業・担当・日程を確認する",
     href: (projectId) => `/projects/joined/${projectId}/tasks`,
+    canShow: canViewProjectFeature,
+  },
+  {
+    label: "計画",
+    icon: CalendarRangeIcon,
+    group: "誰が・いつ進めるか",
+    purpose: "工程・担当・日程・見積を決める",
+    href: (projectId) => `/projects/joined/${projectId}/planning`,
     canShow: canViewProjectFeature,
   },
   {

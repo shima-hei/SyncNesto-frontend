@@ -43,12 +43,18 @@ const phaseValues = (phase: PhaseRead | null): PhaseValues => ({
   archived: String(Boolean(phase?.archived_at)),
 });
 
-export function TaskPhaseDialog({ projectId }: { projectId: number }) {
+export function TaskPhaseDialog({
+  projectId,
+  label = "工程・工数",
+}: {
+  projectId: number;
+  label?: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button type="button" variant="outline" onClick={() => setOpen(true)}>
-        工程・工数
+        {label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="min-w-0 max-h-[90vh] overflow-y-auto sm:max-w-4xl">
@@ -247,16 +253,20 @@ function PhaseOverview({ projectId }: { projectId: number }) {
   );
 }
 
-function PhaseEditor({
+export function PhaseEditor({
   projectId,
   phase,
   action,
   onClose,
+  onCreated,
+  onCloseAutoFocus,
 }: {
   projectId: number;
   phase: PhaseRead | null;
   action: "edit" | "archive" | "restore";
   onClose: () => void;
+  onCreated?: (phase: PhaseRead) => void;
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const [values, setValues] = useState<PhaseValues>(() => ({
     ...phaseValues(phase),
@@ -273,6 +283,7 @@ function PhaseEditor({
     setPending(true);
     setError(null);
     try {
+      let created: PhaseRead | undefined;
       if (baseline) {
         const original = phaseValues(baseline);
         const data: PhaseUpdate = { version: baseline.version };
@@ -287,11 +298,12 @@ function PhaseEditor({
           data,
         );
       } else
-        await createPhaseProjectsProjectIdPhasesPost(projectId, {
+        created = await createPhaseProjectsProjectIdPhasesPost(projectId, {
           name: next.name.trim(),
           sort_order: Number(next.sortOrder),
         });
       await invalidateTaskProjectSurfaces(client, projectId);
+      if (created) onCreated?.(created);
       onClose();
     } catch (error) {
       setError(error as Error);
@@ -306,7 +318,7 @@ function PhaseEditor({
   return (
     <>
       <Dialog open onOpenChange={(open) => !open && !pending && onClose()}>
-        <DialogContent>
+        <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
           <DialogHeader>
             <DialogTitle>
               {action === "archive"

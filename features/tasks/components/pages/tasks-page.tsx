@@ -5,7 +5,8 @@ import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 
 import { useRef, useState } from "react";
 import { PlusIcon } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { LoadingState } from "@/components/shared/feedback/loading-state";
@@ -29,21 +30,16 @@ import {
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { useUrlTabState } from "@/hooks/use-url-tab-state";
-import type { MilestoneRead } from "@/lib/api/generated/model";
 
 import {
   ALL_OVERDUE,
   ALL_PRIORITIES,
   ALL_TYPES,
-  GANTT_DISPLAY_OPTIONS,
-  GanttControls,
   SORT_OPTIONS,
   TaskBoardToolbar,
   TaskFilters,
 } from "./parts/task-page-controls";
 import { useCreateTask } from "../../hooks/use-create-task";
-import { useGantt } from "../../hooks/use-gantt";
-import { useMilestones } from "../../hooks/use-milestones";
 import { useTasks } from "../../hooks/use-tasks";
 import { useTaskListScope } from "../../hooks/use-task-list-scope";
 import { useTaskStatusFilter } from "../../hooks/use-task-status-filter";
@@ -57,6 +53,7 @@ import {
   clearTaskListFilter,
   type TaskListScope,
 } from "../../lib/task-list-scope";
+import { getPlanningHref } from "../../lib/planning-route";
 import { defaultTaskFormValues } from "../../lib/task-mappers";
 import { BOARD_TASK_LIMIT, getBoardTaskScope } from "../../lib/task-view-scope";
 import {
@@ -66,14 +63,10 @@ import {
 import { TaskForm } from "../forms/task-form";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
-import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import {
   type BoardSwimlane,
   TasksBoardSection,
 } from "../sections/tasks-board-section";
-import { TasksGanttSection } from "../sections/tasks-gantt-section";
-import { useTaskPlanning } from "../../hooks/use-task-planning";
-import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
 import { TaskListWorkbench } from "../sections/task-list-workbench";
 import { TaskFilterSelect } from "./controls/task-filter-select";
 import { TaskPhaseDialog } from "../sections/task-phase-dialog";
@@ -83,7 +76,7 @@ import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useRequirement } from "@/features/requirements/hooks/use-requirement";
 
 const PAGE_SIZE = 20;
-const TASK_TABS = ["list", "board", "gantt"] as const;
+const TASK_TABS = ["list", "board"] as const;
 
 type TasksPageProps = {
   projectId: number;
@@ -91,12 +84,13 @@ type TasksPageProps = {
 
 export function TasksPage({ projectId }: TasksPageProps) {
   const { user } = useAuth();
-  const planning = useTaskPlanning(projectId);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useUrlTabState({
     values: TASK_TABS,
     defaultValue: "list",
   });
+  const planningHref = getPlanningHref(projectId, searchParams);
   const taskTypes = useTaskTypes(projectId);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const listNavigationGuard = useRef<(action: () => void) => void>((action) =>
@@ -130,14 +124,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const [sort, setSort] = useUrlFilterState<
     (typeof SORT_OPTIONS)[number]["value"]
   >("sort", "updated_desc");
-  const [ganttStartDate, setGanttStartDate] = useUrlFilterState(
-    "ganttStartDate",
-    "",
-  );
-  const [ganttEndDate, setGanttEndDate] = useUrlFilterState("ganttEndDate", "");
-  const [ganttDisplayUnit, setGanttDisplayUnit] = useUrlFilterState<
-    (typeof GANTT_DISPLAY_OPTIONS)[number]["value"]
-  >("ganttDisplayUnit", "day");
   const [boardSwimlane, setBoardSwimlane] = useUrlFilterState<BoardSwimlane>(
     "boardSwimlane",
     "none",
@@ -147,17 +133,10 @@ export function TasksPage({ projectId }: TasksPageProps) {
     "collapsed",
   );
   const isBoardCompletedCollapsed = boardCompleted !== "expanded";
-  const [milestoneCreateDialogOpen, setMilestoneCreateDialogOpen] =
-    useState(false);
-  const [milestoneListDialogOpen, setMilestoneListDialogOpen] = useState(false);
-  const [editingMilestone, setEditingMilestone] =
-    useState<MilestoneRead | null>(null);
-  const [deleteMilestoneTarget, setDeleteMilestoneTarget] =
-    useState<MilestoneRead | null>(null);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
-  const taskListScope = useTaskListScope(projectId, activeTab !== "gantt");
+  const taskListScope = useTaskListScope(projectId, true);
   const { usersById } = useTaskUserMap(projectId);
   const selectedRequirementId = Number(requirementId);
   const { requirement: selectedRequirement } = useRequirement(
@@ -201,34 +180,12 @@ export function TasksPage({ projectId }: TasksPageProps) {
     activeTab === "board" &&
       (searchParams.get("assignee") !== "me" || Boolean(user)),
   );
-  const {
-    gantt,
-    isLoading: isGanttLoading,
-    isFetching: isGanttFetching,
-    isPlaceholderData: isGanttPlaceholder,
-    error: ganttError,
-    refetch: refetchGantt,
-  } = useGantt(
-    projectId,
-    {
-      start_date: ganttStartDate || undefined,
-      end_date: ganttEndDate || undefined,
-      assignee_id: assigneeId ? Number(assigneeId) : undefined,
-      requirement_id: requirementId ? Number(requirementId) : undefined,
-    },
-    activeTab === "gantt",
-  );
   const boardScope = getBoardTaskScope(
     tasks,
     total,
     isBoardCompletedCollapsed,
     TASK_STATUS_OPTIONS.map((option) => option.value),
   );
-  const currentGantt = isGanttPlaceholder || ganttError ? null : gantt;
-  const ganttUnscheduled =
-    currentGantt?.tasks.filter((task) => !task.start_date && !task.due_date)
-      .length ?? 0;
-  const { milestones } = useMilestones(projectId);
   const {
     createTask,
     isPending: isCreatePending,
@@ -324,9 +281,21 @@ export function TasksPage({ projectId }: TasksPageProps) {
       <OverviewReturn projectId={projectId} />
       <PageHeader
         title="タスク"
-        description="プロジェクトのタスク、カンバン、ガントチャートを管理します。"
+        description="一覧とボードでタスクの進捗を確認・更新します。"
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link
+                href={planningHref}
+                onNavigate={(event) => {
+                  if (activeTab !== "list") return;
+                  event.preventDefault();
+                  listNavigationGuard.current(() => router.push(planningHref));
+                }}
+              >
+                計画を開く
+              </Link>
+            </Button>
             <TaskPhaseDialog projectId={projectId} />
             {canCreate ? (
               <Button type="button" onClick={() => setCreateDialogOpen(true)}>
@@ -344,7 +313,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
           className="flex flex-col gap-2"
         >
           <p className="text-sm text-muted-foreground">
-            担当者・関連要件は、一覧・ボード・ガントに共通で適用します。
+            担当者・関連要件は一覧とボードで共通です。
           </p>
           <FieldGroup className="grid gap-3 md:grid-cols-2">
             <TaskUserSelectField
@@ -370,7 +339,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </section>
       ) : null}
 
-      <TaskPlanningWorkspace planning={planning} canUpdate={canUpdate} />
       <Tabs
         value={activeTab}
         onValueChange={(value) => {
@@ -385,7 +353,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
         >
           <TabsTrigger value="list">一覧</TabsTrigger>
           <TabsTrigger value="board">ボード</TabsTrigger>
-          <TabsTrigger value="gantt">ガント</TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -401,7 +368,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
             }
             help={
               <p className="text-muted-foreground">
-                キーワードはEnterまたは「検索」で適用し、ほかの条件は選択時に適用します。状態内はOR、異なる条件同士はANDです。担当者・関連要件はボード・ガントにも共通で適用し、その他は一覧・ボードに共通です。すべて解除すると並び順も標準に戻ります。
+                キーワードはEnterまたは「検索」で適用し、ほかの条件は選択時に適用します。状態内はOR、異なる条件同士はANDです。担当者・関連要件は「計画を開く」から計画にも引き継げます。すべて解除すると並び順も標準に戻ります。
               </p>
             }
             basicExtra={
@@ -640,58 +607,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
             </>
           )}
         </TabsContent>
-
-        <TabsContent value="gantt" className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            ガント固有の期間条件：期間に重なるタスクと日程未設定を取得します。一覧・ボードのキーワード・状態・優先度・タグ・期限条件は適用されません。
-          </p>
-          <GanttControls
-            canUpdate={canUpdate}
-            startDate={ganttStartDate}
-            endDate={ganttEndDate}
-            displayUnit={ganttDisplayUnit}
-            gantt={currentGantt}
-            milestones={milestones}
-            onStartDateChange={setGanttStartDate}
-            onEndDateChange={setGanttEndDate}
-            onDisplayUnitChange={(value) =>
-              setGanttDisplayUnit(value as typeof ganttDisplayUnit)
-            }
-            onOpenMilestoneList={() => setMilestoneListDialogOpen(true)}
-            onOpenMilestoneCreate={() => setMilestoneCreateDialogOpen(true)}
-          />
-          <p className="text-sm text-muted-foreground">
-            対象期間：{ganttStartDate || "開始の制限なし"} 〜{" "}
-            {ganttEndDate || "終了の制限なし"}（日程未設定を含む）
-          </p>
-          {ganttError ? (
-            <DataLoadError
-              resourceName="ガント"
-              isRetrying={isGanttFetching}
-              onRetry={() => void refetchGantt()}
-            />
-          ) : (
-            <>
-              {currentGantt ? (
-                <p role="status" className="text-sm text-muted-foreground">
-                  共通条件・期間条件に合う取得{currentGantt.tasks.length}
-                  件（日程あり{currentGantt.tasks.length - ganttUnscheduled}
-                  件・日程未設定{ganttUnscheduled}件）
-                  {isGanttFetching ? " · 更新中" : ""}
-                </p>
-              ) : null}
-              <TasksGanttSection
-                planning={planning}
-                projectId={projectId}
-                gantt={currentGantt}
-                isLoading={isGanttLoading || isGanttPlaceholder}
-                displayUnit={ganttDisplayUnit}
-                canUpdate={canUpdate}
-                onMilestoneSelect={setEditingMilestone}
-              />
-            </>
-          )}
-        </TabsContent>
       </Tabs>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -713,19 +628,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
           />
         </DialogContent>
       </Dialog>
-      <MilestoneDialogs
-        projectId={projectId}
-        canUpdate={canUpdate}
-        milestones={milestones}
-        createOpen={milestoneCreateDialogOpen}
-        listOpen={milestoneListDialogOpen}
-        editingMilestone={editingMilestone}
-        deleteTarget={deleteMilestoneTarget}
-        onCreateOpenChange={setMilestoneCreateDialogOpen}
-        onListOpenChange={setMilestoneListDialogOpen}
-        onEditingMilestoneChange={setEditingMilestone}
-        onDeleteTargetChange={setDeleteMilestoneTarget}
-      />
     </div>
   );
 }

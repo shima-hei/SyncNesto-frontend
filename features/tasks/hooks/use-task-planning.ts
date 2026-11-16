@@ -58,6 +58,11 @@ export function useTaskPlanning(projectId: number) {
   } | null>(null);
   const [checkingId, setCheckingId] = useState<number | null>(null);
   const [editorTask, setEditorTask] = useState<TaskRead | null>(null);
+  const editorTrigger = useRef<HTMLElement | null>(null);
+  const [lastSaved, setLastSaved] = useState<{
+    task: TaskRead;
+    revision: number;
+  } | null>(null);
   const rowsRef = useRef(state.rows);
   const inFlight = useRef(new Set<number>());
   const activeKey = useRef(key);
@@ -65,6 +70,7 @@ export function useTaskPlanning(projectId: number) {
     setState({ key, rows: {}, handled: false });
     setComparison(null);
     setEditorTask(null);
+    setLastSaved(null);
     setStorageError(false);
   }
   const rows = state.key === key ? state.rows : EMPTY_ROWS;
@@ -205,6 +211,10 @@ export function useTaskPlanning(projectId: number) {
       const next = { ...rowsRef.current };
       delete next[saved.id];
       persistRows(next);
+      setLastSaved((previous) => ({
+        task: saved,
+        revision: (previous?.revision ?? 0) + 1,
+      }));
       // 保存成功を、後続の再取得失敗で取り消さない。
       void invalidateTaskProjectSurfaces(queryClient, projectId);
     } catch (error) {
@@ -240,7 +250,18 @@ export function useTaskPlanning(projectId: number) {
     storageError,
     comparison,
     editorTask,
-    openEditor: setEditorTask,
+    lastSaved,
+    openEditor: (task: TaskRead, trigger: HTMLElement) => {
+      editorTrigger.current = trigger;
+      setEditorTask(task);
+    },
+    restoreEditorFocus: () => {
+      const trigger = editorTrigger.current;
+      editorTrigger.current = null;
+      if (!trigger?.isConnected) return false;
+      trigger.focus({ preventScroll: true });
+      return document.activeElement === trigger;
+    },
     closeEditor: () => setEditorTask(null),
     closeComparison: () => setComparison(null),
     resolveComparison: (values: TaskPlanningValues) => {

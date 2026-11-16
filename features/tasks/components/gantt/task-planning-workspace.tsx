@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { DraftRestoreDialog } from "@/components/shared/dialogs/draft-restore-dialog";
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export function TaskPlanningWorkspace({
   planning: TaskPlanningController;
   canUpdate: boolean;
 }) {
+  const focusFallback = useRef<HTMLDivElement>(null);
   const selected = planning.editorTask;
   const { getTaskUserLabel } = useTaskUserMap(planning.projectId);
   const query = useReadTaskTasksTaskIdGet(selected?.id ?? 0, {
@@ -42,6 +44,19 @@ export function TaskPlanningWorkspace({
   const comparison = planning.comparison;
   return (
     <>
+      <div
+        ref={focusFallback}
+        tabIndex={-1}
+        aria-label="計画の保存状況"
+        role="status"
+        className="text-sm empty:sr-only"
+      >
+        {planning.lastSaved ? (
+          <span key={planning.lastSaved.revision}>
+            「{planning.lastSaved.task.title}」の計画を保存しました。
+          </span>
+        ) : null}
+      </div>
       <DraftRestoreDialog
         open={Boolean(planning.pendingDraft)}
         updatedAt={planning.pendingDraft?.updatedAt}
@@ -65,7 +80,7 @@ export function TaskPlanningWorkspace({
             編集中の計画 {Object.keys(planning.rows).length}件
           </h2>
           <p className="text-sm text-muted-foreground">
-            ドラッグも未保存の編集です。各行で保存してください。絞り込み外・未配置の行もここから開けます。
+            ドラッグも未保存の編集です。各行で保存してください。絞り込み外・未日程の行もここから開けます。
           </p>
           <ul className="flex flex-wrap gap-2">
             {Object.values(planning.rows).map((row) => (
@@ -75,7 +90,9 @@ export function TaskPlanningWorkspace({
                   variant="outline"
                   size="sm"
                   className="h-auto max-w-full whitespace-normal text-left"
-                  onClick={() => planning.openEditor(row.baseline)}
+                  onClick={(event) =>
+                    planning.openEditor(row.baseline, event.currentTarget)
+                  }
                 >
                   {row.baseline.title} ·{" "}
                   {row.status === "pending"
@@ -97,7 +114,14 @@ export function TaskPlanningWorkspace({
           if (!open) planning.closeEditor();
         }}
       >
-        <SheetContent className="overflow-y-auto sm:max-w-xl">
+        <SheetContent
+          className="overflow-y-auto sm:max-w-xl"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (!planning.restoreEditorFocus())
+              focusFallback.current?.focus({ preventScroll: true });
+          }}
+        >
           <SheetHeader>
             <SheetTitle>{selectedTask?.title ?? "計画を編集"}</SheetTitle>
             <SheetDescription>
@@ -114,6 +138,12 @@ export function TaskPlanningWorkspace({
               {canUpdate ? (
                 <>
                   <TaskPlanningFields task={selectedTask} planning={planning} />
+                  <p role="status" className="text-sm empty:sr-only">
+                    {planning.lastSaved?.task.id === selectedTask.id &&
+                    !planning.rows[selectedTask.id]
+                      ? "この行の計画を保存しました。"
+                      : null}
+                  </p>
                   <TaskPlanningActions
                     task={selectedTask}
                     planning={planning}

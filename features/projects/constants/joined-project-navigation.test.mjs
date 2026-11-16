@@ -35,14 +35,15 @@ const {
   resolve(root, "features/projects/constants/joined-project-navigation.ts"),
 );
 
-test("既存9入口を保持し、同じ論理分類へ合意・承認を追加する", () => {
+test("既存10入口を保持し、タスクと同じ分類に計画を追加する", () => {
   const paths = items.map((item) => item.href(7));
-  assert.equal(paths.length, 10);
+  assert.equal(paths.length, 11);
   for (const suffix of [
     "",
     "/members",
     "/requirements",
     "/tasks",
+    "/planning",
     "/specifications",
     "/test-designs",
     "/test-cases",
@@ -52,6 +53,12 @@ test("既存9入口を保持し、同じ論理分類へ合意・承認を追加�
   ])
     assert.ok(paths.includes(`/projects/joined/7${suffix}`));
   assert.equal(groups.length, 7);
+  assert.deepEqual(
+    items
+      .filter((item) => item.group === "誰が・いつ進めるか")
+      .map((item) => item.label),
+    ["タスク", "計画"],
+  );
   assert.equal(
     items.filter((item) => item.group === "どう確かめるか").length,
     2,
@@ -66,7 +73,7 @@ test("既存canShowを維持し、Projectロールなしはsystem_adminでも業
     const visible = items.filter((item) =>
       item.canShow({ role: { key }, is_system_admin: false }),
     );
-    assert.equal(visible.length, key === "viewer" ? 9 : 10);
+    assert.equal(visible.length, key === "viewer" ? 10 : 11);
   }
 });
 

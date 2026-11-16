@@ -49,7 +49,7 @@ export function GanttUnscheduledDropLane({
   return (
     <div className="grid border-b bg-muted/10" style={gridStyle}>
       <div className="sticky left-0 z-10 border-r bg-muted/10 px-3 py-2 text-xs text-muted-foreground">
-        未配置タスクをドロップ
+        未日程タスクをドロップ
       </div>
       <GanttDroppableTimeline
         className={cn("py-3", isDragging && "bg-primary/5")}
