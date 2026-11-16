@@ -145,7 +145,9 @@ export function UserForm({
             </FieldLabel>
             <Input
               id={passwordId}
+              name="new-password"
               type="password"
+              autoComplete="new-password"
               value={values.password}
               placeholder={
                 mode === "update" ? "変更する場合のみ入力" : undefined
