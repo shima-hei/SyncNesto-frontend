@@ -201,3 +201,71 @@ test("explicit display bounds retain dates beyond the last task and clip bars to
   );
   assert.equal(toCalendarDateInput(defaultRange.end), fallback.endDate);
 });
+
+test("day and week calendars expose three months on an empty project or with one date bound", () => {
+  for (const unit of ["day", "week"]) {
+    const fallback = controls.getTodayGanttRange(
+      unit,
+      new Date(2027, 11, 15, 23),
+    );
+    assert.deepEqual(fallback, {
+      startDate: "2027-12-01",
+      endDate: "2028-02-29",
+    });
+    const empty = timeline.getGanttDisplayRange(null, "", "", fallback);
+    assert.equal(timeline.getInclusiveDays(empty), 91);
+    assert.equal(toCalendarDateInput(empty.end), "2028-02-29");
+    const future = timeline.getGanttDisplayRange(
+      null,
+      "2028-06-01",
+      "",
+      fallback,
+    );
+    assert.equal(timeline.getInclusiveDays(future), 91);
+    const next = controls.moveGanttRange(empty, unit, 1);
+    assert.equal(next.startDate, "2028-03-01");
+    assert.equal(next.endDate, "2028-05-30");
+  }
+});
+
+test("only inconsistent finish-to-start dates warn and both rows receive the same violation", async () => {
+  const { getGanttDependencyWarnings } = await import(
+    loadUrl("../features/tasks/lib/gantt-dependency-warnings.ts", {
+      "@/lib/format/date": dateModule,
+    })
+  );
+  const predecessor = { id: 1, task_code: "A", due_date: "2028-02-28" };
+  const successor = { id: 2, task_code: "B", start_date: "2028-02-28" };
+  const edge = {
+    id: 5,
+    predecessor_task_id: 1,
+    successor_task_id: 2,
+    dependency_type: "finish_to_start",
+    lag_days: 0,
+  };
+  const warnings = getGanttDependencyWarnings([predecessor, successor], [edge]);
+  assert.deepEqual([...warnings.keys()], [1, 2]);
+  assert.equal(warnings.get(1)[0], warnings.get(2)[0]);
+  assert.equal(warnings.get(1)[0].earliestStart, "2028-02-29");
+
+  for (const [start_date, lag] of [
+    ["2028-02-29", 0],
+    ["2028-03-02", 2],
+    ["2028-02-28", -1],
+    [null, 0],
+  ]) {
+    assert.equal(
+      getGanttDependencyWarnings(
+        [predecessor, { ...successor, start_date }],
+        [{ ...edge, lag_days: lag }],
+      ).size,
+      0,
+    );
+  }
+  const delayed = getGanttDependencyWarnings(
+    [predecessor, { ...successor, start_date: "2028-03-01" }],
+    [{ ...edge, lag_days: 2 }],
+  );
+  assert.equal(delayed.get(2)[0].earliestStart, "2028-03-02");
+  assert.equal(getGanttDependencyWarnings([successor], [edge]).size, 0);
+});

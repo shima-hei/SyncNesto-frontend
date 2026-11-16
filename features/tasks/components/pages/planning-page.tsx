@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { PlusIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
@@ -96,6 +96,19 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     !ownTasks || Boolean(user),
   );
   const currentGantt = isGanttPlaceholder || ganttError ? null : gantt;
+  const needsDependencyTasks = useMemo(() => {
+    if (!currentGantt) return false;
+    const ids = new Set(currentGantt.tasks.map((task) => task.id));
+    return currentGantt.dependencies.some(
+      (edge) =>
+        ids.has(edge.predecessor_task_id) !== ids.has(edge.successor_task_id),
+    );
+  }, [currentGantt]);
+  const projectGantt = useGantt(
+    projectId,
+    {},
+    activeView === "gantt" && needsDependencyTasks,
+  );
   const needle = search.trim().toLocaleLowerCase();
   const shown =
     currentGantt && needle
@@ -236,6 +249,13 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               planning={planning}
               phases={phases.data ?? []}
               gantt={shown}
+              dependencyTasks={
+                needsDependencyTasks &&
+                !projectGantt.error &&
+                !projectGantt.isPlaceholderData
+                  ? (projectGantt.gantt?.tasks ?? currentGantt?.tasks)
+                  : currentGantt?.tasks
+              }
               isLoading={
                 isGanttLoading || isGanttPlaceholder || (ownTasks && !user)
               }

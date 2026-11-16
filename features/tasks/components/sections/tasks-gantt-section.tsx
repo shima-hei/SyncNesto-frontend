@@ -32,7 +32,11 @@ import {
   GanttPlanningCells,
 } from "../gantt/gantt-planning-cells";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
-import { GanttDependenciesSummary } from "../gantt/gantt-dependencies-summary";
+import { GanttDependencyBadge } from "../gantt/gantt-dependency-badge";
+import {
+  getGanttDependencyWarnings,
+  type GanttDependencyWarning,
+} from "../../lib/gantt-dependency-warnings";
 import {
   DropDateHighlight,
   GanttMilestoneLines,
@@ -72,6 +76,7 @@ import { TaskDetailSheet } from "./task-detail-sheet";
 type TasksGanttSectionProps = {
   projectId: number;
   gantt: GanttResponse | null;
+  dependencyTasks?: TaskRead[];
   phases: PhaseRead[];
   isLoading: boolean;
   displayUnit: GanttDisplayUnit;
@@ -87,6 +92,7 @@ type TasksGanttSectionProps = {
 export function TasksGanttSection({
   projectId,
   gantt,
+  dependencyTasks,
   phases,
   isLoading,
   displayUnit,
@@ -131,6 +137,27 @@ export function TasksGanttSection({
       : task,
   );
   const dependencies = gantt?.dependencies ?? [];
+  const dependencySnapshot = new Map(
+    dependencyTasks?.map((task) => [task.id, task]),
+  );
+  for (const task of gantt?.tasks ?? []) {
+    const previous = dependencySnapshot.get(task.id);
+    if (!previous || previous.version <= task.version)
+      dependencySnapshot.set(task.id, task);
+  }
+  const saved = planning.lastSaved?.task;
+  const savedBaseline = saved && dependencySnapshot.get(saved.id);
+  if (saved && savedBaseline && savedBaseline.version < saved.version)
+    dependencySnapshot.set(saved.id, saved);
+  for (const row of Object.values(planning.rows)) {
+    const task = dependencySnapshot.get(row.baseline.id);
+    if (task)
+      dependencySnapshot.set(task.id, overlayPlanningTask(task, row.values));
+  }
+  const dependencyWarnings = getGanttDependencyWarnings(
+    dependencySnapshot.values(),
+    dependencies,
+  );
   const milestones = gantt?.milestones ?? [];
   const visibleTasks = tasks.filter((task) => task.start_date || task.due_date);
   const unscheduledTasks = tasks.filter(
@@ -285,6 +312,7 @@ export function TasksGanttSection({
                     <GanttTaskRow
                       key={task.id}
                       task={task}
+                      warnings={dependencyWarnings.get(task.id) ?? []}
                       range={range}
                       milestones={visibleMilestones}
                       gridStyle={ganttGridStyle}
@@ -361,14 +389,6 @@ export function TasksGanttSection({
           </div>
         </div>
       </div>
-      {dependencies.length ? (
-        <details className="text-sm">
-          <summary className="cursor-pointer text-muted-foreground">
-            依存関係 {dependencies.length}件
-          </summary>
-          <GanttDependenciesSummary tasks={tasks} dependencies={dependencies} />
-        </details>
-      ) : null}
       <TaskDetailSheet
         projectId={projectId}
         taskId={selectedTaskId}
@@ -386,6 +406,7 @@ export function TasksGanttSection({
 
 function GanttTaskRow({
   task,
+  warnings,
   range,
   milestones,
   gridStyle,
@@ -406,6 +427,7 @@ function GanttTaskRow({
   onDropDateClear,
 }: {
   task: TaskRead;
+  warnings: readonly GanttDependencyWarning[];
   range: DateRange;
   milestones: MilestoneRead[];
   gridStyle: GanttGridStyle;
@@ -523,6 +545,7 @@ function GanttTaskRow({
         >
           <GanttRowTitle
             task={task}
+            warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
             onToggleCollapse={onToggleCollapse}
@@ -538,6 +561,7 @@ function GanttTaskRow({
         <div className="flex min-w-0 flex-col gap-1 @min-[50rem]:hidden">
           <GanttRowTitle
             task={task}
+            warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
             onToggleCollapse={onToggleCollapse}
@@ -679,12 +703,14 @@ function GanttTaskRow({
 
 function GanttRowTitle({
   task,
+  warnings,
   hasChildren,
   isCollapsed,
   onToggleCollapse,
   onOpenDetail,
 }: {
   task: TaskRead;
+  warnings: readonly GanttDependencyWarning[];
   hasChildren: boolean;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
@@ -722,6 +748,12 @@ function GanttRowTitle({
         <span className="block truncate text-sm font-medium">{task.title}</span>
         <span className="sr-only"> {task.task_code}</span>
       </button>
+      {warnings.length ? (
+        <GanttDependencyBadge
+          taskLabel={task.task_code || task.title}
+          warnings={warnings}
+        />
+      ) : null}
     </div>
   );
 }

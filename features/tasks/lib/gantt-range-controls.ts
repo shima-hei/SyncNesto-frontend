@@ -17,8 +17,18 @@ export const getCurrentGanttRange = (
   };
 };
 
-export const getTodayGanttRange = (displayUnit: string) => {
-  const today = toCalendarDate(new Date());
+export const getTodayGanttRange = (displayUnit: string, now = new Date()) => {
+  const today = toCalendarDate(now);
+  if (displayUnit === "day" || displayUnit === "week") {
+    const start = new Date(today);
+    start.setUTCDate(1);
+    const end = new Date(start);
+    end.setUTCMonth(start.getUTCMonth() + 3, 0);
+    return {
+      startDate: toCalendarDateInput(start),
+      endDate: toCalendarDateInput(end),
+    };
+  }
   const days = getGanttWindowDays(displayUnit);
   const start = addDays(today, -Math.floor(days / 3));
   const end = addDays(start, days);
@@ -48,7 +58,9 @@ export const moveGanttRange = (
     };
   }
 
-  const days = getGanttWindowDays(displayUnit) * direction;
+  const days =
+    (Math.round((range.end.getTime() - range.start.getTime()) / 86400000) + 1) *
+    direction;
 
   return {
     startDate: toCalendarDateInput(addDays(range.start, days)),
@@ -58,8 +70,6 @@ export const moveGanttRange = (
 
 const getGanttWindowDays = (displayUnit: string) => {
   switch (displayUnit) {
-    case "week":
-      return 28;
     case "month":
       return 120;
     case "quarter":

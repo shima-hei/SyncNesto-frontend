@@ -66,14 +66,21 @@ export const getGanttDisplayRange = (
   };
   const fallbackStart = new Date(fallback.startDate);
   const fallbackEnd = new Date(fallback.endDate);
-  const start =
-    parse(startDate) ??
+  const requestedStart = parse(startDate);
+  const requestedEnd = parse(endDate);
+  const span = fallbackEnd.getTime() - fallbackStart.getTime();
+  let start =
+    requestedStart ??
     (observed && observed.start < fallbackStart
       ? observed.start
       : fallbackStart);
-  const end =
-    parse(endDate) ??
+  let end =
+    requestedEnd ??
     (observed && observed.end > fallbackEnd ? observed.end : fallbackEnd);
+  if (requestedStart && !requestedEnd)
+    end = new Date(Math.max(end.getTime(), start.getTime() + span));
+  if (requestedEnd && !requestedStart)
+    start = new Date(Math.min(start.getTime(), end.getTime() - span));
   return { start, end: end < start ? start : end };
 };
 
