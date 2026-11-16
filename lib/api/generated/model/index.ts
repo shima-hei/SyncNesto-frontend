@@ -157,6 +157,8 @@ export * from "./fixedApprovalRead";
 export * from "./fixedApprovalReadAudience";
 export * from "./fixedApprovalReadScopeManifest";
 export * from "./fixedApprovalScopeInput";
+export * from "./ganttOrderMove";
+export * from "./ganttOrderMovePlacement";
 export * from "./ganttResponse";
 export * from "./getVerificationEvidenceProjectsProjectIdRequirementVerificationPlansPlanIdEvidenceSetsSetIdGetParams";
 export * from "./goalSourceEventPage";

@@ -270,6 +270,9 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               displayStart={ganttStartDate}
               displayEnd={ganttEndDate}
               canUpdate={canUpdate}
+              canReorderPhases={
+                currentProjectRole?.role?.key === "project_admin"
+              }
               unscheduledPanelOpen={unscheduledOpen}
               onCloseUnscheduled={() => {
                 setUnscheduledOpen(false);

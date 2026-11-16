@@ -21,8 +21,27 @@ async function load(name) {
   );
 }
 
-const { groupPlanningTasks } = await load("planning-phases");
+const { getGanttTaskTree, groupPlanningTasks } = await load("planning-phases");
 const { getPlanningHref } = await load("planning-route");
+
+test("ガントの順序で親タスクと配下の行をまとめる", () => {
+  const tasks = [
+    { id: 5, parent_task_id: 2 },
+    { id: 2 },
+    { id: 1 },
+    { id: 4, parent_task_id: 2 },
+    { id: 3, parent_task_id: 99 },
+  ];
+  const tree = getGanttTaskTree(tasks);
+  assert.deepEqual(
+    tree.map(({ task }) => task.id),
+    [2, 1, 3],
+  );
+  assert.deepEqual(
+    tree[0].children.map(({ task }) => task.id),
+    [5, 4],
+  );
+});
 
 test("ガントの旧入口から計画に期間・担当・要件・概要の戻り先を引き継ぐ", () => {
   const query = new URLSearchParams({

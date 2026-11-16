@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,10 @@ import {
   groupPlanningTasks,
   getPlanningPhaseKey,
   getPlanningPhaseLabels,
+  getGanttTaskTree,
+  type GanttTaskNode,
 } from "../../lib/planning-phases";
+import { useGanttOrder } from "../../hooks/use-gantt-order";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import {
   getTaskPlanningValues,
@@ -29,9 +32,15 @@ import {
 import { getTodayGanttRange } from "../../lib/gantt-range-controls";
 import {
   GANTT_COLUMNS,
+  GanttAssigneeCell,
   GanttPlanningCells,
 } from "../gantt/gantt-planning-cells";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
+import {
+  GANTT_ORDER_ROW,
+  GanttOrderHandle,
+  type GanttOrderControl,
+} from "../gantt/gantt-order-handle";
 import { GanttDependencyBadge } from "../gantt/gantt-dependency-badge";
 import {
   getGanttDependencyWarnings,
@@ -83,6 +92,7 @@ type TasksGanttSectionProps = {
   displayStart: string;
   displayEnd: string;
   canUpdate: boolean;
+  canReorderPhases: boolean;
   planning: TaskPlanningController;
   unscheduledPanelOpen: boolean;
   onCloseUnscheduled: () => void;
@@ -99,6 +109,7 @@ export function TasksGanttSection({
   displayStart,
   displayEnd,
   canUpdate,
+  canReorderPhases,
   planning,
   unscheduledPanelOpen,
   onCloseUnscheduled,
@@ -121,7 +132,8 @@ export function TasksGanttSection({
     null,
   );
   const [dragRange, setDragRange] = useState<DateRange | null>(null);
-  const { getTaskUserLabel } = useTaskUserMap(projectId);
+  const { usersById, getTaskUserLabel } = useTaskUserMap(projectId);
+  const order = useGanttOrder(projectId);
 
   if (isLoading) {
     return (
@@ -180,11 +192,44 @@ export function TasksGanttSection({
       .map((task) => task.parent_task_id)
       .filter((taskId): taskId is number => Boolean(taskId)),
   );
-  const displayedTasks = visibleTasks.filter(
-    (task) =>
-      !task.parent_task_id || !collapsedTaskIds.includes(task.parent_task_id),
-  );
+  const visibleById = new Map(visibleTasks.map((task) => [task.id, task]));
+  const collapsed = new Set(collapsedTaskIds);
+  const displayedTasks = visibleTasks.filter((task) => {
+    let parentId = task.parent_task_id;
+    while (parentId) {
+      if (collapsed.has(parentId)) return false;
+      parentId = visibleById.get(parentId)?.parent_task_id;
+    }
+    return true;
+  });
   const groups = groupPlanningTasks(displayedTasks, phases);
+  const phaseIdsByKey = new Map(
+    phases.map((phase) => [`phase:${phase.id}`, phase.id]),
+  );
+  const displayedPhaseIds = groups.flatMap((group) => {
+    const id = phaseIdsByKey.get(group.key);
+    return id === undefined ? [] : [id];
+  });
+  const getOrderControl = (
+    kind: "phase" | "task",
+    group: string,
+    id: number,
+    label: string,
+    ids: number[],
+  ): GanttOrderControl | undefined => {
+    if (ids.length < 2) return;
+    const index = ids.indexOf(id);
+    return {
+      id,
+      group,
+      label,
+      previous: ids[index - 1],
+      next: ids[index + 1],
+      disabled: order.isPending || Boolean(dragRange),
+      save: (move, name, trigger) =>
+        order.mutate({ kind, move, label: name, trigger }),
+    };
+  };
   const phaseLabels = getPlanningPhaseLabels(phases);
   const timelineWidth = getTimelineWidth(range, displayUnit);
   const ganttGridStyle = {
@@ -203,6 +248,83 @@ export function TasksGanttSection({
   const clearUnscheduledDragState = () => {
     setDraggingUnscheduledTaskId(null);
     setHighlightedDropDate(null);
+  };
+
+  const renderTaskRows = (nodes: GanttTaskNode[], phaseKey: string) => {
+    const siblingsByParent = new Map<number | null, number[]>();
+    for (const { task } of nodes) {
+      const parentId = task.parent_task_id ?? null;
+      const siblings = siblingsByParent.get(parentId) ?? [];
+      siblings.push(task.id);
+      siblingsByParent.set(parentId, siblings);
+    }
+    return nodes.map(({ task, children }) => {
+      const parentId = task.parent_task_id ?? null;
+      const orderControl = canUpdate
+        ? getOrderControl(
+            "task",
+            `task:${phaseKey}:${parentId ?? "root"}`,
+            task.id,
+            task.title,
+            siblingsByParent.get(parentId) ?? [],
+          )
+        : undefined;
+      return (
+        <div
+          key={task.id}
+          data-gantt-order-group={orderControl?.group}
+          data-gantt-order-id={orderControl?.id}
+          className={cn("divide-y", GANTT_ORDER_ROW)}
+        >
+          <GanttTaskRow
+            task={task}
+            warnings={dependencyWarnings.get(task.id) ?? []}
+            range={range}
+            milestones={visibleMilestones}
+            gridStyle={ganttGridStyle}
+            assigneeLabel={
+              task.assignee_id ? getTaskUserLabel(task.assignee_id) : "未割当"
+            }
+            assigneeAvatarUrl={
+              task.assignee_id
+                ? usersById.get(task.assignee_id)?.avatar_url
+                : undefined
+            }
+            orderControl={orderControl}
+            highlightedDropDate={highlightedDropDate}
+            unscheduledTasks={unscheduledTasks}
+            hasChildren={parentTaskIds.has(task.id)}
+            isCollapsed={collapsedTaskIds.includes(task.id)}
+            canUpdate={
+              canUpdate &&
+              !planning.pendingDraft &&
+              !["pending", "unknown", "conflict"].includes(
+                planning.rows[task.id]?.status ?? "",
+              )
+            }
+            planning={planning}
+            canEditPlanning={canUpdate}
+            onToggleCollapse={() =>
+              setCollapsedTaskIds((current) =>
+                current.includes(task.id)
+                  ? current.filter((taskId) => taskId !== task.id)
+                  : [...current, task.id],
+              )
+            }
+            onScheduleUpdate={(values) => planning.edit(task, values)}
+            onDragActive={(active) => setDragRange(active ? range : null)}
+            onOpenDetail={openTaskDetail}
+            onDropUnscheduledTask={(task, dropDate) =>
+              dropUnscheduledTask(task, dropDate)
+            }
+            onDropDateHover={setHighlightedDropDate}
+            onDropDateClear={() => setHighlightedDropDate(null)}
+          />
+          {!collapsedTaskIds.includes(task.id) &&
+            renderTaskRows(children, phaseKey)}
+        </div>
+      );
+    });
   };
 
   return (
@@ -229,9 +351,10 @@ export function TasksGanttSection({
       />
       <div
         role="region"
+        data-gantt-scroll=""
         aria-label="ガントの日程表"
         tabIndex={0}
-        className="max-h-[min(68dvh,52rem)] overflow-auto rounded-lg border [--gantt-task-width:min(17rem,65cqi)] @min-[50rem]:[--gantt-task-width:min(39rem,56cqi)] focus-visible:outline-2 focus-visible:outline-ring"
+        className="max-h-[min(68dvh,52rem)] overflow-auto rounded-lg border data-[gantt-reordering]:cursor-grabbing [--gantt-task-width:min(17rem,65cqi)] @min-[50rem]:[--gantt-task-width:min(39rem,56cqi)] focus-visible:outline-2 focus-visible:outline-ring"
       >
         <div
           style={{
@@ -278,79 +401,60 @@ export function TasksGanttSection({
             />
           ) : null}
           <div className="divide-y">
-            {groups.map((group) => (
-              <Fragment key={group.key}>
+            {groups.map((group) => {
+              const phaseId = phaseIdsByKey.get(group.key);
+              const orderControl =
+                canReorderPhases && phaseId !== undefined
+                  ? getOrderControl(
+                      "phase",
+                      "phases",
+                      phaseId,
+                      group.label,
+                      displayedPhaseIds,
+                    )
+                  : undefined;
+              return (
                 <div
-                  className="grid border-b bg-muted/40"
-                  style={ganttGridStyle}
+                  key={group.key}
+                  data-gantt-order-group={orderControl?.group}
+                  data-gantt-order-id={orderControl?.id}
+                  className={cn("divide-y", GANTT_ORDER_ROW)}
                 >
-                  <h3 className="sticky left-0 z-10 min-w-0 break-words border-r bg-muted px-2 py-1.5 text-sm font-medium">
-                    <button
-                      type="button"
-                      aria-expanded={!collapsedGroups.has(group.key)}
-                      className="flex min-w-0 items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring"
-                      onClick={() =>
-                        setCollapsedGroups((previous) => {
-                          const next = new Set(previous);
-                          if (next.has(group.key)) next.delete(group.key);
-                          else next.add(group.key);
-                          return next;
-                        })
-                      }
-                    >
-                      {collapsedGroups.has(group.key) ? (
-                        <ChevronRightIcon className="size-4" />
-                      ) : (
-                        <ChevronDownIcon className="size-4" />
-                      )}
-                      {group.label}
-                    </button>
-                  </h3>
+                  <div
+                    className="grid border-b bg-muted/40"
+                    style={ganttGridStyle}
+                  >
+                    <div className="sticky left-0 z-10 flex min-w-0 items-center gap-0.5 border-r bg-muted px-2 py-1.5">
+                      {orderControl && <GanttOrderHandle {...orderControl} />}
+                      <h3 className="min-w-0 break-words text-sm font-medium">
+                        <button
+                          type="button"
+                          aria-expanded={!collapsedGroups.has(group.key)}
+                          className="flex min-w-0 items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring"
+                          onClick={() =>
+                            setCollapsedGroups((previous) => {
+                              const next = new Set(previous);
+                              if (next.has(group.key)) next.delete(group.key);
+                              else next.add(group.key);
+                              return next;
+                            })
+                          }
+                        >
+                          {collapsedGroups.has(group.key) ? (
+                            <ChevronRightIcon className="size-4" />
+                          ) : (
+                            <ChevronDownIcon className="size-4" />
+                          )}
+                          {group.label}
+                        </button>
+                      </h3>
+                    </div>
+                  </div>
+                  {!collapsedGroups.has(group.key) &&
+                    renderTaskRows(getGanttTaskTree(group.tasks), group.key)}
                 </div>
-                {!collapsedGroups.has(group.key) &&
-                  group.tasks.map((task) => (
-                    <GanttTaskRow
-                      key={task.id}
-                      task={task}
-                      warnings={dependencyWarnings.get(task.id) ?? []}
-                      range={range}
-                      milestones={visibleMilestones}
-                      gridStyle={ganttGridStyle}
-                      assigneeLabel={getTaskUserLabel(task.assignee_id)}
-                      highlightedDropDate={highlightedDropDate}
-                      unscheduledTasks={unscheduledTasks}
-                      hasChildren={parentTaskIds.has(task.id)}
-                      isCollapsed={collapsedTaskIds.includes(task.id)}
-                      canUpdate={
-                        canUpdate &&
-                        !planning.pendingDraft &&
-                        !["pending", "unknown", "conflict"].includes(
-                          planning.rows[task.id]?.status ?? "",
-                        )
-                      }
-                      planning={planning}
-                      canEditPlanning={canUpdate}
-                      onToggleCollapse={() =>
-                        setCollapsedTaskIds((current) =>
-                          current.includes(task.id)
-                            ? current.filter((taskId) => taskId !== task.id)
-                            : [...current, task.id],
-                        )
-                      }
-                      onScheduleUpdate={(values) => planning.edit(task, values)}
-                      onDragActive={(active) =>
-                        setDragRange(active ? range : null)
-                      }
-                      onOpenDetail={openTaskDetail}
-                      onDropUnscheduledTask={(task, dropDate) =>
-                        dropUnscheduledTask(task, dropDate)
-                      }
-                      onDropDateHover={setHighlightedDropDate}
-                      onDropDateClear={() => setHighlightedDropDate(null)}
-                    />
-                  ))}
-              </Fragment>
-            ))}
+              );
+            })}
             {visibleMilestones.length ? (
               <div className="grid bg-muted/20" style={ganttGridStyle}>
                 <div className="sticky left-0 z-10 border-r bg-muted/20 px-3 py-2 text-sm font-medium">
@@ -411,6 +515,8 @@ function GanttTaskRow({
   milestones,
   gridStyle,
   assigneeLabel,
+  assigneeAvatarUrl,
+  orderControl,
   highlightedDropDate,
   unscheduledTasks,
   hasChildren,
@@ -432,6 +538,8 @@ function GanttTaskRow({
   milestones: MilestoneRead[];
   gridStyle: GanttGridStyle;
   assigneeLabel: string;
+  assigneeAvatarUrl?: string | null;
+  orderControl?: GanttOrderControl;
   highlightedDropDate: string | null;
   unscheduledTasks: TaskRead[];
   hasChildren: boolean;
@@ -545,6 +653,7 @@ function GanttTaskRow({
         >
           <GanttRowTitle
             task={task}
+            orderControl={orderControl}
             warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
@@ -555,12 +664,20 @@ function GanttTaskRow({
             task={task}
             planning={planning}
             editable={canUpdate}
-            assigneeLabel={assigneeLabel}
-          />
+          >
+            <GanttAssigneeCell
+              task={task}
+              planning={planning}
+              editable={canUpdate}
+              name={assigneeLabel}
+              avatarUrl={assigneeAvatarUrl}
+            />
+          </GanttPlanningCells>
         </div>
         <div className="flex min-w-0 flex-col gap-1 @min-[50rem]:hidden">
           <GanttRowTitle
             task={task}
+            orderControl={orderControl}
             warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
@@ -568,7 +685,13 @@ function GanttTaskRow({
             onOpenDetail={onOpenDetail}
           />
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <span>{assigneeLabel}</span>
+            <GanttAssigneeCell
+              task={task}
+              planning={planning}
+              editable={canUpdate}
+              name={assigneeLabel}
+              avatarUrl={assigneeAvatarUrl}
+            />
             <span>
               {getTaskStatusLabel(task.status)} {task.progress_percent}%
             </span>
@@ -703,6 +826,7 @@ function GanttTaskRow({
 
 function GanttRowTitle({
   task,
+  orderControl,
   warnings,
   hasChildren,
   isCollapsed,
@@ -710,6 +834,7 @@ function GanttRowTitle({
   onOpenDetail,
 }: {
   task: TaskRead;
+  orderControl?: GanttOrderControl;
   warnings: readonly GanttDependencyWarning[];
   hasChildren: boolean;
   isCollapsed: boolean;
@@ -718,6 +843,7 @@ function GanttRowTitle({
 }) {
   return (
     <div className="flex min-w-0 items-center gap-0.5">
+      {orderControl && <GanttOrderHandle {...orderControl} />}
       {hasChildren ? (
         <Button
           type="button"

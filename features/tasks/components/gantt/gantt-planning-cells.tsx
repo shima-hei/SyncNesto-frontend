@@ -1,13 +1,20 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { UserRoundIcon } from "lucide-react";
 
+import { UserAvatar } from "@/components/shared/display/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { TaskRead } from "@/lib/api/generated/model";
 
 import { getTaskStatusLabel } from "../../constants/task-options";
@@ -23,7 +30,7 @@ import {
 } from "./task-planning-editor";
 
 export const GANTT_COLUMNS =
-  "grid-cols-[minmax(0,1.6fr)_minmax(0,.8fr)_minmax(0,1fr)_minmax(0,1fr)]";
+  "grid-cols-[minmax(0,2fr)_3.25rem_minmax(0,1fr)_minmax(0,1fr)]";
 
 type Changes = Partial<TaskPlanningValues>;
 
@@ -31,12 +38,12 @@ export function GanttPlanningCells({
   task,
   planning,
   editable,
-  assigneeLabel,
+  children,
 }: {
   task: TaskRead;
   planning: TaskPlanningController;
   editable: boolean;
-  assigneeLabel: string;
+  children: ReactNode;
 }) {
   const row = planning.rows[task.id];
   const values = row?.values ?? getTaskPlanningValues(task);
@@ -48,16 +55,7 @@ export function GanttPlanningCells({
   const common = { task, values, editable, commit };
   return (
     <>
-      <PlanningCell {...common} label="担当者" value={assigneeLabel} immediate>
-        {(current, change) => (
-          <TaskUserSelectField
-            projectId={task.project_id}
-            label="担当者"
-            value={current.assigneeId}
-            onChange={(assigneeId) => change({ assigneeId })}
-          />
-        )}
-      </PlanningCell>
+      {children}
       <PlanningCell {...common} label="進捗" value={progress}>
         {(current, change) => (
           <TaskProgressFields
@@ -76,6 +74,49 @@ export function GanttPlanningCells({
   );
 }
 
+export function GanttAssigneeCell({
+  task,
+  planning,
+  editable,
+  name,
+  avatarUrl,
+}: {
+  task: TaskRead;
+  planning: TaskPlanningController;
+  editable: boolean;
+  name: string;
+  avatarUrl?: string | null;
+}) {
+  const values = planning.rows[task.id]?.values ?? getTaskPlanningValues(task);
+  return (
+    <PlanningCell
+      task={task}
+      values={values}
+      editable={editable}
+      commit={(changes) => void planning.commit(task, changes)}
+      label="担当者"
+      value={name}
+      immediate
+      icon={
+        values.assigneeId ? (
+          <UserAvatar name={name} src={avatarUrl} size="sm" />
+        ) : (
+          <UserRoundIcon className="size-4 text-muted-foreground" />
+        )
+      }
+    >
+      {(current, change) => (
+        <TaskUserSelectField
+          projectId={task.project_id}
+          label="担当者"
+          value={current.assigneeId}
+          onChange={(assigneeId) => change({ assigneeId })}
+        />
+      )}
+    </PlanningCell>
+  );
+}
+
 function PlanningCell({
   task,
   label,
@@ -84,6 +125,7 @@ function PlanningCell({
   editable,
   children,
   immediate = false,
+  icon,
   commit,
 }: {
   task: TaskRead;
@@ -92,6 +134,7 @@ function PlanningCell({
   values: TaskPlanningValues;
   editable: boolean;
   immediate?: boolean;
+  icon?: ReactNode;
   commit: (changes: Changes) => void;
   children: (
     values: TaskPlanningValues,
@@ -106,6 +149,28 @@ function PlanningCell({
     setChanges({});
     commit(next);
   };
+  const trigger = (
+    <PopoverTrigger asChild>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className={
+          icon
+            ? "size-8 rounded-sm p-0"
+            : "h-8 w-full min-w-0 justify-start rounded-sm px-1.5 text-xs tabular-nums"
+        }
+        aria-label={ariaLabel}
+        title={icon ? undefined : value}
+      >
+        {icon ? (
+          <span aria-hidden>{icon}</span>
+        ) : (
+          <span className="truncate">{value}</span>
+        )}
+      </Button>
+    </PopoverTrigger>
+  );
   return editable ? (
     <Popover
       open={open}
@@ -114,18 +179,14 @@ function PlanningCell({
         if (!next) setChanges({});
       }}
     >
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-full min-w-0 justify-start rounded-sm px-1.5 text-xs tabular-nums"
-          aria-label={ariaLabel}
-          title={value}
-        >
-          <span className="truncate">{value}</span>
-        </Button>
-      </PopoverTrigger>
+      {icon ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+          <TooltipContent>{value}</TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
       <PopoverContent
         className="w-64 space-y-2"
         align="start"
@@ -147,6 +208,14 @@ function PlanningCell({
         )}
       </PopoverContent>
     </Popover>
+  ) : icon ? (
+    <span
+      className="inline-flex size-8 items-center justify-center"
+      title={value}
+    >
+      <span aria-hidden>{icon}</span>
+      <span className="sr-only">{ariaLabel}</span>
+    </span>
   ) : (
     <span
       className="min-w-0 truncate px-1.5 text-xs tabular-nums"

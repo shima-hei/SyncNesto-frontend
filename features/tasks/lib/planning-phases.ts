@@ -1,5 +1,20 @@
 import type { PhaseRead, TaskRead } from "@/lib/api/generated/model";
 
+export type GanttTaskNode = { task: TaskRead; children: GanttTaskNode[] };
+
+export function getGanttTaskTree(tasks: TaskRead[]): GanttTaskNode[] {
+  const nodes = new Map(
+    tasks.map((task) => [task.id, { task, children: [] as GanttTaskNode[] }]),
+  );
+  const roots: GanttTaskNode[] = [];
+  for (const node of nodes.values()) {
+    const parent = nodes.get(node.task.parent_task_id ?? -1);
+    if (parent) parent.children.push(node);
+    else roots.push(node);
+  }
+  return roots;
+}
+
 export function getPlanningPhaseKey(task: TaskRead) {
   if (task.phase_scope === "phase" && task.phase_id)
     return `phase:${task.phase_id}`;
