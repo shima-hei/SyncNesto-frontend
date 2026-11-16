@@ -25,6 +25,7 @@ export function GanttControls({
   canUpdate,
   startDate,
   endDate,
+  customRange,
   displayUnit,
   search,
   gantt,
@@ -40,13 +41,17 @@ export function GanttControls({
   canUpdate: boolean;
   startDate: string;
   endDate: string;
+  customRange: boolean;
   displayUnit: string;
   search: string;
   gantt: GanttResponse | null;
   milestones: MilestoneRead[];
   filterFields: ReactNode;
   actions: ReactNode;
-  onRangeChange: (range: { startDate: string; endDate: string }) => void;
+  onRangeChange: (
+    range: { startDate: string; endDate: string },
+    customRange?: boolean,
+  ) => void;
   onDisplayUnitChange: (value: string) => void;
   onSearchChange: (value: string) => void;
   onOpenMilestoneList: () => void;
@@ -55,7 +60,7 @@ export function GanttControls({
   const [filterOpen, setFilterOpen] = useState(false);
   const move = (direction: -1 | 1) => {
     const range = getCurrentGanttRange(startDate, endDate, displayUnit);
-    onRangeChange(moveGanttRange(range, displayUnit, direction));
+    onRangeChange(moveGanttRange(range, displayUnit, direction), customRange);
   };
 
   return (
@@ -146,7 +151,10 @@ export function GanttControls({
                 type="date"
                 value={startDate}
                 onChange={(event) =>
-                  onRangeChange({ startDate: event.target.value, endDate })
+                  onRangeChange(
+                    { startDate: event.target.value, endDate },
+                    true,
+                  )
                 }
               />
             </div>
@@ -157,7 +165,10 @@ export function GanttControls({
                 type="date"
                 value={endDate}
                 onChange={(event) =>
-                  onRangeChange({ startDate, endDate: event.target.value })
+                  onRangeChange(
+                    { startDate, endDate: event.target.value },
+                    true,
+                  )
                 }
               />
             </div>

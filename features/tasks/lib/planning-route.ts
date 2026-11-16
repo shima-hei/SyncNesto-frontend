@@ -1,6 +1,7 @@
 const planningSearchKeys = [
   "ganttStartDate",
   "ganttEndDate",
+  "ganttRangeMode",
   "ganttDisplayUnit",
   "assigneeId",
   "requirementId",

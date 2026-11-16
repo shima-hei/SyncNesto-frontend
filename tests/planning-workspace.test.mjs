@@ -29,6 +29,7 @@ test("ガントの旧入口から計画に期間・担当・要件・概要の�
     tab: "gantt",
     ganttStartDate: "2026-11-01",
     ganttEndDate: "2026-11-30",
+    ganttRangeMode: "custom",
     ganttDisplayUnit: "week",
     ganttAssigneeId: "8",
     ganttRequirementId: "12",
@@ -41,6 +42,7 @@ test("ガントの旧入口から計画に期間・担当・要件・概要の�
   assert.deepEqual(Object.fromEntries(url.searchParams), {
     ganttStartDate: "2026-11-01",
     ganttEndDate: "2026-11-30",
+    ganttRangeMode: "custom",
     ganttDisplayUnit: "week",
     assigneeId: "8",
     requirementId: "12",

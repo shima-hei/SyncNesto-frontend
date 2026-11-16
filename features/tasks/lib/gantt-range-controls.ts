@@ -1,5 +1,23 @@
 import { toCalendarDate, toCalendarDateInput } from "@/lib/format/date";
 
+export const extendLegacyGanttRange = (
+  startDate: string,
+  endDate: string,
+  displayUnit: string,
+  customRange: boolean,
+) => {
+  if (customRange || (displayUnit !== "day" && displayUnit !== "week"))
+    return endDate;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const duration = (end.getTime() - start.getTime()) / 86400000;
+  // 旧「今日」や期間移動は開始日の21日後または28日後を終了日として保存した。
+  if (duration !== 21 && duration !== 28) return endDate;
+
+  return toCalendarDateInput(getThreeMonthEnd(start));
+};
+
 export const getCurrentGanttRange = (
   startDate: string,
   endDate: string,
@@ -22,11 +40,9 @@ export const getTodayGanttRange = (displayUnit: string, now = new Date()) => {
   if (displayUnit === "day" || displayUnit === "week") {
     const start = new Date(today);
     start.setUTCDate(1);
-    const end = new Date(start);
-    end.setUTCMonth(start.getUTCMonth() + 3, 0);
     return {
       startDate: toCalendarDateInput(start),
-      endDate: toCalendarDateInput(end),
+      endDate: toCalendarDateInput(getThreeMonthEnd(start)),
     };
   }
   const days = getGanttWindowDays(displayUnit);
@@ -66,6 +82,12 @@ export const moveGanttRange = (
     startDate: toCalendarDateInput(addDays(range.start, days)),
     endDate: toCalendarDateInput(addDays(range.end, days)),
   };
+};
+
+const getThreeMonthEnd = (start: Date) => {
+  const end = new Date(start);
+  end.setUTCMonth(start.getUTCMonth() + 3, 0);
+  return end;
 };
 
 const getGanttWindowDays = (displayUnit: string) => {

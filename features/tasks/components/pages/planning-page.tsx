@@ -24,6 +24,7 @@ import { useMilestones } from "../../hooks/use-milestones";
 import { usePlanningPhases } from "../../hooks/use-planning-phases";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useTaskPlanning } from "../../hooks/use-task-planning";
+import { extendLegacyGanttRange } from "../../lib/gantt-range-controls";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
 import { GanttQuickTask } from "../gantt/gantt-quick-task";
@@ -62,13 +63,20 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     "",
   );
   const [ganttStartDate] = useUrlFilterState("ganttStartDate", "");
-  const [ganttEndDate] = useUrlFilterState("ganttEndDate", "");
+  const [requestedEndDate] = useUrlFilterState("ganttEndDate", "");
+  const customGanttRange = searchParams.get("ganttRangeMode") === "custom";
   const [unit, setGanttDisplayUnit] = useUrlFilterState(
     "ganttDisplayUnit",
     "week",
   );
   const ganttDisplayUnit =
     GANTT_DISPLAY_OPTIONS.find(({ value }) => value === unit)?.value ?? "week";
+  const ganttEndDate = extendLegacyGanttRange(
+    ganttStartDate,
+    requestedEndDate,
+    ganttDisplayUnit,
+    customGanttRange,
+  );
   const [milestoneCreateDialogOpen, setMilestoneCreateDialogOpen] =
     useState(false);
   const [milestoneListDialogOpen, setMilestoneListDialogOpen] = useState(false);
@@ -129,17 +137,15 @@ export function PlanningPage({ projectId }: { projectId: number }) {
         : !task.start_date && !task.due_date;
     }).length ?? 0;
 
-  const setRange = ({
-    startDate,
-    endDate,
-  }: {
-    startDate: string;
-    endDate: string;
-  }) => {
+  const setRange = (
+    { startDate, endDate }: { startDate: string; endDate: string },
+    customRange = false,
+  ) => {
     const url = new URL(window.location.href);
     for (const [key, value] of [
       ["ganttStartDate", startDate],
       ["ganttEndDate", endDate],
+      ["ganttRangeMode", customRange && (startDate || endDate) ? "custom" : ""],
     ]) {
       if (value) url.searchParams.set(key, value);
       else url.searchParams.delete(key);
@@ -177,6 +183,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
             canUpdate={canUpdate}
             startDate={ganttStartDate}
             endDate={ganttEndDate}
+            customRange={customGanttRange}
             displayUnit={ganttDisplayUnit}
             search={search}
             gantt={shown}

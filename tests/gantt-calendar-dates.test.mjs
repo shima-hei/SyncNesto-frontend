@@ -126,6 +126,32 @@ test("keeps range paging in the target month at month and quarter boundaries", (
   });
 });
 
+test("extends legacy short day and week windows while keeping explicit date filters", () => {
+  const start = "2026-11-09";
+  const legacyDayEnd = "2026-11-30";
+  assert.equal(
+    controls.extendLegacyGanttRange(start, legacyDayEnd, "day", false),
+    "2027-01-31",
+  );
+  assert.equal(
+    controls.extendLegacyGanttRange(start, "2026-12-07", "week", false),
+    "2027-01-31",
+  );
+  assert.equal(
+    controls.extendLegacyGanttRange(start, legacyDayEnd, "day", true),
+    legacyDayEnd,
+  );
+  assert.equal(
+    controls.extendLegacyGanttRange(start, legacyDayEnd, "month", false),
+    legacyDayEnd,
+  );
+  assert.equal(
+    controls.extendLegacyGanttRange(start, "2026-11-29", "day", false),
+    "2026-11-29",
+  );
+  assert.equal(controls.extendLegacyGanttRange(start, "", "day", false), "");
+});
+
 test("timeline period headings span real days without repeating labels", () => {
   const ranges = [
     [
