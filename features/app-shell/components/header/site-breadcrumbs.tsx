@@ -88,7 +88,7 @@ export function SiteBreadcrumbs() {
                 className={cn(
                   "min-w-0",
                   isLast
-                    ? "flex-1"
+                    ? "flex-[1_1_6rem] @min-[16rem]/breadcrumbs:min-w-20"
                     : "hidden max-w-24 @min-[16rem]/breadcrumbs:inline-flex md:max-w-60",
                 )}
               >
