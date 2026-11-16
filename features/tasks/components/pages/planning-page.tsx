@@ -240,6 +240,8 @@ export function PlanningPage({ projectId }: { projectId: number }) {
                 isGanttLoading || isGanttPlaceholder || (ownTasks && !user)
               }
               displayUnit={ganttDisplayUnit}
+              displayStart={ganttStartDate}
+              displayEnd={ganttEndDate}
               canUpdate={canUpdate}
               unscheduledPanelOpen={unscheduledOpen}
               onCloseUnscheduled={() => {

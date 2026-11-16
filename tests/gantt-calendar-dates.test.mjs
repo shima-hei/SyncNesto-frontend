@@ -164,3 +164,40 @@ test("timeline period headings span real days without repeating labels", () => {
     );
   }
 });
+
+test("explicit display bounds retain dates beyond the last task and clip bars to their real overlap", () => {
+  const observed = timeline.getDateRange(
+    [{ start_date: "2026-11-13", due_date: "2026-11-19" }],
+    [],
+  );
+  const fallback = { startDate: "2026-11-10", endDate: "2026-12-08" };
+  const range = timeline.getGanttDisplayRange(
+    observed,
+    "2026-11-15",
+    "2026-11-25",
+    fallback,
+  );
+  assert.equal(toCalendarDateInput(range.end), "2026-11-25");
+  assert.deepEqual(
+    timeline.getTimelineBarStyle(observed.start, observed.end, range),
+    {
+      left: "0%",
+      width: `${(5 / 11) * 100}%`,
+    },
+  );
+  assert.equal(
+    timeline.getTimelineBarStyle(
+      new Date("2026-12-01"),
+      new Date("2026-12-03"),
+      range,
+    ),
+    null,
+  );
+  const defaultRange = timeline.getGanttDisplayRange(
+    observed,
+    "",
+    "",
+    fallback,
+  );
+  assert.equal(toCalendarDateInput(defaultRange.end), fallback.endDate);
+});

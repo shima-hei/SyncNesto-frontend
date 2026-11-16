@@ -26,7 +26,7 @@ import {
   getTaskPlanningValues,
   overlayPlanningTask,
 } from "../../lib/task-planning";
-import { TaskPlanningActions } from "../gantt/task-planning-editor";
+import { getTodayGanttRange } from "../../lib/gantt-range-controls";
 import {
   GANTT_COLUMNS,
   GanttPlanningCells,
@@ -58,7 +58,7 @@ import {
   getClientDate,
   getDateRange,
   getDraggedDateRange,
-  getFallbackDateRange,
+  getGanttDisplayRange,
   getPointerDate,
   getTimelineBarStyle,
   getTimelineWidth,
@@ -75,6 +75,8 @@ type TasksGanttSectionProps = {
   phases: PhaseRead[];
   isLoading: boolean;
   displayUnit: GanttDisplayUnit;
+  displayStart: string;
+  displayEnd: string;
   canUpdate: boolean;
   planning: TaskPlanningController;
   unscheduledPanelOpen: boolean;
@@ -88,6 +90,8 @@ export function TasksGanttSection({
   phases,
   isLoading,
   displayUnit,
+  displayStart,
+  displayEnd,
   canUpdate,
   planning,
   unscheduledPanelOpen,
@@ -132,13 +136,18 @@ export function TasksGanttSection({
   const unscheduledTasks = tasks.filter(
     (task) => !task.start_date && !task.due_date,
   );
-  const visibleMilestones = milestones.filter(
-    (milestone) => milestone.target_date,
-  );
   const range =
     dragRange ??
-    getDateRange(visibleTasks, visibleMilestones) ??
-    (unscheduledTasks.length ? getFallbackDateRange(displayUnit) : null);
+    getGanttDisplayRange(
+      getDateRange(visibleTasks, milestones),
+      displayStart,
+      displayEnd,
+      getTodayGanttRange(displayUnit),
+    );
+  const visibleMilestones = milestones.filter((milestone) => {
+    const date = new Date(milestone.target_date);
+    return date >= range.start && date <= range.end;
+  });
   const parentTaskIds = new Set(
     visibleTasks
       .map((task) => task.parent_task_id)
@@ -150,9 +159,9 @@ export function TasksGanttSection({
   );
   const groups = groupPlanningTasks(displayedTasks, phases);
   const phaseLabels = getPlanningPhaseLabels(phases);
-  const timelineWidth = range ? getTimelineWidth(range, displayUnit) : 0;
+  const timelineWidth = getTimelineWidth(range, displayUnit);
   const ganttGridStyle = {
-    gridTemplateColumns: `var(--gantt-task-width) ${timelineWidth}px`,
+    gridTemplateColumns: `var(--gantt-task-width) minmax(${timelineWidth}px, 1fr)`,
   };
   const dropUnscheduledTask = (
     task: TaskRead,
@@ -162,21 +171,12 @@ export function TasksGanttSection({
 
     setDraggingUnscheduledTaskId(null);
     setHighlightedDropDate(null);
-    planning.edit(task, { startDate, dueDate: startDate });
-    return Promise.resolve();
+    return planning.commit(task, { startDate, dueDate: startDate });
   };
   const clearUnscheduledDragState = () => {
     setDraggingUnscheduledTaskId(null);
     setHighlightedDropDate(null);
   };
-
-  if (!range && !unscheduledTasks.length) {
-    return (
-      <div className="rounded-lg border p-4 text-sm text-muted-foreground">
-        開始日、終了予定日、またはマイルストーンが設定されていません。
-      </div>
-    );
-  }
 
   return (
     <div className="@container flex flex-col gap-3">
@@ -200,181 +200,167 @@ export function TasksGanttSection({
           dropUnscheduledTask(task, toCalendarDate(new Date()))
         }
       />
-      {range ? (
+      <div
+        role="region"
+        aria-label="ガントの日程表"
+        tabIndex={0}
+        className="max-h-[min(68dvh,52rem)] overflow-auto rounded-lg border [--gantt-task-width:min(17rem,65cqi)] @min-[50rem]:[--gantt-task-width:min(39rem,56cqi)] focus-visible:outline-2 focus-visible:outline-ring"
+      >
         <div
-          role="region"
-          aria-label="ガントの日程表"
-          tabIndex={0}
-          className="max-h-[min(68dvh,52rem)] overflow-auto rounded-lg border [--gantt-task-width:min(17rem,65cqi)] @min-[50rem]:[--gantt-task-width:min(39rem,56cqi)] focus-visible:outline-2 focus-visible:outline-ring"
+          style={{
+            minWidth: `calc(var(--gantt-task-width) + ${timelineWidth}px)`,
+          }}
         >
           <div
-            style={{
-              width: `calc(var(--gantt-task-width) + ${timelineWidth}px)`,
-            }}
+            className="sticky top-0 z-30 grid border-b bg-muted text-xs font-medium text-muted-foreground"
+            style={ganttGridStyle}
           >
             <div
-              className="sticky top-0 z-30 grid border-b bg-muted text-xs font-medium text-muted-foreground"
-              style={ganttGridStyle}
+              className={cn(
+                "sticky left-0 z-10 grid items-center gap-1 border-r bg-muted px-2 py-2",
+                GANTT_COLUMNS,
+              )}
             >
-              <div
-                className={cn(
-                  "sticky left-0 z-10 grid items-center gap-1 border-r bg-muted px-2 py-2",
-                  GANTT_COLUMNS,
-                )}
-              >
-                <span className="col-span-4 @min-[50rem]:col-span-1">
-                  タスク
-                </span>
-                <span className="hidden px-1.5 @min-[50rem]:block">担当者</span>
-                <span className="hidden px-1.5 @min-[50rem]:block">
-                  状態・進捗
-                </span>
-                <span className="hidden px-1.5 @min-[50rem]:block">
-                  予定期間
-                </span>
-              </div>
-              <GanttTimelineHeader
-                range={range}
-                displayUnit={displayUnit}
-                milestones={visibleMilestones}
-                highlightedDropDate={highlightedDropDate}
-                canUpdate={canUpdate}
-                onMilestoneSelect={onMilestoneSelect}
-              />
+              <span className="col-span-4 @min-[50rem]:col-span-1">タスク</span>
+              <span className="hidden px-1.5 @min-[50rem]:block">担当者</span>
+              <span className="hidden px-1.5 @min-[50rem]:block">
+                状態・進捗
+              </span>
+              <span className="hidden px-1.5 @min-[50rem]:block">予定期間</span>
             </div>
-            {canUpdate && unscheduledTasks.length && unscheduledPanelOpen ? (
-              <GanttUnscheduledDropLane
-                tasks={unscheduledTasks}
-                range={range}
-                gridStyle={ganttGridStyle}
-                milestones={visibleMilestones}
-                isDragging={Boolean(draggingUnscheduledTaskId)}
-                highlightedDropDate={highlightedDropDate}
-                onDropTask={dropUnscheduledTask}
-                onDropDateHover={setHighlightedDropDate}
-                onDropDateClear={() => setHighlightedDropDate(null)}
-              />
-            ) : null}
-            <div className="divide-y">
-              {groups.map((group) => (
-                <Fragment key={group.key}>
-                  <div
-                    className="grid border-b bg-muted/40"
-                    style={ganttGridStyle}
-                  >
-                    <h3 className="sticky left-0 z-10 min-w-0 break-words border-r bg-muted px-2 py-1.5 text-sm font-medium">
-                      <button
-                        type="button"
-                        aria-expanded={!collapsedGroups.has(group.key)}
-                        className="flex min-w-0 items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring"
-                        onClick={() =>
-                          setCollapsedGroups((previous) => {
-                            const next = new Set(previous);
-                            if (next.has(group.key)) next.delete(group.key);
-                            else next.add(group.key);
-                            return next;
-                          })
-                        }
-                      >
-                        {collapsedGroups.has(group.key) ? (
-                          <ChevronRightIcon className="size-4" />
-                        ) : (
-                          <ChevronDownIcon className="size-4" />
-                        )}
-                        {group.label}
-                      </button>
-                    </h3>
-                  </div>
-                  {!collapsedGroups.has(group.key) &&
-                    group.tasks.map((task) => (
-                      <GanttTaskRow
-                        key={task.id}
-                        task={task}
-                        range={range}
-                        milestones={visibleMilestones}
-                        gridStyle={ganttGridStyle}
-                        assigneeLabel={getTaskUserLabel(task.assignee_id)}
-                        highlightedDropDate={highlightedDropDate}
-                        unscheduledTasks={unscheduledTasks}
-                        hasChildren={parentTaskIds.has(task.id)}
-                        isCollapsed={collapsedTaskIds.includes(task.id)}
-                        canUpdate={
-                          canUpdate &&
-                          !planning.pendingDraft &&
-                          !["pending", "unknown", "conflict"].includes(
-                            planning.rows[task.id]?.status ?? "",
-                          )
-                        }
-                        planning={planning}
-                        canEditPlanning={canUpdate}
-                        onToggleCollapse={() =>
-                          setCollapsedTaskIds((current) =>
-                            current.includes(task.id)
-                              ? current.filter((taskId) => taskId !== task.id)
-                              : [...current, task.id],
-                          )
-                        }
-                        onScheduleUpdate={(values) =>
-                          planning.edit(task, values)
-                        }
-                        onDragActive={(active) =>
-                          setDragRange(active ? range : null)
-                        }
-                        onOpenDetail={openTaskDetail}
-                        onDropUnscheduledTask={(task, dropDate) =>
-                          dropUnscheduledTask(task, dropDate)
-                        }
-                        onDropDateHover={setHighlightedDropDate}
-                        onDropDateClear={() => setHighlightedDropDate(null)}
-                      />
-                    ))}
-                </Fragment>
-              ))}
-              {visibleMilestones.length ? (
-                <div className="grid bg-muted/20" style={ganttGridStyle}>
-                  <div className="sticky left-0 z-10 border-r bg-muted/20 px-3 py-2 text-sm font-medium">
-                    マイルストーン
-                  </div>
-                  <GanttDroppableTimeline
-                    className="py-4"
-                    tasks={unscheduledTasks}
-                    range={range}
-                    highlightedDropDate={highlightedDropDate}
-                    isDropEnabled={
-                      canUpdate && Boolean(unscheduledTasks.length)
-                    }
-                    onDropTask={dropUnscheduledTask}
-                    onDropDateHover={setHighlightedDropDate}
-                    onDropDateClear={() => setHighlightedDropDate(null)}
-                  >
-                    <WeekendBands range={range} />
-                    <GanttMilestoneLines
-                      milestones={visibleMilestones}
-                      range={range}
-                    />
-                    <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
-                    <TodayLine range={range} />
-                    {visibleMilestones.map((milestone) => (
-                      <GanttMilestoneMarker
-                        key={milestone.id}
-                        milestone={milestone}
-                        range={range}
-                        showLabel={visibleMilestones.length <= 3}
-                        canUpdate={canUpdate}
-                        onSelect={onMilestoneSelect}
-                      />
-                    ))}
-                  </GanttDroppableTimeline>
+            <GanttTimelineHeader
+              range={range}
+              displayUnit={displayUnit}
+              milestones={visibleMilestones}
+              highlightedDropDate={highlightedDropDate}
+              canUpdate={canUpdate}
+              onMilestoneSelect={onMilestoneSelect}
+            />
+          </div>
+          {canUpdate && unscheduledTasks.length && unscheduledPanelOpen ? (
+            <GanttUnscheduledDropLane
+              tasks={unscheduledTasks}
+              range={range}
+              gridStyle={ganttGridStyle}
+              milestones={visibleMilestones}
+              isDragging={Boolean(draggingUnscheduledTaskId)}
+              highlightedDropDate={highlightedDropDate}
+              onDropTask={dropUnscheduledTask}
+              onDropDateHover={setHighlightedDropDate}
+              onDropDateClear={() => setHighlightedDropDate(null)}
+            />
+          ) : null}
+          <div className="divide-y">
+            {groups.map((group) => (
+              <Fragment key={group.key}>
+                <div
+                  className="grid border-b bg-muted/40"
+                  style={ganttGridStyle}
+                >
+                  <h3 className="sticky left-0 z-10 min-w-0 break-words border-r bg-muted px-2 py-1.5 text-sm font-medium">
+                    <button
+                      type="button"
+                      aria-expanded={!collapsedGroups.has(group.key)}
+                      className="flex min-w-0 items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring"
+                      onClick={() =>
+                        setCollapsedGroups((previous) => {
+                          const next = new Set(previous);
+                          if (next.has(group.key)) next.delete(group.key);
+                          else next.add(group.key);
+                          return next;
+                        })
+                      }
+                    >
+                      {collapsedGroups.has(group.key) ? (
+                        <ChevronRightIcon className="size-4" />
+                      ) : (
+                        <ChevronDownIcon className="size-4" />
+                      )}
+                      {group.label}
+                    </button>
+                  </h3>
                 </div>
-              ) : null}
-            </div>
+                {!collapsedGroups.has(group.key) &&
+                  group.tasks.map((task) => (
+                    <GanttTaskRow
+                      key={task.id}
+                      task={task}
+                      range={range}
+                      milestones={visibleMilestones}
+                      gridStyle={ganttGridStyle}
+                      assigneeLabel={getTaskUserLabel(task.assignee_id)}
+                      highlightedDropDate={highlightedDropDate}
+                      unscheduledTasks={unscheduledTasks}
+                      hasChildren={parentTaskIds.has(task.id)}
+                      isCollapsed={collapsedTaskIds.includes(task.id)}
+                      canUpdate={
+                        canUpdate &&
+                        !planning.pendingDraft &&
+                        !["pending", "unknown", "conflict"].includes(
+                          planning.rows[task.id]?.status ?? "",
+                        )
+                      }
+                      planning={planning}
+                      canEditPlanning={canUpdate}
+                      onToggleCollapse={() =>
+                        setCollapsedTaskIds((current) =>
+                          current.includes(task.id)
+                            ? current.filter((taskId) => taskId !== task.id)
+                            : [...current, task.id],
+                        )
+                      }
+                      onScheduleUpdate={(values) => planning.edit(task, values)}
+                      onDragActive={(active) =>
+                        setDragRange(active ? range : null)
+                      }
+                      onOpenDetail={openTaskDetail}
+                      onDropUnscheduledTask={(task, dropDate) =>
+                        dropUnscheduledTask(task, dropDate)
+                      }
+                      onDropDateHover={setHighlightedDropDate}
+                      onDropDateClear={() => setHighlightedDropDate(null)}
+                    />
+                  ))}
+              </Fragment>
+            ))}
+            {visibleMilestones.length ? (
+              <div className="grid bg-muted/20" style={ganttGridStyle}>
+                <div className="sticky left-0 z-10 border-r bg-muted/20 px-3 py-2 text-sm font-medium">
+                  マイルストーン
+                </div>
+                <GanttDroppableTimeline
+                  className="py-4"
+                  tasks={unscheduledTasks}
+                  range={range}
+                  highlightedDropDate={highlightedDropDate}
+                  isDropEnabled={canUpdate && Boolean(unscheduledTasks.length)}
+                  onDropTask={dropUnscheduledTask}
+                  onDropDateHover={setHighlightedDropDate}
+                  onDropDateClear={() => setHighlightedDropDate(null)}
+                >
+                  <WeekendBands range={range} />
+                  <GanttMilestoneLines
+                    milestones={visibleMilestones}
+                    range={range}
+                  />
+                  <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
+                  <TodayLine range={range} />
+                  {visibleMilestones.map((milestone) => (
+                    <GanttMilestoneMarker
+                      key={milestone.id}
+                      milestone={milestone}
+                      range={range}
+                      showLabel={visibleMilestones.length <= 3}
+                      canUpdate={canUpdate}
+                      onSelect={onMilestoneSelect}
+                    />
+                  ))}
+                </GanttDroppableTimeline>
+              </div>
+            ) : null}
           </div>
         </div>
-      ) : (
-        <div className="rounded-lg border p-4 text-sm text-muted-foreground">
-          ガントに表示できる日付設定済みタスク、またはマイルストーンがありません。
-        </div>
-      )}
+      </div>
       {dependencies.length ? (
         <details className="text-sm">
           <summary className="cursor-pointer text-muted-foreground">
@@ -442,10 +428,11 @@ function GanttTaskRow({
   const { startDate, dueDate } =
     planning.rows[task.id]?.values ?? getTaskPlanningValues(task);
   const [dragState, setDragState] = useState<GanttDragState | null>(null);
-  const beforeDragDates = useRef({ startDate, dueDate });
+  const beforeDragDates = useRef({ startDate, dueDate, autoSave: false });
   const timelineRef = useRef<HTMLDivElement | null>(null);
-  const start = startDate ? new Date(startDate) : range.start;
-  const end = dueDate ? new Date(dueDate) : start;
+  const dragMoved = useRef(false);
+  const start = new Date(startDate || dueDate);
+  const end = new Date(dueDate || startDate);
   const plannedBarStyle = getTimelineBarStyle(start, end, range);
   const actualBarStyle = getActualBarStyle(task, range);
   const updateDraggedRange = (event: React.PointerEvent<HTMLElement>) => {
@@ -459,6 +446,12 @@ function GanttTaskRow({
       return;
     }
 
+    if (
+      !dragMoved.current &&
+      toCalendarDateInput(pointedDate) === dragState.anchorDate
+    )
+      return;
+    dragMoved.current = true;
     const nextRange = getDraggedDateRange(dragState, pointedDate);
 
     onScheduleUpdate(nextRange);
@@ -473,7 +466,13 @@ function GanttTaskRow({
       ? getDraggedDateRange(dragState, pointedDate)
       : { startDate, dueDate };
 
-    onScheduleUpdate(nextRange);
+    if (
+      dragMoved.current ||
+      (pointedDate && toCalendarDateInput(pointedDate) !== dragState.anchorDate)
+    ) {
+      onScheduleUpdate(nextRange);
+      if (beforeDragDates.current.autoSave) void planning.save(task);
+    }
     setDragState(null);
     onDragActive(false);
 
@@ -498,13 +497,18 @@ function GanttTaskRow({
     event.preventDefault();
     event.stopPropagation();
     timelineRef.current?.setPointerCapture(event.pointerId);
-    beforeDragDates.current = { startDate, dueDate };
+    dragMoved.current = false;
+    beforeDragDates.current = {
+      startDate,
+      dueDate,
+      autoSave: !planning.rows[task.id],
+    };
     onDragActive(true);
     setDragState({
       mode,
       anchorDate: toCalendarDateInput(anchorDate),
-      originalStartDate: startDate || toCalendarDateInput(range.start),
-      originalDueDate: dueDate || startDate || toCalendarDateInput(range.start),
+      originalStartDate: startDate || dueDate,
+      originalDueDate: dueDate || startDate,
     });
   };
 
@@ -559,9 +563,6 @@ function GanttTaskRow({
             ) : null}
           </div>
         </div>
-        {canEditPlanning ? (
-          <TaskPlanningActions task={task} planning={planning} />
-        ) : null}
       </div>
       <div
         ref={timelineRef}
@@ -569,7 +570,10 @@ function GanttTaskRow({
         onPointerMove={updateDraggedRange}
         onPointerUp={finishDrag}
         onPointerCancel={() => {
-          if (dragState) onScheduleUpdate(beforeDragDates.current);
+          if (dragState) {
+            const { startDate, dueDate } = beforeDragDates.current;
+            onScheduleUpdate({ startDate, dueDate });
+          }
           setDragState(null);
           onDragActive(false);
         }}
@@ -626,38 +630,44 @@ function GanttTaskRow({
         <GanttMilestoneLines milestones={milestones} range={range} />
         <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
         <TodayLine range={range} />
-        <div
-          className="relative h-4 rounded-md bg-primary/25 data-[editable=true]:cursor-grab data-[dragging=true]:cursor-grabbing"
-          data-editable={canUpdate ? "true" : undefined}
-          data-dragging={dragState?.mode === "move" ? "true" : undefined}
-          style={plannedBarStyle}
-          title={`${formatDate(startDate)} - ${formatDate(dueDate)}`}
-          onPointerDown={(event) => startDrag(event, "move")}
-        >
+        {plannedBarStyle ? (
           <div
-            className="h-full rounded-md bg-primary"
-            style={{ width: `${task.progress_percent ?? 0}%` }}
-          />
-          {canUpdate ? (
-            <>
-              <button
-                type="button"
-                className="absolute top-0 bottom-0 left-0 w-2 cursor-ew-resize rounded-l-full bg-primary/80"
-                aria-label={`${task.task_code}の開始日をドラッグで変更`}
-                onPointerDown={(event) => startDrag(event, "start")}
-              />
-              <button
-                type="button"
-                className="absolute top-0 right-0 bottom-0 w-2 cursor-ew-resize rounded-r-full bg-primary/80"
-                aria-label={`${task.task_code}の終了予定日をドラッグで変更`}
-                onPointerDown={(event) => startDrag(event, "end")}
-              />
-            </>
-          ) : null}
-        </div>
+            className="relative h-4 rounded-md bg-primary/25 data-[editable=true]:cursor-grab data-[dragging=true]:cursor-grabbing"
+            data-editable={canUpdate ? "true" : undefined}
+            data-dragging={dragState?.mode === "move" ? "true" : undefined}
+            style={plannedBarStyle}
+            title={`${formatDate(startDate)} - ${formatDate(dueDate)}`}
+            onPointerDown={(event) => startDrag(event, "move")}
+          >
+            <div
+              className="h-full rounded-md bg-primary"
+              style={{ width: `${task.progress_percent ?? 0}%` }}
+            />
+            {canUpdate ? (
+              <>
+                {start >= range.start ? (
+                  <button
+                    type="button"
+                    className="absolute top-0 bottom-0 left-0 w-2 cursor-ew-resize rounded-l-full bg-primary/80"
+                    aria-label={`${task.task_code}の開始日をドラッグで変更`}
+                    onPointerDown={(event) => startDrag(event, "start")}
+                  />
+                ) : null}
+                {end <= range.end ? (
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bottom-0 w-2 cursor-ew-resize rounded-r-full bg-primary/80"
+                    aria-label={`${task.task_code}の終了予定日をドラッグで変更`}
+                    onPointerDown={(event) => startDrag(event, "end")}
+                  />
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        ) : null}
         {actualBarStyle ? (
           <div
-            className="relative mt-1 h-1.5 rounded-full bg-foreground/60"
+            className="pointer-events-none absolute bottom-1 h-1 rounded-full bg-foreground/60"
             style={actualBarStyle}
             title={`実績: ${formatDate(task.actual_start_date)} - ${formatDate(task.actual_end_date)}`}
           />

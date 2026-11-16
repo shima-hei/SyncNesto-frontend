@@ -50,7 +50,7 @@ export function TaskPlanningWorkspace({
         tabIndex={-1}
         aria-label="計画の保存状況"
         role="status"
-        className="text-sm empty:sr-only"
+        className="sr-only"
       >
         {planning.lastSaved ? (
           <span key={planning.lastSaved.revision}>

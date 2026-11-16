@@ -1,6 +1,6 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,10 @@ import type { TaskRead } from "@/lib/api/generated/model";
 
 import { getTaskStatusLabel } from "../../constants/task-options";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
-import { getTaskPlanningValues } from "../../lib/task-planning";
+import {
+  getTaskPlanningValues,
+  type TaskPlanningValues,
+} from "../../lib/task-planning";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import {
   TaskPlanningDateFields,
@@ -21,6 +24,8 @@ import {
 
 export const GANTT_COLUMNS =
   "grid-cols-[minmax(0,1.6fr)_minmax(0,.8fr)_minmax(0,1fr)_minmax(0,1fr)]";
+
+type Changes = Partial<TaskPlanningValues>;
 
 export function GanttPlanningCells({
   task,
@@ -39,43 +44,33 @@ export function GanttPlanningCells({
   const dateLabel = (date: string) =>
     date ? date.slice(5).replace("-", "/") : "—";
   const period = `${dateLabel(values.startDate)} – ${dateLabel(values.dueDate)}`;
+  const commit = (changes: Changes) => void planning.commit(task, changes);
+  const common = { task, values, editable, commit };
   return (
     <>
-      <PlanningCell
-        editable={editable}
-        task={task}
-        label="担当者"
-        value={assigneeLabel}
-      >
-        <TaskUserSelectField
-          projectId={task.project_id}
-          label="担当者"
-          value={values.assigneeId}
-          onChange={(assigneeId) => planning.edit(task, { assigneeId })}
-        />
+      <PlanningCell {...common} label="担当者" value={assigneeLabel} immediate>
+        {(current, change) => (
+          <TaskUserSelectField
+            projectId={task.project_id}
+            label="担当者"
+            value={current.assigneeId}
+            onChange={(assigneeId) => change({ assigneeId })}
+          />
+        )}
       </PlanningCell>
-      <PlanningCell
-        editable={editable}
-        task={task}
-        label="進捗"
-        value={progress}
-      >
-        <TaskProgressFields
-          values={values}
-          originalStatus={row?.baseline.status ?? task.status ?? "backlog"}
-          onChange={(changes) => planning.edit(task, changes)}
-        />
+      <PlanningCell {...common} label="進捗" value={progress}>
+        {(current, change) => (
+          <TaskProgressFields
+            values={current}
+            originalStatus={row?.baseline.status ?? task.status ?? "backlog"}
+            onChange={change}
+          />
+        )}
       </PlanningCell>
-      <PlanningCell
-        editable={editable}
-        task={task}
-        label="予定期間"
-        value={period}
-      >
-        <TaskPlanningDateFields
-          values={values}
-          onChange={(changes) => planning.edit(task, changes)}
-        />
+      <PlanningCell {...common} label="予定期間" value={period}>
+        {(current, change) => (
+          <TaskPlanningDateFields values={current} onChange={change} />
+        )}
       </PlanningCell>
     </>
   );
@@ -85,17 +80,40 @@ function PlanningCell({
   task,
   label,
   value,
+  values,
   editable,
   children,
-}: PropsWithChildren<{
+  immediate = false,
+  commit,
+}: {
   task: TaskRead;
   label: string;
   value: string;
+  values: TaskPlanningValues;
   editable: boolean;
-}>) {
+  immediate?: boolean;
+  commit: (changes: Changes) => void;
+  children: (
+    values: TaskPlanningValues,
+    onChange: (changes: Changes) => void,
+  ) => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [changes, setChanges] = useState<Changes>({});
   const ariaLabel = `${task.task_code}の${label} ${value}`;
+  const apply = (next: Changes) => {
+    setOpen(false);
+    setChanges({});
+    commit(next);
+  };
   return editable ? (
-    <Popover>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setChanges({});
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -113,7 +131,20 @@ function PlanningCell({
         align="start"
         aria-label={`${task.task_code}の${label}`}
       >
-        {children}
+        {children({ ...values, ...changes }, (next) => {
+          if (immediate) apply(next);
+          else setChanges((previous) => ({ ...previous, ...next }));
+        })}
+        {immediate ? null : (
+          <Button
+            type="button"
+            size="sm"
+            disabled={!Object.keys(changes).length}
+            onClick={() => apply(changes)}
+          >
+            適用
+          </Button>
+        )}
       </PopoverContent>
     </Popover>
   ) : (

@@ -50,21 +50,31 @@ export const getDateRange = (
   return { start, end };
 };
 
-export const getFallbackDateRange = (
-  displayUnit: GanttDisplayUnit,
+export const getGanttDisplayRange = (
+  observed: DateRange | null,
+  startDate: string,
+  endDate: string,
+  fallback: { startDate: string; endDate: string },
 ): DateRange => {
-  const start = toCalendarDate(new Date());
-  const end = new Date(start);
-  const days = {
-    day: 30,
-    week: 84,
-    month: 180,
-    quarter: 365,
-  }[displayUnit];
-
-  end.setUTCDate(start.getUTCDate() + days);
-
-  return { start, end };
+  const parse = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(value);
+    return Number.isFinite(date.getTime()) &&
+      toCalendarDateInput(date) === value
+      ? date
+      : null;
+  };
+  const fallbackStart = new Date(fallback.startDate);
+  const fallbackEnd = new Date(fallback.endDate);
+  const start =
+    parse(startDate) ??
+    (observed && observed.start < fallbackStart
+      ? observed.start
+      : fallbackStart);
+  const end =
+    parse(endDate) ??
+    (observed && observed.end > fallbackEnd ? observed.end : fallbackEnd);
+  return { start, end: end < start ? start : end };
 };
 
 export const getTimelineWidth = (
@@ -79,7 +89,7 @@ export const getTimelineWidth = (
     case "month":
       return Math.max(640, Math.ceil(days / 30) * 160);
     case "week":
-      return Math.max(640, Math.ceil(days / 7) * 120);
+      return Math.max(640, days * 22);
     case "day":
     default:
       return Math.max(640, days * 28);
@@ -244,8 +254,11 @@ export const getTimelineBarStyle = (
   range: DateRange,
 ) => {
   const totalDays = getInclusiveDays(range);
-  const offset = Math.max(daysBetween(range.start, start), 0);
-  const duration = Math.max(daysBetween(start, end) + 1, 1);
+  if (end < range.start || start > range.end) return null;
+  const clippedStart = start < range.start ? range.start : start;
+  const clippedEnd = end > range.end ? range.end : end;
+  const offset = daysBetween(range.start, clippedStart);
+  const duration = Math.max(daysBetween(clippedStart, clippedEnd) + 1, 1);
 
   return {
     left: `${Math.min((offset / totalDays) * 100, 100)}%`,

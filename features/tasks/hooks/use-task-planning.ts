@@ -1,7 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getConflictCurrent } from "@/lib/api/conflict";
@@ -42,7 +43,10 @@ export type PlanningRow = TaskPlanningDraft & {
   status: "draft" | "pending" | "error" | "conflict" | "unknown";
   message?: string;
   planningSaved?: boolean;
+  undoDates?: Pick<TaskRead, "actual_start_date" | "actual_end_date">;
 };
+type UndoAction = { id: string | number; run: () => void };
+
 const EMPTY_ROWS: Record<number, PlanningRow> = {};
 
 export function useTaskPlanning(projectId: number) {
@@ -68,6 +72,7 @@ export function useTaskPlanning(projectId: number) {
     task: TaskRead;
     revision: number;
   } | null>(null);
+  const undoAction = useRef<UndoAction | null>(null);
   const rowsRef = useRef(state.rows);
   const inFlight = useRef(new Set<number>());
   const activeKey = useRef(key);
@@ -83,12 +88,39 @@ export function useTaskPlanning(projectId: number) {
     activeKey.current = key;
     rowsRef.current = rows;
   }, [key, rows]);
+  useEffect(() => {
+    const handleUndo = (event: KeyboardEvent) => {
+      if (
+        !undoAction.current ||
+        event.isComposing ||
+        event.repeat ||
+        !(event.ctrlKey || event.metaKey) ||
+        event.altKey ||
+        event.shiftKey ||
+        event.key.toLowerCase() !== "z"
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      undoAction.current.run();
+    };
+    document.addEventListener("keydown", handleUndo, true);
+    return () => {
+      document.removeEventListener("keydown", handleUndo, true);
+      if (undoAction.current) toast.dismiss(undoAction.current.id);
+      undoAction.current = null;
+    };
+  }, [key]);
   const stored = useMemo(() => {
     try {
       return readStoredDraft<
         Record<
           number,
-          TaskPlanningDraft & { uncertain?: boolean; planningSaved?: boolean }
+          TaskPlanningDraft & {
+            uncertain?: boolean;
+            planningSaved?: boolean;
+            undoDates?: PlanningRow["undoDates"];
+          }
         >
       >(user?.id, scope, 1, session);
     } catch {
@@ -115,6 +147,7 @@ export function useTaskPlanning(projectId: number) {
             values: row.values,
             uncertain: row.status === "pending" || row.status === "unknown",
             planningSaved: row.planningSaved,
+            undoDates: row.undoDates,
           },
         ]),
       );
@@ -152,6 +185,7 @@ export function useTaskPlanning(projectId: number) {
       },
       status: "draft",
       planningSaved: previous?.planningSaved,
+      undoDates: previous?.undoDates,
     };
     const next = { ...rowsRef.current, [task.id]: row };
     if (!isPlanningDirty(row)) delete next[task.id];
@@ -210,6 +244,7 @@ export function useTaskPlanning(projectId: number) {
         ...rowsRef.current,
         [task.id]: { ...row, status: "error", message: validation },
       });
+      toast.error(validation);
       return;
     }
     if (task.version > row.baseline.version) {
@@ -232,12 +267,17 @@ export function useTaskPlanning(projectId: number) {
           ...rebaseAfterPlanningSave(row, saved),
           status: "pending",
           planningSaved: true,
+          undoDates: row.undoDates,
         };
         setTaskDetailCache(queryClient, saved.id, saved);
         persistRows({ ...rowsRef.current, [task.id]: pending });
       }
       const progress = toTaskProgressUpdate(pending);
-      if (progress) saved = await updateTaskTasksTaskIdPatch(task.id, progress);
+      if (progress)
+        saved = await updateTaskTasksTaskIdPatch(task.id, {
+          ...progress,
+          ...pending.undoDates,
+        });
       if (!isActive()) return;
       setTaskDetailCache(queryClient, saved.id, saved);
       const next = { ...rowsRef.current };
@@ -247,12 +287,23 @@ export function useTaskPlanning(projectId: number) {
         task: saved,
         revision: (previous?.revision ?? 0) + 1,
       }));
+      if (row.undoDates)
+        toast.success(`「${saved.title}」の変更を元に戻しました。`);
+      else notifySaved(row.baseline, saved);
       // 保存成功を、後続の再取得失敗で取り消さない。
       void invalidateTaskProjectSurfaces(queryClient, projectId);
     } catch (error) {
       if (!isActive()) return;
       const current = getConflictCurrent<TaskRead>(error);
       const knownFailure = error instanceof ApiError && error.status < 500;
+      if (current && row.undoDates && !pending.planningSaved) {
+        const next = { ...rowsRef.current };
+        delete next[task.id];
+        persistRows(next);
+        void invalidateTaskProjectSurfaces(queryClient, projectId);
+        toast.error("別の更新があるため、元に戻せませんでした。");
+        return;
+      }
       const message = current
         ? "他の更新があります。現在値と入力を比較してください。"
         : knownFailure
@@ -269,14 +320,76 @@ export function useTaskPlanning(projectId: number) {
       if (pending.planningSaved)
         void invalidateTaskProjectSurfaces(queryClient, projectId);
       if (current) setComparison({ draft: failed, current });
+      toast.error(failed.message);
     } finally {
       inFlight.current.delete(task.id);
     }
   };
+  const notifySaved = (before: TaskRead, saved: TaskRead) => {
+    if (undoAction.current) toast.dismiss(undoAction.current.id);
+    const clear = ({ id }: { id: string | number }) => {
+      if (undoAction.current?.id === id) undoAction.current = null;
+    };
+    const run = () => {
+      if (!undoAction.current || undoAction.current.id !== id) return;
+      undoAction.current = null;
+      toast.dismiss(id);
+      if (
+        !isActive() ||
+        rowsRef.current[saved.id] ||
+        inFlight.current.has(saved.id)
+      ) {
+        toast.error("編集中の変更を確認してから操作してください。");
+        return;
+      }
+      const oldValues = getTaskPlanningValues(before);
+      const inverse: PlanningRow = {
+        baseline: saved,
+        values: { ...oldValues, changeReason: "ガントで直前の変更を取り消し" },
+        status: "draft",
+        undoDates: {
+          ...(before.actual_start_date !== saved.actual_start_date
+            ? { actual_start_date: before.actual_start_date ?? null }
+            : {}),
+          ...(before.actual_end_date !== saved.actual_end_date
+            ? { actual_end_date: before.actual_end_date ?? null }
+            : {}),
+        },
+      };
+      persistRows({ ...rowsRef.current, [saved.id]: inverse });
+      void save(saved);
+    };
+    const id = toast.success(`「${saved.title}」を変更しました。`, {
+      position: "bottom-center",
+      duration: 10000,
+      closeButton: true,
+      description: "Ctrl+Z / ⌘Z",
+      action: { label: "元に戻す", onClick: run },
+      onAutoClose: clear,
+      onDismiss: clear,
+    });
+    undoAction.current = { id, run };
+  };
+
+  const commit = async (
+    task: TaskRead,
+    changes: Partial<TaskPlanningValues>,
+  ) => {
+    const previous = rowsRef.current[task.id];
+    edit(task, changes);
+    if (rowsRef.current[task.id] === previous) return;
+    if (previous && previous.status !== "error" && rowsRef.current[task.id]) {
+      toast.info("下書きを更新しました。「編集中の計画」から保存できます。");
+      return;
+    }
+    await save(task);
+  };
+
   return {
     projectId,
     rows,
     edit,
+    commit,
     save,
     discard,
     confirm,
@@ -305,6 +418,7 @@ export function useTaskPlanning(projectId: number) {
         baseline: comparison.current,
         values,
         status: "draft",
+        undoDates: comparison.draft.undoDates,
       };
       const next = { ...rowsRef.current, [row.baseline.id]: row };
       if (!isPlanningDirty(row)) delete next[row.baseline.id];
@@ -320,6 +434,7 @@ export function useTaskPlanning(projectId: number) {
             {
               ...draft,
               planningSaved: stored?.values[Number(id)]?.planningSaved,
+              undoDates: stored?.values[Number(id)]?.undoDates,
               status: stored?.values[Number(id)]?.uncertain
                 ? "unknown"
                 : "draft",
