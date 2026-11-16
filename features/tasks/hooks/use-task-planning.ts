@@ -10,6 +10,7 @@ import type { TaskRead } from "@/lib/api/generated/model";
 import {
   readTaskTasksTaskIdGet,
   updateTaskPlanningTasksTaskIdPlanningPatch,
+  updateTaskTasksTaskIdPatch,
 } from "@/lib/api/generated/tasks/tasks";
 import { getDraftSession, isCurrentDraftSession } from "@/lib/demo/session";
 import {
@@ -25,10 +26,13 @@ import {
 import {
   getPlanningDraftScope,
   getPlanningValidation,
+  getProgressValidation,
   getTaskPlanningValues,
   isPlanningDirty,
   isPlanningReflected,
   readPlanningDrafts,
+  rebaseAfterPlanningSave,
+  toTaskProgressUpdate,
   toTaskPlanningUpdate,
   type TaskPlanningDraft,
   type TaskPlanningValues,
@@ -37,6 +41,7 @@ import {
 export type PlanningRow = TaskPlanningDraft & {
   status: "draft" | "pending" | "error" | "conflict" | "unknown";
   message?: string;
+  planningSaved?: boolean;
 };
 const EMPTY_ROWS: Record<number, PlanningRow> = {};
 
@@ -81,7 +86,10 @@ export function useTaskPlanning(projectId: number) {
   const stored = useMemo(() => {
     try {
       return readStoredDraft<
-        Record<number, TaskPlanningDraft & { uncertain?: boolean }>
+        Record<
+          number,
+          TaskPlanningDraft & { uncertain?: boolean; planningSaved?: boolean }
+        >
       >(user?.id, scope, 1, session);
     } catch {
       return null;
@@ -106,6 +114,7 @@ export function useTaskPlanning(projectId: number) {
             baseline: row.baseline,
             values: row.values,
             uncertain: row.status === "pending" || row.status === "unknown",
+            planningSaved: row.planningSaved,
           },
         ]),
       );
@@ -126,14 +135,23 @@ export function useTaskPlanning(projectId: number) {
   const edit = (task: TaskRead, changes: Partial<TaskPlanningValues>) => {
     if (pendingDraft || inFlight.current.has(task.id)) return;
     const previous = rowsRef.current[task.id];
-    if (previous?.status === "unknown") return;
+    if (previous?.status === "unknown" || previous?.status === "conflict")
+      return;
+    const values = previous?.values ?? getTaskPlanningValues(task);
+    if (
+      Object.entries(changes).every(
+        ([key, value]) => values[key as keyof TaskPlanningValues] === value,
+      )
+    )
+      return;
     const row: PlanningRow = {
       baseline: previous?.baseline ?? task,
       values: {
-        ...(previous?.values ?? getTaskPlanningValues(task)),
+        ...values,
         ...changes,
       },
       status: "draft",
+      planningSaved: previous?.planningSaved,
     };
     const next = { ...rowsRef.current, [task.id]: row };
     if (!isPlanningDirty(row)) delete next[task.id];
@@ -184,7 +202,9 @@ export function useTaskPlanning(projectId: number) {
     const dateChanged =
       row.values.startDate !== (row.baseline.start_date ?? "") ||
       row.values.dueDate !== (row.baseline.due_date ?? "");
-    const validation = getPlanningValidation(row.values, dateChanged);
+    const validation =
+      getPlanningValidation(row.values, dateChanged) ??
+      getProgressValidation(row);
     if (validation) {
       persistRows({
         ...rowsRef.current,
@@ -192,8 +212,8 @@ export function useTaskPlanning(projectId: number) {
       });
       return;
     }
-    if (task.version !== row.baseline.version) {
-      setComparison({ draft: row, current: task });
+    if (task.version > row.baseline.version) {
+      void confirm(task.id);
       return;
     }
     inFlight.current.add(task.id);
@@ -201,11 +221,23 @@ export function useTaskPlanning(projectId: number) {
       ...rowsRef.current,
       [task.id]: { ...row, status: "pending", message: undefined },
     });
+    let pending: PlanningRow = row;
+    let saved = row.baseline;
     try {
-      const saved = await updateTaskPlanningTasksTaskIdPlanningPatch(
-        task.id,
-        toTaskPlanningUpdate(row),
-      );
+      const plan = toTaskPlanningUpdate(row);
+      if (Object.keys(plan).length > 1) {
+        saved = await updateTaskPlanningTasksTaskIdPlanningPatch(task.id, plan);
+        if (!isActive()) return;
+        pending = {
+          ...rebaseAfterPlanningSave(row, saved),
+          status: "pending",
+          planningSaved: true,
+        };
+        setTaskDetailCache(queryClient, saved.id, saved);
+        persistRows({ ...rowsRef.current, [task.id]: pending });
+      }
+      const progress = toTaskProgressUpdate(pending);
+      if (progress) saved = await updateTaskTasksTaskIdPatch(task.id, progress);
       if (!isActive()) return;
       setTaskDetailCache(queryClient, saved.id, saved);
       const next = { ...rowsRef.current };
@@ -221,19 +253,22 @@ export function useTaskPlanning(projectId: number) {
       if (!isActive()) return;
       const current = getConflictCurrent<TaskRead>(error);
       const knownFailure = error instanceof ApiError && error.status < 500;
-      persistRows({
-        ...rowsRef.current,
-        [task.id]: {
-          ...row,
-          status: current ? "conflict" : knownFailure ? "error" : "unknown",
-          message: current
-            ? "他の更新があります。現在値と入力を比較してください。"
-            : knownFailure
-              ? error.message
-              : "保存結果が不明です。自動再送せず、現在値を確認してください。",
-        },
-      });
-      if (current) setComparison({ draft: row, current });
+      const message = current
+        ? "他の更新があります。現在値と入力を比較してください。"
+        : knownFailure
+          ? error.message
+          : "保存結果が不明です。自動再送せず、現在値を確認してください。";
+      const failed: PlanningRow = {
+        ...pending,
+        status: current ? "conflict" : knownFailure ? "error" : "unknown",
+        message: pending.planningSaved
+          ? `担当・日程などの計画項目は保存済みです。進捗の更新について ${message}`
+          : message,
+      };
+      persistRows({ ...rowsRef.current, [task.id]: failed });
+      if (pending.planningSaved)
+        void invalidateTaskProjectSurfaces(queryClient, projectId);
+      if (current) setComparison({ draft: failed, current });
     } finally {
       inFlight.current.delete(task.id);
     }
@@ -284,6 +319,7 @@ export function useTaskPlanning(projectId: number) {
             id,
             {
               ...draft,
+              planningSaved: stored?.values[Number(id)]?.planningSaved,
               status: stored?.values[Number(id)]?.uncertain
                 ? "unknown"
                 : "draft",

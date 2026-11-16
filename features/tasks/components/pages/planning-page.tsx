@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { PlusIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { PageHeader } from "@/components/shared/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FieldGroup } from "@/components/ui/field";
 import {
   canCreateTask,
@@ -19,9 +22,11 @@ import type { MilestoneRead } from "@/lib/api/generated/model";
 import { useGantt } from "../../hooks/use-gantt";
 import { useMilestones } from "../../hooks/use-milestones";
 import { usePlanningPhases } from "../../hooks/use-planning-phases";
+import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useTaskPlanning } from "../../hooks/use-task-planning";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
+import { GanttQuickTask } from "../gantt/gantt-quick-task";
 import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
 import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import { PlanningPhaseActions } from "../sections/planning-phase-actions";
@@ -36,8 +41,16 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const { currentProjectRole } = useCurrentProjectRole(projectId);
+  const canCreate = canCreateTask(currentProjectRole);
   const canUpdate = canUpdateTask(currentProjectRole);
   const planning = useTaskPlanning(projectId);
+  const { getTaskUserLabel } = useTaskUserMap(projectId);
+  const [mode, setMode] = useUrlFilterState("planningView", "gantt");
+  const activeView = mode === "effort" ? "effort" : "gantt";
+  const [search, setSearch] = useUrlFilterState("ganttSearch", "");
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [unscheduledOpen, setUnscheduledOpen] = useState(false);
+  const unscheduledTrigger = useRef<HTMLButtonElement>(null);
   const ownTasks =
     searchParams.get("assignee") === "me" && !searchParams.has("assigneeId");
   const [assigneeId, setAssigneeId] = useUrlFilterState(
@@ -48,17 +61,14 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     "requirementId",
     "",
   );
-  const [ganttStartDate, setGanttStartDate] = useUrlFilterState(
-    "ganttStartDate",
-    "",
-  );
-  const [ganttEndDate, setGanttEndDate] = useUrlFilterState("ganttEndDate", "");
+  const [ganttStartDate] = useUrlFilterState("ganttStartDate", "");
+  const [ganttEndDate] = useUrlFilterState("ganttEndDate", "");
   const [unit, setGanttDisplayUnit] = useUrlFilterState(
     "ganttDisplayUnit",
-    "day",
+    "week",
   );
   const ganttDisplayUnit =
-    GANTT_DISPLAY_OPTIONS.find(({ value }) => value === unit)?.value ?? "day";
+    GANTT_DISPLAY_OPTIONS.find(({ value }) => value === unit)?.value ?? "week";
   const [milestoneCreateDialogOpen, setMilestoneCreateDialogOpen] =
     useState(false);
   const [milestoneListDialogOpen, setMilestoneListDialogOpen] = useState(false);
@@ -86,98 +96,173 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     !ownTasks || Boolean(user),
   );
   const currentGantt = isGanttPlaceholder || ganttError ? null : gantt;
-  const tasks = currentGantt?.tasks;
-  const ganttUnscheduled =
-    tasks?.filter((task) => !task.start_date && !task.due_date).length ?? 0;
-  const missingEstimate =
-    tasks?.filter((task) => task.estimated_minutes == null).length ?? 0;
-  const unassigned =
-    tasks?.filter((task) => task.assignee_id == null).length ?? 0;
+  const needle = search.trim().toLocaleLowerCase();
+  const shown =
+    currentGantt && needle
+      ? {
+          ...currentGantt,
+          tasks: currentGantt.tasks.filter((task) =>
+            `${task.title} ${task.task_code} ${getTaskUserLabel(task.assignee_id)}`
+              .toLocaleLowerCase()
+              .includes(needle),
+          ),
+        }
+      : currentGantt;
+  const unscheduledCount =
+    shown?.tasks.filter((task) => {
+      const draft = planning.rows[task.id]?.values;
+      return draft
+        ? !draft.startDate && !draft.dueDate
+        : !task.start_date && !task.due_date;
+    }).length ?? 0;
+
+  const setRange = ({
+    startDate,
+    endDate,
+  }: {
+    startDate: string;
+    endDate: string;
+  }) => {
+    const url = new URL(window.location.href);
+    for (const [key, value] of [
+      ["ganttStartDate", startDate],
+      ["ganttEndDate", endDate],
+    ]) {
+      if (value) url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
+    }
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  };
 
   return (
-    <div className="@container flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-3">
       <OverviewReturn projectId={projectId} />
-      <PageHeader
-        title="計画"
-        actions={<TaskPhaseDialog projectId={projectId} summaryOnly />}
-      />
-      <PlanningPhaseActions
-        projectId={projectId}
-        phases={phases}
-        tasks={currentGantt?.tasks}
-        canManage={currentProjectRole?.role?.key === "project_admin"}
-        canUpdate={canUpdate}
-        canCreate={canCreateTask(currentProjectRole)}
-        planning={planning}
-      />
+      <PageHeader title="計画" />
       <TaskPlanningWorkspace planning={planning} canUpdate={canUpdate} />
-      <section
-        aria-label="計画の絞り込み"
-        className="flex min-w-0 flex-col gap-3"
+      <Tabs
+        value={activeView}
+        onValueChange={(value) => {
+          setMode(value);
+          if (value !== "gantt") setUnscheduledOpen(false);
+        }}
+        className="min-w-0 gap-2"
       >
-        <FieldGroup className="grid gap-3 @md:grid-cols-2">
-          <TaskUserSelectField
-            projectId={projectId}
-            label="担当者"
-            value={assigneeId}
-            placeholder="すべて"
-            onChange={setAssigneeId}
-          />
-          <TaskRequirementSelectField
-            projectId={projectId}
-            value={requirementId}
-            placeholder="すべて"
-            onChange={setRequirementId}
-          />
-        </FieldGroup>
-        <GanttControls
-          canUpdate={canUpdate}
-          startDate={ganttStartDate}
-          endDate={ganttEndDate}
-          displayUnit={ganttDisplayUnit}
-          gantt={currentGantt}
-          milestones={milestones}
-          onStartDateChange={setGanttStartDate}
-          onEndDateChange={setGanttEndDate}
-          onDisplayUnitChange={setGanttDisplayUnit}
-          onOpenMilestoneList={() => setMilestoneListDialogOpen(true)}
-          onOpenMilestoneCreate={() => setMilestoneCreateDialogOpen(true)}
-        />
-      </section>
-      <p className="text-sm text-muted-foreground">
-        対象期間 {ganttStartDate || "開始の制限なし"} 〜{" "}
-        {ganttEndDate || "終了の制限なし"}（未日程を含む）
-      </p>
-      {ganttError ? (
-        <DataLoadError
-          resourceName="ガント"
-          isRetrying={isGanttFetching}
-          onRetry={() => void refetchGantt()}
-        />
-      ) : (
-        <>
-          {currentGantt ? (
-            <p role="status" className="text-sm text-muted-foreground">
-              表示対象 {currentGantt.tasks.length}
-              件（日程あり{currentGantt.tasks.length - ganttUnscheduled}
-              件・未日程{ganttUnscheduled}件） · 担当未設定 {unassigned}件 ·
-              見積未入力 {missingEstimate}件{isGanttFetching ? " · 更新中" : ""}
-            </p>
-          ) : null}
-          <TasksGanttSection
-            planning={planning}
-            phases={phases.data ?? []}
-            projectId={projectId}
-            gantt={currentGantt}
-            isLoading={
-              isGanttLoading || isGanttPlaceholder || (ownTasks && !user)
-            }
-            displayUnit={ganttDisplayUnit}
+        <TabsList variant="line" className="w-full justify-start border-b">
+          <TabsTrigger value="gantt">ガント</TabsTrigger>
+          <TabsTrigger value="effort">工程・工数</TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value="gantt"
+          forceMount
+          className={activeView === "gantt" ? "min-w-0 space-y-2" : "hidden"}
+        >
+          <GanttControls
             canUpdate={canUpdate}
-            onMilestoneSelect={setEditingMilestone}
+            startDate={ganttStartDate}
+            endDate={ganttEndDate}
+            displayUnit={ganttDisplayUnit}
+            search={search}
+            gantt={shown}
+            milestones={milestones}
+            onRangeChange={setRange}
+            onDisplayUnitChange={setGanttDisplayUnit}
+            onSearchChange={setSearch}
+            onOpenMilestoneList={() => setMilestoneListDialogOpen(true)}
+            onOpenMilestoneCreate={() => setMilestoneCreateDialogOpen(true)}
+            filterFields={
+              <FieldGroup className="grid gap-2 sm:grid-cols-2">
+                <TaskUserSelectField
+                  projectId={projectId}
+                  label="担当者"
+                  value={assigneeId}
+                  placeholder="すべて"
+                  onChange={setAssigneeId}
+                />
+                <TaskRequirementSelectField
+                  projectId={projectId}
+                  value={requirementId}
+                  placeholder="すべて"
+                  onChange={setRequirementId}
+                />
+              </FieldGroup>
+            }
+            actions={
+              <>
+                <Button
+                  ref={unscheduledTrigger}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  aria-expanded={unscheduledOpen && Boolean(unscheduledCount)}
+                  disabled={!unscheduledCount && !unscheduledOpen}
+                  onClick={() => setUnscheduledOpen(!unscheduledOpen)}
+                >
+                  未日程 {unscheduledCount}
+                </Button>
+                {canCreate ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    aria-controls="gantt-quick-task"
+                    aria-expanded={quickOpen}
+                    onClick={() => setQuickOpen(!quickOpen)}
+                  >
+                    <PlusIcon data-icon="inline-start" /> タスクを追加
+                  </Button>
+                ) : null}
+              </>
+            }
           />
-        </>
-      )}
+          {canCreate ? (
+            <GanttQuickTask
+              projectId={projectId}
+              planning={planning}
+              open={quickOpen}
+            />
+          ) : null}
+          {ganttError ? (
+            <DataLoadError
+              resourceName="ガント"
+              isRetrying={isGanttFetching}
+              onRetry={() => void refetchGantt()}
+            />
+          ) : (
+            <TasksGanttSection
+              projectId={projectId}
+              planning={planning}
+              phases={phases.data ?? []}
+              gantt={shown}
+              isLoading={
+                isGanttLoading || isGanttPlaceholder || (ownTasks && !user)
+              }
+              displayUnit={ganttDisplayUnit}
+              canUpdate={canUpdate}
+              unscheduledPanelOpen={unscheduledOpen}
+              onCloseUnscheduled={() => {
+                setUnscheduledOpen(false);
+                unscheduledTrigger.current?.focus();
+              }}
+              onMilestoneSelect={setEditingMilestone}
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="effort" className="min-w-0 space-y-3">
+          <PlanningPhaseActions
+            projectId={projectId}
+            phases={phases}
+            tasks={currentGantt?.tasks}
+            canManage={currentProjectRole?.role?.key === "project_admin"}
+            canUpdate={canUpdate}
+            canCreate={canCreate}
+            planning={planning}
+          />
+          <TaskPhaseDialog projectId={projectId} summaryOnly />
+        </TabsContent>
+      </Tabs>
       <MilestoneDialogs
         projectId={projectId}
         canUpdate={canUpdate}

@@ -1,18 +1,9 @@
 "use client";
 
 import { Fragment, useRef, useState } from "react";
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  PanelRightOpenIcon,
-} from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import type {
   GanttResponse,
   MilestoneRead,
@@ -35,10 +26,11 @@ import {
   getTaskPlanningValues,
   overlayPlanningTask,
 } from "../../lib/task-planning";
+import { TaskPlanningActions } from "../gantt/task-planning-editor";
 import {
-  TaskPlanningActions,
-  TaskPlanningFields,
-} from "../gantt/task-planning-editor";
+  GANTT_COLUMNS,
+  GanttPlanningCells,
+} from "../gantt/gantt-planning-cells";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { GanttDependenciesSummary } from "../gantt/gantt-dependencies-summary";
 import {
@@ -54,13 +46,8 @@ import {
   GanttUnscheduledDropLane,
 } from "../gantt/gantt-timeline-grid";
 import { UnscheduledTasksPanel } from "../gantt/unscheduled-tasks-panel";
-import {
-  TaskFlagBadges,
-  TaskPriorityBadge,
-  TaskStatusBadge,
-  TaskTags,
-  TaskTypeBadge,
-} from "../shared/task-badges";
+import { cn } from "@/lib/utils";
+import { getTaskStatusLabel } from "../../constants/task-options";
 import {
   type DateRange,
   type GanttDisplayUnit,
@@ -90,6 +77,8 @@ type TasksGanttSectionProps = {
   displayUnit: GanttDisplayUnit;
   canUpdate: boolean;
   planning: TaskPlanningController;
+  unscheduledPanelOpen: boolean;
+  onCloseUnscheduled: () => void;
   onMilestoneSelect: (milestone: MilestoneRead) => void;
 };
 
@@ -101,8 +90,13 @@ export function TasksGanttSection({
   displayUnit,
   canUpdate,
   planning,
+  unscheduledPanelOpen,
+  onCloseUnscheduled,
   onMilestoneSelect,
 }: TasksGanttSectionProps) {
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [collapsedTaskIds, setCollapsedTaskIds] = useState<number[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
@@ -110,8 +104,6 @@ export function TasksGanttSection({
     detailTrigger.current = trigger;
     setSelectedTaskId(taskId);
   };
-  const unscheduledTrigger = useRef<HTMLButtonElement>(null);
-  const [unscheduledPanelOpen, setUnscheduledPanelOpen] = useState(false);
   const [draggingUnscheduledTaskId, setDraggingUnscheduledTaskId] = useState<
     number | null
   >(null);
@@ -188,29 +180,6 @@ export function TasksGanttSection({
 
   return (
     <div className="@container flex flex-col gap-3">
-      {canUpdate ? (
-        <p className="text-sm text-muted-foreground">
-          担当・予定日・見積を編集できます。ドラッグ後も、各行の「保存」で確定します。
-        </p>
-      ) : null}
-      {unscheduledTasks.length ? (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            ref={unscheduledTrigger}
-            onClick={() => setUnscheduledPanelOpen(true)}
-            aria-expanded={unscheduledPanelOpen}
-            aria-controls={
-              unscheduledPanelOpen ? "planning-unscheduled" : undefined
-            }
-          >
-            <PanelRightOpenIcon data-icon="inline-start" />
-            未日程タスク {unscheduledTasks.length}
-          </Button>
-        </div>
-      ) : null}
       <UnscheduledTasksPanel
         open={unscheduledPanelOpen}
         tasks={unscheduledTasks}
@@ -221,9 +190,8 @@ export function TasksGanttSection({
         }
         onEditPlanning={canUpdate ? planning.openEditor : undefined}
         onClose={() => {
-          setUnscheduledPanelOpen(false);
           clearUnscheduledDragState();
-          unscheduledTrigger.current?.focus();
+          onCloseUnscheduled();
         }}
         onOpenDetail={openTaskDetail}
         onDragStart={setDraggingUnscheduledTaskId}
@@ -233,18 +201,37 @@ export function TasksGanttSection({
         }
       />
       {range ? (
-        <div className="overflow-x-auto rounded-lg border [--gantt-task-width:min(20rem,65cqi)] @min-[96rem]:[--gantt-task-width:1040px]">
+        <div
+          role="region"
+          aria-label="ガントの日程表"
+          tabIndex={0}
+          className="max-h-[min(68dvh,52rem)] overflow-auto rounded-lg border [--gantt-task-width:min(17rem,65cqi)] @min-[50rem]:[--gantt-task-width:min(39rem,56cqi)] focus-visible:outline-2 focus-visible:outline-ring"
+        >
           <div
             style={{
               width: `calc(var(--gantt-task-width) + ${timelineWidth}px)`,
             }}
           >
             <div
-              className="grid border-b bg-muted/40 text-xs text-muted-foreground"
+              className="sticky top-0 z-30 grid border-b bg-muted text-xs font-medium text-muted-foreground"
               style={ganttGridStyle}
             >
-              <div className="sticky left-0 z-20 border-r bg-muted/40 px-3 py-2">
-                タスク / 計画（行ごとに保存）
+              <div
+                className={cn(
+                  "sticky left-0 z-10 grid items-center gap-1 border-r bg-muted px-2 py-2",
+                  GANTT_COLUMNS,
+                )}
+              >
+                <span className="col-span-4 @min-[50rem]:col-span-1">
+                  タスク
+                </span>
+                <span className="hidden px-1.5 @min-[50rem]:block">担当者</span>
+                <span className="hidden px-1.5 @min-[50rem]:block">
+                  状態・進捗
+                </span>
+                <span className="hidden px-1.5 @min-[50rem]:block">
+                  予定期間
+                </span>
               </div>
               <GanttTimelineHeader
                 range={range}
@@ -275,50 +262,72 @@ export function TasksGanttSection({
                     className="grid border-b bg-muted/40"
                     style={ganttGridStyle}
                   >
-                    <h3 className="sticky left-0 z-10 min-w-0 break-words border-r bg-muted px-3 py-2 text-sm font-medium">
-                      {group.label}
+                    <h3 className="sticky left-0 z-10 min-w-0 break-words border-r bg-muted px-2 py-1.5 text-sm font-medium">
+                      <button
+                        type="button"
+                        aria-expanded={!collapsedGroups.has(group.key)}
+                        className="flex min-w-0 items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring"
+                        onClick={() =>
+                          setCollapsedGroups((previous) => {
+                            const next = new Set(previous);
+                            if (next.has(group.key)) next.delete(group.key);
+                            else next.add(group.key);
+                            return next;
+                          })
+                        }
+                      >
+                        {collapsedGroups.has(group.key) ? (
+                          <ChevronRightIcon className="size-4" />
+                        ) : (
+                          <ChevronDownIcon className="size-4" />
+                        )}
+                        {group.label}
+                      </button>
                     </h3>
                   </div>
-                  {group.tasks.map((task) => (
-                    <GanttTaskRow
-                      key={task.id}
-                      task={task}
-                      range={range}
-                      milestones={visibleMilestones}
-                      gridStyle={ganttGridStyle}
-                      assigneeLabel={getTaskUserLabel(task.assignee_id)}
-                      highlightedDropDate={highlightedDropDate}
-                      unscheduledTasks={unscheduledTasks}
-                      hasChildren={parentTaskIds.has(task.id)}
-                      isCollapsed={collapsedTaskIds.includes(task.id)}
-                      canUpdate={
-                        canUpdate &&
-                        !planning.pendingDraft &&
-                        !["pending", "unknown"].includes(
-                          planning.rows[task.id]?.status ?? "",
-                        )
-                      }
-                      planning={planning}
-                      canEditPlanning={canUpdate}
-                      onToggleCollapse={() =>
-                        setCollapsedTaskIds((current) =>
-                          current.includes(task.id)
-                            ? current.filter((taskId) => taskId !== task.id)
-                            : [...current, task.id],
-                        )
-                      }
-                      onScheduleUpdate={(values) => planning.edit(task, values)}
-                      onDragActive={(active) =>
-                        setDragRange(active ? range : null)
-                      }
-                      onOpenDetail={openTaskDetail}
-                      onDropUnscheduledTask={(task, dropDate) =>
-                        dropUnscheduledTask(task, dropDate)
-                      }
-                      onDropDateHover={setHighlightedDropDate}
-                      onDropDateClear={() => setHighlightedDropDate(null)}
-                    />
-                  ))}
+                  {!collapsedGroups.has(group.key) &&
+                    group.tasks.map((task) => (
+                      <GanttTaskRow
+                        key={task.id}
+                        task={task}
+                        range={range}
+                        milestones={visibleMilestones}
+                        gridStyle={ganttGridStyle}
+                        assigneeLabel={getTaskUserLabel(task.assignee_id)}
+                        highlightedDropDate={highlightedDropDate}
+                        unscheduledTasks={unscheduledTasks}
+                        hasChildren={parentTaskIds.has(task.id)}
+                        isCollapsed={collapsedTaskIds.includes(task.id)}
+                        canUpdate={
+                          canUpdate &&
+                          !planning.pendingDraft &&
+                          !["pending", "unknown", "conflict"].includes(
+                            planning.rows[task.id]?.status ?? "",
+                          )
+                        }
+                        planning={planning}
+                        canEditPlanning={canUpdate}
+                        onToggleCollapse={() =>
+                          setCollapsedTaskIds((current) =>
+                            current.includes(task.id)
+                              ? current.filter((taskId) => taskId !== task.id)
+                              : [...current, task.id],
+                          )
+                        }
+                        onScheduleUpdate={(values) =>
+                          planning.edit(task, values)
+                        }
+                        onDragActive={(active) =>
+                          setDragRange(active ? range : null)
+                        }
+                        onOpenDetail={openTaskDetail}
+                        onDropUnscheduledTask={(task, dropDate) =>
+                          dropUnscheduledTask(task, dropDate)
+                        }
+                        onDropDateHover={setHighlightedDropDate}
+                        onDropDateClear={() => setHighlightedDropDate(null)}
+                      />
+                    ))}
                 </Fragment>
               ))}
               {visibleMilestones.length ? (
@@ -367,7 +376,12 @@ export function TasksGanttSection({
         </div>
       )}
       {dependencies.length ? (
-        <GanttDependenciesSummary tasks={tasks} dependencies={dependencies} />
+        <details className="text-sm">
+          <summary className="cursor-pointer text-muted-foreground">
+            依存関係 {dependencies.length}件
+          </summary>
+          <GanttDependenciesSummary tasks={tasks} dependencies={dependencies} />
+        </details>
       ) : null}
       <TaskDetailSheet
         projectId={projectId}
@@ -496,98 +510,46 @@ function GanttTaskRow({
 
   return (
     <div className="grid" style={gridStyle}>
-      <div className="sticky left-0 z-10 flex flex-col gap-2 border-r bg-background px-3 py-2">
-        <div className="flex gap-3">
-          <div className="flex min-w-0 flex-1 flex-col gap-2 @min-[96rem]:w-72 @min-[96rem]:flex-none">
-            <div className="flex min-w-0 items-center gap-2">
-              {hasChildren ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={
-                    isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"
-                  }
-                  aria-expanded={!isCollapsed}
-                  onClick={onToggleCollapse}
-                >
-                  {isCollapsed ? (
-                    <ChevronRightIcon data-icon="inline-start" />
-                  ) : (
-                    <ChevronDownIcon data-icon="inline-start" />
-                  )}
-                </Button>
-              ) : (
-                <span className="size-8 shrink-0" />
-              )}
-              <HoverCard
-                open={canEditPlanning ? false : undefined}
-                openDelay={150}
-                closeDelay={120}
-              >
-                <HoverCardTrigger asChild>
-                  <button
-                    type="button"
-                    aria-haspopup="dialog"
-                    className="flex min-w-0 flex-1 flex-col gap-1 rounded text-left hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-ring"
-                    onClick={(event) =>
-                      onOpenDetail(task.id, event.currentTarget)
-                    }
-                  >
-                    {task.parent_task_id ? (
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        └
-                      </span>
-                    ) : null}
-                    <span className="line-clamp-3 break-words text-sm font-medium">
-                      {task.title}
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {task.task_code}
-                    </span>
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent side="right" align="start" className="w-72">
-                  <div className="flex flex-col gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {task.task_code}
-                      </p>
-                    </div>
-                    <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
-                      <dt className="text-muted-foreground">担当者</dt>
-                      <dd className="truncate">{assigneeLabel}</dd>
-                      <dt className="text-muted-foreground">進捗</dt>
-                      <dd>{task.progress_percent ?? 0}%</dd>
-                    </dl>
-                    <div className="flex flex-wrap gap-1">
-                      <TaskTypeBadge
-                        type={task.task_type}
-                        name={task.task_type_name}
-                      />
-                      <TaskPriorityBadge priority={task.priority} />
-                    </div>
-                    <TaskTags tags={task.tags} />
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-              <div className="flex shrink-0 flex-col gap-1">
-                <TaskStatusBadge status={task.status} />
-                <TaskFlagBadges
-                  isOverdue={task.is_overdue}
-                  isBlocked={task.is_blocked}
-                />
-              </div>
-            </div>
+      <div className="sticky left-0 z-10 min-w-0 border-r bg-background px-2 py-1">
+        <div
+          className={cn(
+            "hidden min-h-8 items-center gap-1 @min-[50rem]:grid",
+            GANTT_COLUMNS,
+          )}
+        >
+          <GanttRowTitle
+            task={task}
+            hasChildren={hasChildren}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={onToggleCollapse}
+            onOpenDetail={onOpenDetail}
+          />
+          <GanttPlanningCells
+            task={task}
+            planning={planning}
+            editable={canUpdate}
+            assigneeLabel={assigneeLabel}
+          />
+        </div>
+        <div className="flex min-w-0 flex-col gap-1 @min-[50rem]:hidden">
+          <GanttRowTitle
+            task={task}
+            hasChildren={hasChildren}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={onToggleCollapse}
+            onOpenDetail={onOpenDetail}
+          />
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span>{assigneeLabel}</span>
+            <span>
+              {getTaskStatusLabel(task.status)} {task.progress_percent}%
+            </span>
             {canEditPlanning ? (
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                className="@min-[96rem]:hidden"
+                className="h-7"
                 onClick={(event) =>
                   planning.openEditor(task, event.currentTarget)
                 }
@@ -596,11 +558,6 @@ function GanttTaskRow({
               </Button>
             ) : null}
           </div>
-          {canEditPlanning ? (
-            <div className="hidden min-w-0 flex-1 @min-[96rem]:block">
-              <TaskPlanningFields task={task} planning={planning} inline />
-            </div>
-          ) : null}
         </div>
         {canEditPlanning ? (
           <TaskPlanningActions task={task} planning={planning} />
@@ -608,7 +565,7 @@ function GanttTaskRow({
       </div>
       <div
         ref={timelineRef}
-        className="relative flex flex-col justify-center py-4"
+        className="relative flex flex-col justify-center py-2"
         onPointerMove={updateDraggedRange}
         onPointerUp={finishDrag}
         onPointerCancel={() => {
@@ -670,7 +627,7 @@ function GanttTaskRow({
         <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
         <TodayLine range={range} />
         <div
-          className="relative h-3 rounded-full bg-primary/20 data-[editable=true]:cursor-grab data-[dragging=true]:cursor-grabbing"
+          className="relative h-4 rounded-md bg-primary/25 data-[editable=true]:cursor-grab data-[dragging=true]:cursor-grabbing"
           data-editable={canUpdate ? "true" : undefined}
           data-dragging={dragState?.mode === "move" ? "true" : undefined}
           style={plannedBarStyle}
@@ -706,6 +663,55 @@ function GanttTaskRow({
           />
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function GanttRowTitle({
+  task,
+  hasChildren,
+  isCollapsed,
+  onToggleCollapse,
+  onOpenDetail,
+}: {
+  task: TaskRead;
+  hasChildren: boolean;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  onOpenDetail: (taskId: number, trigger: HTMLButtonElement) => void;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-0.5">
+      {hasChildren ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="h-7 w-7 shrink-0"
+          aria-label={isCollapsed ? "子タスクを展開" : "子タスクを折りたたむ"}
+          aria-expanded={!isCollapsed}
+          onClick={onToggleCollapse}
+        >
+          {isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
+        </Button>
+      ) : task.parent_task_id ? (
+        <span
+          aria-hidden
+          className="w-3 shrink-0 text-xs text-muted-foreground"
+        >
+          └
+        </span>
+      ) : null}
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        title={`${task.task_code} ${task.title}`}
+        className="min-w-0 flex-1 rounded-sm px-1 py-1 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+        onClick={(event) => onOpenDetail(task.id, event.currentTarget)}
+      >
+        <span className="block truncate text-sm font-medium">{task.title}</span>
+        <span className="sr-only"> {task.task_code}</span>
+      </button>
     </div>
   );
 }
