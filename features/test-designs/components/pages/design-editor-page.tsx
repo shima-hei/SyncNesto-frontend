@@ -291,12 +291,14 @@ function Editor({ initial }: { initial: Design }) {
               sourceId={design.id}
               version={design.version}
             />
-            <Button
-              disabled={readOnly || !state.dirty}
-              onClick={() => void state.save()}
-            >
-              保存
-            </Button>
+            {permissions.edit && (
+              <Button
+                disabled={readOnly || !state.dirty}
+                onClick={() => void state.save()}
+              >
+                保存
+              </Button>
+            )}
           </>
         }
       />
@@ -311,29 +313,31 @@ function Editor({ initial }: { initial: Design }) {
               ? "未保存の変更あり"
               : `保存済み v${design.version}`}
         </span>
-        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={readOnly || !state.canUndo}
-            onClick={state.undo}
-          >
-            元に戻す
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={readOnly || !state.canRedo}
-            onClick={state.redo}
-          >
-            やり直す
-          </Button>
-          <Button size="sm" variant="outline" onClick={state.exportDraft}>
-            編集内容を退避
-          </Button>
-        </div>
+        {permissions.edit && (
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={readOnly || !state.canUndo}
+              onClick={state.undo}
+            >
+              元に戻す
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={readOnly || !state.canRedo}
+              onClick={state.redo}
+            >
+              やり直す
+            </Button>
+            <Button size="sm" variant="outline" onClick={state.exportDraft}>
+              編集内容を退避
+            </Button>
+          </div>
+        )}
       </div>
-      {state.recovery && (
+      {permissions.edit && state.recovery && (
         <div
           role="status"
           className="flex flex-wrap items-center gap-3 rounded-md border p-3"
@@ -362,7 +366,7 @@ function Editor({ initial }: { initial: Design }) {
           </Button>
         </div>
       )}
-      {state.draftError && (
+      {permissions.edit && state.draftError && (
         <p role="alert" className="text-sm">
           ブラウザへの下書き保存ができません。保存または「編集内容を退避」を使用してください。
         </p>
@@ -674,7 +678,7 @@ function Editor({ initial }: { initial: Design }) {
         </DesignInspector>
       </div>
       <Dialog
-        open={!!state.conflict}
+        open={permissions.edit && !!state.conflict}
         onOpenChange={(open) => {
           if (!open) state.dismissConflict();
         }}
