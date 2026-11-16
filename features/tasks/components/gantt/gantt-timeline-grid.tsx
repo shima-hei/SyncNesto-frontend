@@ -12,6 +12,9 @@ import {
   type GanttGridStyle,
   getClientDate,
   getDateCells,
+  getGanttPeriodHeaders,
+  getInclusiveDays,
+  getTimelineWidth,
 } from "../../lib/gantt-timeline";
 import {
   getDraggedUnscheduledTaskId,
@@ -171,31 +174,14 @@ export function GanttTimelineHeader({
   canUpdate: boolean;
   onMilestoneSelect: (milestone: MilestoneRead) => void;
 }) {
-  if (displayUnit !== "day") {
-    return (
-      <div
-        className="relative grid py-5"
-        style={{
-          gridTemplateColumns: `repeat(${range.labels.length}, minmax(0, 1fr))`,
-        }}
-      >
-        <DropDateHighlight date={highlightedDropDate} range={range} />
-        <GanttMilestoneHeaderMarkers
-          milestones={milestones}
-          range={range}
-          canUpdate={canUpdate}
-          onSelect={onMilestoneSelect}
-        />
-        {range.labels.map((label, index) => (
-          <span key={`${label}-${index}`} className="relative">
-            {label}
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  const dates = getDateCells(range);
+  const dayCount = getInclusiveDays(range);
+  const showDays =
+    displayUnit === "day" ||
+    (displayUnit === "week" &&
+      getTimelineWidth(range, displayUnit) / dayCount >= 20);
+  const dates = showDays ? getDateCells(range) : [];
+  const periods =
+    displayUnit === "day" ? [] : getGanttPeriodHeaders(range, displayUnit);
 
   return (
     <div className="relative py-2">
@@ -209,23 +195,39 @@ export function GanttTimelineHeader({
       <div
         className="grid text-center"
         style={{
-          gridTemplateColumns: `repeat(${dates.length}, minmax(28px, 1fr))`,
+          gridTemplateColumns: showDays
+            ? `repeat(${dayCount}, minmax(0, 1fr))`
+            : periods.map(({ days }) => `minmax(0, ${days}fr)`).join(" "),
         }}
       >
-        {dates.map((date) => (
+        {periods.map((period) => (
           <div
-            key={`month-${date.key}`}
-            className={cn(
-              "min-w-0 border-l border-border/60 px-1 pb-1 text-[11px]",
-              date.isMonthStart && "font-medium text-foreground",
-            )}
+            key={period.key}
+            style={showDays ? { gridColumn: `span ${period.days}` } : undefined}
+            className="min-w-0 truncate border-l border-border/60 px-1 pb-1 text-left text-[11px] font-medium text-foreground"
+            title={period.label}
           >
-            {date.showMonthLabel ? `${date.date.getUTCMonth() + 1}月` : ""}
+            {period.label}
           </div>
         ))}
+        {displayUnit === "day"
+          ? dates.map((date) => (
+              <div
+                key={`month-${date.key}`}
+                className={cn(
+                  "min-w-0 border-l border-border/60 px-1 pb-1 text-[11px]",
+                  date.isMonthStart && "font-medium text-foreground",
+                )}
+              >
+                {date.showMonthLabel ? `${date.date.getUTCMonth() + 1}月` : ""}
+              </div>
+            ))
+          : null}
         {dates.map((date) => (
-          <div
+          <time
             key={`day-${date.key}`}
+            dateTime={date.key}
+            title={date.key}
             className={cn(
               "min-w-0 border-l border-border/60 px-1 pt-1 text-xs",
               date.isWeekend && "bg-muted/60",
@@ -233,7 +235,7 @@ export function GanttTimelineHeader({
             )}
           >
             {date.date.getUTCDate()}
-          </div>
+          </time>
         ))}
       </div>
     </div>

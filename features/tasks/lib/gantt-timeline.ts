@@ -5,7 +5,6 @@ import { toCalendarDate, toCalendarDateInput } from "@/lib/format/date";
 export type DateRange = {
   start: Date;
   end: Date;
-  labels: string[];
 };
 
 export type GanttGridStyle = {
@@ -27,7 +26,6 @@ export const GANTT_TASK_COLUMN_WIDTH = 320;
 export const getDateRange = (
   tasks: TaskRead[],
   milestones: MilestoneRead[],
-  displayUnit: GanttDisplayUnit,
 ): DateRange | null => {
   const taskTimestamps = tasks
     .flatMap((task) => [
@@ -49,9 +47,7 @@ export const getDateRange = (
 
   const start = new Date(Math.min(...timestamps));
   const end = new Date(Math.max(...timestamps));
-  const labels = getDateLabels(start, end, displayUnit);
-
-  return { start, end, labels };
+  return { start, end };
 };
 
 export const getFallbackDateRange = (
@@ -68,11 +64,7 @@ export const getFallbackDateRange = (
 
   end.setUTCDate(start.getUTCDate() + days);
 
-  return {
-    start,
-    end,
-    labels: getDateLabels(start, end, displayUnit),
-  };
+  return { start, end };
 };
 
 export const getTimelineWidth = (
@@ -123,6 +115,47 @@ export const getDateCells = (range: DateRange) => {
   }
 
   return cells;
+};
+
+export const getGanttPeriodHeaders = (
+  range: DateRange,
+  displayUnit: Exclude<GanttDisplayUnit, "day">,
+) => {
+  const headers: { key: string; label: string; days: number }[] = [];
+  let cursor = new Date(range.start);
+  while (cursor <= range.end) {
+    const periodStart = new Date(cursor);
+    if (displayUnit === "week") {
+      periodStart.setUTCDate(cursor.getUTCDate() - cursor.getUTCDay());
+    } else {
+      periodStart.setUTCDate(1);
+      if (displayUnit === "quarter")
+        periodStart.setUTCMonth(Math.floor(cursor.getUTCMonth() / 3) * 3);
+    }
+    const next = new Date(periodStart);
+    if (displayUnit === "week") next.setUTCDate(next.getUTCDate() + 7);
+    else
+      next.setUTCMonth(next.getUTCMonth() + (displayUnit === "month" ? 1 : 3));
+
+    const month = periodStart.getUTCMonth() + 1;
+    const year = periodStart.getUTCFullYear();
+    const label =
+      displayUnit === "week"
+        ? `${month}/${periodStart.getUTCDate()}の週`
+        : displayUnit === "month"
+          ? `${year}年${month}月`
+          : `${year}年 第${Math.floor((month - 1) / 3) + 1}四半期`;
+    headers.push({
+      key: toCalendarDateInput(periodStart),
+      label,
+      days: Math.min(
+        daysBetween(cursor, next),
+        daysBetween(cursor, range.end) + 1,
+      ),
+    });
+    cursor = next;
+  }
+  return headers;
 };
 
 export const daysBetween = (start: Date, end: Date) => {
@@ -318,54 +351,4 @@ const maxDateInput = (date: Date, minDateInput: string) => {
   const minDate = new Date(minDateInput);
 
   return toCalendarDateInput(date < minDate ? minDate : date);
-};
-
-const getDateLabels = (
-  start: Date,
-  end: Date,
-  displayUnit: GanttDisplayUnit,
-) => {
-  const rangeDays = daysBetween(start, end);
-  const labelCount = Math.min(getLabelCount(displayUnit), rangeDays + 1);
-
-  return Array.from({ length: labelCount }).map((_, index) => {
-    const date = new Date(start);
-    date.setUTCDate(
-      start.getUTCDate() +
-        Math.round((rangeDays / Math.max(labelCount - 1, 1)) * index),
-    );
-
-    switch (displayUnit) {
-      case "week":
-        return `${date.getUTCFullYear()}/W${getWeekNumber(date)}`;
-      case "month":
-        return `${date.getUTCFullYear()}/${date.getUTCMonth() + 1}`;
-      case "quarter":
-        return `${date.getUTCFullYear()}/Q${Math.floor(date.getUTCMonth() / 3) + 1}`;
-      case "day":
-      default:
-        return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
-    }
-  });
-};
-
-const getLabelCount = (displayUnit: GanttDisplayUnit) => {
-  switch (displayUnit) {
-    case "month":
-      return 6;
-    case "quarter":
-      return 4;
-    case "week":
-    case "day":
-    default:
-      return 7;
-  }
-};
-
-const getWeekNumber = (date: Date) => {
-  const firstDay = new Date(date);
-  firstDay.setUTCMonth(0, 1);
-  const days = daysBetween(firstDay, date);
-
-  return Math.ceil((days + firstDay.getUTCDay() + 1) / 7);
 };

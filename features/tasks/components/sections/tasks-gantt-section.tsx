@@ -137,7 +137,7 @@ export function TasksGanttSection({
   );
   const range =
     dragRange ??
-    getDateRange(visibleTasks, visibleMilestones, displayUnit) ??
+    getDateRange(visibleTasks, visibleMilestones) ??
     (unscheduledTasks.length ? getFallbackDateRange(displayUnit) : null);
   const parentTaskIds = new Set(
     visibleTasks

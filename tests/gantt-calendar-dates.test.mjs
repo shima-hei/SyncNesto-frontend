@@ -61,7 +61,6 @@ for (const tz of ["Asia/Tokyo", "UTC", "America/Los_Angeles"]) {
       const range = timeline.getDateRange(
         [{ start_date: start, due_date: end }],
         [],
-        "day",
       );
       assert.deepEqual(
         timeline.getDateCells(range).map((cell) => cell.key),
@@ -125,4 +124,43 @@ test("keeps range paging in the target month at month and quarter boundaries", (
     startDate: "2028-04-30",
     endDate: "2028-05-29",
   });
+});
+
+test("timeline period headings span real days without repeating labels", () => {
+  const ranges = [
+    [
+      "week",
+      "2026-11-14",
+      "2026-11-23",
+      [1, 7, 2],
+      ["2026-11-08", "2026-11-15", "2026-11-22"],
+    ],
+    ["month", "2028-02-28", "2028-03-02", [2, 2], ["2028-02-01", "2028-03-01"]],
+    [
+      "quarter",
+      "2026-12-30",
+      "2027-01-02",
+      [2, 2],
+      ["2026-10-01", "2027-01-01"],
+    ],
+  ];
+  for (const [unit, start, end, spans, keys] of ranges) {
+    const range = timeline.getDateRange(
+      [{ start_date: start, due_date: end }],
+      [],
+    );
+    const headers = timeline.getGanttPeriodHeaders(range, unit);
+    assert.deepEqual(
+      headers.map(({ days }) => days),
+      spans,
+    );
+    assert.deepEqual(
+      headers.map(({ key }) => key),
+      keys,
+    );
+    assert.equal(
+      spans.reduce((sum, days) => sum + days, 0),
+      timeline.getInclusiveDays(range),
+    );
+  }
 });
