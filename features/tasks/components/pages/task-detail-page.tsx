@@ -5,7 +5,7 @@ import { useListNavigation } from "@/hooks/use-list-navigation";
 import { createTaskOrigin } from "@/lib/navigation/task-origin";
 import { TaskRequirementLinks } from "../shared/task-requirement-links";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeftIcon,
@@ -249,6 +249,14 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
                 value={getTaskReferenceLabel(parentTask, task.parent_task_id)}
               />
               <TaskInfo
+                label="登録日時"
+                value={
+                  <time dateTime={task.created_at}>
+                    {formatDateTime(task.created_at)}
+                  </time>
+                }
+              />
+              <TaskInfo
                 label="更新日時"
                 value={formatDateTime(task.updated_at)}
               />
@@ -402,7 +410,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
   );
 }
 
-function TaskInfo({ label, value }: { label: string; value: string | number }) {
+function TaskInfo({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
