@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { RequirementDocumentRead } from "@/lib/api/generated/model";
+import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
@@ -117,7 +118,7 @@ export function RequirementDocumentOverview({
         `[data-document-field="${CSS.escape(targetAnchor.field)}"]`,
       );
 
-    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    scrollToRequirementContent(element);
     setActivePreviewAnchorKey(anchorKey);
     window.setTimeout(() => {
       setActivePreviewAnchorKey((current) =>
