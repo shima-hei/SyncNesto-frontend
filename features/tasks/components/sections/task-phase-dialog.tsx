@@ -29,6 +29,7 @@ import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-pro
 import { getConflictCurrent, getConflictFields } from "@/lib/api/conflict";
 import type {
   EffortMetric,
+  EffortSummary,
   EffortTotals,
   PhaseRead,
   PhaseUpdate,
@@ -42,6 +43,7 @@ import {
 import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
 import { formatEffortMetric } from "../../lib/task-effort";
 import { getTaskStatusLabel } from "../../constants/task-options";
+import { TaskUserSelectField } from "../forms/task-user-select-field";
 
 type PhaseValues = { name: string; sortOrder: string; archived: string };
 const phaseValues = (phase: PhaseRead | null): PhaseValues => ({
@@ -220,11 +222,33 @@ function PhaseManagement({ projectId }: { projectId: number }) {
 }
 
 function ProjectEffortSummary({ projectId }: { projectId: number }) {
+  const [assigneeId, setAssigneeId] = useState("");
   const summary = useEffortSummaryProjectsProjectIdTasksEffortSummaryGet(
     projectId,
-    undefined,
+    assigneeId ? { assignee_id: Number(assigneeId) } : undefined,
     { query: { retry: false } },
   );
+  return (
+    <>
+      <TaskUserSelectField
+        projectId={projectId}
+        label="担当者で集計を絞る"
+        value={assigneeId}
+        placeholder="すべての担当者"
+        onChange={setAssigneeId}
+      />
+      <ProjectEffortResult query={summary} />
+    </>
+  );
+}
+
+function ProjectEffortResult({
+  query: summary,
+}: {
+  query: ReturnType<
+    typeof useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<EffortSummary>
+  >;
+}) {
   if (summary.error) {
     return (
       <DataLoadError
