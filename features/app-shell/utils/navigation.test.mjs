@@ -118,16 +118,20 @@ test("breadcrumbs use daily and management labels without duplicate project hier
   );
 });
 
-test("詳細のパンくずで対象IDと親機能を区別する", () => {
-  for (const [path, label] of [
-    ["tasks/51", "タスク #51"],
-    ["requirements/11/items/21", "要件 #21"],
-    ["specifications/31", "設計書 #31"],
-    ["test-designs/41", "テスト設計書 #41"],
+test("詳細のパンくずは内部IDを表示せず、名称を取得する対象を保持する", () => {
+  for (const [path, label, type, id] of [
+    ["tasks/51", "タスク詳細", "task", 51],
+    ["requirements/11", "要件定義書詳細", "requirement-document", 11],
+    ["requirements/11/items/21", "要件詳細", "requirement", 21],
+    ["specifications/31", "設計書詳細", "specification", 31],
+    ["test-designs/41", "テスト設計書詳細", "test-design", 41],
+    ["documents/61", "ドキュメント詳細", "document", 61],
   ]) {
     const items = getBreadcrumbItems(`/projects/joined/7/${path}`);
     assert.equal(items.at(-1).label, label);
     assert.equal(items.at(-1).href, undefined);
+    assert.equal(items.at(-1).dynamicType, type);
+    assert.equal(items.at(-1).dynamicId, id);
     assert.equal(items[1].dynamicId, 7);
   }
 });

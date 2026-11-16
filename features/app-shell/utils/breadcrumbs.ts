@@ -1,8 +1,29 @@
 export type BreadcrumbItem = {
   label: string;
   href?: string;
-  dynamicType?: "project";
+  dynamicType?: "project" | (typeof RESOURCE_SEGMENTS)[string]["type"];
   dynamicId?: number;
+};
+
+const RESOURCE_SEGMENTS: Record<
+  string,
+  {
+    label: string;
+    type:
+      | "task"
+      | "requirement-document"
+      | "requirement"
+      | "specification"
+      | "test-design"
+      | "document";
+  }
+> = {
+  tasks: { label: "タスク詳細", type: "task" },
+  requirements: { label: "要件定義書詳細", type: "requirement-document" },
+  items: { label: "要件詳細", type: "requirement" },
+  specifications: { label: "設計書詳細", type: "specification" },
+  "test-designs": { label: "テスト設計書詳細", type: "test-design" },
+  documents: { label: "ドキュメント詳細", type: "document" },
 };
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -161,28 +182,14 @@ const getDynamicBreadcrumbItem = ({
     return { label: "組織詳細", href };
   }
 
-  if (previousSegment === "requirements") {
+  const resource = previousSegment && RESOURCE_SEGMENTS[previousSegment];
+  if (resource) {
     return {
-      label: "要件定義書詳細",
+      label: resource.label,
       href,
+      dynamicType: resource.type,
+      dynamicId: id,
     };
-  }
-
-  if (previousSegment === "items") {
-    return {
-      label: `要件 #${id}`,
-      href,
-    };
-  }
-
-  const labels: Record<string, string> = {
-    tasks: "タスク",
-    specifications: "設計書",
-    "test-designs": "テスト設計書",
-    documents: "ドキュメント",
-  };
-  if (previousSegment && labels[previousSegment]) {
-    return { label: `${labels[previousSegment]} #${id}`, href };
   }
   return null;
 };
