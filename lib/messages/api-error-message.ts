@@ -14,6 +14,7 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   UNAUTHORIZED: "ログインが必要です。",
   AUTHENTICATION_REQUIRED: "ログインが必要です。",
   TOKEN_EXPIRED: "セッションの有効期限が切れました。再度ログインしてください。",
+  STALE_SESSION_TOKEN: "認証情報が更新されました。もう一度お試しください。",
   INVALID_TOKEN: "認証情報が正しくありません。再度ログインしてください。",
   FORBIDDEN: "この操作を行う権限がありません。",
   PASSWORD_CHANGE_REQUIRED:

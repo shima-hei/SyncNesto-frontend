@@ -3,6 +3,7 @@ export const AUTH_ERROR_CODES = {
   invalidCredentials: "INVALID_CREDENTIALS",
   invalidToken: "INVALID_TOKEN",
   tokenExpired: "TOKEN_EXPIRED",
+  staleSessionToken: "STALE_SESSION_TOKEN",
 } as const;
 
 type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];
