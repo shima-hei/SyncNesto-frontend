@@ -31,6 +31,7 @@ import {
   canReviewRequirement,
   canUpdateRequirement,
 } from "@/features/auth/utils/authorization";
+import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { formatDateTime } from "@/lib/format/date";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 
@@ -128,7 +129,7 @@ export function RequirementDetailPage({
     }
 
     const element = document.querySelector(selector);
-    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    scrollToRequirementContent(element);
   };
 
   const getTargetAnchorStatus = (targetAnchor: Record<string, unknown>) => {

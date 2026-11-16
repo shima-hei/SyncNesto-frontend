@@ -7,6 +7,7 @@ import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delet
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RequirementOpenIssueRead } from "@/lib/api/generated/model";
+import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { formatDate } from "@/lib/format/date";
 
 import { getRequirementOpenIssueStatusLabel } from "../../constants/requirement-options";
@@ -188,14 +189,11 @@ export function RequirementOpenIssuesSection({
                       showTargetAnchorInput={false}
                       onTargetAnchorClick={(anchor) => {
                         if (typeof anchor.field !== "string") return;
-                        document
-                          .querySelector(
+                        scrollToRequirementContent(
+                          document.querySelector(
                             `[data-open-issue-id="${issue.id}"] [data-open-issue-field="${CSS.escape(anchor.field)}"]`,
-                          )
-                          ?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
+                          ),
+                        );
                       }}
                       getTargetAnchorStatus={(anchor) => {
                         if (!isRequirementReviewTargetAnchor(anchor))

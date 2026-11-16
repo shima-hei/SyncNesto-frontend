@@ -36,6 +36,7 @@ import {
   useWorkbenchScope,
 } from "../../../hooks/use-workbench-state";
 import { captureWorkbenchReturnPoint } from "../../../hooks/use-workbench-return-navigation";
+import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { cn } from "@/lib/utils";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 
@@ -296,7 +297,7 @@ export function RequirementDocumentRequirementsTab({
     ) {
       if (parent instanceof HTMLDetailsElement) parent.open = true;
     }
-    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    scrollToRequirementContent(element);
     setActiveAnchorKey(anchorKey);
     window.setTimeout(() => {
       setActiveAnchorKey((current) => (current === anchorKey ? null : current));
