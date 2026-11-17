@@ -32,9 +32,46 @@ export function getPlanningPhaseLabels(phases: PhaseRead[]) {
   ]);
 }
 
-export function groupPlanningTasks(tasks: TaskRead[], phases: PhaseRead[]) {
+export const isUnscheduledTask = (task: TaskRead) =>
+  !task.start_date && !task.due_date;
+
+export function selectGanttPhaseRows(
+  tasks: TaskRead[],
+  unscheduledLimit: number,
+  revealedTaskId?: number,
+) {
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const shownIds = new Set<number>();
+  let unscheduled = 0;
+  for (const task of tasks) {
+    if (isUnscheduledTask(task) && task.id !== revealedTaskId) {
+      if (unscheduled >= unscheduledLimit) continue;
+      unscheduled++;
+    }
+    let current: TaskRead | undefined = task;
+    while (current && !shownIds.has(current.id)) {
+      shownIds.add(current.id);
+      current = byId.get(current.parent_task_id ?? -1);
+    }
+  }
+  return {
+    shown: tasks.filter((task) => shownIds.has(task.id)),
+    remaining: tasks.length - shownIds.size,
+  };
+}
+
+export function groupPlanningTasks(
+  tasks: TaskRead[],
+  phases: PhaseRead[],
+  includeEmptyPhases = false,
+) {
   const labels = getPlanningPhaseLabels(phases);
   const groups = new Map<string, TaskRead[]>();
+  if (includeEmptyPhases) {
+    for (const phase of phases) {
+      if (!phase.archived_at) groups.set(`phase:${phase.id}`, []);
+    }
+  }
   for (const task of tasks) {
     const key = getPlanningPhaseKey(task);
     const rows = groups.get(key);

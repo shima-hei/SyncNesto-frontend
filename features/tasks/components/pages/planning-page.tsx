@@ -27,7 +27,6 @@ import { useTaskPlanning } from "../../hooks/use-task-planning";
 import { extendLegacyGanttRange } from "../../lib/gantt-range-controls";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
-import { GanttQuickTask } from "../gantt/gantt-quick-task";
 import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
 import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import { PlanningPhaseActions } from "../sections/planning-phase-actions";
@@ -237,13 +236,6 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               </>
             }
           />
-          {canCreate ? (
-            <GanttQuickTask
-              projectId={projectId}
-              planning={planning}
-              open={quickOpen}
-            />
-          ) : null}
           {ganttError ? (
             <DataLoadError
               resourceName="ガント"
@@ -254,6 +246,15 @@ export function PlanningPage({ projectId }: { projectId: number }) {
             <TasksGanttSection
               projectId={projectId}
               planning={planning}
+              canCreate={canCreate}
+              quickOpen={quickOpen}
+              visibilityScope={JSON.stringify([
+                search,
+                assigneeId,
+                requirementId,
+                ganttStartDate,
+                ganttEndDate,
+              ])}
               phases={phases.data ?? []}
               gantt={shown}
               dependencyTasks={

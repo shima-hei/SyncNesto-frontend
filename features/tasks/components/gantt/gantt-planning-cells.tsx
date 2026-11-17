@@ -50,7 +50,10 @@ export function GanttPlanningCells({
   const progress = `${getTaskStatusLabel(values.status)} ${values.progressPercent || "—"}%`;
   const dateLabel = (date: string) =>
     date ? date.slice(5).replace("-", "/") : "—";
-  const period = `${dateLabel(values.startDate)} – ${dateLabel(values.dueDate)}`;
+  const period =
+    values.startDate || values.dueDate
+      ? `${dateLabel(values.startDate)} – ${dateLabel(values.dueDate)}`
+      : "未日程";
   const commit = (changes: Changes) => void planning.commit(task, changes);
   const common = { task, values, editable, commit };
   return (

@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type {
   GanttResponse,
   MilestoneRead,
-  PhaseRead,
+  PhaseListItem,
   TaskRead,
 } from "@/lib/api/generated/model";
 import {
@@ -21,6 +21,8 @@ import {
   getPlanningPhaseKey,
   getPlanningPhaseLabels,
   getGanttTaskTree,
+  isUnscheduledTask,
+  selectGanttPhaseRows,
   type GanttTaskNode,
 } from "../../lib/planning-phases";
 import { useGanttOrder } from "../../hooks/use-gantt-order";
@@ -41,6 +43,10 @@ import {
   GanttOrderHandle,
   type GanttOrderControl,
 } from "../gantt/gantt-order-handle";
+import {
+  GanttContextTaskButton,
+  GanttQuickTask,
+} from "../gantt/gantt-quick-task";
 import { GanttDependencyBadge } from "../gantt/gantt-dependency-badge";
 import {
   getGanttDependencyWarnings,
@@ -86,7 +92,10 @@ type TasksGanttSectionProps = {
   projectId: number;
   gantt: GanttResponse | null;
   dependencyTasks?: TaskRead[];
-  phases: PhaseRead[];
+  phases: PhaseListItem[];
+  canCreate: boolean;
+  quickOpen: boolean;
+  visibilityScope: string;
   isLoading: boolean;
   displayUnit: GanttDisplayUnit;
   displayStart: string;
@@ -99,11 +108,17 @@ type TasksGanttSectionProps = {
   onMilestoneSelect: (milestone: MilestoneRead) => void;
 };
 
+const INITIAL_UNSCHEDULED_ROWS = 3;
+const UNSCHEDULED_ROW_BATCH = 20;
+
 export function TasksGanttSection({
   projectId,
   gantt,
   dependencyTasks,
   phases,
+  canCreate,
+  quickOpen,
+  visibilityScope,
   isLoading,
   displayUnit,
   displayStart,
@@ -134,6 +149,47 @@ export function TasksGanttSection({
   const [dragRange, setDragRange] = useState<DateRange | null>(null);
   const { usersById, getTaskUserLabel } = useTaskUserMap(projectId);
   const order = useGanttOrder(projectId);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [recent, setRecent] = useState<{
+    task: TaskRead;
+    scope: string;
+    focusRow: boolean;
+  }>();
+  const [unscheduledLimits, setUnscheduledLimits] = useState<
+    Record<string, number>
+  >({});
+  const revealed = recent?.scope === visibilityScope ? recent : undefined;
+  useEffect(() => {
+    if (!revealed || isLoading) return;
+    const frame = requestAnimationFrame(() => {
+      const row = chartRef.current?.querySelector<HTMLElement>(
+        `[data-gantt-task-id="${revealed.task.id}"]`,
+      );
+      row?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      if (revealed.focusRow) {
+        Array.from(
+          row?.querySelectorAll<HTMLButtonElement>("[data-gantt-task-title]") ??
+            [],
+        )
+          .find((button) => button.getClientRects().length)
+          ?.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [revealed, isLoading]);
+  const revealTask = (task: TaskRead, focusRow = false) => {
+    const groupKey = getPlanningPhaseKey(task);
+    setCollapsedGroups((previous) => {
+      if (!previous.has(groupKey)) return previous;
+      const next = new Set(previous);
+      next.delete(groupKey);
+      return next;
+    });
+    setCollapsedTaskIds((previous) =>
+      previous.filter((id) => id !== task.parent_task_id),
+    );
+    setRecent({ task, scope: visibilityScope, focusRow });
+  };
 
   if (isLoading) {
     return (
@@ -143,7 +199,16 @@ export function TasksGanttSection({
     );
   }
 
-  const tasks = (gantt?.tasks ?? []).map((task) =>
+  const incoming = gantt?.tasks ?? [];
+  const recentTask = revealed?.task;
+  const savedRecent = planning.lastSaved?.task;
+  const pinnedTask =
+    savedRecent && savedRecent.id === recentTask?.id ? savedRecent : recentTask;
+  const tasks = (
+    pinnedTask && !incoming.some((task) => task.id === pinnedTask.id)
+      ? [...incoming, pinnedTask]
+      : incoming
+  ).map((task) =>
     planning.rows[task.id]
       ? overlayPlanningTask(task, planning.rows[task.id].values)
       : task,
@@ -171,14 +236,20 @@ export function TasksGanttSection({
     dependencies,
   );
   const milestones = gantt?.milestones ?? [];
-  const visibleTasks = tasks.filter((task) => task.start_date || task.due_date);
-  const unscheduledTasks = tasks.filter(
-    (task) => !task.start_date && !task.due_date,
-  );
+  const datedTasks = tasks.filter((task) => !isUnscheduledTask(task));
+  const unscheduledTasks = tasks.filter(isUnscheduledTask);
+  const unscheduledCountByPhase = new Map<string, number>();
+  for (const task of unscheduledTasks) {
+    const key = getPlanningPhaseKey(task);
+    unscheduledCountByPhase.set(
+      key,
+      (unscheduledCountByPhase.get(key) ?? 0) + 1,
+    );
+  }
   const range =
     dragRange ??
     getGanttDisplayRange(
-      getDateRange(visibleTasks, milestones),
+      getDateRange(datedTasks, milestones),
       displayStart,
       displayEnd,
       getTodayGanttRange(displayUnit),
@@ -188,13 +259,13 @@ export function TasksGanttSection({
     return date >= range.start && date <= range.end;
   });
   const parentTaskIds = new Set(
-    visibleTasks
+    tasks
       .map((task) => task.parent_task_id)
       .filter((taskId): taskId is number => Boolean(taskId)),
   );
-  const visibleById = new Map(visibleTasks.map((task) => [task.id, task]));
+  const visibleById = new Map(tasks.map((task) => [task.id, task]));
   const collapsed = new Set(collapsedTaskIds);
-  const displayedTasks = visibleTasks.filter((task) => {
+  const displayedTasks = tasks.filter((task) => {
     let parentId = task.parent_task_id;
     while (parentId) {
       if (collapsed.has(parentId)) return false;
@@ -202,12 +273,12 @@ export function TasksGanttSection({
     }
     return true;
   });
-  const groups = groupPlanningTasks(displayedTasks, phases);
-  const phaseIdsByKey = new Map(
-    phases.map((phase) => [`phase:${phase.id}`, phase.id]),
+  const groups = groupPlanningTasks(displayedTasks, phases, true);
+  const phaseByKey = new Map(
+    phases.map((phase) => [`phase:${phase.id}`, phase]),
   );
   const displayedPhaseIds = groups.flatMap((group) => {
-    const id = phaseIdsByKey.get(group.key);
+    const id = phaseByKey.get(group.key)?.id;
     return id === undefined ? [] : [id];
   });
   const getOrderControl = (
@@ -272,6 +343,7 @@ export function TasksGanttSection({
       return (
         <div
           key={task.id}
+          data-gantt-task-id={task.id}
           data-gantt-order-group={orderControl?.group}
           data-gantt-order-id={orderControl?.id}
           className={cn("divide-y", GANTT_ORDER_ROW)}
@@ -291,6 +363,22 @@ export function TasksGanttSection({
                 : undefined
             }
             orderControl={orderControl}
+            addChild={
+              canCreate &&
+              (!task.phase_id ||
+                phaseByKey.get(phaseKey)?.archived_at === null) ? (
+                <GanttContextTaskButton
+                  target={{
+                    label: task.title,
+                    phaseAssignment: phaseKey,
+                    parentTaskId: task.id,
+                  }}
+                  projectId={projectId}
+                  planning={planning}
+                  onCreated={(created) => revealTask(created, true)}
+                />
+              ) : undefined
+            }
             highlightedDropDate={highlightedDropDate}
             unscheduledTasks={unscheduledTasks}
             hasChildren={parentTaskIds.has(task.id)}
@@ -329,6 +417,14 @@ export function TasksGanttSection({
 
   return (
     <div className="@container flex flex-col gap-3">
+      {canCreate && (
+        <GanttQuickTask
+          projectId={projectId}
+          planning={planning}
+          open={quickOpen}
+          onCreated={revealTask}
+        />
+      )}
       <UnscheduledTasksPanel
         open={unscheduledPanelOpen}
         tasks={unscheduledTasks}
@@ -350,6 +446,7 @@ export function TasksGanttSection({
         }
       />
       <div
+        ref={chartRef}
         role="region"
         data-gantt-scroll=""
         aria-label="ガントの日程表"
@@ -402,7 +499,26 @@ export function TasksGanttSection({
           ) : null}
           <div className="divide-y">
             {groups.map((group) => {
-              const phaseId = phaseIdsByKey.get(group.key);
+              const phase = phaseByKey.get(group.key);
+              const phaseId = phase?.id;
+              const totalUnscheduled =
+                unscheduledCountByPhase.get(group.key) ?? 0;
+              const expanded = !collapsedGroups.has(group.key);
+              const limit =
+                unscheduledLimits[group.key] ?? INITIAL_UNSCHEDULED_ROWS;
+              const rows = expanded
+                ? selectGanttPhaseRows(group.tasks, limit, recentTask?.id)
+                : null;
+              const start = phase?.planned_start_date;
+              const end = phase?.planned_end_date;
+              const periodBar =
+                start && end && start <= end
+                  ? getTimelineBarStyle(new Date(start), new Date(end), range)
+                  : null;
+              const periodLabel =
+                start && end && start <= end
+                  ? `工程全体の予定期間 ${formatDate(start)}〜${formatDate(end)}`
+                  : undefined;
               const orderControl =
                 canReorderPhases && phaseId !== undefined
                   ? getOrderControl(
@@ -429,7 +545,7 @@ export function TasksGanttSection({
                       <h3 className="min-w-0 break-words text-sm font-medium">
                         <button
                           type="button"
-                          aria-expanded={!collapsedGroups.has(group.key)}
+                          aria-expanded={expanded}
                           className="flex min-w-0 items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring"
                           onClick={() =>
                             setCollapsedGroups((previous) => {
@@ -440,18 +556,69 @@ export function TasksGanttSection({
                             })
                           }
                         >
-                          {collapsedGroups.has(group.key) ? (
-                            <ChevronRightIcon className="size-4" />
-                          ) : (
+                          {expanded ? (
                             <ChevronDownIcon className="size-4" />
+                          ) : (
+                            <ChevronRightIcon className="size-4" />
                           )}
                           {group.label}
                         </button>
                       </h3>
+                      {totalUnscheduled > 0 && (
+                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                          未日程 {totalUnscheduled}
+                        </span>
+                      )}
+                      {canCreate && phase && !phase.archived_at && (
+                        <GanttContextTaskButton
+                          target={{
+                            label: phase.name,
+                            phaseAssignment: group.key,
+                          }}
+                          projectId={projectId}
+                          planning={planning}
+                          onCreated={(task) => revealTask(task, true)}
+                        />
+                      )}
+                    </div>
+                    <div className="relative flex items-center">
+                      {periodLabel && (
+                        <span className="sr-only">{periodLabel}</span>
+                      )}
+                      {periodBar && (
+                        <div
+                          className="absolute h-1.5 rounded-full bg-foreground/50"
+                          data-gantt-phase-summary={phaseId}
+                          style={periodBar}
+                          title={periodLabel}
+                        />
+                      )}
                     </div>
                   </div>
-                  {!collapsedGroups.has(group.key) &&
-                    renderTaskRows(getGanttTaskTree(group.tasks), group.key)}
+                  {rows && (
+                    <>
+                      {renderTaskRows(getGanttTaskTree(rows.shown), group.key)}
+                      {rows.remaining > 0 && (
+                        <div className="grid" style={ganttGridStyle}>
+                          <div className="sticky left-0 z-10 border-r bg-background p-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                setUnscheduledLimits((previous) => ({
+                                  ...previous,
+                                  [group.key]: limit + UNSCHEDULED_ROW_BATCH,
+                                }))
+                              }
+                            >
+                              未日程をさらに表示（残り {rows.remaining} 件）
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -517,6 +684,7 @@ function GanttTaskRow({
   assigneeLabel,
   assigneeAvatarUrl,
   orderControl,
+  addChild,
   highlightedDropDate,
   unscheduledTasks,
   hasChildren,
@@ -540,6 +708,7 @@ function GanttTaskRow({
   assigneeLabel: string;
   assigneeAvatarUrl?: string | null;
   orderControl?: GanttOrderControl;
+  addChild?: ReactNode;
   highlightedDropDate: string | null;
   unscheduledTasks: TaskRead[];
   hasChildren: boolean;
@@ -563,7 +732,10 @@ function GanttTaskRow({
   const dragMoved = useRef(false);
   const start = new Date(startDate || dueDate);
   const end = new Date(dueDate || startDate);
-  const plannedBarStyle = getTimelineBarStyle(start, end, range);
+  const hasPlannedDates = Boolean(startDate || dueDate);
+  const plannedBarStyle = hasPlannedDates
+    ? getTimelineBarStyle(start, end, range)
+    : null;
   const actualBarStyle = getActualBarStyle(task, range);
   const updateDraggedRange = (event: React.PointerEvent<HTMLElement>) => {
     if (!dragState) {
@@ -654,6 +826,7 @@ function GanttTaskRow({
           <GanttRowTitle
             task={task}
             orderControl={orderControl}
+            addChild={addChild}
             warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
@@ -678,6 +851,7 @@ function GanttTaskRow({
           <GanttRowTitle
             task={task}
             orderControl={orderControl}
+            addChild={addChild}
             warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
@@ -695,6 +869,7 @@ function GanttTaskRow({
             <span>
               {getTaskStatusLabel(task.status)} {task.progress_percent}%
             </span>
+            {!hasPlannedDates && <span>未日程</span>}
             {canEditPlanning ? (
               <Button
                 type="button"
@@ -827,6 +1002,7 @@ function GanttTaskRow({
 function GanttRowTitle({
   task,
   orderControl,
+  addChild,
   warnings,
   hasChildren,
   isCollapsed,
@@ -835,6 +1011,7 @@ function GanttRowTitle({
 }: {
   task: TaskRead;
   orderControl?: GanttOrderControl;
+  addChild?: ReactNode;
   warnings: readonly GanttDependencyWarning[];
   hasChildren: boolean;
   isCollapsed: boolean;
@@ -867,6 +1044,7 @@ function GanttRowTitle({
       <button
         type="button"
         aria-haspopup="dialog"
+        data-gantt-task-title=""
         title={`${task.task_code} ${task.title}`}
         className="min-w-0 flex-1 rounded-sm px-1 py-1 text-left hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
         onClick={(event) => onOpenDetail(task.id, event.currentTarget)}
@@ -874,6 +1052,7 @@ function GanttRowTitle({
         <span className="block truncate text-sm font-medium">{task.title}</span>
         <span className="sr-only"> {task.task_code}</span>
       </button>
+      {addChild}
       {warnings.length ? (
         <GanttDependencyBadge
           taskLabel={task.task_code || task.title}

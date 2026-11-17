@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarPlusIcon, GripVerticalIcon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,8 @@ type UnscheduledTasksPanelProps = {
   onEditPlanning?: (task: TaskRead, trigger: HTMLButtonElement) => void;
 };
 
+const UNSCHEDULED_PAGE_SIZE = 24;
+
 export function UnscheduledTasksPanel({
   open,
   tasks,
@@ -40,6 +42,7 @@ export function UnscheduledTasksPanel({
   onEditPlanning,
 }: UnscheduledTasksPanelProps) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  const [limit, setLimit] = useState(UNSCHEDULED_PAGE_SIZE);
   useEffect(() => {
     if (open) closeButton.current?.focus();
   }, [open]);
@@ -79,7 +82,7 @@ export function UnscheduledTasksPanel({
       <div className="flex-1 overflow-y-auto p-3">
         {tasks.length ? (
           <div className="flex flex-col gap-2">
-            {tasks.map((task) => (
+            {tasks.slice(0, limit).map((task) => (
               <UnscheduledTaskDragItem
                 key={task.id}
                 task={task}
@@ -93,6 +96,17 @@ export function UnscheduledTasksPanel({
                 onEditPlanning={onEditPlanning}
               />
             ))}
+            {tasks.length > limit && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setLimit((current) => current + UNSCHEDULED_PAGE_SIZE)
+                }
+              >
+                さらに表示（残り {tasks.length - limit} 件）
+              </Button>
+            )}
           </div>
         ) : (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">

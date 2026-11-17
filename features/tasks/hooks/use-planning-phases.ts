@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import type { PhaseRead } from "@/lib/api/generated/model";
+import type { PhaseListItem } from "@/lib/api/generated/model";
 import {
   getListPhasesProjectsProjectIdPhasesGetQueryKey,
   listPhasesProjectsProjectIdPhasesGet,
@@ -18,7 +18,7 @@ export function usePlanningPhases(projectId: number) {
     ],
     retry: false,
     queryFn: async ({ signal }) => {
-      const phases = new Map<number, PhaseRead>();
+      const phases = new Map<number, PhaseListItem>();
       for (let page = 1; ; page++) {
         const result = await listPhasesProjectsProjectIdPhasesGet(
           projectId,

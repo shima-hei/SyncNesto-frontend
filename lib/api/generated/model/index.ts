@@ -316,6 +316,7 @@ export * from "./phaseEventReadNewValue";
 export * from "./phaseEventReadOldValue";
 export * from "./phaseEventsProjectsProjectIdPhasesPhaseIdEventsGetParams";
 export * from "./phaseList";
+export * from "./phaseListItem";
 export * from "./phaseRead";
 export * from "./phaseUpdate";
 export * from "./preservationCleanupRequest";

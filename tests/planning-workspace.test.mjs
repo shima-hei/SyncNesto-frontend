@@ -21,7 +21,8 @@ async function load(name) {
   );
 }
 
-const { getGanttTaskTree, groupPlanningTasks } = await load("planning-phases");
+const { getGanttTaskTree, groupPlanningTasks, selectGanttPhaseRows } =
+  await load("planning-phases");
 const { getPlanningHref } = await load("planning-route");
 
 test("ガントの順序で親タスクと配下の行をまとめる", () => {
@@ -40,6 +41,34 @@ test("ガントの順序で親タスクと配下の行をまとめる", () => {
   assert.deepEqual(
     tree[0].children.map(({ task }) => task.id),
     [5, 4],
+  );
+});
+
+test("未日程の初期表示に直近の登録と必要な親を残し、空の工程も表示する", () => {
+  const tasks = [
+    { id: 1 },
+    { id: 2 },
+    { id: 3 },
+    { id: 4 },
+    { id: 5, start_date: "2026-11-17", parent_task_id: 4 },
+    { id: 6 },
+  ];
+  const result = selectGanttPhaseRows(tasks, 2, 6);
+  assert.deepEqual(
+    result.shown.map((task) => task.id),
+    [1, 2, 4, 5, 6],
+  );
+  assert.equal(result.remaining, 1);
+  assert.deepEqual(
+    groupPlanningTasks(
+      [],
+      [
+        { id: 7, name: "空の工程", archived_at: null },
+        { id: 8, name: "旧工程", archived_at: "2026-11-16" },
+      ],
+      true,
+    ),
+    [{ key: "phase:7", label: "空の工程", tasks: [] }],
   );
 });
 

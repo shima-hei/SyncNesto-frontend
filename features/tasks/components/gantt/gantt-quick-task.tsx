@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { PlusIcon } from "lucide-react";
 
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import type { TaskRead } from "@/lib/api/generated/model";
 
@@ -13,14 +19,24 @@ import { useCreateTask } from "../../hooks/use-create-task";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import { defaultTaskFormValues } from "../../lib/task-mappers";
 
+export type GanttTaskCreateTarget = {
+  label: string;
+  phaseAssignment: string;
+  parentTaskId?: number;
+};
+
 export function GanttQuickTask({
   projectId,
   planning,
   open,
+  target,
+  onCreated,
 }: {
   projectId: number;
   planning: TaskPlanningController;
   open: boolean;
+  target?: GanttTaskCreateTarget;
+  onCreated?: (created: TaskRead) => void;
 }) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -38,12 +54,20 @@ export function GanttQuickTask({
     inFlight.current = true;
     try {
       const saved = await createTask(
-        { ...defaultTaskFormValues, title, description },
+        {
+          ...defaultTaskFormValues,
+          title,
+          description,
+          phaseAssignment:
+            target?.phaseAssignment ?? defaultTaskFormValues.phaseAssignment,
+          parentTaskId: target?.parentTaskId?.toString() ?? "",
+        },
         { navigateAfterCreate: false },
       );
       setTitle("");
       setDescription("");
       setCreated(saved);
+      onCreated?.(saved);
       input.current?.focus();
     } catch {
       // リクエスト失敗時は入力を保持する。
@@ -55,8 +79,8 @@ export function GanttQuickTask({
   return (
     <div
       hidden={!open}
-      id="gantt-quick-task"
-      className="space-y-2 rounded-lg border p-3"
+      id={target ? undefined : "gantt-quick-task"}
+      className={target ? "space-y-2" : "space-y-2 rounded-lg border p-3"}
     >
       <form
         className="flex flex-col gap-2"
@@ -114,7 +138,7 @@ export function GanttQuickTask({
           </span>
         ) : null}
       </div>
-      {created ? (
+      {created && !target ? (
         <Button
           type="button"
           variant="outline"
@@ -126,5 +150,57 @@ export function GanttQuickTask({
         </Button>
       ) : null}
     </div>
+  );
+}
+
+export function GanttContextTaskButton({
+  target,
+  projectId,
+  planning,
+  onCreated,
+}: {
+  target: GanttTaskCreateTarget;
+  projectId: number;
+  planning: TaskPlanningController;
+  onCreated: (task: TaskRead) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const action = target.parentTaskId ? "子タスクを追加" : "タスクを追加";
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="size-7 shrink-0"
+          aria-label={`「${target.label}」に${action}`}
+          title={action}
+        >
+          <PlusIcon />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[min(21rem,calc(100vw-2rem))]"
+        aria-label={`「${target.label}」に${action}`}
+      >
+        <p className="mb-2 text-xs text-muted-foreground">
+          {target.label} に{action}
+        </p>
+        {open ? (
+          <GanttQuickTask
+            projectId={projectId}
+            planning={planning}
+            target={target}
+            open
+            onCreated={(task) => {
+              setOpen(false);
+              onCreated(task);
+            }}
+          />
+        ) : null}
+      </PopoverContent>
+    </Popover>
   );
 }
