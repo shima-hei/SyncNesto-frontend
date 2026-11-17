@@ -14,6 +14,7 @@ import { TaskFlagBadges, TaskStatusBadge } from "../shared/task-badges";
 
 type UnscheduledTasksPanelProps = {
   open: boolean;
+  groupLabel?: string;
   tasks: TaskRead[];
   isPending: boolean;
   canUpdate: boolean;
@@ -30,6 +31,7 @@ const UNSCHEDULED_PAGE_SIZE = 24;
 
 export function UnscheduledTasksPanel({
   open,
+  groupLabel,
   tasks,
   isPending,
   canUpdate,
@@ -60,7 +62,7 @@ export function UnscheduledTasksPanel({
       <div className="flex items-start justify-between gap-3 border-b p-4">
         <div className="min-w-0">
           <h3 id="planning-unscheduled-title" className="text-base font-medium">
-            未日程タスク
+            {groupLabel ? `${groupLabel}の未日程タスク` : "未日程タスク"}
           </h3>
           {canUpdate ? (
             <p className="text-sm text-muted-foreground">

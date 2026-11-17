@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { PlusIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
@@ -24,7 +24,9 @@ import { useMilestones } from "../../hooks/use-milestones";
 import { usePlanningPhases } from "../../hooks/use-planning-phases";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { useTaskPlanning } from "../../hooks/use-task-planning";
+import { useTaskStatusFilter } from "../../hooks/use-task-status-filter";
 import { extendLegacyGanttRange } from "../../lib/gantt-range-controls";
+import { matchesTaskStatus } from "../../lib/task-list-filters";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
 import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
@@ -32,6 +34,7 @@ import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import { PlanningPhaseActions } from "../sections/planning-phase-actions";
 import { TaskPhaseDialog } from "../sections/task-phase-dialog";
 import { TasksGanttSection } from "../sections/tasks-gantt-section";
+import { GanttStatusFilters } from "./controls/gantt-status-filters";
 import {
   GanttControls,
   GANTT_DISPLAY_OPTIONS,
@@ -49,8 +52,8 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const activeView = mode === "effort" ? "effort" : "gantt";
   const [search, setSearch] = useUrlFilterState("ganttSearch", "");
   const [quickOpen, setQuickOpen] = useState(false);
-  const [unscheduledOpen, setUnscheduledOpen] = useState(false);
-  const unscheduledTrigger = useRef<HTMLButtonElement>(null);
+  const [unscheduledGroup, setUnscheduledGroup] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useTaskStatusFilter();
   const ownTasks =
     searchParams.get("assignee") === "me" && !searchParams.has("assigneeId");
   const [assigneeId, setAssigneeId] = useUrlFilterState(
@@ -117,7 +120,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     activeView === "gantt" && needsDependencyTasks,
   );
   const needle = search.trim().toLocaleLowerCase();
-  const shown =
+  const searched =
     currentGantt && needle
       ? {
           ...currentGantt,
@@ -128,14 +131,15 @@ export function PlanningPage({ projectId }: { projectId: number }) {
           ),
         }
       : currentGantt;
-  const unscheduledCount =
-    shown?.tasks.filter((task) => {
-      const draft = planning.rows[task.id]?.values;
-      return draft
-        ? !draft.startDate && !draft.dueDate
-        : !task.start_date && !task.due_date;
-    }).length ?? 0;
-
+  const shown =
+    searched && statusFilter.kind !== "all"
+      ? {
+          ...searched,
+          tasks: searched.tasks.filter((task) =>
+            matchesTaskStatus(statusFilter, task.status),
+          ),
+        }
+      : searched;
   const setRange = (
     { startDate, endDate }: { startDate: string; endDate: string },
     customRange = false,
@@ -165,7 +169,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
         value={activeView}
         onValueChange={(value) => {
           setMode(value);
-          if (value !== "gantt") setUnscheduledOpen(false);
+          if (value !== "gantt") setUnscheduledGroup(null);
         }}
         className="min-w-0 gap-2"
       >
@@ -210,31 +214,22 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               </FieldGroup>
             }
             actions={
-              <>
+              canCreate ? (
                 <Button
-                  ref={unscheduledTrigger}
                   type="button"
                   size="sm"
-                  variant="outline"
-                  aria-expanded={unscheduledOpen && Boolean(unscheduledCount)}
-                  disabled={!unscheduledCount && !unscheduledOpen}
-                  onClick={() => setUnscheduledOpen(!unscheduledOpen)}
+                  aria-controls="gantt-quick-task"
+                  aria-expanded={quickOpen}
+                  onClick={() => setQuickOpen(!quickOpen)}
                 >
-                  未日程 {unscheduledCount}
+                  <PlusIcon data-icon="inline-start" /> タスクを追加
                 </Button>
-                {canCreate ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    aria-controls="gantt-quick-task"
-                    aria-expanded={quickOpen}
-                    onClick={() => setQuickOpen(!quickOpen)}
-                  >
-                    <PlusIcon data-icon="inline-start" /> タスクを追加
-                  </Button>
-                ) : null}
-              </>
+              ) : null
             }
+          />
+          <GanttStatusFilters
+            filter={statusFilter}
+            onChange={setStatusFilter}
           />
           {ganttError ? (
             <DataLoadError
@@ -254,9 +249,13 @@ export function PlanningPage({ projectId }: { projectId: number }) {
                 requirementId,
                 ganttStartDate,
                 ganttEndDate,
+                statusFilter,
               ])}
               phases={phases.data ?? []}
               gantt={shown}
+              rangeTasks={
+                statusFilter.kind !== "all" ? searched?.tasks : undefined
+              }
               dependencyTasks={
                 needsDependencyTasks &&
                 !projectGantt.error &&
@@ -274,11 +273,8 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               canReorderPhases={
                 currentProjectRole?.role?.key === "project_admin"
               }
-              unscheduledPanelOpen={unscheduledOpen}
-              onCloseUnscheduled={() => {
-                setUnscheduledOpen(false);
-                unscheduledTrigger.current?.focus();
-              }}
+              unscheduledGroup={unscheduledGroup}
+              onUnscheduledGroupChange={setUnscheduledGroup}
               onMilestoneSelect={setEditingMilestone}
             />
           )}

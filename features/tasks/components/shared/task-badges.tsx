@@ -101,5 +101,5 @@ const taskStatusTones: Record<string, StatusTone> = {
   blocked: "danger",
 };
 
-const getTaskStatusTone = (status?: string | null): StatusTone =>
+export const getTaskStatusTone = (status?: string | null): StatusTone =>
   status ? (taskStatusTones[status] ?? "neutral") : "neutral";

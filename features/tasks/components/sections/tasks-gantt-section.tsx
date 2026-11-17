@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,6 +42,7 @@ import {
   GANTT_COLUMNS,
   GanttAssigneeCell,
   GanttPlanningCells,
+  GanttStatusProgress,
 } from "../gantt/gantt-planning-cells";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import {
@@ -65,6 +72,7 @@ import {
   GanttUnscheduledDropLane,
 } from "../gantt/gantt-timeline-grid";
 import { UnscheduledTasksPanel } from "../gantt/unscheduled-tasks-panel";
+import { getTaskStatusTone } from "../shared/task-badges";
 import { cn } from "@/lib/utils";
 import { getTaskStatusLabel } from "../../constants/task-options";
 import {
@@ -91,6 +99,7 @@ import { TaskDetailSheet } from "./task-detail-sheet";
 type TasksGanttSectionProps = {
   projectId: number;
   gantt: GanttResponse | null;
+  rangeTasks?: TaskRead[];
   dependencyTasks?: TaskRead[];
   phases: PhaseListItem[];
   canCreate: boolean;
@@ -103,8 +112,8 @@ type TasksGanttSectionProps = {
   canUpdate: boolean;
   canReorderPhases: boolean;
   planning: TaskPlanningController;
-  unscheduledPanelOpen: boolean;
-  onCloseUnscheduled: () => void;
+  unscheduledGroup: string | null;
+  onUnscheduledGroupChange: (key: string | null) => void;
   onMilestoneSelect: (milestone: MilestoneRead) => void;
 };
 
@@ -114,6 +123,7 @@ const UNSCHEDULED_ROW_BATCH = 20;
 export function TasksGanttSection({
   projectId,
   gantt,
+  rangeTasks,
   dependencyTasks,
   phases,
   canCreate,
@@ -126,8 +136,8 @@ export function TasksGanttSection({
   canUpdate,
   canReorderPhases,
   planning,
-  unscheduledPanelOpen,
-  onCloseUnscheduled,
+  unscheduledGroup,
+  onUnscheduledGroupChange,
   onMilestoneSelect,
 }: TasksGanttSectionProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
@@ -150,6 +160,7 @@ export function TasksGanttSection({
   const { usersById, getTaskUserLabel } = useTaskUserMap(projectId);
   const order = useGanttOrder(projectId);
   const chartRef = useRef<HTMLDivElement>(null);
+  const unscheduledTrigger = useRef<HTMLButtonElement>(null);
   const [recent, setRecent] = useState<{
     task: TaskRead;
     scope: string;
@@ -204,15 +215,15 @@ export function TasksGanttSection({
   const savedRecent = planning.lastSaved?.task;
   const pinnedTask =
     savedRecent && savedRecent.id === recentTask?.id ? savedRecent : recentTask;
+  const withDraft = (task: TaskRead) =>
+    planning.rows[task.id]
+      ? overlayPlanningTask(task, planning.rows[task.id].values)
+      : task;
   const tasks = (
     pinnedTask && !incoming.some((task) => task.id === pinnedTask.id)
       ? [...incoming, pinnedTask]
       : incoming
-  ).map((task) =>
-    planning.rows[task.id]
-      ? overlayPlanningTask(task, planning.rows[task.id].values)
-      : task,
-  );
+  ).map(withDraft);
   const dependencies = gantt?.dependencies ?? [];
   const dependencySnapshot = new Map(
     dependencyTasks?.map((task) => [task.id, task]),
@@ -236,16 +247,20 @@ export function TasksGanttSection({
     dependencies,
   );
   const milestones = gantt?.milestones ?? [];
-  const datedTasks = tasks.filter((task) => !isUnscheduledTask(task));
+  const datedTasks = (rangeTasks?.map(withDraft) ?? tasks).filter(
+    (task) => !isUnscheduledTask(task),
+  );
   const unscheduledTasks = tasks.filter(isUnscheduledTask);
-  const unscheduledCountByPhase = new Map<string, number>();
+  const unscheduledByPhase = new Map<string, TaskRead[]>();
   for (const task of unscheduledTasks) {
     const key = getPlanningPhaseKey(task);
-    unscheduledCountByPhase.set(
-      key,
-      (unscheduledCountByPhase.get(key) ?? 0) + 1,
-    );
+    const items = unscheduledByPhase.get(key);
+    if (items) items.push(task);
+    else unscheduledByPhase.set(key, [task]);
   }
+  const panelTasks = unscheduledGroup
+    ? (unscheduledByPhase.get(unscheduledGroup) ?? [])
+    : [];
   const range =
     dragRange ??
     getGanttDisplayRange(
@@ -426,8 +441,12 @@ export function TasksGanttSection({
         />
       )}
       <UnscheduledTasksPanel
-        open={unscheduledPanelOpen}
-        tasks={unscheduledTasks}
+        key={unscheduledGroup}
+        open={unscheduledGroup !== null}
+        groupLabel={
+          unscheduledGroup ? phaseLabels.get(unscheduledGroup) : undefined
+        }
+        tasks={panelTasks}
         isPending={Boolean(planning.pendingDraft)}
         canUpdate={canUpdate}
         getPhaseLabel={(task) =>
@@ -436,7 +455,11 @@ export function TasksGanttSection({
         onEditPlanning={canUpdate ? planning.openEditor : undefined}
         onClose={() => {
           clearUnscheduledDragState();
-          onCloseUnscheduled();
+          onUnscheduledGroupChange(null);
+          (unscheduledTrigger.current?.isConnected
+            ? unscheduledTrigger.current
+            : chartRef.current
+          )?.focus();
         }}
         onOpenDetail={openTaskDetail}
         onDragStart={setDraggingUnscheduledTaskId}
@@ -484,9 +507,9 @@ export function TasksGanttSection({
               onMilestoneSelect={onMilestoneSelect}
             />
           </div>
-          {canUpdate && unscheduledTasks.length && unscheduledPanelOpen ? (
+          {canUpdate && panelTasks.length > 0 ? (
             <GanttUnscheduledDropLane
-              tasks={unscheduledTasks}
+              tasks={panelTasks}
               range={range}
               gridStyle={ganttGridStyle}
               milestones={visibleMilestones}
@@ -502,7 +525,7 @@ export function TasksGanttSection({
               const phase = phaseByKey.get(group.key);
               const phaseId = phase?.id;
               const totalUnscheduled =
-                unscheduledCountByPhase.get(group.key) ?? 0;
+                unscheduledByPhase.get(group.key)?.length ?? 0;
               const expanded = !collapsedGroups.has(group.key);
               const limit =
                 unscheduledLimits[group.key] ?? INITIAL_UNSCHEDULED_ROWS;
@@ -565,9 +588,21 @@ export function TasksGanttSection({
                         </button>
                       </h3>
                       {totalUnscheduled > 0 && (
-                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="ml-auto h-7 shrink-0 px-1.5 text-xs text-muted-foreground"
+                          aria-label={`「${group.label}」の未日程 ${totalUnscheduled}件を表示`}
+                          aria-expanded={unscheduledGroup === group.key}
+                          aria-controls="planning-unscheduled"
+                          onClick={(event) => {
+                            unscheduledTrigger.current = event.currentTarget;
+                            onUnscheduledGroupChange(group.key);
+                          }}
+                        >
                           未日程 {totalUnscheduled}
-                        </span>
+                        </Button>
                       )}
                       {canCreate && phase && !phase.archived_at && (
                         <GanttContextTaskButton
@@ -866,9 +901,10 @@ function GanttTaskRow({
               name={assigneeLabel}
               avatarUrl={assigneeAvatarUrl}
             />
-            <span>
-              {getTaskStatusLabel(task.status)} {task.progress_percent}%
-            </span>
+            <GanttStatusProgress
+              status={task.status}
+              progress={task.progress_percent}
+            />
             {!hasPlannedDates && <span>未日程</span>}
             {canEditPlanning ? (
               <Button
@@ -954,15 +990,16 @@ function GanttTaskRow({
         <TodayLine range={range} />
         {plannedBarStyle ? (
           <div
-            className="relative h-4 rounded-md bg-primary/25 data-[editable=true]:cursor-grab data-[dragging=true]:cursor-grabbing"
+            className="relative h-4 rounded-md border border-[color:var(--gantt-status-edge)] bg-[color-mix(in_oklab,var(--gantt-status-color)_36%,var(--background))] data-[editable=true]:cursor-grab data-[dragging=true]:cursor-grabbing forced-colors:border-[CanvasText]"
+            data-gantt-bar-tone={getTaskStatusTone(task.status)}
             data-editable={canUpdate ? "true" : undefined}
             data-dragging={dragState?.mode === "move" ? "true" : undefined}
-            style={plannedBarStyle}
-            title={`${formatDate(startDate)} - ${formatDate(dueDate)}`}
+            style={{ ...plannedBarStyle, ...getStatusBarColors(task.status) }}
+            title={`${getTaskStatusLabel(task.status)} ${task.progress_percent ?? 0}% · ${formatDate(startDate)} – ${formatDate(dueDate)}`}
             onPointerDown={(event) => startDrag(event, "move")}
           >
             <div
-              className="h-full rounded-md bg-primary"
+              className="h-full rounded bg-[var(--gantt-status-color)] forced-colors:border-b-2 forced-colors:border-[CanvasText]"
               style={{ width: `${task.progress_percent ?? 0}%` }}
             />
             {canUpdate ? (
@@ -970,7 +1007,7 @@ function GanttTaskRow({
                 {start >= range.start ? (
                   <button
                     type="button"
-                    className="absolute top-0 bottom-0 left-0 w-2 cursor-ew-resize rounded-l-full bg-primary/80"
+                    className="absolute top-0 bottom-0 left-0 w-2 cursor-ew-resize rounded-l-full bg-[var(--gantt-status-edge)]"
                     aria-label={`${task.task_code}の開始日をドラッグで変更`}
                     onPointerDown={(event) => startDrag(event, "start")}
                   />
@@ -978,7 +1015,7 @@ function GanttTaskRow({
                 {end <= range.end ? (
                   <button
                     type="button"
-                    className="absolute top-0 right-0 bottom-0 w-2 cursor-ew-resize rounded-r-full bg-primary/80"
+                    className="absolute top-0 right-0 bottom-0 w-2 cursor-ew-resize rounded-r-full bg-[var(--gantt-status-edge)]"
                     aria-label={`${task.task_code}の終了予定日をドラッグで変更`}
                     onPointerDown={(event) => startDrag(event, "end")}
                   />
@@ -997,6 +1034,15 @@ function GanttTaskRow({
       </div>
     </div>
   );
+}
+
+function getStatusBarColors(status?: string | null): CSSProperties {
+  const tone = getTaskStatusTone(status);
+  const edge = tone === "resolved" || tone === "returned" ? "border" : "fg";
+  return {
+    "--gantt-status-color": `var(--status-${tone}-chart)`,
+    "--gantt-status-edge": `var(--status-${tone}-${edge})`,
+  } as CSSProperties;
 }
 
 function GanttRowTitle({

@@ -18,6 +18,7 @@ import { TASK_STATUS_OPTIONS } from "../../../constants/task-options";
 import {
   getSelectedTaskStatuses,
   getTaskStatusFilterLabel,
+  toggleTaskStatusFilter,
   type TaskStatusFilter,
 } from "../../../lib/task-list-filters";
 
@@ -90,16 +91,11 @@ export function TaskStatusFilterControl({
                 key={option.value}
                 checked={selected.includes(option.value)}
                 onSelect={(event) => event.preventDefault()}
-                onCheckedChange={(checked) => {
-                  const values = checked
-                    ? [...selected, option.value]
-                    : selected.filter((status) => status !== option.value);
+                onCheckedChange={(checked) =>
                   onChange(
-                    values.length
-                      ? { kind: "include", values }
-                      : { kind: "all" },
-                  );
-                }}
+                    toggleTaskStatusFilter(selected, option.value, checked),
+                  )
+                }
               >
                 {option.label}
               </DropdownMenuCheckboxItem>

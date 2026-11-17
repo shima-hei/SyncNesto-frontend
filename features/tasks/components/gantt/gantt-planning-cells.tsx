@@ -24,6 +24,7 @@ import {
   type TaskPlanningValues,
 } from "../../lib/task-planning";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
+import { TaskStatusBadge } from "../shared/task-badges";
 import {
   TaskPlanningDateFields,
   TaskProgressFields,
@@ -47,7 +48,7 @@ export function GanttPlanningCells({
 }) {
   const row = planning.rows[task.id];
   const values = row?.values ?? getTaskPlanningValues(task);
-  const progress = `${getTaskStatusLabel(values.status)} ${values.progressPercent || "—"}%`;
+  const progress = values.progressPercent || "—";
   const dateLabel = (date: string) =>
     date ? date.slice(5).replace("-", "/") : "—";
   const period =
@@ -59,7 +60,14 @@ export function GanttPlanningCells({
   return (
     <>
       {children}
-      <PlanningCell {...common} label="進捗" value={progress}>
+      <PlanningCell
+        {...common}
+        label="進捗"
+        value={`${getTaskStatusLabel(values.status)} ${progress}%`}
+        display={
+          <GanttStatusProgress status={values.status} progress={progress} />
+        }
+      >
         {(current, change) => (
           <TaskProgressFields
             values={current}
@@ -74,6 +82,21 @@ export function GanttPlanningCells({
         )}
       </PlanningCell>
     </>
+  );
+}
+
+export function GanttStatusProgress({
+  status,
+  progress,
+}: {
+  status?: string | null;
+  progress?: string | number | null;
+}) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1">
+      <TaskStatusBadge status={status} />
+      <span className="shrink-0 text-xs tabular-nums">{progress ?? 0}%</span>
+    </span>
   );
 }
 
@@ -129,6 +152,7 @@ function PlanningCell({
   children,
   immediate = false,
   icon,
+  display,
   commit,
 }: {
   task: TaskRead;
@@ -138,6 +162,7 @@ function PlanningCell({
   editable: boolean;
   immediate?: boolean;
   icon?: ReactNode;
+  display?: ReactNode;
   commit: (changes: Changes) => void;
   children: (
     values: TaskPlanningValues,
@@ -169,7 +194,7 @@ function PlanningCell({
         {icon ? (
           <span aria-hidden>{icon}</span>
         ) : (
-          <span className="truncate">{value}</span>
+          (display ?? <span className="truncate">{value}</span>)
         )}
       </Button>
     </PopoverTrigger>
@@ -224,7 +249,7 @@ function PlanningCell({
       className="min-w-0 truncate px-1.5 text-xs tabular-nums"
       title={ariaLabel}
     >
-      {value}
+      {display ?? value}
     </span>
   );
 }
