@@ -41,7 +41,7 @@ import {
   useEffortSummaryProjectsProjectIdTasksEffortSummaryGet,
 } from "@/lib/api/generated/tasks/tasks";
 import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
-import { formatEffortMetric } from "../../lib/task-effort";
+import { formatEffortAmount, formatEffortMetric } from "../../lib/task-effort";
 import { getTaskStatusLabel } from "../../constants/task-options";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 
@@ -192,7 +192,13 @@ function PhaseManagement({ projectId }: { projectId: number }) {
   );
 }
 
-export function ProjectEffortSummary({ projectId }: { projectId: number }) {
+export function ProjectEffortSummary({
+  projectId,
+  showHours = false,
+}: {
+  projectId: number;
+  showHours?: boolean;
+}) {
   const [assigneeId, setAssigneeId] = useState("");
   const summary = useEffortSummaryProjectsProjectIdTasksEffortSummaryGet(
     projectId,
@@ -208,14 +214,16 @@ export function ProjectEffortSummary({ projectId }: { projectId: number }) {
         placeholder="すべての担当者"
         onChange={setAssigneeId}
       />
-      <ProjectEffortResult query={summary} />
+      <ProjectEffortResult query={summary} showHours={showHours} />
     </>
   );
 }
 
 function ProjectEffortResult({
   query: summary,
+  showHours,
 }: {
+  showHours: boolean;
   query: ReturnType<
     typeof useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<EffortSummary>
   >;
@@ -237,8 +245,16 @@ function ProjectEffortResult({
         <p role="status">工数集計を更新しています。</p>
       ) : null}
       <dl className="grid gap-3 sm:grid-cols-2">
-        <EffortTotal label="見積" metric={totals.estimated} />
-        <EffortTotal label="実績" metric={totals.actual} />
+        <EffortTotal
+          label="見積"
+          metric={totals.estimated}
+          showHours={showHours}
+        />
+        <EffortTotal
+          label="実績"
+          metric={totals.actual}
+          showHours={showHours}
+        />
       </dl>
       {totals.task_count ? (
         <>
@@ -247,6 +263,7 @@ function ProjectEffortResult({
               工程別の内訳
             </summary>
             <EffortBreakdown
+              showHours={showHours}
               rows={groups.map((group) => ({
                 label: group.phase
                   ? `${group.phase.name}${group.phase.archived_at ? "（アーカイブ済み）" : ""}`
@@ -263,6 +280,7 @@ function ProjectEffortResult({
               状態別の内訳
             </summary>
             <EffortBreakdown
+              showHours={showHours}
               rows={status_groups.map((group) => ({
                 label: getTaskStatusLabel(group.status),
                 id: group.status,
@@ -283,9 +301,11 @@ function ProjectEffortResult({
 function EffortTotal({
   label,
   metric,
+  showHours,
 }: {
   label: string;
   metric?: EffortMetric;
+  showHours: boolean;
 }) {
   return (
     <div className="rounded-lg border p-3">
@@ -294,7 +314,7 @@ function EffortTotal({
         {metric && !metric.complete ? "（確認済み小計）" : ""}
       </dt>
       <dd className="text-lg font-semibold tabular-nums">
-        {metric ? `${metric.minutes ?? 0} 分` : "未取得"}
+        {metric ? formatEffortAmount(metric.minutes ?? 0, showHours) : "未取得"}
       </dd>
       {metric && !metric.complete ? (
         <dd className="mt-1 flex flex-wrap gap-x-3 text-sm text-muted-foreground">
@@ -312,8 +332,10 @@ function EffortTotal({
 
 function EffortBreakdown({
   rows,
+  showHours,
 }: {
   rows: { id: string; label: string; totals: EffortTotals }[];
+  showHours: boolean;
 }) {
   return (
     <Table>
@@ -330,8 +352,12 @@ function EffortBreakdown({
           <TableRow key={id}>
             <TableCell>{label}</TableCell>
             <TableCell className="tabular-nums">{totals.task_count}</TableCell>
-            <TableCell>{formatEffortMetric(totals.estimated)}</TableCell>
-            <TableCell>{formatEffortMetric(totals.actual)}</TableCell>
+            <TableCell>
+              {formatEffortMetric(totals.estimated, showHours)}
+            </TableCell>
+            <TableCell>
+              {formatEffortMetric(totals.actual, showHours)}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

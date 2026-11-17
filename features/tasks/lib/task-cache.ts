@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import type { TaskRead } from "@/lib/api/generated/model";
+import { getListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGetQueryKey } from "@/lib/api/generated/task-estimates/task-estimates";
 import {
   getListBoardsProjectsProjectIdBoardsGetQueryKey as getBoardListKey,
   getListRequirementTasksRequirementsRequirementIdTasksGetQueryKey as getRequirementTaskListKey,
@@ -113,6 +114,12 @@ export const invalidateTaskProjectSurfaces = (
   options: { includeBoard?: boolean } = {},
 ) => {
   const invalidations = [
+    queryClient.invalidateQueries({
+      queryKey:
+        getListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGetQueryKey(
+          projectId,
+        ),
+    }),
     queryClient.invalidateQueries({
       queryKey:
         getEffortSummaryProjectsProjectIdTasksEffortSummaryGetQueryKey(

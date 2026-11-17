@@ -21,4 +21,5 @@ export interface PhaseListItem {
   task_count?: number;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
+  completed_task_count?: number;
 }

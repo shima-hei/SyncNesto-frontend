@@ -33,6 +33,7 @@ import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
 import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import { PlanningPhaseActions } from "../sections/planning-phase-actions";
 import { ProjectEffortSummary } from "../sections/task-phase-dialog";
+import { TaskEstimateWorkbench } from "../sections/task-estimate-workbench";
 import { TasksGanttSection } from "../sections/tasks-gantt-section";
 import { GanttStatusFilters } from "./controls/gantt-status-filters";
 import {
@@ -51,6 +52,10 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const [mode, setMode] = useUrlFilterState("planningView", "gantt");
   const activeView = mode === "effort" ? "effort" : "gantt";
   const [effortView, setEffortView] = useUrlFilterState("effortView", "phases");
+  const activeEffortView =
+    effortView === "summary" || effortView === "estimate"
+      ? effortView
+      : "phases";
   const [search, setSearch] = useUrlFilterState("ganttSearch", "");
   const [quickOpen, setQuickOpen] = useState(false);
   const [unscheduledGroup, setUnscheduledGroup] = useState<string | null>(null);
@@ -286,7 +291,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
           className={activeView === "effort" ? "min-w-0 space-y-3" : "hidden"}
         >
           <Tabs
-            value={effortView === "summary" ? "summary" : "phases"}
+            value={activeEffortView}
             onValueChange={setEffortView}
             activationMode="manual"
             className="min-w-0 gap-3"
@@ -295,6 +300,9 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               <TabsTrigger value="phases" className="px-3">
                 工程一覧
               </TabsTrigger>
+              <TabsTrigger value="estimate" className="px-3">
+                工数見積
+              </TabsTrigger>
               <TabsTrigger value="summary" className="px-3">
                 工数集計
               </TabsTrigger>
@@ -302,10 +310,12 @@ export function PlanningPage({ projectId }: { projectId: number }) {
             <TabsContent
               value="phases"
               forceMount
-              className={effortView === "summary" ? "hidden" : "min-w-0"}
+              className={activeEffortView === "phases" ? "min-w-0" : "hidden"}
             >
               <PlanningPhaseActions
-                active={activeView === "effort" && effortView !== "summary"}
+                active={
+                  activeView === "effort" && activeEffortView === "phases"
+                }
                 projectId={projectId}
                 phases={phases}
                 tasks={currentGantt?.tasks}
@@ -315,13 +325,26 @@ export function PlanningPage({ projectId }: { projectId: number }) {
                 planning={planning}
               />
             </TabsContent>
+            <TabsContent
+              value="estimate"
+              forceMount
+              className={activeEffortView === "estimate" ? "min-w-0" : "hidden"}
+            >
+              <TaskEstimateWorkbench
+                active={
+                  activeView === "effort" && activeEffortView === "estimate"
+                }
+                projectId={projectId}
+                canUpdate={canUpdate}
+              />
+            </TabsContent>
             <TabsContent value="summary" className="min-w-0">
               <section
                 aria-label="工数集計"
                 className="space-y-4 rounded-lg border p-3"
               >
                 {activeView === "effort" && (
-                  <ProjectEffortSummary projectId={projectId} />
+                  <ProjectEffortSummary projectId={projectId} showHours />
                 )}
               </section>
             </TabsContent>

@@ -300,6 +300,13 @@ export function PlanningPhaseActions({
                     <TableHead scope="col" className="text-right">
                       実績
                     </TableHead>
+                    <TableHead
+                      scope="col"
+                      className="text-right"
+                      title="完了件数 / 全タスク（中止を含む）"
+                    >
+                      完了 / 全件
+                    </TableHead>
                     {canManage && <TableHead scope="col">操作</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -381,8 +388,9 @@ export function PlanningPhaseActions({
                             ? formatEffortMetric(
                                 totals?.estimated ??
                                   (phase.task_count === 0
-                                    ? { minutes: 0 }
+                                    ? { minutes: 0, complete: true }
                                     : null),
+                                true,
                               )
                             : "—"}
                         </TableCell>
@@ -391,10 +399,16 @@ export function PlanningPhaseActions({
                             ? formatEffortMetric(
                                 totals?.actual ??
                                   (phase.task_count === 0
-                                    ? { minutes: 0 }
+                                    ? { minutes: 0, complete: true }
                                     : null),
+                                true,
                               )
                             : "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {phase.completed_task_count === undefined
+                            ? "—"
+                            : `${phase.completed_task_count} / ${phase.task_count ?? 0}`}
                         </TableCell>
                         {canManage && (
                           <TableCell>
@@ -432,7 +446,7 @@ export function PlanningPhaseActions({
                   })}
                   {nameEditor === null && (
                     <TableRow>
-                      <TableCell colSpan={5}>{nameForm(null)}</TableCell>
+                      <TableCell colSpan={6}>{nameForm(null)}</TableCell>
                     </TableRow>
                   )}
                   {(
@@ -464,11 +478,16 @@ export function PlanningPhaseActions({
                           {summary.isSuccess ? (totals?.task_count ?? 0) : "—"}
                         </TableCell>
                         <TableCell className="text-right tabular-nums whitespace-normal">
-                          {totals ? formatEffortMetric(totals.estimated) : "—"}
+                          {totals
+                            ? formatEffortMetric(totals.estimated, true)
+                            : "—"}
                         </TableCell>
                         <TableCell className="text-right tabular-nums whitespace-normal">
-                          {totals ? formatEffortMetric(totals.actual) : "—"}
+                          {totals
+                            ? formatEffortMetric(totals.actual, true)
+                            : "—"}
                         </TableCell>
+                        <TableCell className="text-right">—</TableCell>
                         {canManage && <TableCell />}
                       </TableRow>
                     );
