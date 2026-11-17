@@ -37,9 +37,11 @@ import {
   calculateThreePointMinutes,
   estimateMethodLabels,
   parseEstimateHours,
+  toHourInput,
 } from "../../lib/task-estimate";
 import { effortBasisLabel, formatEstimateHours } from "../../lib/task-effort";
 import { TaskEstimateBaseline } from "./task-estimate-baseline";
+import { TaskEffortPlanEditor } from "./task-effort-plan-editor";
 
 const PAGE_SIZE = 20;
 
@@ -133,7 +135,13 @@ export function TaskEstimateWorkbench({
                       見積
                     </TableHead>
                     <TableHead scope="col" className="text-right">
+                      計画
+                    </TableHead>
+                    <TableHead scope="col" className="text-right">
                       実績
+                    </TableHead>
+                    <TableHead scope="col" className="text-right">
+                      残工数
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -165,14 +173,22 @@ export function TaskEstimateWorkbench({
                           {formatEstimateHours(task.estimated_minutes)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
+                          {formatEstimateHours(task.planned_minutes)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
                           {formatEstimateHours(task.actual_minutes)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {task.status === "done" || task.status === "cancelled"
+                            ? "—"
+                            : formatEstimateHours(task.remaining_minutes)}
                         </TableCell>
                       </TableRow>
                     );
                   })}
                   {!list.data.total && (
                     <TableRow>
-                      <TableCell colSpan={4}>
+                      <TableCell colSpan={6}>
                         対象タスクはありません。
                       </TableCell>
                     </TableRow>
@@ -253,6 +269,13 @@ function EstimatePanel({
       {details.isPending && active && <p role="status">見積明細を取得中…</p>}
       {details.data && (
         <>
+          <TaskEffortPlanEditor
+            projectId={projectId}
+            taskId={task.id}
+            detail={details.data}
+            canUpdate={canUpdate}
+            refresh={async () => (await details.refetch()).data}
+          />
           <TaskEstimateBaseline
             active={active}
             taskId={task.id}
@@ -332,9 +355,6 @@ function EstimatePanel({
     </aside>
   );
 }
-
-const toHourInput = (minutes?: number | null) =>
-  minutes == null ? "" : String(Number((minutes / 60).toFixed(4)));
 
 function formValues(revision: TaskEstimateRevisionRead) {
   return {

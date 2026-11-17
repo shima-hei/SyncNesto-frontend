@@ -15,5 +15,7 @@ export interface TaskPlanningUpdate {
   start_date?: string | null;
   due_date?: string | null;
   estimated_minutes?: number | null;
+  planned_minutes?: number | null;
+  remaining_minutes?: number | null;
   change_reason?: string | null;
 }

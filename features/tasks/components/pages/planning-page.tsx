@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { PlusIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
@@ -50,6 +50,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const planning = useTaskPlanning(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
   const [mode, setMode] = useUrlFilterState("planningView", "gantt");
+  const ganttTab = useRef<HTMLButtonElement>(null);
   const activeView = mode === "effort" ? "effort" : "gantt";
   const [effortView, setEffortView] = useUrlFilterState("effortView", "phases");
   const activeEffortView =
@@ -180,7 +181,9 @@ export function PlanningPage({ projectId }: { projectId: number }) {
         className="min-w-0 gap-2"
       >
         <TabsList variant="line" className="w-full justify-start border-b">
-          <TabsTrigger value="gantt">ガント</TabsTrigger>
+          <TabsTrigger ref={ganttTab} value="gantt">
+            ガント
+          </TabsTrigger>
           <TabsTrigger value="effort">工程・工数</TabsTrigger>
         </TabsList>
         <TabsContent
@@ -347,7 +350,17 @@ export function PlanningPage({ projectId }: { projectId: number }) {
                 className="space-y-4 rounded-lg border p-3"
               >
                 {activeView === "effort" && (
-                  <ProjectEffortSummary projectId={projectId} showHours />
+                  <ProjectEffortSummary
+                    projectId={projectId}
+                    showHours
+                    onOpenGanttForAssignee={(id) => {
+                      setAssigneeId(String(id));
+                      setMode("gantt");
+                      requestAnimationFrame(() =>
+                        ganttTab.current?.focus({ preventScroll: true }),
+                      );
+                    }}
+                  />
                 )}
               </section>
             </TabsContent>

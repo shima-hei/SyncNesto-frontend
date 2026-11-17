@@ -4,6 +4,9 @@ export const estimateMethodLabels = {
   triangular: "3点・三角分布",
 } as const;
 
+export const toHourInput = (minutes?: number | null) =>
+  minutes == null ? "" : String(Number((minutes / 60).toFixed(4)));
+
 export function parseEstimateHours(value: string) {
   const number = Number(value);
   const minutes = Math.round(number * 60);

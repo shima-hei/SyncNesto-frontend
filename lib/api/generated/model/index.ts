@@ -48,6 +48,7 @@ export * from "./artifactReleaseSummaryProjectionVersion";
 export * from "./artifactReleaseSummarySourceKind";
 export * from "./artifactSource";
 export * from "./artifactSourceKind";
+export * from "./assigneeEffortGroup";
 export * from "./auditLogListRead";
 export * from "./auditLogRead";
 export * from "./auditLogReadDetails";

@@ -8,6 +8,8 @@ import type { TaskEstimateRevisionRead } from "./taskEstimateRevisionRead";
 
 export interface TaskEstimateRead {
   version: number;
+  planned_minutes?: number | null;
+  remaining_minutes?: number | null;
   current: TaskEstimateRevisionRead;
   history: TaskEstimateRevisionRead[];
   history_total: number;

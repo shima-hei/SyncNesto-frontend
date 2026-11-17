@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
@@ -44,6 +44,7 @@ import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
 import { formatEffortAmount, formatEffortMetric } from "../../lib/task-effort";
 import { getTaskStatusLabel } from "../../constants/task-options";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
+import { useTaskUserMap } from "../../hooks/use-task-user-map";
 
 type PhaseValues = { name: string; sortOrder: string; archived: string };
 const phaseValues = (phase: PhaseRead | null): PhaseValues => ({
@@ -195,11 +196,14 @@ function PhaseManagement({ projectId }: { projectId: number }) {
 export function ProjectEffortSummary({
   projectId,
   showHours = false,
+  onOpenGanttForAssignee,
 }: {
   projectId: number;
   showHours?: boolean;
+  onOpenGanttForAssignee?: (assigneeId: number) => void;
 }) {
   const [assigneeId, setAssigneeId] = useState("");
+  const { getTaskUserLabel } = useTaskUserMap(projectId);
   const summary = useEffortSummaryProjectsProjectIdTasksEffortSummaryGet(
     projectId,
     assigneeId ? { assignee_id: Number(assigneeId) } : undefined,
@@ -214,7 +218,12 @@ export function ProjectEffortSummary({
         placeholder="すべての担当者"
         onChange={setAssigneeId}
       />
-      <ProjectEffortResult query={summary} showHours={showHours} />
+      <ProjectEffortResult
+        query={summary}
+        showHours={showHours}
+        getTaskUserLabel={getTaskUserLabel}
+        onOpenGanttForAssignee={onOpenGanttForAssignee}
+      />
     </>
   );
 }
@@ -222,8 +231,12 @@ export function ProjectEffortSummary({
 function ProjectEffortResult({
   query: summary,
   showHours,
+  getTaskUserLabel,
+  onOpenGanttForAssignee,
 }: {
   showHours: boolean;
+  getTaskUserLabel: (id: number) => string;
+  onOpenGanttForAssignee?: (assigneeId: number) => void;
   query: ReturnType<
     typeof useEffortSummaryProjectsProjectIdTasksEffortSummaryGet<EffortSummary>
   >;
@@ -238,26 +251,71 @@ function ProjectEffortResult({
     );
   }
   if (!summary.data) return <p role="status">工数集計を取得しています。</p>;
-  const { totals, groups, status_groups } = summary.data;
+  const { totals, groups, status_groups, assignee_groups } = summary.data;
   return (
     <>
       {summary.isFetching ? (
         <p role="status">工数集計を更新しています。</p>
       ) : null}
-      <dl className="grid gap-3 sm:grid-cols-2">
+      <dl
+        className={`grid gap-3 sm:grid-cols-2 ${showHours ? "lg:grid-cols-4" : ""}`}
+      >
         <EffortTotal
           label="見積"
           metric={totals.estimated}
           showHours={showHours}
         />
+        {showHours && (
+          <EffortTotal label="計画工数" metric={totals.planned} showHours />
+        )}
         <EffortTotal
           label="実績"
           metric={totals.actual}
           showHours={showHours}
         />
+        {showHours && (
+          <EffortTotal label="残工数" metric={totals.remaining} showHours />
+        )}
       </dl>
       {totals.task_count ? (
         <>
+          {showHours && assignee_groups?.length ? (
+            <section aria-label="担当者別の負荷" className="space-y-2">
+              <h3 className="font-medium">担当者別の負荷</h3>
+              <p className="text-xs text-muted-foreground">
+                残工数は完了・中止を除いた入力済みの工数を集計します。
+              </p>
+              <EffortBreakdown
+                showHours
+                showActions={Boolean(onOpenGanttForAssignee)}
+                rows={assignee_groups.map(
+                  ({ assignee_id, totals: assigneeTotals }) => {
+                    const label =
+                      assignee_id == null
+                        ? "担当なし"
+                        : getTaskUserLabel(assignee_id);
+                    return {
+                      id: String(assignee_id ?? "unassigned"),
+                      label,
+                      totals: assigneeTotals,
+                      action:
+                        assignee_id != null && onOpenGanttForAssignee ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            aria-label={`${label}のガントを表示`}
+                            onClick={() => onOpenGanttForAssignee(assignee_id)}
+                          >
+                            ガントで確認
+                          </Button>
+                        ) : null,
+                    };
+                  },
+                )}
+              />
+            </section>
+          ) : null}
           <details className="min-w-0">
             <summary className="cursor-pointer py-2 text-sm font-medium">
               工程別の内訳
@@ -333,33 +391,70 @@ function EffortTotal({
 function EffortBreakdown({
   rows,
   showHours,
+  showActions = false,
 }: {
-  rows: { id: string; label: string; totals: EffortTotals }[];
+  rows: {
+    id: string;
+    label: string;
+    totals: EffortTotals;
+    action?: ReactNode;
+  }[];
   showHours: boolean;
+  showActions?: boolean;
 }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>区分</TableHead>
-          <TableHead>件数</TableHead>
-          <TableHead>見積</TableHead>
-          <TableHead>実績</TableHead>
+          <TableHead scope="col">区分</TableHead>
+          <TableHead scope="col">件数</TableHead>
+          <TableHead scope="col">見積</TableHead>
+          {showHours && <TableHead scope="col">計画</TableHead>}
+          <TableHead scope="col">実績</TableHead>
+          {showHours && <TableHead scope="col">残工数</TableHead>}
+          {showHours && <TableHead scope="col">差（実績−計画）</TableHead>}
+          {showActions && <TableHead scope="col">日程</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map(({ id, label, totals }) => (
-          <TableRow key={id}>
-            <TableCell>{label}</TableCell>
-            <TableCell className="tabular-nums">{totals.task_count}</TableCell>
-            <TableCell>
-              {formatEffortMetric(totals.estimated, showHours)}
-            </TableCell>
-            <TableCell>
-              {formatEffortMetric(totals.actual, showHours)}
-            </TableCell>
-          </TableRow>
-        ))}
+        {rows.map(({ id, label, totals, action }) => {
+          const difference =
+            totals.actual?.complete && totals.planned?.complete
+              ? (totals.actual.minutes ?? 0) - (totals.planned.minutes ?? 0)
+              : null;
+          return (
+            <TableRow key={id}>
+              <TableCell>{label}</TableCell>
+              <TableCell className="tabular-nums">
+                {totals.task_count}
+              </TableCell>
+              <TableCell>
+                {formatEffortMetric(totals.estimated, showHours)}
+              </TableCell>
+              {showHours && (
+                <TableCell>
+                  {formatEffortMetric(totals.planned, showHours)}
+                </TableCell>
+              )}
+              <TableCell>
+                {formatEffortMetric(totals.actual, showHours)}
+              </TableCell>
+              {showHours && (
+                <TableCell>
+                  {formatEffortMetric(totals.remaining, showHours)}
+                </TableCell>
+              )}
+              {showHours && (
+                <TableCell className="tabular-nums">
+                  {difference === null
+                    ? "—"
+                    : `${difference > 0 ? "+" : ""}${formatEffortAmount(difference, showHours)}`}
+                </TableCell>
+              )}
+              {showActions && <TableCell>{action}</TableCell>}
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
