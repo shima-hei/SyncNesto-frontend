@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PhaseListItemColor } from "./phaseListItemColor";
 
 /**
  * 工程に所属する全タスクの予定期間を返す。
@@ -15,6 +16,8 @@ export interface PhaseListItem {
   sort_order: number;
   version: number;
   archived_at: string | null;
+  color?: PhaseListItemColor;
+  description?: string | null;
   task_count?: number;
   planned_start_date?: string | null;
   planned_end_date?: string | null;

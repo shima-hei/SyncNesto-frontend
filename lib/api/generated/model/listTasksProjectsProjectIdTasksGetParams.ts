@@ -5,11 +5,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListTasksProjectsProjectIdTasksGetHierarchy } from "./listTasksProjectsProjectIdTasksGetHierarchy";
+import type { ListTasksProjectsProjectIdTasksGetPhaseScope } from "./listTasksProjectsProjectIdTasksGetPhaseScope";
 
 export type ListTasksProjectsProjectIdTasksGetParams = {
-  /**
-   * @minimum 1
-   */
+  /** @minimum 1 */
   page?: number;
   /**
    * @minimum 1
@@ -23,6 +22,8 @@ export type ListTasksProjectsProjectIdTasksGetParams = {
   assignee_id?: number | null;
   requirement_id?: number | null;
   parent_task_id?: number | null;
+  phase_scope?: ListTasksProjectsProjectIdTasksGetPhaseScope;
+  phase_id?: number | null;
   root_only?: boolean | null;
   start_date_from?: string | null;
   due_date_to?: string | null;

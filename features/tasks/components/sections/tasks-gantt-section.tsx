@@ -32,6 +32,7 @@ import {
   type GanttTaskNode,
 } from "../../lib/planning-phases";
 import { useGanttOrder } from "../../hooks/use-gantt-order";
+import { phaseColors } from "../../lib/phase-colors";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import {
   getTaskPlanningValues,
@@ -523,6 +524,9 @@ export function TasksGanttSection({
           <div className="divide-y">
             {groups.map((group) => {
               const phase = phaseByKey.get(group.key);
+              const phaseTone = phase?.color
+                ? phaseColors[phase.color].className
+                : undefined;
               const phaseId = phase?.id;
               const totalUnscheduled =
                 unscheduledByPhase.get(group.key)?.length ?? 0;
@@ -584,6 +588,12 @@ export function TasksGanttSection({
                           ) : (
                             <ChevronRightIcon className="size-4" />
                           )}
+                          {phaseTone && (
+                            <span
+                              aria-hidden="true"
+                              className={`size-2 shrink-0 rounded-full ${phaseTone}`}
+                            />
+                          )}
                           {group.label}
                         </button>
                       </h3>
@@ -622,7 +632,7 @@ export function TasksGanttSection({
                       )}
                       {periodBar && (
                         <div
-                          className="absolute h-1.5 rounded-full bg-foreground/50"
+                          className={`absolute h-1.5 rounded-full ${phaseTone ?? "bg-foreground/50"}`}
                           data-gantt-phase-summary={phaseId}
                           style={periodBar}
                           title={periodLabel}

@@ -18,7 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getConflictCurrent } from "@/lib/api/conflict";
-import type { PhaseRead, TaskRead } from "@/lib/api/generated/model";
+import type {
+  PhaseAssignment,
+  PhaseRead,
+  TaskRead,
+} from "@/lib/api/generated/model";
 import {
   createPhaseProjectsProjectIdPhasesPost,
   updatePhaseProjectsProjectIdPhasesPhaseIdPatch,
@@ -30,9 +34,11 @@ import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import { useGanttOrder } from "../../hooks/use-gantt-order";
 import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
 import { formatEffortMetric } from "../../lib/task-effort";
+import { phaseColors } from "../../lib/phase-colors";
 import { GANTT_ORDER_ROW, GanttOrderHandle } from "../gantt/gantt-order-handle";
 import { PlanningPlacementDialog } from "./planning-placement-dialog";
 import { PhaseEditor } from "./task-phase-dialog";
+import { PhaseDetailPanel } from "./phase-detail-panel";
 
 export function PlanningPhaseActions({
   active,
@@ -58,6 +64,7 @@ export function PlanningPhaseActions({
   const [nameEditor, setNameEditor] = useState<PhaseRead | null | undefined>();
   const [archiveTarget, setArchiveTarget] = useState<PhaseRead>();
   const [showArchived, setShowArchived] = useState(false);
+  const [selectedPhase, setSelectedPhase] = useState<PhaseAssignment>();
   const [placementOpen, setPlacementOpen] = useState(false);
   const [newPhaseId, setNewPhaseId] = useState<number>();
   const [result, setResult] = useState<{ message: string; task?: TaskRead }>();
@@ -65,10 +72,23 @@ export function PlanningPhaseActions({
   const placementTrigger = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const archiveTrigger = useRef<HTMLButtonElement>(null);
+  const detailsTrigger = useRef<HTMLButtonElement>(null);
   const placedTask = result?.task;
   const allPhases = phases.data ?? [];
   const activePhases = allPhases.filter((phase) => !phase.archived_at);
   const visiblePhases = showArchived ? allPhases : activePhases;
+  const selectedPhaseDetails = allPhases.find(
+    (phase) => phase.id === selectedPhase?.phase_id,
+  );
+  const closeDetails = () => {
+    setSelectedPhase(undefined);
+    requestAnimationFrame(() => {
+      (detailsTrigger.current?.isConnected
+        ? detailsTrigger.current
+        : heading.current
+      )?.focus({ preventScroll: true });
+    });
+  };
   const summary = useEffortSummaryProjectsProjectIdTasksEffortSummaryGet(
     projectId,
     undefined,
@@ -257,158 +277,218 @@ export function PlanningPhaseActions({
       {phases.isSuccess && (
         <>
           <div
-            data-gantt-scroll
-            className="max-h-[60dvh] overflow-auto rounded-md border"
+            className={
+              selectedPhase
+                ? "grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]"
+                : "min-w-0"
+            }
           >
-            <Table aria-label="工程と工数">
-              <TableHeader>
-                <TableRow>
-                  <TableHead scope="col">工程</TableHead>
-                  <TableHead scope="col" className="text-right">
-                    タスク
-                  </TableHead>
-                  <TableHead scope="col" className="text-right">
-                    見積
-                  </TableHead>
-                  <TableHead scope="col" className="text-right">
-                    実績
-                  </TableHead>
-                  {canManage && <TableHead scope="col">操作</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visiblePhases.map((phase, index) => {
-                  const totals = groups.get(`phase:${phase.id}`);
-                  return (
-                    <TableRow
-                      key={phase.id}
-                      className={GANTT_ORDER_ROW}
-                      data-gantt-order-id={phase.id}
-                      data-gantt-order-group="planning-phases"
-                    >
-                      <TableCell className="whitespace-normal">
-                        {nameEditor?.id === phase.id ? (
-                          nameForm(nameEditor)
-                        ) : (
-                          <div className="flex min-w-0 items-center gap-1">
-                            {canManage && visiblePhases.length > 1 && (
-                              <GanttOrderHandle
-                                id={phase.id}
-                                group="planning-phases"
-                                label={phase.name}
-                                previous={visiblePhases[index - 1]?.id}
-                                next={visiblePhases[index + 1]?.id}
-                                disabled={
-                                  order.isPending || nameEditor !== undefined
-                                }
-                                save={(move, label, trigger) =>
-                                  order.mutate({
-                                    kind: "phase",
-                                    move,
-                                    label,
-                                    trigger,
-                                  })
-                                }
-                              />
-                            )}
-                            <span className="min-w-24 max-w-96 wrap-anywhere">
-                              {phase.name}
-                              {phase.archived_at && (
-                                <span className="ml-1 text-xs text-muted-foreground">
-                                  アーカイブ済み
-                                </span>
+            <div
+              data-gantt-scroll
+              className="max-h-[60dvh] overflow-auto rounded-md border"
+            >
+              <Table aria-label="工程と工数">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead scope="col">工程</TableHead>
+                    <TableHead scope="col" className="text-right">
+                      タスク
+                    </TableHead>
+                    <TableHead scope="col" className="text-right">
+                      見積
+                    </TableHead>
+                    <TableHead scope="col" className="text-right">
+                      実績
+                    </TableHead>
+                    {canManage && <TableHead scope="col">操作</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visiblePhases.map((phase, index) => {
+                    const totals = groups.get(`phase:${phase.id}`);
+                    return (
+                      <TableRow
+                        key={phase.id}
+                        className={GANTT_ORDER_ROW}
+                        data-gantt-order-id={phase.id}
+                        data-gantt-order-group="planning-phases"
+                      >
+                        <TableCell className="whitespace-normal">
+                          {nameEditor?.id === phase.id ? (
+                            nameForm(nameEditor)
+                          ) : (
+                            <div className="flex min-w-0 items-center gap-1">
+                              {canManage && visiblePhases.length > 1 && (
+                                <GanttOrderHandle
+                                  id={phase.id}
+                                  group="planning-phases"
+                                  label={phase.name}
+                                  previous={visiblePhases[index - 1]?.id}
+                                  next={visiblePhases[index + 1]?.id}
+                                  disabled={
+                                    order.isPending || nameEditor !== undefined
+                                  }
+                                  save={(move, label, trigger) =>
+                                    order.mutate({
+                                      kind: "phase",
+                                      move,
+                                      label,
+                                      trigger,
+                                    })
+                                  }
+                                />
                               )}
-                            </span>
-                          </div>
+                              {phase.color && (
+                                <span
+                                  aria-hidden="true"
+                                  className={`size-2.5 shrink-0 rounded-full ${phaseColors[phase.color].className}`}
+                                />
+                              )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-auto min-h-7 min-w-20 max-w-96 justify-start px-1 whitespace-normal wrap-anywhere"
+                                aria-expanded={
+                                  selectedPhase?.phase_id === phase.id
+                                }
+                                onClick={(event) => {
+                                  detailsTrigger.current = event.currentTarget;
+                                  if (selectedPhase?.phase_id === phase.id)
+                                    closeDetails();
+                                  else
+                                    setSelectedPhase({
+                                      kind: "phase",
+                                      phase_id: phase.id,
+                                    });
+                                }}
+                              >
+                                {phase.name}
+                                {phase.archived_at && (
+                                  <span className="ml-1 text-xs text-muted-foreground">
+                                    アーカイブ済み
+                                  </span>
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {phase.task_count}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums whitespace-normal">
+                          {summary.isSuccess
+                            ? formatEffortMetric(
+                                totals?.estimated ??
+                                  (phase.task_count === 0
+                                    ? { minutes: 0 }
+                                    : null),
+                              )
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums whitespace-normal">
+                          {summary.isSuccess
+                            ? formatEffortMetric(
+                                totals?.actual ??
+                                  (phase.task_count === 0
+                                    ? { minutes: 0 }
+                                    : null),
+                              )
+                            : "—"}
+                        </TableCell>
+                        {canManage && (
+                          <TableCell>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={
+                                nameEditor !== undefined || order.isPending
+                              }
+                              aria-label={`${phase.name}を編集`}
+                              onClick={() => editName(phase)}
+                            >
+                              編集
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={
+                                nameEditor !== undefined || order.isPending
+                              }
+                              aria-label={`${phase.name}を${phase.archived_at ? "復元" : "アーカイブ"}`}
+                              onClick={(event) => {
+                                archiveTrigger.current = event.currentTarget;
+                                setArchiveTarget(phase);
+                              }}
+                            >
+                              {phase.archived_at ? "復元" : "アーカイブ"}
+                            </Button>
+                          </TableCell>
                         )}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {phase.task_count}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-normal">
-                        {summary.isSuccess
-                          ? formatEffortMetric(
-                              totals?.estimated ??
-                                (phase.task_count === 0
-                                  ? { minutes: 0 }
-                                  : null),
-                            )
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-normal">
-                        {summary.isSuccess
-                          ? formatEffortMetric(
-                              totals?.actual ??
-                                (phase.task_count === 0
-                                  ? { minutes: 0 }
-                                  : null),
-                            )
-                          : "—"}
-                      </TableCell>
-                      {canManage && (
-                        <TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {nameEditor === null && (
+                    <TableRow>
+                      <TableCell colSpan={5}>{nameForm(null)}</TableCell>
+                    </TableRow>
+                  )}
+                  {(
+                    [
+                      ["shared", "共通作業"],
+                      ["unclassified", "未分類"],
+                    ] as const
+                  ).map(([key, label]) => {
+                    const totals = groups.get(key);
+                    return (
+                      <TableRow key={key} className="bg-muted/30">
+                        <TableCell className="font-medium">
                           <Button
                             type="button"
-                            size="sm"
                             variant="ghost"
-                            disabled={
-                              nameEditor !== undefined || order.isPending
-                            }
-                            aria-label={`${phase.name}を編集`}
-                            onClick={() => editName(phase)}
-                          >
-                            編集
-                          </Button>
-                          <Button
-                            type="button"
                             size="sm"
-                            variant="ghost"
-                            disabled={
-                              nameEditor !== undefined || order.isPending
-                            }
-                            aria-label={`${phase.name}を${phase.archived_at ? "復元" : "アーカイブ"}`}
+                            className="px-1"
+                            aria-expanded={selectedPhase?.kind === key}
                             onClick={(event) => {
-                              archiveTrigger.current = event.currentTarget;
-                              setArchiveTarget(phase);
+                              detailsTrigger.current = event.currentTarget;
+                              if (selectedPhase?.kind === key) closeDetails();
+                              else setSelectedPhase({ kind: key });
                             }}
                           >
-                            {phase.archived_at ? "復元" : "アーカイブ"}
+                            {label}
                           </Button>
                         </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })}
-                {nameEditor === null && (
-                  <TableRow>
-                    <TableCell colSpan={5}>{nameForm(null)}</TableCell>
-                  </TableRow>
-                )}
-                {(
-                  [
-                    ["shared", "共通作業"],
-                    ["unclassified", "未分類"],
-                  ] as const
-                ).map(([key, label]) => {
-                  const totals = groups.get(key);
-                  return (
-                    <TableRow key={key} className="bg-muted/30">
-                      <TableCell className="font-medium">{label}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {summary.isSuccess ? (totals?.task_count ?? 0) : "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-normal">
-                        {totals ? formatEffortMetric(totals.estimated) : "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-normal">
-                        {totals ? formatEffortMetric(totals.actual) : "—"}
-                      </TableCell>
-                      {canManage && <TableCell />}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        <TableCell className="text-right tabular-nums">
+                          {summary.isSuccess ? (totals?.task_count ?? 0) : "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums whitespace-normal">
+                          {totals ? formatEffortMetric(totals.estimated) : "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums whitespace-normal">
+                          {totals ? formatEffortMetric(totals.actual) : "—"}
+                        </TableCell>
+                        {canManage && <TableCell />}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            {selectedPhase && (
+              <PhaseDetailPanel
+                key={`${selectedPhase.kind}:${selectedPhase.phase_id ?? ""}`}
+                projectId={projectId}
+                active={active}
+                selection={selectedPhase}
+                phase={selectedPhaseDetails}
+                phases={allPhases}
+                canManage={canManage}
+                canUpdate={canUpdate && !planning.pendingDraft}
+                onClose={closeDetails}
+              />
+            )}
           </div>
           {allPhases.some((phase) => phase.archived_at) && (
             <Button

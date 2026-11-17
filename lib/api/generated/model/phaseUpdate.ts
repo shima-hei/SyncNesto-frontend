@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PhaseUpdateColor } from "./phaseUpdateColor";
 
 /**
  * version付き部分更新。
@@ -14,4 +15,6 @@ export interface PhaseUpdate {
   name?: string | null;
   sort_order?: number | null;
   archived?: boolean | null;
+  color?: PhaseUpdateColor;
+  description?: string | null;
 }
