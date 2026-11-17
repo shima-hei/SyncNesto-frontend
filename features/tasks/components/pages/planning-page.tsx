@@ -32,7 +32,7 @@ import { TaskRequirementSelectField } from "../forms/task-requirement-select-fie
 import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
 import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import { PlanningPhaseActions } from "../sections/planning-phase-actions";
-import { TaskPhaseDialog } from "../sections/task-phase-dialog";
+import { ProjectEffortSummary } from "../sections/task-phase-dialog";
 import { TasksGanttSection } from "../sections/tasks-gantt-section";
 import { GanttStatusFilters } from "./controls/gantt-status-filters";
 import {
@@ -50,6 +50,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const { getTaskUserLabel } = useTaskUserMap(projectId);
   const [mode, setMode] = useUrlFilterState("planningView", "gantt");
   const activeView = mode === "effort" ? "effort" : "gantt";
+  const [effortView, setEffortView] = useUrlFilterState("effortView", "phases");
   const [search, setSearch] = useUrlFilterState("ganttSearch", "");
   const [quickOpen, setQuickOpen] = useState(false);
   const [unscheduledGroup, setUnscheduledGroup] = useState<string | null>(null);
@@ -279,17 +280,52 @@ export function PlanningPage({ projectId }: { projectId: number }) {
             />
           )}
         </TabsContent>
-        <TabsContent value="effort" className="min-w-0 space-y-3">
-          <PlanningPhaseActions
-            projectId={projectId}
-            phases={phases}
-            tasks={currentGantt?.tasks}
-            canManage={currentProjectRole?.role?.key === "project_admin"}
-            canUpdate={canUpdate}
-            canCreate={canCreate}
-            planning={planning}
-          />
-          <TaskPhaseDialog projectId={projectId} summaryOnly />
+        <TabsContent
+          value="effort"
+          forceMount
+          className={activeView === "effort" ? "min-w-0 space-y-3" : "hidden"}
+        >
+          <Tabs
+            value={effortView === "summary" ? "summary" : "phases"}
+            onValueChange={setEffortView}
+            activationMode="manual"
+            className="min-w-0 gap-3"
+          >
+            <TabsList aria-label="工程・工数の表示">
+              <TabsTrigger value="phases" className="px-3">
+                工程一覧
+              </TabsTrigger>
+              <TabsTrigger value="summary" className="px-3">
+                工数集計
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent
+              value="phases"
+              forceMount
+              className={effortView === "summary" ? "hidden" : "min-w-0"}
+            >
+              <PlanningPhaseActions
+                active={activeView === "effort" && effortView !== "summary"}
+                projectId={projectId}
+                phases={phases}
+                tasks={currentGantt?.tasks}
+                canManage={currentProjectRole?.role?.key === "project_admin"}
+                canUpdate={canUpdate}
+                canCreate={canCreate}
+                planning={planning}
+              />
+            </TabsContent>
+            <TabsContent value="summary" className="min-w-0">
+              <section
+                aria-label="工数集計"
+                className="space-y-4 rounded-lg border p-3"
+              >
+                {activeView === "effort" && (
+                  <ProjectEffortSummary projectId={projectId} />
+                )}
+              </section>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
       <MilestoneDialogs

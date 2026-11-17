@@ -52,25 +52,18 @@ const phaseValues = (phase: PhaseRead | null): PhaseValues => ({
   archived: String(Boolean(phase?.archived_at)),
 });
 
-export function TaskPhaseDialog({
-  projectId,
-  summaryOnly = false,
-}: {
-  projectId: number;
-  summaryOnly?: boolean;
-}) {
+export function TaskPhaseDialog({ projectId }: { projectId: number }) {
   const [open, setOpen] = useState(false);
-  const label = summaryOnly ? "工数集計" : "工程・工数";
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline">
-          {label}
+          工程・工数
         </Button>
       </DialogTrigger>
       <DialogContent className="min-w-0 max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{label}</DialogTitle>
+          <DialogTitle>工程・工数</DialogTitle>
           <DialogDescription>
             プロジェクト全体の見積・実績を集計します。
           </DialogDescription>
@@ -78,31 +71,9 @@ export function TaskPhaseDialog({
         {open ? (
           <>
             <ProjectEffortSummary projectId={projectId} />
-            {summaryOnly ? null : <PhaseManagement projectId={projectId} />}
+            <PhaseManagement projectId={projectId} />
           </>
         ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function PhaseManagementDialog({ projectId }: { projectId: number }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
-          工程を管理
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="min-w-0 max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>工程を管理</DialogTitle>
-          <DialogDescription>
-            名称・表示順を変更し、完了した工程をアーカイブできます。
-          </DialogDescription>
-        </DialogHeader>
-        {open ? <PhaseManagement projectId={projectId} /> : null}
       </DialogContent>
     </Dialog>
   );
@@ -221,7 +192,7 @@ function PhaseManagement({ projectId }: { projectId: number }) {
   );
 }
 
-function ProjectEffortSummary({ projectId }: { projectId: number }) {
+export function ProjectEffortSummary({ projectId }: { projectId: number }) {
   const [assigneeId, setAssigneeId] = useState("");
   const summary = useEffortSummaryProjectsProjectIdTasksEffortSummaryGet(
     projectId,
