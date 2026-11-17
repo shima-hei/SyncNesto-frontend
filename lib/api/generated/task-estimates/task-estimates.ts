@@ -21,9 +21,13 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
   GetTaskEstimateTasksTaskIdEstimateGetParams,
   HTTPValidationError,
   ListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGetParams,
+  TaskEstimateBaselineConfirm,
+  TaskEstimateBaselineRead,
+  TaskEstimateBaselines,
   TaskEstimateMethodRead,
   TaskEstimateRead,
   TaskEstimateUpdate,
@@ -684,6 +688,439 @@ export const useUpdateTaskEstimateTasksTaskIdEstimatePatch = <
 > => {
   return useMutation(
     getUpdateTaskEstimateTasksTaskIdEstimatePatchMutationOptions(options),
+    queryClient,
+  );
+};
+export const getGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetUrl = (
+  taskId: number,
+  params?: GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/tasks/${taskId}/estimate/baselines?${stringifiedParams}`
+    : `/tasks/${taskId}/estimate/baselines`;
+};
+
+/**
+ * @summary Get Task Estimate Baselines
+ */
+export const getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet = async (
+  taskId: number,
+  params?: GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<TaskEstimateBaselines> => {
+  return apiClient<TaskEstimateBaselines>(
+    getGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetUrl(
+      taskId,
+      params,
+    ),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetQueryKey =
+  (
+    taskId: number,
+    params?: GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+  ) => {
+    return [
+      `/tasks/${taskId}/estimate/baselines`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet>
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    taskId: number,
+    params?: GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetQueryKey(
+        taskId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+        >
+      >
+    > = ({ signal }) =>
+      getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet(taskId, params, {
+        signal,
+        ...requestOptions,
+      });
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: taskId !== null && taskId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet>
+    >
+  >;
+export type GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Get Task Estimate Baselines */
+export function useGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet<
+  TData = Awaited<
+    ReturnType<typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  taskId: number,
+  params:
+    undefined | GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Task Estimate Baselines */
+export function useGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet<
+  TData = Awaited<
+    ReturnType<typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  taskId: number,
+  params?: GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Task Estimate Baselines */
+export function useGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet<
+  TData = Awaited<
+    ReturnType<typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  taskId: number,
+  params?: GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Task Estimate Baselines */
+export function useGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet<
+  TData = Awaited<
+    ReturnType<typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  taskId: number,
+  params?: GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetQueryOptions(
+      taskId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostUrl =
+  (taskId: number) => {
+    return `/tasks/${taskId}/estimate/baselines`;
+  };
+
+/**
+ * @summary Confirm Task Estimate Baseline
+ */
+export const confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost =
+  async (
+    taskId: number,
+    taskEstimateBaselineConfirm: TaskEstimateBaselineConfirm,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<TaskEstimateBaselineRead> => {
+    const getHeaders = (
+      h?: NonNullable<RequestInit["headers"]>,
+    ): Record<string, string | readonly string[]> => {
+      if (!h) return {};
+      if (h instanceof Headers) return Object.fromEntries(h.entries());
+      if (Symbol.iterator in h) {
+        return Object.fromEntries(
+          Array.from(
+            h as Iterable<Iterable<string>>,
+            (entry) => Array.from(entry) as [string, string],
+          ),
+        );
+      }
+      const headers: Record<string, string | readonly string[]> = {};
+      for (const [name, value] of Object.entries<
+        string | readonly string[] | undefined
+      >(h)) {
+        if (value !== undefined) headers[name] = value;
+      }
+      return headers;
+    };
+    return apiClient<TaskEstimateBaselineRead>(
+      getConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostUrl(taskId),
+      {
+        ...options,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getHeaders(options?.headers),
+        },
+        body: JSON.stringify(taskEstimateBaselineConfirm),
+      },
+    );
+  };
+
+export const getConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationKey =
+  () =>
+    ["confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost"] as const;
+
+export const getConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost
+        >
+      >,
+      TError,
+      ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost
+      >
+    >,
+    TError,
+    ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost
+        >
+      >,
+      ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationVariables
+    > = (props) => {
+      const { taskId, data } = props ?? {};
+
+      return confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost(
+        taskId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost
+      >
+    >
+  >;
+export type ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationBody =
+  BodyType<TaskEstimateBaselineConfirm>;
+export type ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationVariables =
+  { taskId: number; data: BodyType<TaskEstimateBaselineConfirm> };
+
+/** @summary Confirm Task Estimate Baseline */
+export const useConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost
+        >
+      >,
+      TError,
+      ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<
+    ReturnType<
+      typeof confirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost
+    >
+  >,
+  TError,
+  ConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPostMutationOptions(
+      options,
+    ),
     queryClient,
   );
 };

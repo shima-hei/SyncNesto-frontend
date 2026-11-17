@@ -336,6 +336,9 @@ export function PlanningPage({ projectId }: { projectId: number }) {
                 }
                 projectId={projectId}
                 canUpdate={canUpdate}
+                canConfirm={
+                  canUpdate && currentProjectRole?.role?.key === "project_admin"
+                }
               />
             </TabsContent>
             <TabsContent value="summary" className="min-w-0">

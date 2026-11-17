@@ -39,6 +39,7 @@ import {
   parseEstimateHours,
 } from "../../lib/task-estimate";
 import { effortBasisLabel, formatEstimateHours } from "../../lib/task-effort";
+import { TaskEstimateBaseline } from "./task-estimate-baseline";
 
 const PAGE_SIZE = 20;
 
@@ -46,10 +47,12 @@ export function TaskEstimateWorkbench({
   active,
   projectId,
   canUpdate,
+  canConfirm,
 }: {
   active: boolean;
   projectId: number;
   canUpdate: boolean;
+  canConfirm: boolean;
 }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -194,6 +197,7 @@ export function TaskEstimateWorkbench({
               projectId={projectId}
               task={current}
               canUpdate={canUpdate}
+              canConfirm={canConfirm}
               onClose={() => setCurrent(undefined)}
             />
           )}
@@ -208,12 +212,14 @@ function EstimatePanel({
   projectId,
   task,
   canUpdate,
+  canConfirm,
   onClose,
 }: {
   active: boolean;
   projectId: number;
   task: TaskRead;
   canUpdate: boolean;
+  canConfirm: boolean;
   onClose: () => void;
 }) {
   const [page, setPage] = useState(1);
@@ -247,6 +253,15 @@ function EstimatePanel({
       {details.isPending && active && <p role="status">見積明細を取得中…</p>}
       {details.data && (
         <>
+          <TaskEstimateBaseline
+            active={active}
+            taskId={task.id}
+            title={task.title}
+            estimate={details.data.current}
+            canConfirm={canConfirm}
+            getUserLabel={getTaskUserLabel}
+            refreshEstimate={details.refetch}
+          />
           {canUpdate ? (
             <EstimateForm
               projectId={projectId}
