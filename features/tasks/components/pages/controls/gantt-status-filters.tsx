@@ -34,7 +34,7 @@ export function GanttStatusFilters({
 
   return (
     <fieldset
-      className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0 px-1"
+      className="flex min-w-0 flex-wrap items-center gap-2 px-1 py-1"
       aria-describedby="gantt-status-filter-help"
     >
       <legend className="sr-only">ガントのステータスフィルター</legend>
@@ -65,24 +65,27 @@ export function GanttStatusFilters({
       >
         完了以外
       </Button>
-      {options.map(({ value, label }) => (
-        <label
-          key={value}
-          className="flex min-h-11 cursor-pointer items-center gap-1 px-0.5"
-        >
-          <input
-            type="checkbox"
-            checked={selected.includes(value)}
-            className="size-4 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            onChange={(event) =>
-              onChange(
-                toggleTaskStatusFilter(selected, value, event.target.checked),
-              )
-            }
-          />
-          <StatusBadge tone={getTaskStatusTone(value)}>{label}</StatusBadge>
-        </label>
-      ))}
+      {options.map(({ value, label }) => {
+        const pressed = selected.includes(value);
+        return (
+          <StatusBadge
+            key={value}
+            tone={getTaskStatusTone(value)}
+            asChild
+            className="h-8 cursor-pointer px-2.5 hover:brightness-110 aria-pressed:outline-1 aria-pressed:outline-offset-2 aria-pressed:outline-current"
+          >
+            <button
+              type="button"
+              aria-pressed={pressed}
+              onClick={() =>
+                onChange(toggleTaskStatusFilter(selected, value, !pressed))
+              }
+            >
+              {label}
+            </button>
+          </StatusBadge>
+        );
+      })}
     </fieldset>
   );
 }
