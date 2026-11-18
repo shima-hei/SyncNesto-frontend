@@ -21,6 +21,8 @@ import type { TaskRead } from "@/lib/api/generated/model";
 import type { TaskTreeRow } from "../../lib/task-tree";
 import { getTaskParentSummary } from "../../lib/task-list-scope";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
+import { TaskPhaseCell } from "../shared/task-phase-cell";
+import { usePlanningPhases } from "../../hooks/use-planning-phases";
 import { TaskHierarchyBadge } from "../shared/task-hierarchy-badge";
 import {
   TaskStatusBadge,
@@ -68,6 +70,7 @@ export function TaskTreeTable({
   onCheck,
   onCheckAll,
 }: Props) {
+  const phases = usePlanningPhases(projectId);
   const { usersById } = useTaskUserMap(projectId);
   const moreFocusRef = useRef<number | null>(null);
   useLayoutEffect(() => {
@@ -99,7 +102,7 @@ export function TaskTreeTable({
     selectedIds.includes(row.task.id),
   ).length;
   const columns =
-    4 + Number(canUpdate) + Number(showProgress) + (showDetails ? 5 : 0);
+    5 + Number(canUpdate) + Number(showProgress) + (showDetails ? 5 : 0);
   const tasksById = new Map(
     rows
       .filter(
@@ -131,6 +134,7 @@ export function TaskTreeTable({
             </TableHead>
           ) : null}
           <TableHead className="min-w-64">タスク</TableHead>
+          <TableHead>工程</TableHead>
           <TableHead>状態</TableHead>
           <TableHead>担当</TableHead>
           <TableHead>期限</TableHead>
@@ -309,6 +313,15 @@ export function TaskTreeTable({
                         ) : null}
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <TaskPhaseCell
+                      task={task}
+                      phases={phases.data ?? []}
+                      editable={
+                        canUpdate && source === "match" && phases.isSuccess
+                      }
+                    />
                   </TableCell>
                   <TableCell>
                     <TaskStatusBadge status={task.status} />

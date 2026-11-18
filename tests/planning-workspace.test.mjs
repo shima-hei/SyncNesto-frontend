@@ -1,0 +1,137 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import test from "node:test";
+import ts from "typescript";
+
+async function load(name) {
+  const { outputText } = ts.transpileModule(
+    fs.readFileSync(
+      new URL(`../features/tasks/lib/${name}.ts`, import.meta.url),
+      "utf8",
+    ),
+    {
+      compilerOptions: {
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.ES2022,
+      },
+    },
+  );
+  return import(
+    `data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`
+  );
+}
+
+const { getGanttTaskTree, groupPlanningTasks, selectGanttPhaseRows } =
+  await load("planning-phases");
+const { getPlanningHref } = await load("planning-route");
+
+test("ガントの順序で親タスクと配下の行をまとめる", () => {
+  const tasks = [
+    { id: 5, parent_task_id: 2 },
+    { id: 2 },
+    { id: 1 },
+    { id: 4, parent_task_id: 2 },
+    { id: 3, parent_task_id: 99 },
+  ];
+  const tree = getGanttTaskTree(tasks);
+  assert.deepEqual(
+    tree.map(({ task }) => task.id),
+    [2, 1, 3],
+  );
+  assert.deepEqual(
+    tree[0].children.map(({ task }) => task.id),
+    [5, 4],
+  );
+});
+
+test("未日程の初期表示に直近の登録と必要な親を残し、空の工程も表示する", () => {
+  const tasks = [
+    { id: 1 },
+    { id: 2 },
+    { id: 3 },
+    { id: 4 },
+    { id: 5, start_date: "2026-11-17", parent_task_id: 4 },
+    { id: 6 },
+  ];
+  const result = selectGanttPhaseRows(tasks, 2, 6);
+  assert.deepEqual(
+    result.shown.map((task) => task.id),
+    [1, 2, 4, 5, 6],
+  );
+  assert.equal(result.remaining, 1);
+  assert.deepEqual(
+    groupPlanningTasks(
+      [],
+      [
+        { id: 7, name: "空の工程", archived_at: null },
+        { id: 8, name: "旧工程", archived_at: "2026-11-16" },
+      ],
+      true,
+    ),
+    [{ key: "phase:7", label: "空の工程", tasks: [] }],
+  );
+});
+
+test("ガントの旧入口から計画に期間・担当・要件・概要の戻り先を引き継ぐ", () => {
+  const query = new URLSearchParams({
+    tab: "gantt",
+    ganttStartDate: "2026-11-01",
+    ganttEndDate: "2026-11-30",
+    ganttRangeMode: "custom",
+    ganttDisplayUnit: "week",
+    ganttAssigneeId: "8",
+    ganttRequirementId: "12",
+    overviewReturn: "/projects/joined/7?overviewView=schedule",
+    q: "一覧の検索語",
+    status: "todo",
+  });
+  const url = new URL(getPlanningHref(7, query), "https://syncnesto.invalid");
+  assert.equal(url.pathname, "/projects/joined/7/planning");
+  assert.deepEqual(Object.fromEntries(url.searchParams), {
+    ganttStartDate: "2026-11-01",
+    ganttEndDate: "2026-11-30",
+    ganttRangeMode: "custom",
+    ganttDisplayUnit: "week",
+    assigneeId: "8",
+    requirementId: "12",
+    overviewReturn: "/projects/joined/7?overviewView=schedule",
+  });
+  assert.equal(
+    getPlanningHref(7, new URLSearchParams("assignee=me")),
+    "/projects/joined/7/planning?assignee=me",
+  );
+  assert.equal(
+    getPlanningHref(
+      7,
+      new URLSearchParams("assignee=me&assigneeId=&ganttAssigneeId=8"),
+    ),
+    "/projects/joined/7/planning?assigneeId=",
+  );
+});
+
+test("既存の親子・工程順を保持して工程、共通、未分類に一度ずつまとめる", () => {
+  const tasks = [
+    { id: 1, phase_scope: "unclassified", start_date: "2026-11-16" },
+    { id: 2, phase_scope: "phase", phase_id: 3, parent_task_id: 1 },
+    { id: 3, phase_scope: "shared" },
+    { id: 4, phase_scope: "phase", phase_id: 2 },
+    { id: 5, phase_scope: "phase", phase_id: 3 },
+    { id: 6 },
+    { id: 7, phase_scope: "phase", phase_id: 9 },
+  ];
+  const groups = groupPlanningTasks(tasks, [
+    { id: 3, name: "設計" },
+    { id: 2, name: "検証", archived_at: "2026-11-12" },
+  ]);
+  assert.deepEqual(
+    groups.map(({ label, tasks }) => [label, tasks.map(({ id }) => id)]),
+    [
+      ["設計", [2, 5]],
+      ["検証（アーカイブ済み）", [4]],
+      ["共通作業", [3]],
+      ["未分類", [1, 6]],
+      ["工程 #9", [7]],
+    ],
+  );
+  assert.equal(groups[0].tasks[0], tasks[1]);
+});

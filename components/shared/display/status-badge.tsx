@@ -35,13 +35,19 @@ export function StatusBadge({
   tone,
   children,
   className,
+  asChild,
 }: {
   tone: StatusTone;
   children: ReactNode;
   className?: string;
+  asChild?: boolean;
 }) {
   return (
-    <Badge variant="outline" className={cn(toneClasses[tone], className)}>
+    <Badge
+      asChild={asChild}
+      variant="outline"
+      className={cn(toneClasses[tone], className)}
+    >
       {children}
     </Badge>
   );

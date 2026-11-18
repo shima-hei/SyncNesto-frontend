@@ -29,6 +29,7 @@ const task = {
   estimated_basis: "rollup",
   actual_start_date: null,
   progress_percent: 40,
+  status: "in_progress",
 };
 const draft = (changes) => ({
   baseline: task,
@@ -85,6 +86,7 @@ test("three-way reconciliation keeps unrelated current changes and only reapplie
   };
   const original = draft({ dueDate: "2026-11-03" });
   assert.deepEqual(planning.mergePlanningValues(original, current), {
+    ...planning.getTaskPlanningValues(current),
     assigneeId: "8",
     startDate: "2026-10-29",
     dueDate: "2026-11-03",
@@ -131,4 +133,55 @@ test("restoration separates planning scope and rejects foreign or malformed reco
   assert.equal(overlaid.due_date, null);
   assert.equal(overlaid.actual_start_date, null);
   assert.equal(overlaid.estimated_basis, "rollup");
+});
+
+test("daily save rebases progress on the accepted planning version and keeps progress reconciliation independent", () => {
+  const pending = draft({
+    dueDate: "2026-11-03",
+    status: "returned",
+    progressPercent: "55",
+    changeReason: "前提を再確認",
+  });
+  assert.equal(planning.getProgressValidation(pending), null);
+  assert.ok(planning.getProgressValidation(draft({ status: "done" })));
+  assert.ok(planning.getProgressValidation(draft({ status: "returned" })));
+
+  const planned = { ...task, version: 4, due_date: "2026-11-03" };
+  const rebased = planning.rebaseAfterPlanningSave(pending, planned);
+  assert.deepEqual(planning.toTaskPlanningUpdate(rebased), { version: 4 });
+  assert.deepEqual(planning.toTaskProgressUpdate(rebased), {
+    version: 4,
+    status: "returned",
+    progress_percent: 55,
+    change_reason: "前提を再確認",
+  });
+  assert.equal(planning.isPlanningReflected(rebased, planned), false);
+  assert.equal(
+    planning.isPlanningReflected(rebased, {
+      ...planned,
+      status: "returned",
+      progress_percent: 55,
+    }),
+    true,
+  );
+});
+
+test("restores drafts saved before progress editing was added", () => {
+  const old = {
+    baseline: task,
+    values: {
+      assigneeId: "2",
+      startDate: "2026-10-29",
+      dueDate: "",
+      estimatedMinutes: "90",
+    },
+  };
+  const restored = planning.readPlanningDrafts({ 7: old }, 5)[7];
+  assert.equal(restored.values.status, "in_progress");
+  assert.equal(restored.values.progressPercent, "40");
+  assert.equal(planning.toTaskProgressUpdate(restored), null);
+  assert.deepEqual(planning.toTaskPlanningUpdate(restored), {
+    version: 3,
+    due_date: null,
+  });
 });

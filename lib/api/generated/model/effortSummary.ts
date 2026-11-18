@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { AssigneeEffortGroup } from "./assigneeEffortGroup";
 import type { EffortFilters } from "./effortFilters";
 import type { EffortTotals } from "./effortTotals";
 import type { PhaseEffortGroup } from "./phaseEffortGroup";
@@ -19,4 +20,5 @@ export interface EffortSummary {
   totals: EffortTotals;
   groups: PhaseEffortGroup[];
   status_groups: StatusEffortGroup[];
+  assignee_groups?: AssigneeEffortGroup[];
 }

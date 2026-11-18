@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -10,19 +11,122 @@ import {
 import { Input } from "@/components/ui/input";
 import type { TaskRead } from "@/lib/api/generated/model";
 
+import { TASK_STATUS_OPTIONS } from "../../constants/task-options";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import { effortBasisLabel } from "../../lib/task-effort";
-import { getTaskPlanningValues } from "../../lib/task-planning";
+import {
+  getTaskPlanningValues,
+  type TaskPlanningValues,
+} from "../../lib/task-planning";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
+
+const dateFields = [
+  ["startDate", "開始予定日"],
+  ["dueDate", "終了予定日"],
+] as const;
+
+export function TaskPlanningDateFields({
+  values,
+  disabled,
+  onChange,
+}: {
+  values: TaskPlanningValues;
+  disabled?: boolean;
+  onChange: (changes: Partial<TaskPlanningValues>) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="grid gap-3">
+      {dateFields.map(([key, label]) => (
+        <Field key={key}>
+          <FieldLabel htmlFor={`${id}-${key}`}>{label}</FieldLabel>
+          <Input
+            id={`${id}-${key}`}
+            type="date"
+            value={values[key]}
+            disabled={disabled}
+            onChange={(event) => onChange({ [key]: event.target.value })}
+          />
+        </Field>
+      ))}
+    </div>
+  );
+}
+
+export function TaskProgressFields({
+  values,
+  originalStatus,
+  disabled,
+  onChange,
+}: {
+  values: TaskPlanningValues;
+  originalStatus: string;
+  disabled?: boolean;
+  onChange: (changes: Partial<TaskPlanningValues>) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="grid gap-3">
+      <Field>
+        <FieldLabel htmlFor={`${id}-status`}>状態</FieldLabel>
+        <select
+          id={`${id}-status`}
+          className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+          disabled={disabled}
+          value={values.status}
+          onChange={(event) => {
+            const status = event.target.value;
+            onChange({
+              status,
+              ...(status === "done" ? { progressPercent: "100" } : {}),
+            });
+          }}
+        >
+          {!TASK_STATUS_OPTIONS.some(({ value }) => value === values.status) ? (
+            <option value={values.status}>{values.status}</option>
+          ) : null}
+          {TASK_STATUS_OPTIONS.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`${id}-progress`}>進捗率（%）</FieldLabel>
+        <Input
+          id={`${id}-progress`}
+          inputMode="numeric"
+          maxLength={3}
+          value={values.progressPercent}
+          disabled={disabled || values.status === "done"}
+          onChange={(event) =>
+            onChange({ progressPercent: event.target.value })
+          }
+        />
+      </Field>
+      {values.status === "returned" && originalStatus !== "returned" ? (
+        <Field>
+          <FieldLabel htmlFor={`${id}-reason`}>差し戻し理由（必須）</FieldLabel>
+          <Input
+            id={`${id}-reason`}
+            value={values.changeReason}
+            disabled={disabled}
+            required
+            onChange={(event) => onChange({ changeReason: event.target.value })}
+          />
+        </Field>
+      ) : null}
+    </div>
+  );
+}
 
 export function TaskPlanningFields({
   task,
   planning,
-  inline = false,
 }: {
   task: TaskRead;
   planning: TaskPlanningController;
-  inline?: boolean;
 }) {
   const row = planning.rows[task.id];
   const values = row?.values ?? getTaskPlanningValues(task);
@@ -30,17 +134,10 @@ export function TaskPlanningFields({
     planning.checkingId === task.id ||
     Boolean(planning.pendingDraft) ||
     row?.status === "pending" ||
-    row?.status === "unknown";
+    row?.status === "unknown" ||
+    row?.status === "conflict";
   return (
-    <FieldGroup
-      className={
-        inline
-          ? "grid grid-cols-[minmax(190px,1fr)_140px_140px_118px] items-start gap-2"
-          : "gap-4"
-      }
-      onKeyDown={(event) => event.stopPropagation()}
-      onClick={(event) => event.stopPropagation()}
-    >
+    <FieldGroup className="gap-4">
       <TaskUserSelectField
         projectId={task.project_id}
         label="担当者"
@@ -48,37 +145,23 @@ export function TaskPlanningFields({
         disabled={disabled}
         onChange={(assigneeId) => planning.edit(task, { assigneeId })}
       />
-      {(
-        [
-          ["startDate", "開始予定日"],
-          ["dueDate", "終了予定日"],
-        ] as const
-      ).map(([key, label]) => (
-        <Field key={key}>
-          <FieldLabel
-            htmlFor={`planning-${inline ? "grid" : "sheet"}-${task.id}-${key}`}
-          >
-            {label}
-          </FieldLabel>
-          <Input
-            id={`planning-${inline ? "grid" : "sheet"}-${task.id}-${key}`}
-            type="date"
-            value={values[key]}
-            disabled={disabled}
-            onChange={(event) =>
-              planning.edit(task, { [key]: event.target.value })
-            }
-          />
-        </Field>
-      ))}
+      <TaskProgressFields
+        values={values}
+        originalStatus={row?.baseline.status ?? task.status ?? "backlog"}
+        disabled={disabled}
+        onChange={(changes) => planning.edit(task, changes)}
+      />
+      <TaskPlanningDateFields
+        values={values}
+        disabled={disabled}
+        onChange={(changes) => planning.edit(task, changes)}
+      />
       <Field>
-        <FieldLabel
-          htmlFor={`planning-${inline ? "grid" : "sheet"}-${task.id}-estimate`}
-        >
+        <FieldLabel htmlFor={`planning-sheet-${task.id}-estimate`}>
           見積入力（分）
         </FieldLabel>
         <Input
-          id={`planning-${inline ? "grid" : "sheet"}-${task.id}-estimate`}
+          id={`planning-sheet-${task.id}-estimate`}
           inputMode="numeric"
           value={values.estimatedMinutes}
           disabled={disabled}

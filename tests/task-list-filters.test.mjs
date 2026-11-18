@@ -19,6 +19,24 @@ const filters = await import(
   `data:text/javascript;base64,${Buffer.from(source).toString("base64")}`
 );
 
+test("status toggles match any selection and the completed preset excludes only done", () => {
+  const todo = filters.toggleTaskStatusFilter([], "todo", true);
+  const picked = filters.toggleTaskStatusFilter(
+    todo.values,
+    "in_progress",
+    true,
+  );
+  assert.equal(filters.matchesTaskStatus(picked, "todo"), true);
+  assert.equal(filters.matchesTaskStatus(picked, "in_progress"), true);
+  assert.equal(filters.matchesTaskStatus(picked, "done"), false);
+  const active = { kind: "exclude", values: ["done"] };
+  assert.equal(filters.matchesTaskStatus(active, "done"), false);
+  assert.equal(filters.matchesTaskStatus(active, "resolved"), true);
+  assert.equal(filters.matchesTaskStatus(active, "cancelled"), true);
+  const cleared = filters.toggleTaskStatusFilter(["todo"], "todo", false);
+  assert.equal(filters.matchesTaskStatus(cleared, "done"), true);
+});
+
 test("generated API serializes status arrays as repeated query parameters", async () => {
   const clientSource = fs.readFileSync(
     new URL("../lib/api/generated/tasks/tasks.ts", import.meta.url),

@@ -13,4 +13,6 @@ export interface EffortTotals {
   task_count?: number;
   estimated?: EffortMetric;
   actual?: EffortMetric;
+  planned?: EffortMetric;
+  remaining?: EffortMetric;
 }

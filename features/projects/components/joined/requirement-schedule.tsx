@@ -142,7 +142,7 @@ export function RequirementScheduleView({
       origin,
     );
   const gantt = (id?: number) =>
-    link(`tasks?tab=gantt${id ? `&ganttRequirementId=${id}` : ""}`);
+    link(`planning${id ? `?requirementId=${id}` : ""}`);
   const move = (direction: number) => {
     const next = shiftScheduleWindow(from, to, direction);
     if (next) change({ scheduleStart: next.start, scheduleEnd: next.end });

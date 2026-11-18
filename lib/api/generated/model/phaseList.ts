@@ -4,13 +4,13 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import type { PhaseRead } from "./phaseRead";
+import type { PhaseListItem } from "./phaseListItem";
 
 /**
  * 全件と取りこぼしを区別する工程一覧。
  */
 export interface PhaseList {
-  items: PhaseRead[];
+  items: PhaseListItem[];
   total: number;
   page: number;
   page_size: number;

@@ -43,6 +43,8 @@ const FIELD_LABELS: Record<string, string> = {
   actual_end_date: "実終了日",
   estimated_minutes: "見積時間",
   actual_minutes: "実績時間",
+  planned_minutes: "計画工数",
+  remaining_minutes: "残工数",
   phase_assignment: "工程所属",
   estimated_basis: "見積工数の根拠",
   actual_basis: "実績工数の根拠",
@@ -228,6 +230,8 @@ const formatNumberValue = (value: number, fieldName?: string | null) => {
   switch (fieldName) {
     case "estimated_minutes":
     case "actual_minutes":
+    case "planned_minutes":
+    case "remaining_minutes":
       return `${value}分`;
     case "progress_percent":
       return `${value}%`;

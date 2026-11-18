@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PhaseReadColor } from "./phaseReadColor";
 
 /**
  * アーカイブ分を含む工程読取。
@@ -15,5 +16,8 @@ export interface PhaseRead {
   sort_order: number;
   version: number;
   archived_at: string | null;
+  color?: PhaseReadColor;
+  description?: string | null;
+  reserve_minutes?: number | null;
   task_count?: number;
 }

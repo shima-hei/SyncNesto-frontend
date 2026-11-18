@@ -278,3 +278,136 @@ test("a saved response may remount the form before draft cleanup without prompti
     true,
   );
 });
+
+test("workbench totals count own work once and preserve explicit zero across phase and date filters", async () => {
+  const { sumMeasure, filterEffortTasks, initialEffortFilter, hasEffortIssue } =
+    await load("../features/tasks/lib/effort-workspace.ts");
+  const parent = {
+    id: 1,
+    task_code: "P",
+    title: "親",
+    estimated_basis: "rollup",
+    estimated_minutes: 600,
+    actual_basis: "rollup",
+    actual_minutes: 200,
+    status: "done",
+    remaining_minutes: 120,
+  };
+  const child = {
+    id: 2,
+    parent_task_id: 1,
+    task_code: "C",
+    title: "子",
+    phase_scope: "phase",
+    phase_id: 7,
+    start_date: "2026-11-01",
+    due_date: "2026-11-18",
+    estimated_basis: "own",
+    estimated_minutes: 0,
+    actual_basis: "own",
+    actual_minutes: 5,
+    planned_minutes: 0,
+    remaining_minutes: 0,
+  };
+  const missing = {
+    ...child,
+    id: 3,
+    start_date: null,
+    due_date: null,
+    estimated_minutes: null,
+    actual_minutes: null,
+  };
+  const pending = {
+    ...child,
+    id: 4,
+    estimated_basis: "unreviewed",
+    estimated_minutes: 80,
+  };
+  const tasks = [parent, child, missing, pending];
+  assert.deepEqual(sumMeasure(tasks, "estimated"), {
+    minutes: 0,
+    entered: 1,
+    missing: 1,
+    unreviewed: 1,
+  });
+  assert.deepEqual(sumMeasure(tasks, "remaining"), {
+    minutes: 0,
+    entered: 3,
+    missing: 0,
+    unreviewed: 0,
+  });
+  assert.equal(hasEffortIssue(parent, "over"), false);
+  assert.equal(hasEffortIssue(child, "over"), true);
+  assert.deepEqual(
+    filterEffortTasks(
+      tasks,
+      { ...initialEffortFilter, issue: "missing" },
+      () => "",
+    ),
+    [missing],
+  );
+  assert.deepEqual(
+    filterEffortTasks(
+      tasks,
+      {
+        ...initialEffortFilter,
+        phase: "7",
+        from: "2026-11-18",
+        to: "2026-11-18",
+      },
+      () => "",
+    ),
+    [child, pending],
+  );
+});
+
+test("method previews round once and distinguish missing, zero and overflow", async () => {
+  const { calculateEstimate, estimateFormValues, parseEstimateHours } =
+    await load("../features/tasks/lib/task-estimate.ts");
+  assert.equal(parseEstimateHours("1.025"), 62);
+  assert.equal(parseEstimateHours("1.024999999999999999"), 61);
+  assert.equal(parseEstimateHours("0"), 0);
+  assert.equal(parseEstimateHours(""), null);
+  const draft = estimateFormValues({ task_version: 1, method: "parametric" });
+  const product = (quantity, unitHours) =>
+    calculateEstimate({ ...draft, quantity, unitHours }).minutes;
+  assert.equal(product("", "0"), null);
+  assert.equal(product("0", "0.03"), 0);
+  assert.equal(product("2.5", "0.03"), 5);
+  assert.equal(product("10000", "0.0001"), 60);
+  assert.equal(product("99999999", "99999999"), null);
+  const analog = calculateEstimate({
+    ...draft,
+    method: "analogous",
+    referenceWork: " 調査 ",
+    referenceHours: "0.25",
+    factor: "1.1",
+  });
+  assert.deepEqual(analog, {
+    minutes: 17,
+    inputs: { reference_work: "調査", reference_minutes: 15, factor: "1.1" },
+  });
+});
+
+test("worksheet ranges preserve quoted references and reject stale or uneven rectangles", async () => {
+  const { bounds, fromTsv, toTsv } = await load(
+    "../features/tasks/lib/estimate-worksheet-range.ts",
+  );
+  const matrix = [
+    ['見積根拠\t"初版"\n翌日', "0", "1.25"],
+    ["", "2", "3"],
+  ];
+  assert.deepEqual(fromTsv(toTsv(matrix) + "\r\n"), matrix);
+  assert.throws(() => fromTsv("1\t2\n3"));
+  assert.throws(() => fromTsv('"閉じていない'));
+  const first = { id: 8, field: "optimistic" },
+    last = { id: 4, field: "pessimistic" };
+  const fields = ["optimistic", "likely", "pessimistic"];
+  assert.deepEqual(bounds([8, 4], fields, last, first), {
+    top: 0,
+    bottom: 1,
+    left: 0,
+    right: 2,
+  });
+  assert.equal(bounds([8], fields, first, last), null);
+});

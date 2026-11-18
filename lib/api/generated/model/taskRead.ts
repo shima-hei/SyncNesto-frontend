@@ -42,6 +42,8 @@ export interface TaskRead {
   id: number;
   project_id: number;
   version: number;
+  planned_minutes?: number | null;
+  remaining_minutes?: number | null;
   task_type_name?: string | null;
   parent_summary?: TaskParentSummary | null;
   has_children?: boolean;

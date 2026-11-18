@@ -65,6 +65,26 @@ export function getSelectedTaskStatuses(
     .map((option) => option.value);
 }
 
+export function matchesTaskStatus(
+  filter: TaskStatusFilter,
+  status?: string | null,
+) {
+  if (filter.kind === "all") return true;
+  const included = filter.values.includes(status ?? "");
+  return filter.kind === "include" ? included : !included;
+}
+
+export function toggleTaskStatusFilter(
+  selected: string[],
+  status: string,
+  checked: boolean,
+): TaskStatusFilter {
+  const values = checked
+    ? [...selected, status]
+    : selected.filter((current) => current !== status);
+  return values.length ? { kind: "include", values } : { kind: "all" };
+}
+
 export function getTaskStatusFilterLabel(
   filter: TaskStatusFilter,
   options: readonly { value: string; label: string }[],
