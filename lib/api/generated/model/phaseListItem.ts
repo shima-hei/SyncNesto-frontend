@@ -18,6 +18,7 @@ export interface PhaseListItem {
   archived_at: string | null;
   color?: PhaseListItemColor;
   description?: string | null;
+  reserve_minutes?: number | null;
   task_count?: number;
   planned_start_date?: string | null;
   planned_end_date?: string | null;

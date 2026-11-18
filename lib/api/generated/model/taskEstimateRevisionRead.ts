@@ -7,6 +7,11 @@
 import type { TaskEstimateRevisionReadMethod } from "./taskEstimateRevisionReadMethod";
 
 export interface TaskEstimateRevisionRead {
+  quantity?: string | null;
+  unit_hours?: string | null;
+  reference_work?: string | null;
+  reference_minutes?: number | null;
+  factor?: string | null;
   task_version: number;
   method?: TaskEstimateRevisionReadMethod;
   minutes?: number | null;

@@ -13,4 +13,6 @@ export const TaskEstimateRevisionReadMethod = {
   simple: "simple",
   pert: "pert",
   triangular: "triangular",
+  parametric: "parametric",
+  analogous: "analogous",
 } as const;

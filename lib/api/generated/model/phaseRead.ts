@@ -18,5 +18,6 @@ export interface PhaseRead {
   archived_at: string | null;
   color?: PhaseReadColor;
   description?: string | null;
+  reserve_minutes?: number | null;
   task_count?: number;
 }

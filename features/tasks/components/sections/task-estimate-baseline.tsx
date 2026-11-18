@@ -28,7 +28,10 @@ import {
   useGetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGet,
 } from "@/lib/api/generated/task-estimates/task-estimates";
 import { formatEstimateHours } from "../../lib/task-effort";
-import { estimateMethodLabels } from "../../lib/task-estimate";
+import {
+  estimateMethodLabels,
+  estimateInputSummary,
+} from "../../lib/task-estimate";
 
 const PAGE_SIZE = 20;
 const dateFormat = new Intl.DateTimeFormat("ja-JP", {
@@ -248,6 +251,11 @@ export function TaskEstimateBaseline({
                   {formatEstimateHours(row.estimate.minutes)}
                   {row.estimate.method &&
                     ` ・ ${estimateMethodLabels[row.estimate.method]}`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="wrap-anywhere">
+                    {estimateInputSummary(row.estimate)}
+                  </span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {dateFormat.format(new Date(row.confirmed_at))}

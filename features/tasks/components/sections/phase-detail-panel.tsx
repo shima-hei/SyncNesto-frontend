@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   PhaseAssignment,
@@ -38,6 +39,7 @@ import { phaseColors } from "../../lib/phase-colors";
 
 import { TaskStatusBadge } from "../shared/task-badges";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
+import { toHourInput, parseEstimateHours } from "../../lib/task-estimate";
 import { formatEstimateHours } from "../../lib/task-effort";
 import styles from "./effort-workspace.module.css";
 
@@ -324,11 +326,19 @@ export function PhaseDetailPanel({
         (canManage ? (
           <PhaseDetailsForm projectId={projectId} phase={phase} />
         ) : (
-          phase.description && (
-            <p className="text-sm whitespace-pre-wrap wrap-anywhere">
-              {phase.description}
+          <>
+            <p className="text-sm">
+              工程予備工数　
+              {phase.reserve_minutes == null
+                ? "未入力"
+                : formatEstimateHours(phase.reserve_minutes)}
             </p>
-          )
+            {phase.description && (
+              <p className="text-sm whitespace-pre-wrap wrap-anywhere">
+                {phase.description}
+              </p>
+            )}
+          </>
         ))}
       {canManage && canUpdate && phase && !phase.archived_at && (
         <Button
@@ -365,6 +375,7 @@ function PhaseDetailsForm({
   const [draft, setDraft] = useState<{
     color: PhaseUpdateColor;
     description: string;
+    reserveHours: string;
   }>();
   const save = useMutation({
     mutationFn: ({
@@ -378,6 +389,7 @@ function PhaseDetailsForm({
         version: previous.version,
         color: values.color,
         description: values.description.trim() || null,
+        reserve_minutes: parseEstimateHours(values.reserveHours),
       }),
     onSuccess: async () => {
       await invalidateTaskProjectSurfaces(client, projectId);
@@ -391,17 +403,28 @@ function PhaseDetailsForm({
     setDraft({
       color: phase.color ?? null,
       description: phase.description ?? "",
+      reserveHours: toHourInput(phase.reserve_minutes),
       ...draft,
       ...change,
     });
   };
   const conflict = getConflictCurrent<PhaseRead>(save.error);
+  const reserveHours =
+    draft?.reserveHours ?? toHourInput(phase.reserve_minutes);
+  const invalidReserve =
+    reserveHours.trim() !== "" && parseEstimateHours(reserveHours) === null;
   return (
     <form
       className="space-y-2"
       onSubmit={(event) => {
         event.preventDefault();
-        if (baseline && draft && !conflict && !save.isPending)
+        if (
+          baseline &&
+          draft &&
+          !invalidReserve &&
+          !conflict &&
+          !save.isPending
+        )
           save.mutate({ previous: baseline, values: draft });
       }}
     >
@@ -442,6 +465,23 @@ function PhaseDetailsForm({
         </div>
       </fieldset>
       <label className="grid gap-1 text-sm">
+        工程予備工数（h）
+        <Input
+          type="number"
+          step="any"
+          min="0"
+          max={toHourInput(2147483647)}
+          placeholder="未入力"
+          value={reserveHours}
+          aria-invalid={invalidReserve}
+          disabled={save.isPending}
+          onChange={(event) => change({ reserveHours: event.target.value })}
+        />
+        <span className="text-xs text-muted-foreground">
+          タスク見積とは別枠で確保する時間です。
+        </span>
+      </label>
+      <label className="grid gap-1 text-sm">
         工程の説明
         <Textarea
           value={draft?.description ?? phase.description ?? ""}
@@ -454,7 +494,7 @@ function PhaseDetailsForm({
         <Button
           type="submit"
           size="sm"
-          disabled={save.isPending || Boolean(conflict)}
+          disabled={save.isPending || invalidReserve || Boolean(conflict)}
         >
           工程の詳細を保存
         </Button>
@@ -469,6 +509,7 @@ function PhaseDetailsForm({
             setDraft({
               color: conflict.color ?? null,
               description: conflict.description ?? "",
+              reserveHours: toHourInput(conflict.reserve_minutes),
             });
             save.reset();
           }}

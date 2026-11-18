@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { getConflictCurrent } from "@/lib/api/conflict";
 import type {
   TaskEstimateRead,
-  TaskEstimateRevisionRead,
   TaskEstimateUpdate,
   TaskRead,
 } from "@/lib/api/generated/model";
@@ -26,10 +25,10 @@ import { useReadTaskTasksTaskIdGet } from "@/lib/api/generated/tasks/tasks";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
 import {
-  calculateThreePointMinutes,
+  calculateEstimate,
+  estimateFormValues,
+  estimateInputSummary,
   estimateMethodLabels,
-  parseEstimateHours,
-  toHourInput,
 } from "../../lib/task-estimate";
 import {
   effortBasisLabel,
@@ -155,6 +154,9 @@ export function EstimatePanel({
                   : "見積未入力"}
                 　{formatEstimateHours(details.data.current.minutes)}
               </p>
+              <p className="text-xs wrap-anywhere text-muted-foreground">
+                {estimateInputSummary(details.data.current)}
+              </p>
               {details.data.current.assumptions && (
                 <p className="whitespace-pre-wrap">
                   {details.data.current.assumptions}
@@ -201,11 +203,12 @@ export function EstimatePanel({
                       更新者　{getTaskUserLabel(revision.actor_id)}
                     </p>
                   )}
-                  {revision.optimistic_minutes != null && (
-                    <p className="text-xs text-muted-foreground">
-                      楽観 {formatEstimateHours(revision.optimistic_minutes)} ／
-                      最頻 {formatEstimateHours(revision.likely_minutes)} ／
-                      悲観 {formatEstimateHours(revision.pessimistic_minutes)}
+                  <p className="text-xs wrap-anywhere text-muted-foreground">
+                    {estimateInputSummary(revision)}
+                  </p>
+                  {revision.assumptions && (
+                    <p className="whitespace-pre-wrap wrap-anywhere">
+                      {revision.assumptions}
                     </p>
                   )}
                   {revision.change_reason && (
@@ -232,18 +235,6 @@ export function EstimatePanel({
   );
 }
 
-function formValues(revision: TaskEstimateRevisionRead) {
-  return {
-    method: revision.method ?? "simple",
-    hours: toHourInput(revision.minutes),
-    optimistic: toHourInput(revision.optimistic_minutes),
-    likely: toHourInput(revision.likely_minutes),
-    pessimistic: toHourInput(revision.pessimistic_minutes),
-    assumptions: revision.assumptions ?? "",
-    reason: "",
-  };
-}
-
 function EstimateForm({
   projectId,
   taskId,
@@ -257,25 +248,18 @@ function EstimateForm({
 }) {
   const client = useQueryClient();
   const [version, setVersion] = useState<number>();
-  const [draft, setDraft] = useState<ReturnType<typeof formValues>>();
-  const values = draft ?? formValues(detail.current);
+  const [draft, setDraft] = useState<ReturnType<typeof estimateFormValues>>();
+  const values = draft ?? estimateFormValues(detail.current);
   const edit = (changes: Partial<typeof values>) => {
     if (version === undefined) setVersion(detail.version);
     setDraft({ ...values, ...changes });
   };
-  const optimistic = parseEstimateHours(values.optimistic);
-  const likely = parseEstimateHours(values.likely);
-  const pessimistic = parseEstimateHours(values.pessimistic);
   const simple = values.method === "simple";
-  const calculated =
-    values.method === "simple"
-      ? parseEstimateHours(values.hours)
-      : calculateThreePointMinutes(
-          values.method,
-          optimistic,
-          likely,
-          pessimistic,
-        );
+  const three = values.method === "pert" || values.method === "triangular";
+  const { minutes: calculated, inputs } = calculateEstimate(values);
+  const canSave =
+    calculated !== null &&
+    (values.method !== "analogous" || Boolean(values.referenceWork.trim()));
   const save = useMutation({
     mutationFn: (data: TaskEstimateUpdate) =>
       updateTaskEstimateTasksTaskIdEstimatePatch(taskId, data),
@@ -299,25 +283,14 @@ function EstimateForm({
       className="space-y-3"
       onSubmit={(event) => {
         event.preventDefault();
-        if (
-          calculated === null ||
-          version === undefined ||
-          save.isPending ||
-          conflict
-        )
+        if (!canSave || version === undefined || save.isPending || conflict)
           return;
         save.mutate({
           version,
           method: values.method,
           assumptions: values.assumptions.trim() || null,
           change_reason: values.reason.trim() || null,
-          ...(simple
-            ? { minutes: calculated }
-            : {
-                optimistic_minutes: optimistic,
-                likely_minutes: likely,
-                pessimistic_minutes: pessimistic,
-              }),
+          ...inputs,
         });
       }}
     >
@@ -327,16 +300,23 @@ function EstimateForm({
           <select
             aria-label="見積手法"
             className="h-8 rounded-md border bg-background px-2"
-            value={simple ? "simple" : "three"}
+            value={three ? "three" : values.method}
             onChange={(e) =>
-              edit({ method: e.target.value === "simple" ? "simple" : "pert" })
+              edit({
+                method:
+                  e.target.value === "three"
+                    ? "pert"
+                    : (e.target.value as typeof values.method),
+              })
             }
           >
             <option value="simple">単純見積</option>
             <option value="three">3点見積</option>
+            <option value="parametric">パラメトリック見積</option>
+            <option value="analogous">類推見積</option>
           </select>
         </label>
-        {!simple && (
+        {three && (
           <fieldset className="grid gap-1.5 rounded-md bg-muted/40 p-2">
             <legend className="px-1 text-xs text-muted-foreground">
               計算方式
@@ -368,7 +348,7 @@ function EstimateForm({
               onChange={(event) => edit({ hours: event.target.value })}
             />
           </label>
-        ) : (
+        ) : three ? (
           <div className="grid gap-2 sm:grid-cols-3">
             {(
               [
@@ -390,8 +370,53 @@ function EstimateForm({
               </label>
             ))}
           </div>
+        ) : (
+          <div className="grid gap-2">
+            {values.method === "analogous" && (
+              <label className="grid gap-1">
+                参照する類似作業
+                <Input
+                  required
+                  maxLength={200}
+                  value={values.referenceWork}
+                  onChange={(event) =>
+                    edit({ referenceWork: event.target.value })
+                  }
+                />
+              </label>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              {(values.method === "parametric"
+                ? ([
+                    ["quantity", "数量"],
+                    ["unitHours", "単位工数（h）"],
+                  ] as const)
+                : ([
+                    ["referenceHours", "参照工数（h）"],
+                    ["factor", "補正係数"],
+                  ] as const)
+              ).map(([key, label]) => (
+                <label key={key} className="grid gap-1">
+                  {label}
+                  <Input
+                    type="number"
+                    min="0"
+                    required
+                    step={key === "referenceHours" ? "any" : "0.0001"}
+                    value={values[key]}
+                    onChange={(event) => edit({ [key]: event.target.value })}
+                  />
+                </label>
+              ))}
+            </div>
+            {calculated === null && (
+              <p className="text-xs text-muted-foreground">
+                数量・単位工数・補正係数は小数第4位まで入力できます。計算結果の上限は2,147,483,647分です。
+              </p>
+            )}
+          </div>
         )}
-        {!simple && calculated === null && (
+        {three && calculated === null && (
           <p className="text-xs text-muted-foreground">
             楽観、最頻、悲観の順に大きくなるように入力してください。
           </p>
@@ -400,9 +425,13 @@ function EstimateForm({
           <span className="block text-xs">
             {simple
               ? "見積工数"
-              : values.method === "pert"
-                ? "PERT（楽観＋4×最頻＋悲観）÷6"
-                : "三角分布（楽観＋最頻＋悲観）÷3"}
+              : values.method === "parametric"
+                ? "数量 × 単位工数"
+                : values.method === "analogous"
+                  ? "参照工数 × 補正係数"
+                  : values.method === "pert"
+                    ? "PERT（楽観＋4×最頻＋悲観）÷6"
+                    : "三角分布（楽観＋最頻＋悲観）÷3"}
           </span>
           　
           <output className="text-xl font-semibold whitespace-nowrap tabular-nums">
@@ -435,9 +464,7 @@ function EstimateForm({
         <Button
           type="submit"
           size="sm"
-          disabled={
-            !draft || calculated === null || save.isPending || Boolean(conflict)
-          }
+          disabled={!draft || !canSave || save.isPending || Boolean(conflict)}
         >
           {save.isPending ? "保存中…" : "見積を保存"}
         </Button>

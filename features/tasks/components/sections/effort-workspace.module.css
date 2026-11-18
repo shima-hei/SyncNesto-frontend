@@ -117,3 +117,63 @@
   background: var(--card);
   padding: 0.875rem;
 }
+
+.estimateSheet {
+  table-layout: fixed;
+  min-width: 66rem;
+}
+.titleColumn {
+  width: clamp(8rem, 17vw, 17rem);
+}
+.phaseColumn {
+  width: 8rem;
+}
+.assigneeColumn {
+  width: 10rem;
+}
+.methodColumn {
+  width: 7rem;
+}
+.hoursColumn {
+  width: 8rem;
+}
+.statusColumn {
+  width: 7rem;
+}
+.estimateSheet .groupButton {
+  max-width: 100%;
+}
+.estimateSheet .cell {
+  text-align: end;
+}
+.hoursEditor {
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+}
+.hoursEditor input {
+  order: 1;
+  width: 5rem;
+  appearance: textfield;
+}
+.hoursEditor input::-webkit-inner-spin-button {
+  appearance: none;
+}
+.assignmentEditor {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+.assignmentEditor > :first-child {
+  max-width: 100%;
+  min-width: 0;
+}
+.estimateSheet form {
+  grid-template-columns: minmax(0, 1fr);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

@@ -46,16 +46,33 @@ const icons = {
 export function PlanningEffortSummary({
   tasks,
   phases,
+  filter,
   userLabel,
   onDrill,
   onGantt,
 }: {
   tasks: TaskRead[];
   phases: PhaseRead[];
+  filter: EffortFilter;
   userLabel: (id: number) => string;
   onDrill: (filter: Partial<EffortFilter>) => void;
   onGantt: (id: number) => void;
 }) {
+  const scopedReserves = phases.filter((phase) =>
+    filter.phase ? String(phase.id) === filter.phase : !phase.archived_at,
+  );
+  const enteredReserves = scopedReserves.filter(
+    (phase) => phase.reserve_minutes != null,
+  );
+  const showReserves =
+    enteredReserves.length > 0 &&
+    !(
+      filter.search.trim() ||
+      filter.assignee ||
+      filter.from ||
+      filter.to ||
+      filter.issue
+    );
   const totals = effortMeasures.map((m) => ({
     ...m,
     total: sumMeasure(tasks, m.key),
@@ -169,6 +186,39 @@ export function PlanningEffortSummary({
           </button>
         ))}
       </div>
+      {showReserves && (
+        <details className="rounded-md border bg-card px-3 py-2 text-sm">
+          <summary className="cursor-pointer">
+            工程予備工数（別枠）　
+            <strong className="tabular-nums">
+              {formatEstimateHours(
+                enteredReserves.reduce(
+                  (sum, phase) => sum + (phase.reserve_minutes ?? 0),
+                  0,
+                ),
+              )}
+            </strong>
+            <span className="ml-2 text-xs text-muted-foreground">
+              登録 {enteredReserves.length} / {scopedReserves.length} 工程
+            </span>
+          </summary>
+          <dl className="mt-2 divide-y" aria-label="工程予備工数の内訳">
+            {scopedReserves.map((phase) => (
+              <div key={phase.id} className="flex justify-between gap-2 py-1">
+                <dt className="flex min-w-0 items-center gap-1.5 wrap-anywhere">
+                  <PhaseDot phase={phase} />
+                  {phase.name}
+                </dt>
+                <dd className="shrink-0 tabular-nums">
+                  {phase.reserve_minutes == null
+                    ? "未入力"
+                    : formatEstimateHours(phase.reserve_minutes)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
       {!hasData ? (
         <div className="rounded-lg border p-4">
           <h3 className="font-semibold">

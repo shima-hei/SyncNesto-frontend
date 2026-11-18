@@ -17,4 +17,5 @@ export interface PhaseUpdate {
   archived?: boolean | null;
   color?: PhaseUpdateColor;
   description?: string | null;
+  reserve_minutes?: number | null;
 }

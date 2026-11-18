@@ -49,6 +49,7 @@ import {
 } from "../../lib/effort-workspace";
 import { measureNote, measureValue } from "./effort-controls";
 import styles from "./effort-workspace.module.css";
+import { formatEstimateHours } from "../../lib/task-effort";
 import { phaseColors } from "../../lib/phase-colors";
 import { GANTT_ORDER_ROW, GanttOrderHandle } from "../gantt/gantt-order-handle";
 import { PlanningPlacementDialog } from "./planning-placement-dialog";
@@ -127,7 +128,7 @@ export function PlanningPhaseActions({
     expanded.includes(key) && (
       <TableRow>
         <TableCell
-          colSpan={6}
+          colSpan={7}
           className="bg-muted/20 p-2 pl-5 whitespace-normal"
         >
           <PhaseTaskRows
@@ -362,7 +363,10 @@ export function PlanningPhaseActions({
                         タスク
                       </TableHead>
                       <TableHead scope="col" className="text-right">
-                        見積
+                        タスク見積
+                      </TableHead>
+                      <TableHead scope="col" className="text-right">
+                        工程予備
                       </TableHead>
                       <TableHead scope="col" className="text-right">
                         実績
@@ -450,6 +454,11 @@ export function PlanningPhaseActions({
                               {metric(members, "estimated")}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
+                              {phase.reserve_minutes == null
+                                ? "未入力"
+                                : formatEstimateHours(phase.reserve_minutes)}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
                               {metric(members, "actual")}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
@@ -529,7 +538,7 @@ export function PlanningPhaseActions({
                     })}
                     {nameEditor === null && (
                       <TableRow>
-                        <TableCell colSpan={6}>{nameForm(null)}</TableCell>
+                        <TableCell colSpan={7}>{nameForm(null)}</TableCell>
                       </TableRow>
                     )}
                     {(
@@ -562,6 +571,12 @@ export function PlanningPhaseActions({
                             </TableCell>
                             <TableCell className="text-right">
                               {metric(members, "estimated")}
+                            </TableCell>
+                            <TableCell
+                              className="text-right text-muted-foreground"
+                              aria-label="工程予備の対象外"
+                            >
+                              —
                             </TableCell>
                             <TableCell className="text-right">
                               {metric(members, "actual")}

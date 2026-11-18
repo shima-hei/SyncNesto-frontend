@@ -22,6 +22,8 @@ import { transferPhaseTasksProjectsProjectIdPhasesTransferTasksPost } from "@/li
 import { toPhaseAssignment } from "../../lib/task-mappers";
 import { selectStyle } from "./effort-controls";
 
+import styles from "./effort-workspace.module.css";
+
 export type EditableMinutes =
   "estimated_minutes" | "planned_minutes" | "remaining_minutes";
 
@@ -42,7 +44,9 @@ export function EffortInlineCell({
   const client = useQueryClient();
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    if (field === "assignee_id") form.current?.querySelector("button")?.focus();
+    form.current
+      ?.querySelector<HTMLElement>("input, select, button")
+      ?.focus({ preventScroll: true });
   }, [field]);
   const initial =
     field === "phase"
@@ -131,10 +135,15 @@ export function EffortInlineCell({
       }}
       className="grid gap-1"
     >
-      <div className="flex items-center gap-0.5">
+      <div
+        className={
+          field === "phase" || field === "assignee_id"
+            ? styles.assignmentEditor
+            : styles.hoursEditor
+        }
+      >
         {field === "phase" ? (
           <select
-            autoFocus
             className={selectStyle}
             value={value}
             aria-label="移動先の工程"
@@ -158,9 +167,8 @@ export function EffortInlineCell({
         ) : (
           <Input
             aria-label={`${label}（h）`}
-            autoFocus
             type="number"
-            className="h-7 w-20"
+            className="h-7 min-w-0 px-1 text-end"
             step="any"
             min="0"
             max={toHourInput(2147483647)}

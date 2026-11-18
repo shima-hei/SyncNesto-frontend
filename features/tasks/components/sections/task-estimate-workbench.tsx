@@ -202,11 +202,21 @@ export function TaskEstimateWorkbench({
             aria-label="見積表をスクロール"
           >
             <table
-              className={styles.sheet}
+              className={styles.sheet + " " + styles.estimateSheet}
               ref={table}
               aria-label="タスクの見積一覧"
               onKeyDown={navigateCells}
             >
+              <colgroup>
+                <col className={styles.titleColumn} />
+                <col className={styles.phaseColumn} />
+                <col className={styles.assigneeColumn} />
+                <col className={styles.methodColumn} />
+                {effortMeasures.map(({ key }) => (
+                  <col key={key} className={styles.hoursColumn} />
+                ))}
+                <col className={styles.statusColumn} />
+              </colgroup>
               <thead>
                 <tr>
                   <th scope="col" className={styles.rowTitle}>
@@ -249,8 +259,10 @@ export function TaskEstimateWorkbench({
                               <ChevronDownIcon size={14} />
                             )}
                             <PhaseDot phase={phaseByKey.get(key)} />
-                            {taskPhaseLabel(items[0])}{" "}
-                            <small className="text-muted-foreground">
+                            <span className="truncate">
+                              {taskPhaseLabel(items[0])}
+                            </span>{" "}
+                            <small className="shrink-0 text-muted-foreground">
                               {all.length}件
                             </small>
                           </button>
@@ -316,7 +328,9 @@ export function TaskEstimateWorkbench({
                                   const content = phaseField ? (
                                     <>
                                       <PhaseDot phase={phaseByKey.get(key)} />
-                                      {taskPhaseLabel(task)}
+                                      <span className="truncate">
+                                        {taskPhaseLabel(task)}
+                                      </span>
                                     </>
                                   ) : task.assignee_id == null ? (
                                     "担当なし"
@@ -332,7 +346,9 @@ export function TaskEstimateWorkbench({
                                             ?.avatar_url
                                         }
                                       />
-                                      {getTaskUserLabel(task.assignee_id)}
+                                      <span className="truncate">
+                                        {getTaskUserLabel(task.assignee_id)}
+                                      </span>
                                     </>
                                   );
                                   return (
@@ -346,7 +362,7 @@ export function TaskEstimateWorkbench({
                                           aria-label={
                                             task.title + "の" + label + "を編集"
                                           }
-                                          className="inline-flex min-h-7 items-center gap-1 rounded px-1 hover:bg-accent"
+                                          className="inline-flex max-w-full min-h-7 items-center gap-1 rounded px-1 hover:bg-accent"
                                           disabled={Boolean(editing)}
                                           onClick={() =>
                                             setEditing({ task, field })
@@ -355,7 +371,7 @@ export function TaskEstimateWorkbench({
                                           {content}
                                         </button>
                                       ) : (
-                                        <span className="inline-flex items-center gap-1">
+                                        <span className="inline-flex max-w-full items-center gap-1">
                                           {content}
                                         </span>
                                       )}

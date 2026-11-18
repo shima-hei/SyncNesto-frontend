@@ -360,3 +360,28 @@ test("workbench totals count own work once and preserve explicit zero across pha
     [child, pending],
   );
 });
+
+test("method previews round once and distinguish missing, zero and overflow", async () => {
+  const { calculateEstimate, estimateFormValues } = await load(
+    "../features/tasks/lib/task-estimate.ts",
+  );
+  const draft = estimateFormValues({ task_version: 1, method: "parametric" });
+  const product = (quantity, unitHours) =>
+    calculateEstimate({ ...draft, quantity, unitHours }).minutes;
+  assert.equal(product("", "0"), null);
+  assert.equal(product("0", "0.03"), 0);
+  assert.equal(product("2.5", "0.03"), 5);
+  assert.equal(product("10000", "0.0001"), 60);
+  assert.equal(product("99999999", "99999999"), null);
+  const analog = calculateEstimate({
+    ...draft,
+    method: "analogous",
+    referenceWork: " 調査 ",
+    referenceHours: "0.25",
+    factor: "1.1",
+  });
+  assert.deepEqual(analog, {
+    minutes: 17,
+    inputs: { reference_work: "調査", reference_minutes: 15, factor: "1.1" },
+  });
+});

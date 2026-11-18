@@ -7,6 +7,11 @@
 import type { TaskEstimateUpdateMethod } from "./taskEstimateUpdateMethod";
 
 export interface TaskEstimateUpdate {
+  quantity?: number | string | null;
+  unit_hours?: number | string | null;
+  reference_work?: string | null;
+  reference_minutes?: number | null;
+  factor?: number | string | null;
   /** @minimum 1 */
   version: number;
   method: TaskEstimateUpdateMethod;

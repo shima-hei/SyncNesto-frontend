@@ -403,6 +403,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
             <TabsContent value="summary" className="min-w-0">
               {activeView === "effort" && effortTasks && (
                 <PlanningEffortSummary
+                  filter={effortFilter}
                   tasks={filteredEffort}
                   phases={phases.data ?? []}
                   userLabel={getTaskUserLabel}
