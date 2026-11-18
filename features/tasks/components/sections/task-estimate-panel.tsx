@@ -155,13 +155,18 @@ export function EstimatePanel({
               </p>
             </div>
           ) : canUpdate ? (
-            <EstimateForm
-              initialMethod={initialMethod}
-              projectId={projectId}
-              taskId={task.id}
-              detail={details.data}
-              refresh={async () => (await details.refetch()).data}
-            />
+            <details className="rounded-md border p-2">
+              <summary className="cursor-pointer text-sm font-medium">
+                個別の見積方式・前提条件・変更理由
+              </summary>
+              <EstimateForm
+                initialMethod={initialMethod}
+                projectId={projectId}
+                taskId={task.id}
+                detail={details.data}
+                refresh={async () => (await details.refetch()).data}
+              />
+            </details>
           ) : (
             <div>
               <p>

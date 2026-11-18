@@ -15,8 +15,21 @@ export const toHourInput = (minutes?: number | null) =>
   minutes == null ? "" : String(Number((minutes / 60).toFixed(4)));
 
 export function parseEstimateHours(value: string) {
-  const number = Number(value);
-  const minutes = Math.round(number * 60);
+  const text = value.trim();
+  const number = Number(text);
+  let minutes = Math.round(number * 60);
+  if (Number.isFinite(number) && /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) {
+    const [hours, fraction = ""] = text.split(".");
+    // Multiply the fractional digits by 60 in base ten so half a minute rounds up exactly.
+    let carry = 0;
+    let firstDecimal = 0;
+    for (let i = fraction.length - 1; i >= 0; i--) {
+      const digit = Number(fraction[i]) * 60 + carry;
+      carry = Math.floor(digit / 10);
+      firstDecimal = digit % 10;
+    }
+    minutes = Number(hours) * 60 + carry + (firstDecimal >= 5 ? 1 : 0);
+  }
   return value.trim() &&
     number >= 0 &&
     Number.isInteger(minutes) &&

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useRef, useState, type ReactNode } from "react";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -10,16 +10,32 @@ import { TaskPhaseCell } from "../shared/task-phase-cell";
 import { PlanningAssigneeCell } from "../shared/planning-assignee-cell";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useEstimateWorksheet } from "../../hooks/use-estimate-worksheet";
+import {
+  EstimateStandardControls,
+  EstimateTotals,
+} from "./estimate-standard-controls";
+import {
+  sheetLabels,
+  draftError,
+  type SheetMethod,
+} from "../../lib/estimate-worksheet";
 import { getGanttTaskTree } from "../../lib/planning-phases";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import type { PhaseRead, TaskRead } from "@/lib/api/generated/model";
-import { useListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGet } from "@/lib/api/generated/task-estimates/task-estimates";
+import {
+  useGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGet,
+  useGetEstimateStandardProjectsProjectIdEstimateStandardGet,
+} from "@/lib/api/generated/task-estimates/task-estimates";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import {
   effortMeasures,
@@ -29,7 +45,10 @@ import {
   sumMeasure,
 } from "../../lib/effort-workspace";
 import { formatEstimateHours, taskPhaseLabel } from "../../lib/task-effort";
-import { estimateMethodLabels } from "../../lib/task-estimate";
+import {
+  calculateEstimate,
+  estimateMethodLabels,
+} from "../../lib/task-estimate";
 import { TaskStatusBadge } from "../shared/task-badges";
 import { measureNote, measureValue, PhaseDot } from "./effort-controls";
 import { EffortInlineCell, type EditableMinutes } from "./effort-inline-cell";
@@ -37,44 +56,6 @@ import { EstimatePanel } from "./task-estimate-panel";
 import styles from "./effort-workspace.module.css";
 
 const PAGE = 30;
-function navigateCells(event: KeyboardEvent<HTMLTableElement>) {
-  if (
-    event.defaultPrevented ||
-    event.altKey ||
-    event.ctrlKey ||
-    event.metaKey ||
-    event.shiftKey ||
-    !(event.target instanceof HTMLButtonElement) ||
-    !event.target.hasAttribute("data-cell")
-  )
-    return;
-  const button = event.target,
-    row = button.closest("tr");
-  if (!row) return;
-  const buttons = Array.from(
-    row.querySelectorAll<HTMLButtonElement>("button[data-cell]"),
-  );
-  const rows = Array.from(
-    event.currentTarget.querySelectorAll<HTMLTableRowElement>("tr[data-task]"),
-  );
-  const i = rows.indexOf(row),
-    j = buttons.indexOf(button);
-  let next: HTMLButtonElement | null | undefined;
-  if (event.key === "ArrowRight") next = buttons[j + 1];
-  if (event.key === "ArrowLeft") next = buttons[j - 1];
-  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-    const target = rows[i + (event.key === "ArrowDown" ? 1 : -1)];
-    next =
-      target?.querySelector<HTMLButtonElement>(
-        `button[data-cell="${button.dataset.cell}"]`,
-      ) ?? target?.querySelector("button");
-  }
-  if (next) {
-    event.preventDefault();
-    next.focus();
-  }
-}
-
 export function mayLeaveEffortEditor() {
   if (document.querySelector('[data-effort-pending="true"]')) return false;
   return (
@@ -85,6 +66,9 @@ export function mayLeaveEffortEditor() {
 
 export function TaskEstimateWorkbench({
   active,
+  filters,
+  view,
+  setView,
   planning,
   projectId,
   canUpdate,
@@ -96,6 +80,9 @@ export function TaskEstimateWorkbench({
   onSelect,
 }: {
   active: boolean;
+  filters: ReactNode;
+  view: SheetMethod | "";
+  setView: (method: SheetMethod | "") => void;
   planning: TaskPlanningController;
   projectId: number;
   canUpdate: boolean;
@@ -142,17 +129,30 @@ export function TaskEstimateWorkbench({
   const visible = ordered.slice((page - 1) * PAGE, page * PAGE);
   const pageGroups = groupEffortTasks(visible, phaseKey);
   const ids = visible.map((t) => t.id);
-  const methods =
-    useListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGet(
+  const worksheet =
+    useGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGet(
       projectId,
       { task_ids: ids },
-      { query: { enabled: active && ids.length > 0, retry: false } },
+      { query: { enabled: active && !!ids.length, retry: false } },
     );
-  const methodById = new Map(
-    methods.data?.map((item) => [item.task_id, item.method]),
+  const standard = useGetEstimateStandardProjectsProjectIdEstimateStandardGet(
+    projectId,
+    { query: { enabled: active, retry: false } },
   );
-  const current = allTasks.find((t) => t.id === currentId);
+
   const table = useRef<HTMLTableElement>(null);
+  const sheet = useEstimateWorksheet(
+    table,
+    projectId,
+    view || standard.data?.method || "simple",
+    visible.filter((t) => !collapsed.includes(phaseKey(t))),
+    worksheet.data ?? [],
+    canUpdate && active && !!standard.data && worksheet.isSuccess,
+    currentId,
+  );
+  const method = sheet.method;
+  const current = allTasks.find((t) => t.id === currentId);
+
   const restore = () =>
     requestAnimationFrame(() =>
       (trigger.current?.isConnected
@@ -160,11 +160,6 @@ export function TaskEstimateWorkbench({
         : table.current?.parentElement
       )?.focus({ preventScroll: true }),
     );
-  const [methodChoice, setMethodChoice] = useState<{
-    taskId: number;
-    method: keyof typeof estimateMethodLabels;
-    serial: number;
-  }>();
   const requestedCell = useRef<{ id: number; field: EditableMinutes } | null>(
     null,
   );
@@ -226,45 +221,131 @@ export function TaskEstimateWorkbench({
       }}
     />
   );
-  const select = (
-    task: TaskRead,
-    button: HTMLButtonElement,
-    method?: keyof typeof estimateMethodLabels,
-  ) => {
-    if (!mayLeaveEffortEditor()) return;
-    trigger.current = button;
+  const select = (task: TaskRead, button: HTMLButtonElement) => {
+    if (sheet.drafts[task.id] || sheet.pending) return;
     if (
-      task.estimated_basis === "own" &&
-      method === "simple" &&
-      (!methodById.get(task.id) || methodById.get(task.id) === "simple")
-    ) {
-      onSelect(null);
-      setEditing({ task, field: "estimated_minutes" });
+      document.querySelector('aside [data-effort-dirty="true"]') &&
+      !mayLeaveEffortEditor()
+    )
       return;
-    }
-    if (method)
-      setMethodChoice((old) => ({
-        taskId: task.id,
-        method,
-        serial: (old?.serial ?? 0) + 1,
-      }));
-    else setMethodChoice(undefined);
+    trigger.current = button;
     onSelect(task.id);
   };
   return (
-    <section aria-label="工数見積" className={styles.workspace}>
-      {canUpdate && (
-        <p className="mb-2 text-xs text-muted-foreground">
-          単純見積は見積工数のセルに入力できます。計算式は見積手法から、履歴と計画への反映はタスク名から開きます。
-        </p>
-      )}
-      {methods.isError && (
+    <section
+      aria-label="工数見積"
+      className={styles.workspace + " space-y-2"}
+      data-effort-dirty={sheet.count > 0}
+      data-effort-pending={sheet.pending}
+    >
+      {standard.isError && (
         <DataLoadError
-          resourceName="見積手法"
-          isRetrying={methods.isFetching}
-          onRetry={() => void methods.refetch()}
+          resourceName="案件の標準見積方式"
+          isRetrying={standard.isFetching}
+          onRetry={() => void standard.refetch()}
         />
       )}
+      {standard.data && (
+        <EstimateStandardControls
+          projectId={projectId}
+          standard={standard.data}
+          mode={method}
+          view={view}
+          changeView={setView}
+          locked={!!sheet.count || sheet.pending}
+          canManage={canConfirm}
+          allTasks={allTasks}
+        />
+      )}
+      <Dialog
+        open={!!sheet.conversion}
+        onOpenChange={(open) => {
+          if (!open) sheet.cancelConversion();
+        }}
+      >
+        {sheet.conversion && (
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>表示方式で再見積</DialogTitle>
+              <DialogDescription>
+                {sheet.conversion.title} の入力方式を変更します。
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-md border p-3 text-sm">
+              <div>
+                保存済み　
+                {estimateMethodLabels[sheet.conversion.base.current.method!]}　
+                {formatEstimateHours(sheet.conversion.base.current.minutes)}
+              </div>
+              <div>
+                再見積　{estimateMethodLabels[sheet.conversion.values.method]}
+              </div>
+            </div>
+            <p className="text-sm">
+              {sheet.conversion.values.optimistic
+                ? "記録済みの3点を引き継ぎ、選択方式で試算します。"
+                : "この方式で使用する値を一覧に入力してください。"}
+              「変更を保存」で新しい改訂を追加します。過去の改訂・基準見積・計画は保持されます。
+            </p>
+            <DialogFooter>
+              <Button variant="outline" onClick={sheet.cancelConversion}>
+                キャンセル
+              </Button>
+              <Button onClick={sheet.confirmConversion}>一覧で再入力</Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+      <EstimateTotals tasks={tasks} />
+      {filters}
+      {worksheet.isError && (
+        <DataLoadError
+          resourceName="見積の入力値"
+          isRetrying={worksheet.isFetching}
+          onRetry={() => void worksheet.refetch()}
+        />
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span role="status">
+          {sheet.pending
+            ? "保存中…"
+            : sheet.feedback ||
+              (sheet.count
+                ? sheet.count + "件の変更を編集中"
+                : "保存済みの見積を表示")}
+        </span>
+        {canUpdate && (
+          <div className="flex flex-wrap gap-1">
+            {sheet.canFill && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={sheet.fillDown}
+                disabled={sheet.pending}
+              >
+                先頭行を範囲に適用
+              </Button>
+            )}
+            {!!sheet.count && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void sheet.discard()}
+                disabled={sheet.pending}
+              >
+                変更を破棄
+              </Button>
+            )}
+            <Button
+              size="sm"
+              disabled={!sheet.count || sheet.pending}
+              onClick={() => void sheet.save()}
+            >
+              変更を保存{sheet.count ? " (" + sheet.count + ")" : ""}
+            </Button>
+          </div>
+        )}
+      </div>
       <div className={styles.split}>
         <div className={styles.gridArea + " min-w-0"}>
           <div
@@ -277,13 +358,74 @@ export function TaskEstimateWorkbench({
               className={styles.sheet + " " + styles.estimateSheet}
               ref={table}
               aria-label="タスクの見積一覧"
-              onKeyDown={navigateCells}
+              onKeyDown={(event) => {
+                if (
+                  event.defaultPrevented ||
+                  event.shiftKey ||
+                  event.ctrlKey ||
+                  event.altKey ||
+                  event.metaKey ||
+                  !event.key.startsWith("Arrow")
+                )
+                  return;
+                const target = event.target;
+                if (
+                  !(target instanceof HTMLElement) ||
+                  !target.matches(
+                    "button[data-cell],input[data-sheet-id][readonly]",
+                  )
+                )
+                  return;
+                const row = target.closest("tr[data-task]");
+                if (!row) return;
+                const selector =
+                  "button[data-cell]:not(:disabled), input[data-sheet-id]:not(:disabled)";
+                const cells = Array.from(
+                  row.querySelectorAll<HTMLElement>(selector),
+                );
+                const index = cells.indexOf(target);
+                let next: HTMLElement | undefined;
+                if (event.key === "ArrowLeft" || event.key === "ArrowRight")
+                  next = cells[index + (event.key === "ArrowLeft" ? -1 : 1)];
+                else {
+                  const rows = Array.from(
+                    event.currentTarget.querySelectorAll("tr[data-task]"),
+                  );
+                  const step = event.key === "ArrowUp" ? -1 : 1;
+                  for (
+                    let i = rows.indexOf(row) + step;
+                    rows[i] && !next;
+                    i += step
+                  ) {
+                    next = Array.from(
+                      rows[i].querySelectorAll<HTMLElement>(selector),
+                    ).find(
+                      (el) =>
+                        el.dataset.cell === target.dataset.cell &&
+                        el.dataset.field === target.dataset.field,
+                    );
+                  }
+                }
+                if (next) {
+                  event.preventDefault();
+                  next.focus();
+                }
+              }}
+              data-method={method}
             >
               <colgroup>
                 <col className={styles.titleColumn} />
                 <col className={styles.phaseColumn} />
                 <col className={styles.assigneeColumn} />
-                <col className={styles.methodColumn} />
+                {method !== "simple" &&
+                  sheet.fields.map((field) => (
+                    <col
+                      key={field}
+                      style={{
+                        width: field === "referenceWork" ? "10rem" : "5.6rem",
+                      }}
+                    />
+                  ))}
                 {effortMeasures.map(({ key }) => (
                   <col key={key} className={styles.hoursColumn} />
                 ))}
@@ -296,10 +438,22 @@ export function TaskEstimateWorkbench({
                   </th>
                   <th scope="col">工程</th>
                   <th scope="col">担当</th>
-                  <th scope="col">見積手法</th>
+                  {method !== "simple" &&
+                    sheet.fields.map((field) => (
+                      <th
+                        scope="col"
+                        key={field}
+                        data-number
+                        className={styles.entryHead}
+                      >
+                        {sheetLabels[field]}
+                      </th>
+                    ))}
                   {effortMeasures.map((m) => (
                     <th scope="col" key={m.key} data-number>
-                      {m.label}
+                      {m.key === "estimated" && method !== "simple"
+                        ? "算出見積"
+                        : m.label}
                     </th>
                   ))}
                   <th scope="col">状態</th>
@@ -339,7 +493,9 @@ export function TaskEstimateWorkbench({
                           </button>
                         </th>
                         <td
-                          colSpan={3}
+                          colSpan={
+                            2 + (method === "simple" ? 0 : sheet.fields.length)
+                          }
                           className="text-xs text-muted-foreground"
                         >
                           工程小計
@@ -364,8 +520,46 @@ export function TaskEstimateWorkbench({
                             planning.rows[task.id]?.values.assigneeId ??
                               task.assignee_id,
                           );
-                          const method = methodById.get(task.id),
-                            rollup = task.estimated_basis === "rollup";
+                          const base = sheet.byId.get(task.id),
+                            draft = sheet.drafts[task.id];
+                          const rollup = task.estimated_basis === "rollup";
+                          const mismatch =
+                            !!base?.current.method &&
+                            base.current.method !== method &&
+                            !draft;
+                          const ready = !!base && !!standard.data;
+                          const error = draft ? draftError(draft.values) : null;
+                          const trial =
+                            draft && !error
+                              ? calculateEstimate(draft.values).minutes
+                              : null;
+                          const entries =
+                            ready &&
+                            task.estimated_basis === "own" &&
+                            !mismatch;
+                          const exception = base?.current.method && (
+                            <span className="flex items-center justify-end gap-1 text-xs">
+                              <button
+                                type="button"
+                                className="truncate underline"
+                                title="この方式の入力列を表示"
+                                disabled={!!sheet.count}
+                                onClick={() => setView(base.current.method!)}
+                              >
+                                {estimateMethodLabels[base.current.method]}
+                              </button>
+                              {canUpdate && (
+                                <button
+                                  type="button"
+                                  className="shrink-0 underline"
+                                  aria-label={task.title + "を表示方式で再見積"}
+                                  onClick={() => sheet.convert(task)}
+                                >
+                                  再見積
+                                </button>
+                              )}
+                            </span>
+                          );
                           return (
                             <tr
                               key={task.id}
@@ -376,6 +570,7 @@ export function TaskEstimateWorkbench({
                                 <button
                                   data-cell="title"
                                   aria-expanded={currentId === task.id}
+                                  disabled={!!draft || sheet.pending}
                                   title={
                                     task.parent_summary
                                       ? task.parent_summary.title +
@@ -416,92 +611,31 @@ export function TaskEstimateWorkbench({
                                   }
                                 />
                               </td>
-                              <td>
-                                {canUpdate &&
-                                !rollup &&
-                                methodById.has(task.id) ? (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <button
-                                        data-cell="method"
-                                        aria-label={
-                                          task.title + "の見積手法を選択"
-                                        }
-                                        className="inline-flex max-w-full items-center gap-1 rounded border bg-muted/40 px-1.5 py-1 text-xs"
-                                      >
-                                        <span className="truncate">
-                                          {method
-                                            ? estimateMethodLabels[method]
-                                            : "手法を選択"}
-                                        </span>
-                                        <ChevronDownIcon size={12} />
-                                      </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                      align="start"
-                                      onCloseAutoFocus={(e) => {
-                                        if (
-                                          table.current?.querySelector(
-                                            "input[data-effort-dirty]",
-                                          ) ||
-                                          document.querySelector(
-                                            "aside h3:focus",
-                                          )
-                                        )
-                                          e.preventDefault();
-                                      }}
+                              {method !== "simple" &&
+                                (entries ? (
+                                  sheet.fields.map((field) => (
+                                    <td
+                                      key={field}
+                                      className={styles.entryCell}
+                                      data-number
                                     >
-                                      {(
-                                        [
-                                          "simple",
-                                          "pert",
-                                          "parametric",
-                                          "analogous",
-                                        ] as const
-                                      ).map((choice) => (
-                                        <DropdownMenuItem
-                                          key={choice}
-                                          onSelect={() => {
-                                            const button =
-                                              table.current?.querySelector<HTMLButtonElement>(
-                                                `tr[data-task="${task.id}"] [data-cell=method]`,
-                                              );
-                                            if (button)
-                                              select(
-                                                task,
-                                                button,
-                                                choice === "pert" &&
-                                                  method === "triangular"
-                                                  ? "triangular"
-                                                  : choice,
-                                              );
-                                          }}
-                                        >
-                                          {choice === "pert"
-                                            ? "3点見積"
-                                            : estimateMethodLabels[choice]}
-                                        </DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                      {sheet.input(task, field)}
+                                    </td>
+                                  ))
                                 ) : (
-                                  <button
-                                    data-cell="method"
-                                    className="text-xs"
-                                    onClick={(e) =>
-                                      select(task, e.currentTarget)
-                                    }
+                                  <td
+                                    colSpan={sheet.fields.length}
+                                    className="text-right text-xs text-muted-foreground"
                                   >
-                                    {rollup
-                                      ? "子の集計"
-                                      : method
-                                        ? estimateMethodLabels[method]
-                                        : methods.isSuccess
-                                          ? "未設定"
+                                    {mismatch
+                                      ? exception
+                                      : rollup
+                                        ? "子の集計"
+                                        : ready
+                                          ? "未確認"
                                           : "—"}
-                                  </button>
-                                )}
-                              </td>
+                                  </td>
+                                ))}
                               {effortMeasures.map((m) => {
                                 const field = `${m.key}_minutes` as const;
                                 const value = task[field],
@@ -524,15 +658,51 @@ export function TaskEstimateWorkbench({
                                       : value == null
                                         ? "未入力"
                                         : formatEstimateHours(value);
+                                if (m.key === "estimated") {
+                                  if (method === "simple" && entries)
+                                    return (
+                                      <td
+                                        key={field}
+                                        data-number
+                                        className={styles.entryCell}
+                                      >
+                                        {sheet.input(task, "hours")}
+                                      </td>
+                                    );
+                                  return (
+                                    <td
+                                      key={field}
+                                      data-number
+                                      className={styles.resultCell}
+                                      title={error ?? undefined}
+                                    >
+                                      {draft ? (
+                                        error ? (
+                                          <span
+                                            className="text-xs"
+                                            aria-label={error}
+                                          >
+                                            入力を確認
+                                          </span>
+                                        ) : (
+                                          formatEstimateHours(trial)
+                                        )
+                                      ) : (
+                                        displayValue
+                                      )}
+                                      {method === "simple" &&
+                                        mismatch &&
+                                        exception}
+                                    </td>
+                                  );
+                                }
                                 const editable =
                                   canUpdate &&
                                   !excluded &&
+                                  !draft &&
+                                  !sheet.pending &&
                                   (field === "planned_minutes" ||
-                                    field === "remaining_minutes" ||
-                                    (field === "estimated_minutes" &&
-                                      task.estimated_basis === "own" &&
-                                      methodById.has(task.id) &&
-                                      (!method || method === "simple")));
+                                    field === "remaining_minutes");
                                 return (
                                   <td key={field} data-number>
                                     {editing?.task.id === task.id &&
@@ -570,15 +740,7 @@ export function TaskEstimateWorkbench({
                                         )}
                                       </button>
                                     ) : (
-                                      <span
-                                        title={
-                                          rollup && m.key === "estimated"
-                                            ? "子の集計は詳細に表示"
-                                            : undefined
-                                        }
-                                      >
-                                        {displayValue}
-                                      </span>
+                                      <span>{displayValue}</span>
                                     )}
                                   </td>
                                 );
@@ -594,7 +756,13 @@ export function TaskEstimateWorkbench({
                 })}
                 {!tasks.length && (
                   <tr>
-                    <td colSpan={9}>条件に一致するタスクはありません。</td>
+                    <td
+                      colSpan={
+                        8 + (method === "simple" ? 0 : sheet.fields.length)
+                      }
+                    >
+                      条件に一致するタスクはありません。
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -602,7 +770,10 @@ export function TaskEstimateWorkbench({
           </div>
           <div className="flex flex-wrap justify-between gap-2 px-1 py-2 text-xs text-muted-foreground">
             <span>{tasks.length}件</span>
-            <span>矢印でセル移動　Enter で確定　Tab で次へ　Esc で取消</span>
+            <span>
+              Enter 確定・編集 ／ Tab 次の入力 ／ Esc セルを取消 ／
+              Shift＋クリック 範囲選択 ／ コピー・貼り付け
+            </span>
           </div>
           {ordered.length > PAGE && (
             <DataPagination
@@ -619,24 +790,18 @@ export function TaskEstimateWorkbench({
         {current && (
           <EstimatePanel
             active={active}
-            key={
-              current.id +
-              "-" +
-              (methodChoice?.taskId === current.id
-                ? methodChoice.serial
-                : "detail")
-            }
-            initialMethod={
-              methodChoice?.taskId === current.id
-                ? methodChoice.method
-                : undefined
-            }
+            key={current.id}
             projectId={projectId}
             task={current}
-            canUpdate={canUpdate}
-            canConfirm={canConfirm}
+            canUpdate={canUpdate && !sheet.drafts[current.id]}
+            canConfirm={
+              canConfirm && !sheet.drafts[current.id] && !sheet.pending
+            }
             onClose={() => {
-              if (mayLeaveEffortEditor()) {
+              if (
+                !document.querySelector('aside [data-effort-dirty="true"]') ||
+                mayLeaveEffortEditor()
+              ) {
                 onSelect(null);
                 restore();
               }

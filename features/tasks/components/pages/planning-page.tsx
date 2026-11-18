@@ -33,6 +33,7 @@ import { TaskPlanningWorkspace } from "../gantt/task-planning-workspace";
 import { MilestoneDialogs } from "../sections/milestone-dialogs";
 import { PlanningPhaseActions } from "../sections/planning-phase-actions";
 import { PlanningEffortSummary } from "../sections/planning-effort-summary";
+import type { SheetMethod } from "../../lib/estimate-worksheet";
 import { EffortControls } from "../sections/effort-controls";
 import {
   filterEffortTasks,
@@ -73,6 +74,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     if (value !== "gantt") setUnscheduledGroup(null);
   };
   const [effortFilter, setEffortFilter] = useState(initialEffortFilter);
+  const [estimateView, setEstimateView] = useState<SheetMethod | "">("");
   const [effortRevision, setEffortRevision] = useState(0);
   const estimateTab = useRef<HTMLButtonElement>(null);
   const [estimateTask, setEstimateTask] = useState<number | null>(null);
@@ -194,6 +196,21 @@ export function PlanningPage({ projectId }: { projectId: number }) {
     );
   };
 
+  const effortControls = (
+    <EffortControls
+      value={effortFilter}
+      onChange={(next) => {
+        if (!mayLeaveEffortEditor()) return;
+        setEstimateTask(null);
+        if (document.querySelector('[data-effort-dirty="true"]'))
+          setEffortRevision((n) => n + 1);
+        setEffortFilter(next);
+      }}
+      phases={phases.data ?? []}
+      tasks={effortTasks ?? []}
+      userLabel={getTaskUserLabel}
+    />
+  );
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <OverviewReturn projectId={projectId} />
@@ -347,20 +364,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
             planning={planning}
           />
         </TabsContent>
-        {(activeView === "summary" || activeView === "estimate") && (
-          <EffortControls
-            value={effortFilter}
-            onChange={(next) => {
-              if (!mayLeaveEffortEditor()) return;
-              setEstimateTask(null);
-              setEffortRevision((n) => n + 1);
-              setEffortFilter(next);
-            }}
-            phases={phases.data ?? []}
-            tasks={effortTasks ?? []}
-            userLabel={getTaskUserLabel}
-          />
-        )}
+        {activeView === "summary" && effortControls}
         {activeView !== "gantt" && projectGantt.error && (
           <DataLoadError
             resourceName="工程・工数のタスク"
@@ -378,6 +382,9 @@ export function PlanningPage({ projectId }: { projectId: number }) {
         >
           {effortTasks && (
             <TaskEstimateWorkbench
+              view={estimateView}
+              setView={setEstimateView}
+              filters={activeView === "estimate" ? effortControls : null}
               planning={planning}
               key={effortRevision}
               tasks={filteredEffort}

@@ -362,9 +362,12 @@ test("workbench totals count own work once and preserve explicit zero across pha
 });
 
 test("method previews round once and distinguish missing, zero and overflow", async () => {
-  const { calculateEstimate, estimateFormValues } = await load(
-    "../features/tasks/lib/task-estimate.ts",
-  );
+  const { calculateEstimate, estimateFormValues, parseEstimateHours } =
+    await load("../features/tasks/lib/task-estimate.ts");
+  assert.equal(parseEstimateHours("1.025"), 62);
+  assert.equal(parseEstimateHours("1.024999999999999999"), 61);
+  assert.equal(parseEstimateHours("0"), 0);
+  assert.equal(parseEstimateHours(""), null);
   const draft = estimateFormValues({ task_version: 1, method: "parametric" });
   const product = (quantity, unitHours) =>
     calculateEstimate({ ...draft, quantity, unitHours }).minutes;
@@ -384,4 +387,27 @@ test("method previews round once and distinguish missing, zero and overflow", as
     minutes: 17,
     inputs: { reference_work: "調査", reference_minutes: 15, factor: "1.1" },
   });
+});
+
+test("worksheet ranges preserve quoted references and reject stale or uneven rectangles", async () => {
+  const { bounds, fromTsv, toTsv } = await load(
+    "../features/tasks/lib/estimate-worksheet-range.ts",
+  );
+  const matrix = [
+    ['見積根拠\t"初版"\n翌日', "0", "1.25"],
+    ["", "2", "3"],
+  ];
+  assert.deepEqual(fromTsv(toTsv(matrix) + "\r\n"), matrix);
+  assert.throws(() => fromTsv("1\t2\n3"));
+  assert.throws(() => fromTsv('"閉じていない'));
+  const first = { id: 8, field: "optimistic" },
+    last = { id: 4, field: "pessimistic" };
+  const fields = ["optimistic", "likely", "pessimistic"];
+  assert.deepEqual(bounds([8, 4], fields, last, first), {
+    top: 0,
+    bottom: 1,
+    left: 0,
+    right: 2,
+  });
+  assert.equal(bounds([8], fields, first, last), null);
 });

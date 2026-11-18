@@ -21,10 +21,14 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  EstimateWorksheetRow,
+  EstimateWorksheetSave,
+  GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
   GetTaskEstimateBaselinesTasksTaskIdEstimateBaselinesGetParams,
   GetTaskEstimateTasksTaskIdEstimateGetParams,
   HTTPValidationError,
   ListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGetParams,
+  ProjectEstimateStandard,
   TaskEstimateBaselineConfirm,
   TaskEstimateBaselineRead,
   TaskEstimateBaselines,
@@ -1124,3 +1128,849 @@ export const useConfirmTaskEstimateBaselineTasksTaskIdEstimateBaselinesPost = <
     queryClient,
   );
 };
+export const getGetEstimateStandardProjectsProjectIdEstimateStandardGetUrl = (
+  projectId: number,
+) => {
+  return `/projects/${projectId}/estimate-standard`;
+};
+
+/**
+ * @summary Get Estimate Standard
+ */
+export const getEstimateStandardProjectsProjectIdEstimateStandardGet = async (
+  projectId: number,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<ProjectEstimateStandard> => {
+  return apiClient<ProjectEstimateStandard>(
+    getGetEstimateStandardProjectsProjectIdEstimateStandardGetUrl(projectId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetEstimateStandardProjectsProjectIdEstimateStandardGetQueryKey =
+  (projectId: number) => {
+    return [`/projects/${projectId}/estimate-standard`] as const;
+  };
+
+export const getGetEstimateStandardProjectsProjectIdEstimateStandardGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<typeof getEstimateStandardProjectsProjectIdEstimateStandardGet>
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getGetEstimateStandardProjectsProjectIdEstimateStandardGetQueryKey(
+        projectId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+        >
+      >
+    > = ({ signal }) =>
+      getEstimateStandardProjectsProjectIdEstimateStandardGet(projectId, {
+        signal,
+        ...requestOptions,
+      });
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type GetEstimateStandardProjectsProjectIdEstimateStandardGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof getEstimateStandardProjectsProjectIdEstimateStandardGet>
+    >
+  >;
+export type GetEstimateStandardProjectsProjectIdEstimateStandardGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Get Estimate Standard */
+export function useGetEstimateStandardProjectsProjectIdEstimateStandardGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateStandardProjectsProjectIdEstimateStandardGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Estimate Standard */
+export function useGetEstimateStandardProjectsProjectIdEstimateStandardGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateStandardProjectsProjectIdEstimateStandardGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Estimate Standard */
+export function useGetEstimateStandardProjectsProjectIdEstimateStandardGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateStandardProjectsProjectIdEstimateStandardGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Estimate Standard */
+export function useGetEstimateStandardProjectsProjectIdEstimateStandardGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateStandardProjectsProjectIdEstimateStandardGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateStandardProjectsProjectIdEstimateStandardGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetEstimateStandardProjectsProjectIdEstimateStandardGetQueryOptions(
+      projectId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateEstimateStandardProjectsProjectIdEstimateStandardPatchUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/estimate-standard`;
+  };
+
+/**
+ * @summary Update Estimate Standard
+ */
+export const updateEstimateStandardProjectsProjectIdEstimateStandardPatch =
+  async (
+    projectId: number,
+    projectEstimateStandard: ProjectEstimateStandard,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<ProjectEstimateStandard> => {
+    const getHeaders = (
+      h?: NonNullable<RequestInit["headers"]>,
+    ): Record<string, string | readonly string[]> => {
+      if (!h) return {};
+      if (h instanceof Headers) return Object.fromEntries(h.entries());
+      if (Symbol.iterator in h) {
+        return Object.fromEntries(
+          Array.from(
+            h as Iterable<Iterable<string>>,
+            (entry) => Array.from(entry) as [string, string],
+          ),
+        );
+      }
+      const headers: Record<string, string | readonly string[]> = {};
+      for (const [name, value] of Object.entries<
+        string | readonly string[] | undefined
+      >(h)) {
+        if (value !== undefined) headers[name] = value;
+      }
+      return headers;
+    };
+    return apiClient<ProjectEstimateStandard>(
+      getUpdateEstimateStandardProjectsProjectIdEstimateStandardPatchUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...getHeaders(options?.headers),
+        },
+        body: JSON.stringify(projectEstimateStandard),
+      },
+    );
+  };
+
+export const getUpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationKey =
+  () =>
+    ["updateEstimateStandardProjectsProjectIdEstimateStandardPatch"] as const;
+
+export const getUpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof updateEstimateStandardProjectsProjectIdEstimateStandardPatch
+        >
+      >,
+      TError,
+      UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof updateEstimateStandardProjectsProjectIdEstimateStandardPatch
+      >
+    >,
+    TError,
+    UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof updateEstimateStandardProjectsProjectIdEstimateStandardPatch
+        >
+      >,
+      UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationVariables
+    > = (props) => {
+      const { projectId, data } = props ?? {};
+
+      return updateEstimateStandardProjectsProjectIdEstimateStandardPatch(
+        projectId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof updateEstimateStandardProjectsProjectIdEstimateStandardPatch
+      >
+    >
+  >;
+export type UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationBody =
+  BodyType<ProjectEstimateStandard>;
+export type UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationError =
+  ErrorType<HTTPValidationError>;
+export type UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationVariables =
+  { projectId: number; data: BodyType<ProjectEstimateStandard> };
+
+/** @summary Update Estimate Standard */
+export const useUpdateEstimateStandardProjectsProjectIdEstimateStandardPatch = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof updateEstimateStandardProjectsProjectIdEstimateStandardPatch
+        >
+      >,
+      TError,
+      UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<
+    ReturnType<
+      typeof updateEstimateStandardProjectsProjectIdEstimateStandardPatch
+    >
+  >,
+  TError,
+  UpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getUpdateEstimateStandardProjectsProjectIdEstimateStandardPatchMutationOptions(
+      options,
+    ),
+    queryClient,
+  );
+};
+export const getGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetUrl = (
+  projectId: number,
+  params: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["task_ids"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? "null" : String(v));
+      });
+      return;
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/projects/${projectId}/estimate-worksheet?${stringifiedParams}`
+    : `/projects/${projectId}/estimate-worksheet`;
+};
+
+/**
+ * @summary Get Estimate Worksheet
+ */
+export const getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet = async (
+  projectId: number,
+  params: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<EstimateWorksheetRow[]> => {
+  return apiClient<EstimateWorksheetRow[]>(
+    getGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetUrl(
+      projectId,
+      params,
+    ),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetQueryKey =
+  (
+    projectId: number,
+    params?: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/estimate-worksheet`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    params: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetQueryKey(
+        projectId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+        >
+      >
+    > = ({ signal }) =>
+      getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet(
+        projectId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+      >
+    >
+  >;
+export type GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Get Estimate Worksheet */
+export function useGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Estimate Worksheet */
+export function useGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Estimate Worksheet */
+export function useGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Get Estimate Worksheet */
+export function useGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGet<
+  TData = Awaited<
+    ReturnType<typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params: GetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof getEstimateWorksheetProjectsProjectIdEstimateWorksheetGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetEstimateWorksheetProjectsProjectIdEstimateWorksheetGetQueryOptions(
+      projectId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/estimate-worksheet`;
+  };
+
+/**
+ * @summary Update Estimate Worksheet
+ */
+export const updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch =
+  async (
+    projectId: number,
+    estimateWorksheetSave: EstimateWorksheetSave,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<EstimateWorksheetRow[]> => {
+    const getHeaders = (
+      h?: NonNullable<RequestInit["headers"]>,
+    ): Record<string, string | readonly string[]> => {
+      if (!h) return {};
+      if (h instanceof Headers) return Object.fromEntries(h.entries());
+      if (Symbol.iterator in h) {
+        return Object.fromEntries(
+          Array.from(
+            h as Iterable<Iterable<string>>,
+            (entry) => Array.from(entry) as [string, string],
+          ),
+        );
+      }
+      const headers: Record<string, string | readonly string[]> = {};
+      for (const [name, value] of Object.entries<
+        string | readonly string[] | undefined
+      >(h)) {
+        if (value !== undefined) headers[name] = value;
+      }
+      return headers;
+    };
+    return apiClient<EstimateWorksheetRow[]>(
+      getUpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...getHeaders(options?.headers),
+        },
+        body: JSON.stringify(estimateWorksheetSave),
+      },
+    );
+  };
+
+export const getUpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationKey =
+  () =>
+    ["updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch"] as const;
+
+export const getUpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch
+        >
+      >,
+      TError,
+      UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch
+      >
+    >,
+    TError,
+    UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch
+        >
+      >,
+      UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationVariables
+    > = (props) => {
+      const { projectId, data } = props ?? {};
+
+      return updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch(
+        projectId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch
+      >
+    >
+  >;
+export type UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationBody =
+  BodyType<EstimateWorksheetSave>;
+export type UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationError =
+  ErrorType<HTTPValidationError>;
+export type UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationVariables =
+  { projectId: number; data: BodyType<EstimateWorksheetSave> };
+
+/** @summary Update Estimate Worksheet */
+export const useUpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch
+          >
+        >,
+        TError,
+        UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof updateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatch
+      >
+    >,
+    TError,
+    UpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getUpdateEstimateWorksheetProjectsProjectIdEstimateWorksheetPatchMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };

@@ -158,3 +158,45 @@
 .estimateSheet input::-webkit-inner-spin-button {
   appearance: none;
 }
+
+.estimateSheet[data-method]:not([data-method="simple"]) {
+  min-width: 71rem;
+}
+.estimateSheet .entryHead {
+  color: var(--status-info-fg);
+}
+.entryCell input {
+  width: 100%;
+  min-width: 0;
+  height: 1.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  padding-inline: 0.375rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.entryCell input[data-field="referenceWork"] {
+  text-align: start;
+}
+.entryCell input[data-range] {
+  border-color: var(--status-info-chart);
+  background: var(--status-info-bg);
+}
+.entryCell input::placeholder {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+.resultCell {
+  background: color-mix(in srgb, var(--status-info-bg) 35%, transparent);
+  font-weight: 600;
+}
+
+@container (max-width: 40rem) {
+  .estimateSheet .titleColumn {
+    width: 7.5rem;
+  }
+  .scroller:has(.estimateSheet) {
+    scroll-padding-inline-start: 7.75rem;
+  }
+}
