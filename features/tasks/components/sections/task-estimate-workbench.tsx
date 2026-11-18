@@ -1,113 +1,191 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-
-import { DataLoadError } from "@/components/shared/feedback/data-load-error";
-import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { Fragment, useRef, useState, type KeyboardEvent } from "react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CornerDownRightIcon,
+} from "lucide-react";
+import { UserAvatar } from "@/components/shared/display/user-avatar";
+import { getGanttTaskTree } from "../../lib/planning-phases";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { getConflictCurrent } from "@/lib/api/conflict";
-import type {
-  TaskEstimateRead,
-  TaskEstimateRevisionRead,
-  TaskEstimateUpdate,
-  TaskRead,
-} from "@/lib/api/generated/model";
-import {
-  updateTaskEstimateTasksTaskIdEstimatePatch,
-  useGetTaskEstimateTasksTaskIdEstimateGet,
-  useListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGet,
-} from "@/lib/api/generated/task-estimates/task-estimates";
-import { useListTasksProjectsProjectIdTasksGet } from "@/lib/api/generated/tasks/tasks";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import type { PhaseRead, TaskRead } from "@/lib/api/generated/model";
+import { useListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGet } from "@/lib/api/generated/task-estimates/task-estimates";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
-import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
 import {
-  calculateThreePointMinutes,
-  estimateMethodLabels,
-  parseEstimateHours,
-  toHourInput,
-} from "../../lib/task-estimate";
-import { effortBasisLabel, formatEstimateHours } from "../../lib/task-effort";
-import { TaskEstimateBaseline } from "./task-estimate-baseline";
-import { TaskEffortPlanEditor } from "./task-effort-plan-editor";
+  effortMeasures,
+  groupEffortTasks,
+  isActiveEffort,
+  phaseKey,
+  sumMeasure,
+} from "../../lib/effort-workspace";
+import { formatEstimateHours, taskPhaseLabel } from "../../lib/task-effort";
+import { estimateMethodLabels } from "../../lib/task-estimate";
+import { TaskStatusBadge } from "../shared/task-badges";
+import { measureNote, measureValue, PhaseDot } from "./effort-controls";
+import {
+  EffortInlineCell,
+  type EditableEffortField,
+} from "./effort-inline-cell";
+import { EstimatePanel } from "./task-estimate-panel";
+import styles from "./effort-workspace.module.css";
 
-const PAGE_SIZE = 20;
+const PAGE = 30;
+function navigateCells(event: KeyboardEvent<HTMLTableElement>) {
+  if (
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey ||
+    !(event.target instanceof HTMLButtonElement) ||
+    !event.target.hasAttribute("data-cell")
+  )
+    return;
+  const button = event.target,
+    row = button.closest("tr");
+  if (!row) return;
+  const buttons = Array.from(
+    row.querySelectorAll<HTMLButtonElement>("button[data-cell]"),
+  );
+  const rows = Array.from(
+    event.currentTarget.querySelectorAll<HTMLTableRowElement>("tr[data-task]"),
+  );
+  const i = rows.indexOf(row),
+    j = buttons.indexOf(button);
+  let next: HTMLButtonElement | null | undefined;
+  if (event.key === "ArrowRight") next = buttons[j + 1];
+  if (event.key === "ArrowLeft") next = buttons[j - 1];
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    const target = rows[i + (event.key === "ArrowDown" ? 1 : -1)];
+    next =
+      target?.querySelector<HTMLButtonElement>(
+        `button[data-cell="${button.dataset.cell}"]`,
+      ) ?? target?.querySelector("button");
+  }
+  if (next) {
+    event.preventDefault();
+    next.focus();
+  }
+}
+
+export function mayLeaveEffortEditor() {
+  if (document.querySelector('[data-effort-pending="true"]')) return false;
+  return (
+    !document.querySelector('[data-effort-dirty="true"]') ||
+    window.confirm("未保存の入力を破棄して移動しますか？")
+  );
+}
 
 export function TaskEstimateWorkbench({
   active,
   projectId,
   canUpdate,
   canConfirm,
+  phases,
+  tasks,
+  allTasks,
+  currentId,
+  onSelect,
 }: {
   active: boolean;
   projectId: number;
   canUpdate: boolean;
   canConfirm: boolean;
+  phases: PhaseRead[];
+  tasks: TaskRead[];
+  allTasks: TaskRead[];
+  currentId: number | null;
+  onSelect: (id: number | null) => void;
 }) {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [current, setCurrent] = useState<TaskRead>();
-  const list = useListTasksProjectsProjectIdTasksGet(
-    projectId,
-    { page, page_size: PAGE_SIZE, q: search || undefined },
-    { query: { enabled: active, retry: false } },
+  const [requestedPage, setPage] = useState(1);
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [editing, setEditing] = useState<{
+    task: TaskRead;
+    field: EditableEffortField;
+  } | null>(null);
+  const trigger = useRef<HTMLButtonElement | null>(null);
+  const { usersById, getTaskUserLabel } = useTaskUserMap(projectId);
+  const groups = groupEffortTasks(tasks, phaseKey);
+  const phaseByKey = new Map(phases.map((p) => [String(p.id), p]));
+  const keys = Array.from(
+    new Set([...phaseByKey.keys(), "shared", "unclassified", ...groups.keys()]),
+  ).filter((key) => groups.has(key));
+  const ordered = keys.flatMap((key) => {
+    const members = groups.get(key) ?? [];
+    const stack = getGanttTaskTree(members).reverse();
+    const orderedTasks: TaskRead[] = [];
+    while (stack.length) {
+      const node = stack.pop()!;
+      orderedTasks.push(node.task);
+      for (let i = node.children.length - 1; i >= 0; i--)
+        stack.push(node.children[i]);
+    }
+    if (orderedTasks.length !== members.length) {
+      const known = new Set(orderedTasks.map((t) => t.id));
+      orderedTasks.push(...members.filter((t) => !known.has(t.id)));
+    }
+    return orderedTasks;
+  });
+  const page = Math.min(
+    requestedPage,
+    Math.max(1, Math.ceil(ordered.length / PAGE)),
   );
-  const ids = list.data?.items.map((task) => task.id) ?? [];
+  const visible = ordered.slice((page - 1) * PAGE, page * PAGE);
+  const pageGroups = groupEffortTasks(visible, phaseKey);
+  const ids = visible.map((t) => t.id);
   const methods =
     useListTaskEstimateMethodsProjectsProjectIdTaskEstimateMethodsGet(
       projectId,
       { task_ids: ids },
-      {
-        query: {
-          enabled: active && ids.length > 0,
-          retry: false,
-          staleTime: 0,
-        },
-      },
+      { query: { enabled: active && ids.length > 0, retry: false } },
     );
   const methodById = new Map(
-    methods.data?.map((row) => [row.task_id, row.method]),
+    methods.data?.map((item) => [item.task_id, item.method]),
   );
+  const current = allTasks.find((t) => t.id === currentId);
+  const table = useRef<HTMLTableElement>(null);
+  const restore = () =>
+    requestAnimationFrame(() =>
+      (trigger.current?.isConnected
+        ? trigger.current
+        : table.current?.parentElement
+      )?.focus({ preventScroll: true }),
+    );
+  const editCell = (
+    task: TaskRead,
+    field: EditableEffortField,
+    label: string,
+  ) => (
+    <EffortInlineCell
+      task={task}
+      field={field}
+      phases={phases}
+      label={label}
+      onClose={() => {
+        setEditing(null);
+        requestAnimationFrame(() => {
+          const row = table.current?.querySelector(
+            `tr[data-task="${task.id}"]`,
+          );
+          const button =
+            row?.querySelector<HTMLButtonElement>(
+              `button[data-cell="${field}"]`,
+            ) ?? row?.querySelector<HTMLButtonElement>("button");
+          (button ?? table.current?.parentElement)?.focus({
+            preventScroll: true,
+          });
+        });
+      }}
+    />
+  );
+  const select = (task: TaskRead, button: HTMLButtonElement) => {
+    if (editing || (current?.id !== task.id && !mayLeaveEffortEditor())) return;
+    trigger.current = button;
+    onSelect(task.id);
+  };
   return (
-    <section
-      aria-label="工数見積"
-      className="min-w-0 space-y-3 rounded-lg border p-3"
-    >
-      <form
-        className="flex flex-wrap items-end gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setSearch(String(new FormData(event.currentTarget).get("q")).trim());
-          setPage(1);
-        }}
-      >
-        <label className="grid max-w-sm flex-1 gap-1 text-sm">
-          タスクを検索
-          <Input type="search" name="q" placeholder="タスク名・ID" />
-        </label>
-        <Button variant="outline" size="sm" type="submit">
-          検索
-        </Button>
-      </form>
-      {list.isError && (
-        <DataLoadError
-          resourceName="見積対象のタスク"
-          isRetrying={list.isFetching}
-          onRetry={() => void list.refetch()}
-        />
-      )}
+    <section aria-label="工数見積" className={styles.workspace}>
       {methods.isError && (
         <DataLoadError
           resourceName="見積手法"
@@ -115,462 +193,299 @@ export function TaskEstimateWorkbench({
           onRetry={() => void methods.refetch()}
         />
       )}
-      {list.isPending && active && <p role="status">タスクを取得中…</p>}
-      {list.data && (
-        <div
-          className={
-            current
-              ? "grid min-w-0 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,25rem)]"
-              : "min-w-0"
-          }
-        >
-          <div className="min-w-0 space-y-3">
-            <div className="rounded-md border">
-              <Table aria-label="タスクの見積一覧">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead scope="col">作業</TableHead>
-                    <TableHead scope="col">手法</TableHead>
-                    <TableHead scope="col" className="text-right">
-                      見積
-                    </TableHead>
-                    <TableHead scope="col" className="text-right">
-                      計画
-                    </TableHead>
-                    <TableHead scope="col" className="text-right">
-                      実績
-                    </TableHead>
-                    <TableHead scope="col" className="text-right">
-                      残工数
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {list.data.items.map((task) => {
-                    const method = methodById.get(task.id);
-                    return (
-                      <TableRow key={task.id}>
-                        <TableCell className="whitespace-normal">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-auto min-h-7 w-full justify-start px-1 text-left whitespace-normal wrap-anywhere"
-                            type="button"
-                            aria-expanded={current?.id === task.id}
+      <div className={styles.split}>
+        <div className={styles.gridArea + " min-w-0"}>
+          <div
+            className={styles.scroller}
+            tabIndex={0}
+            role="region"
+            aria-label="見積表をスクロール"
+          >
+            <table
+              className={styles.sheet}
+              ref={table}
+              aria-label="タスクの見積一覧"
+              onKeyDown={navigateCells}
+            >
+              <thead>
+                <tr>
+                  <th scope="col" className={styles.rowTitle}>
+                    タスク
+                  </th>
+                  <th scope="col">工程</th>
+                  <th scope="col">担当</th>
+                  <th scope="col">見積手法</th>
+                  {effortMeasures.map((m) => (
+                    <th scope="col" key={m.key} data-number>
+                      {m.label}
+                    </th>
+                  ))}
+                  <th scope="col">状態</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from(pageGroups, ([key, items]) => {
+                  const all = groups.get(key)!;
+                  const closed = collapsed.includes(key);
+                  return (
+                    <Fragment key={key}>
+                      <tr className={styles.group}>
+                        <th scope="row">
+                          <button
+                            className={styles.groupButton}
+                            aria-expanded={!closed}
+                            disabled={Boolean(editing)}
                             onClick={() =>
-                              setCurrent(
-                                current?.id === task.id ? undefined : task,
+                              setCollapsed(
+                                closed
+                                  ? collapsed.filter((k) => k !== key)
+                                  : [...collapsed, key],
                               )
                             }
                           >
-                            {task.title}
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          {method ? estimateMethodLabels[method] : "—"}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatEstimateHours(task.estimated_minutes)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatEstimateHours(task.planned_minutes)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatEstimateHours(task.actual_minutes)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {task.status === "done" || task.status === "cancelled"
-                            ? "—"
-                            : formatEstimateHours(task.remaining_minutes)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {!list.data.total && (
-                    <TableRow>
-                      <TableCell colSpan={6}>
-                        対象タスクはありません。
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            {list.data.total > PAGE_SIZE && (
-              <DataPagination
-                page={page}
-                pageSize={PAGE_SIZE}
-                total={list.data.total}
-                currentCount={list.data.items.length}
-                onPageChange={setPage}
-              />
-            )}
+                            {closed ? (
+                              <ChevronRightIcon size={14} />
+                            ) : (
+                              <ChevronDownIcon size={14} />
+                            )}
+                            <PhaseDot phase={phaseByKey.get(key)} />
+                            {taskPhaseLabel(items[0])}{" "}
+                            <small className="text-muted-foreground">
+                              {all.length}件
+                            </small>
+                          </button>
+                        </th>
+                        <td
+                          colSpan={3}
+                          className="text-xs text-muted-foreground"
+                        >
+                          工程小計
+                        </td>
+                        {effortMeasures.map((m) => {
+                          const t = sumMeasure(all, m.key);
+                          return (
+                            <td key={m.key} data-number title={measureNote(t)}>
+                              {measureValue(t)}
+                              {t.entered > 0 &&
+                                (t.missing > 0 || t.unreviewed > 0) && (
+                                  <small> 小計</small>
+                                )}
+                            </td>
+                          );
+                        })}
+                        <td />
+                      </tr>
+                      {!closed &&
+                        items.map((task) => {
+                          const method = methodById.get(task.id),
+                            rollup = task.estimated_basis === "rollup";
+                          return (
+                            <tr
+                              key={task.id}
+                              data-task={task.id}
+                              data-selected={currentId === task.id}
+                            >
+                              <th scope="row" className={styles.rowTitle}>
+                                <button
+                                  data-cell="title"
+                                  aria-expanded={currentId === task.id}
+                                  title={
+                                    task.parent_summary
+                                      ? task.parent_summary.title +
+                                        " › " +
+                                        task.title
+                                      : task.title
+                                  }
+                                  className="flex min-h-8 max-w-full items-center gap-1 text-left"
+                                  onClick={(e) => select(task, e.currentTarget)}
+                                >
+                                  {task.parent_task_id && (
+                                    <CornerDownRightIcon
+                                      aria-label="子タスク"
+                                      size={13}
+                                      className="shrink-0 text-muted-foreground"
+                                    />
+                                  )}
+                                  <span className="truncate">{task.title}</span>
+                                </button>
+                              </th>
+                              {(["phase", "assignee_id"] as const).map(
+                                (field) => {
+                                  const phaseField = field === "phase",
+                                    label = phaseField ? "工程" : "担当者";
+                                  const content = phaseField ? (
+                                    <>
+                                      <PhaseDot phase={phaseByKey.get(key)} />
+                                      {taskPhaseLabel(task)}
+                                    </>
+                                  ) : task.assignee_id == null ? (
+                                    "担当なし"
+                                  ) : (
+                                    <>
+                                      <UserAvatar
+                                        size="sm"
+                                        name={getTaskUserLabel(
+                                          task.assignee_id,
+                                        )}
+                                        src={
+                                          usersById.get(task.assignee_id)
+                                            ?.avatar_url
+                                        }
+                                      />
+                                      {getTaskUserLabel(task.assignee_id)}
+                                    </>
+                                  );
+                                  return (
+                                    <td key={field}>
+                                      {editing?.task.id === task.id &&
+                                      editing.field === field ? (
+                                        editCell(editing.task, field, label)
+                                      ) : canUpdate ? (
+                                        <button
+                                          data-cell={field}
+                                          aria-label={
+                                            task.title + "の" + label + "を編集"
+                                          }
+                                          className="inline-flex min-h-7 items-center gap-1 rounded px-1 hover:bg-accent"
+                                          disabled={Boolean(editing)}
+                                          onClick={() =>
+                                            setEditing({ task, field })
+                                          }
+                                        >
+                                          {content}
+                                        </button>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1">
+                                          {content}
+                                        </span>
+                                      )}
+                                    </td>
+                                  );
+                                },
+                              )}
+                              <td>
+                                <button
+                                  data-cell="method"
+                                  className="rounded border bg-muted/40 px-1.5 py-0.5 text-xs"
+                                  onClick={(e) => select(task, e.currentTarget)}
+                                >
+                                  {rollup
+                                    ? "子の集計"
+                                    : method
+                                      ? estimateMethodLabels[method]
+                                      : methods.isSuccess
+                                        ? "未設定"
+                                        : "—"}
+                                </button>
+                              </td>
+                              {effortMeasures.map((m) => {
+                                const field = `${m.key}_minutes` as const;
+                                const value = task[field],
+                                  excluded =
+                                    m.key === "remaining" &&
+                                    !isActiveEffort(task);
+                                const editable =
+                                  canUpdate &&
+                                  !excluded &&
+                                  (field === "planned_minutes" ||
+                                    field === "remaining_minutes" ||
+                                    (field === "estimated_minutes" &&
+                                      task.estimated_basis === "own" &&
+                                      methodById.has(task.id) &&
+                                      (!method || method === "simple")));
+                                return (
+                                  <td key={field} data-number>
+                                    {editing?.task.id === task.id &&
+                                    editing.field === field ? (
+                                      editCell(
+                                        editing.task,
+                                        editing.field,
+                                        m.label,
+                                      )
+                                    ) : editable ? (
+                                      <button
+                                        data-cell={field}
+                                        className={styles.cell}
+                                        disabled={Boolean(editing)}
+                                        aria-label={`${task.title}の${m.label}を編集`}
+                                        onClick={() => {
+                                          setEditing({
+                                            task,
+                                            field: field as EditableEffortField,
+                                          });
+                                        }}
+                                      >
+                                        {formatEstimateHours(value)}
+                                      </button>
+                                    ) : (
+                                      <span
+                                        title={
+                                          rollup && m.key === "estimated"
+                                            ? "子の集計は詳細に表示"
+                                            : undefined
+                                        }
+                                      >
+                                        {excluded ||
+                                        (rollup && m.key === "estimated")
+                                          ? "—"
+                                          : formatEstimateHours(value)}
+                                      </span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                              <td>
+                                <TaskStatusBadge status={task.status} />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </Fragment>
+                  );
+                })}
+                {!tasks.length && (
+                  <tr>
+                    <td colSpan={9}>条件に一致するタスクはありません。</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          {current && (
-            <EstimatePanel
-              key={current.id}
-              active={active}
-              projectId={projectId}
-              task={current}
-              canUpdate={canUpdate}
-              canConfirm={canConfirm}
-              onClose={() => setCurrent(undefined)}
+          <div className="flex flex-wrap justify-between gap-2 px-1 py-2 text-xs text-muted-foreground">
+            <span>{tasks.length}件 · — 未入力／対象外</span>
+            <span>
+              矢印キーでセル移動　Enter で開く・保存　Esc でセル編集を取消
+            </span>
+          </div>
+          {ordered.length > PAGE && (
+            <DataPagination
+              page={page}
+              pageSize={PAGE}
+              total={ordered.length}
+              currentCount={visible.length}
+              onPageChange={(p) => {
+                if (!editing) setPage(p);
+              }}
             />
           )}
         </div>
-      )}
-    </section>
-  );
-}
-
-function EstimatePanel({
-  active,
-  projectId,
-  task,
-  canUpdate,
-  canConfirm,
-  onClose,
-}: {
-  active: boolean;
-  projectId: number;
-  task: TaskRead;
-  canUpdate: boolean;
-  canConfirm: boolean;
-  onClose: () => void;
-}) {
-  const [page, setPage] = useState(1);
-  const { getTaskUserLabel } = useTaskUserMap(projectId);
-  const details = useGetTaskEstimateTasksTaskIdEstimateGet(
-    task.id,
-    { page },
-    { query: { enabled: active, retry: false, staleTime: 0 } },
-  );
-  return (
-    <aside
-      aria-label={`${task.title}の見積詳細`}
-      className="min-w-0 space-y-3 rounded-md border p-3"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="font-medium wrap-anywhere">{task.title}</h3>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          閉じる
-        </Button>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        集計上の見積根拠　{effortBasisLabel(task.estimated_basis)}
-      </p>
-      {details.isError && (
-        <DataLoadError
-          resourceName="見積明細"
-          isRetrying={details.isFetching}
-          onRetry={() => void details.refetch()}
-        />
-      )}
-      {details.isPending && active && <p role="status">見積明細を取得中…</p>}
-      {details.data && (
-        <>
-          <TaskEffortPlanEditor
-            projectId={projectId}
-            taskId={task.id}
-            detail={details.data}
-            canUpdate={canUpdate}
-            refresh={async () => (await details.refetch()).data}
-          />
-          <TaskEstimateBaseline
+        {current && (
+          <EstimatePanel
             active={active}
-            taskId={task.id}
-            title={task.title}
-            estimate={details.data.current}
+            key={current.id}
+            projectId={projectId}
+            task={current}
+            canUpdate={canUpdate}
             canConfirm={canConfirm}
-            getUserLabel={getTaskUserLabel}
-            refreshEstimate={details.refetch}
-          />
-          {canUpdate ? (
-            <EstimateForm
-              projectId={projectId}
-              taskId={task.id}
-              detail={details.data}
-              refresh={async () => (await details.refetch()).data}
-            />
-          ) : (
-            <div>
-              <p>
-                {details.data.current.method
-                  ? estimateMethodLabels[details.data.current.method]
-                  : "見積未入力"}
-                　{formatEstimateHours(details.data.current.minutes)}
-              </p>
-              {details.data.current.assumptions && (
-                <p className="whitespace-pre-wrap">
-                  {details.data.current.assumptions}
-                </p>
-              )}
-            </div>
-          )}
-          <details className="border-t pt-2">
-            <summary className="cursor-pointer font-medium">
-              改訂履歴 {details.data.history_total}件
-            </summary>
-            <ul className="divide-y">
-              {details.data.history.map((revision) => (
-                <li key={revision.task_version} className="py-2 text-sm">
-                  <div>
-                    {revision.method
-                      ? estimateMethodLabels[revision.method]
-                      : "見積を解除"}
-                    　{formatEstimateHours(revision.minutes)}
-                  </div>
-                  {revision.actor_id != null && (
-                    <p className="text-xs text-muted-foreground">
-                      更新者　{getTaskUserLabel(revision.actor_id)}
-                    </p>
-                  )}
-                  {revision.optimistic_minutes != null && (
-                    <p className="text-xs text-muted-foreground">
-                      楽観 {formatEstimateHours(revision.optimistic_minutes)} ／
-                      最頻 {formatEstimateHours(revision.likely_minutes)} ／
-                      悲観 {formatEstimateHours(revision.pessimistic_minutes)}
-                    </p>
-                  )}
-                  {revision.change_reason && (
-                    <p className="whitespace-pre-wrap wrap-anywhere">
-                      {revision.change_reason}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {details.data.history_total > PAGE_SIZE && (
-              <DataPagination
-                page={page}
-                pageSize={PAGE_SIZE}
-                total={details.data.history_total}
-                currentCount={details.data.history.length}
-                onPageChange={setPage}
-              />
-            )}
-          </details>
-        </>
-      )}
-    </aside>
-  );
-}
-
-function formValues(revision: TaskEstimateRevisionRead) {
-  return {
-    method: revision.method ?? "simple",
-    hours: toHourInput(revision.minutes),
-    optimistic: toHourInput(revision.optimistic_minutes),
-    likely: toHourInput(revision.likely_minutes),
-    pessimistic: toHourInput(revision.pessimistic_minutes),
-    assumptions: revision.assumptions ?? "",
-    reason: "",
-  };
-}
-
-function EstimateForm({
-  projectId,
-  taskId,
-  detail,
-  refresh,
-}: {
-  projectId: number;
-  taskId: number;
-  detail: TaskEstimateRead;
-  refresh: () => Promise<TaskEstimateRead | undefined>;
-}) {
-  const client = useQueryClient();
-  const [version, setVersion] = useState<number>();
-  const [draft, setDraft] = useState<ReturnType<typeof formValues>>();
-  const values = draft ?? formValues(detail.current);
-  const edit = (changes: Partial<typeof values>) => {
-    if (version === undefined) setVersion(detail.version);
-    setDraft({ ...values, ...changes });
-  };
-  const optimistic = parseEstimateHours(values.optimistic);
-  const likely = parseEstimateHours(values.likely);
-  const pessimistic = parseEstimateHours(values.pessimistic);
-  const simple = values.method === "simple";
-  const calculated =
-    values.method === "simple"
-      ? parseEstimateHours(values.hours)
-      : calculateThreePointMinutes(
-          values.method,
-          optimistic,
-          likely,
-          pessimistic,
-        );
-  const save = useMutation({
-    mutationFn: (data: TaskEstimateUpdate) =>
-      updateTaskEstimateTasksTaskIdEstimatePatch(taskId, data),
-    onSuccess: async () => {
-      await Promise.all([
-        refresh(),
-        invalidateTaskProjectSurfaces(client, projectId, {
-          includeBoard: true,
-        }),
-      ]);
-      setDraft(undefined);
-      setVersion(undefined);
-      toast.success("見積を保存しました。");
-    },
-  });
-  const conflict = getConflictCurrent<TaskRead>(save.error);
-  return (
-    <form
-      className="space-y-3"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (
-          calculated === null ||
-          version === undefined ||
-          save.isPending ||
-          conflict
-        )
-          return;
-        save.mutate({
-          version,
-          method: values.method,
-          assumptions: values.assumptions.trim() || null,
-          change_reason: values.reason.trim() || null,
-          ...(simple
-            ? { minutes: calculated }
-            : {
-                optimistic_minutes: optimistic,
-                likely_minutes: likely,
-                pessimistic_minutes: pessimistic,
-              }),
-        });
-      }}
-    >
-      <fieldset className="space-y-3" disabled={save.isPending}>
-        <label className="grid gap-1">
-          手法
-          <select
-            className="h-8 rounded-md border bg-background px-2"
-            value={values.method}
-            onChange={(event) =>
-              edit({ method: event.target.value as typeof values.method })
-            }
-          >
-            {Object.entries(estimateMethodLabels).map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {simple ? (
-          <label className="grid gap-1">
-            見積工数（h）
-            <Input
-              type="number"
-              min="0"
-              step="any"
-              required
-              value={values.hours}
-              onChange={(event) => edit({ hours: event.target.value })}
-            />
-          </label>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-3">
-            {(
-              [
-                ["optimistic", "楽観（h）"],
-                ["likely", "最頻（h）"],
-                ["pessimistic", "悲観（h）"],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key} className="grid gap-1">
-                {label}
-                <Input
-                  type="number"
-                  min="0"
-                  step="any"
-                  required
-                  value={values[key]}
-                  onChange={(event) => edit({ [key]: event.target.value })}
-                />
-              </label>
-            ))}
-          </div>
-        )}
-        {!simple && calculated === null && (
-          <p className="text-xs text-muted-foreground">
-            楽観、最頻、悲観の順に大きくなるように入力してください。
-          </p>
-        )}
-        <p className="rounded-md bg-muted px-3 py-2">
-          試算　
-          <output className="font-semibold tabular-nums">
-            {formatEstimateHours(calculated)}
-          </output>
-          {calculated !== null && (
-            <span className="ml-2 text-xs text-muted-foreground">
-              {calculated}分
-            </span>
-          )}
-        </p>
-        <label className="grid gap-1">
-          前提・不確実な点
-          <Textarea
-            maxLength={2000}
-            value={values.assumptions}
-            onChange={(event) => edit({ assumptions: event.target.value })}
-          />
-        </label>
-        <label className="grid gap-1">
-          変更理由
-          <Input
-            maxLength={500}
-            value={values.reason}
-            onChange={(event) => edit({ reason: event.target.value })}
-          />
-        </label>
-      </fieldset>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="submit"
-          size="sm"
-          disabled={
-            !draft || calculated === null || save.isPending || Boolean(conflict)
-          }
-        >
-          見積を保存
-        </Button>
-        {draft && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={save.isPending}
-            onClick={() => {
-              setDraft(undefined);
-              setVersion(undefined);
-              save.reset();
-            }}
-          >
-            入力を破棄
-          </Button>
-        )}
-        {conflict && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={async () => {
-              const latest = await refresh();
-              if (latest) {
-                setVersion(latest.version);
-                save.reset();
+            onClose={() => {
+              if (mayLeaveEffortEditor()) {
+                onSelect(null);
+                restore();
               }
             }}
-          >
-            最新の版で入力を確認
-          </Button>
+          />
         )}
       </div>
-      <FormApiError error={save.error} />
-    </form>
+    </section>
   );
 }

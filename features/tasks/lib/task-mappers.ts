@@ -216,7 +216,7 @@ const areTaskUpdateValuesEqual = (
   return (left ?? null) === (right ?? null);
 };
 
-const toPhaseAssignment = (value: string): PhaseAssignment =>
+export const toPhaseAssignment = (value: string): PhaseAssignment =>
   value?.startsWith("phase:")
     ? { kind: "phase", phase_id: Number(value.slice(6)) }
     : { kind: value === "shared" ? "shared" : "unclassified", phase_id: null };

@@ -1,0 +1,119 @@
+.workspace {
+  container-type: inline-size;
+  min-width: 0;
+}
+.split {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  align-items: start;
+}
+@container (min-width: 60rem) {
+  .split:has(.panel) {
+    grid-template-columns: minmax(0, 1fr) clamp(18rem, 26%, 24rem);
+  }
+  .panel {
+    position: sticky;
+    top: 0.5rem;
+    max-height: 75dvh;
+    overflow: auto;
+  }
+}
+@container (max-width: 59.999rem) {
+  .split:has(.panel) > .gridArea {
+    display: none;
+  }
+}
+.scroller {
+  overflow: auto;
+  max-height: 67dvh;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.sheet {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+}
+.sheet :is(th, td) {
+  padding: 0.375rem 0.625rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.sheet thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  text-align: start;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.sheet tbody th {
+  text-align: start;
+  font-weight: 500;
+}
+.sheet [data-number] {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.sheet .rowTitle {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  max-width: min(17rem, 43vw);
+  background: var(--background);
+  border-right: 1px solid var(--border);
+}
+.sheet thead .rowTitle {
+  z-index: 3;
+  background: var(--muted);
+}
+.sheet .group th,
+.sheet .group td {
+  background: var(--muted);
+}
+.sheet .group th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.sheet tr[data-selected="true"] > * {
+  background: var(--status-info-bg);
+}
+.sheet tr[data-selected="true"] > :first-child {
+  box-shadow: inset 3px 0 var(--status-info-chart);
+}
+.sheet button {
+  cursor: pointer;
+}
+.sheet :is(button, input):focus-visible,
+.scroller:focus-visible {
+  outline: 2px solid var(--status-info-chart);
+  outline-offset: -1px;
+}
+.cell {
+  min-height: 1.875rem;
+  min-width: 3rem;
+  padding-inline: 0.25rem;
+  border-radius: var(--radius-sm);
+}
+.cell:hover {
+  background: var(--accent);
+}
+.groupButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-block: 0.2rem;
+}
+.panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--status-info-chart);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  padding: 0.875rem;
+}

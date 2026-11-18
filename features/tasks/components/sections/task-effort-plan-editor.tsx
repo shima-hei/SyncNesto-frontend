@@ -72,6 +72,8 @@ export function TaskEffortPlanEditor({
       </h4>
       {canUpdate ? (
         <form
+          data-effort-dirty={Boolean(draft)}
+          data-effort-pending={save.isPending}
           aria-labelledby={`${id}-title`}
           className="space-y-2"
           onSubmit={(event) => {
