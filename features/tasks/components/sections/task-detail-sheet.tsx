@@ -47,6 +47,7 @@ import {
 import { TaskCommentsSection } from "./task-comments-section";
 
 type TaskDetailSheetProps = {
+  onEstimate?: (task: TaskRead) => void;
   projectId: number;
   taskId: number | null;
   open: boolean;
@@ -55,6 +56,7 @@ type TaskDetailSheetProps = {
 };
 
 export function TaskDetailSheet({
+  onEstimate,
   projectId,
   taskId,
   open,
@@ -122,6 +124,15 @@ export function TaskDetailSheet({
                   />
                 </div>
               </div>
+              {onEstimate && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onEstimate(task)}
+                >
+                  このタスクの工数見積
+                </Button>
+              )}
               <Button variant="outline" size="sm" asChild>
                 <Link
                   href={withReturn(

@@ -41,7 +41,10 @@ import { TaskEffortPlanEditor } from "./task-effort-plan-editor";
 import styles from "./effort-workspace.module.css";
 const PAGE_SIZE = 20;
 
+type EstimateMethod = keyof typeof estimateMethodLabels;
+
 export function EstimatePanel({
+  initialMethod,
   active,
   projectId,
   task,
@@ -49,6 +52,7 @@ export function EstimatePanel({
   canConfirm,
   onClose,
 }: {
+  initialMethod?: EstimateMethod;
   active: boolean;
   projectId: number;
   task: TaskRead;
@@ -63,6 +67,13 @@ export function EstimatePanel({
     { page },
     { query: { enabled: active, retry: false, staleTime: 0 } },
   );
+  const detailVersion = details.data?.version;
+  const needsRefresh =
+    detailVersion !== undefined && detailVersion < task.version;
+  const refreshDetail = details.refetch;
+  useEffect(() => {
+    if (active && needsRefresh) void refreshDetail();
+  }, [active, needsRefresh, task.version, refreshDetail]);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
@@ -113,7 +124,11 @@ export function EstimatePanel({
       )}
       {details.isPending && active && <p role="status">見積明細を取得中…</p>}
       {details.data && (
-        <>
+        <fieldset
+          disabled={needsRefresh}
+          aria-busy={needsRefresh}
+          className="flex min-w-0 flex-col gap-3"
+        >
           {task.estimated_basis === "rollup" ? (
             <div className="rounded-md bg-muted p-3">
               <p className="text-xs">ボトムアップ · 子孫の見積小計</p>
@@ -141,6 +156,7 @@ export function EstimatePanel({
             </div>
           ) : canUpdate ? (
             <EstimateForm
+              initialMethod={initialMethod}
               projectId={projectId}
               taskId={task.id}
               detail={details.data}
@@ -166,12 +182,13 @@ export function EstimatePanel({
           )}
           <details className="rounded-md border p-2">
             <summary className="cursor-pointer text-sm font-medium">
-              計画工数・残工数と基準見積
+              計画への反映・残工数・基準見積
             </summary>
             <TaskEffortPlanEditor
               projectId={projectId}
               taskId={task.id}
               detail={details.data}
+              canCopyEstimate={task.estimated_basis === "own"}
               canUpdate={canUpdate}
               refresh={async () => (await details.refetch()).data}
             />
@@ -229,13 +246,14 @@ export function EstimatePanel({
               />
             )}
           </details>
-        </>
+        </fieldset>
       )}
     </aside>
   );
 }
 
 function EstimateForm({
+  initialMethod,
   projectId,
   taskId,
   detail,
@@ -244,11 +262,23 @@ function EstimateForm({
   projectId: number;
   taskId: number;
   detail: TaskEstimateRead;
+  initialMethod?: EstimateMethod;
   refresh: () => Promise<TaskEstimateRead | undefined>;
 }) {
   const client = useQueryClient();
-  const [version, setVersion] = useState<number>();
-  const [draft, setDraft] = useState<ReturnType<typeof estimateFormValues>>();
+  const changingMethod =
+    initialMethod !== undefined &&
+    initialMethod !== (detail.current.method ?? "simple");
+  const [version, setVersion] = useState<number | undefined>(() =>
+    changingMethod ? detail.version : undefined,
+  );
+  const [draft, setDraft] = useState<
+    ReturnType<typeof estimateFormValues> | undefined
+  >(() =>
+    changingMethod && initialMethod
+      ? { ...estimateFormValues(detail.current), method: initialMethod }
+      : undefined,
+  );
   const values = draft ?? estimateFormValues(detail.current);
   const edit = (changes: Partial<typeof values>) => {
     if (version === undefined) setVersion(detail.version);

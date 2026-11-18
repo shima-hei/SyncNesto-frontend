@@ -120,25 +120,31 @@
 
 .estimateSheet {
   table-layout: fixed;
-  min-width: 66rem;
+  min-width: 52rem;
 }
 .titleColumn {
-  width: clamp(8rem, 17vw, 17rem);
+  width: 19%;
 }
 .phaseColumn {
-  width: 8rem;
+  width: 10%;
 }
 .assigneeColumn {
-  width: 10rem;
+  width: 12%;
 }
 .methodColumn {
-  width: 9rem;
+  width: 13%;
 }
 .hoursColumn {
-  width: 8rem;
+  width: 9%;
 }
 .statusColumn {
-  width: 7rem;
+  width: 10%;
+}
+.estimateSheet :is(th, td) {
+  padding-inline: clamp(0.3rem, 0.6cqw, 0.625rem);
+}
+.estimateSheet [data-cell="method"] {
+  max-width: 100%;
 }
 .estimateSheet .groupButton {
   max-width: 100%;
@@ -146,34 +152,9 @@
 .estimateSheet .cell {
   text-align: end;
 }
-.hoursEditor {
-  min-width: 0;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 2px;
-}
-.hoursEditor input {
-  order: 1;
-  width: 5rem;
+.estimateSheet input[type="number"] {
   appearance: textfield;
 }
-.hoursEditor input::-webkit-inner-spin-button {
+.estimateSheet input::-webkit-inner-spin-button {
   appearance: none;
-}
-.assignmentEditor {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px;
-}
-.assignmentEditor > :first-child {
-  max-width: 100%;
-  min-width: 0;
-}
-.estimateSheet form {
-  grid-template-columns: minmax(0, 1fr);
-  white-space: normal;
-  overflow-wrap: anywhere;
 }

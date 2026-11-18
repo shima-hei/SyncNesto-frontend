@@ -118,7 +118,7 @@ export function PlanningEffortSummary({
   const linkClass =
     "inline-flex min-h-7 items-center gap-1 text-left font-medium hover:underline";
   return (
-    <section aria-label="工数集計" className="flex min-w-0 flex-col gap-3">
+    <section aria-label="工数分析" className="flex min-w-0 flex-col gap-3">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
         {totals.map(({ key, label, tone, total }) => {
           const Icon = icons[key];
@@ -307,10 +307,10 @@ export function PlanningEffortSummary({
               </ul>
             </section>
             <section
-              aria-label="担当者別の負荷"
+              aria-label="担当者別の登録工数"
               className="rounded-lg border bg-card p-3"
             >
-              <h3 className="font-semibold">担当者別の負荷</h3>
+              <h3 className="font-semibold">担当者別の登録工数</h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 案件内の計画工数と、完了・中止を除く残工数
               </p>

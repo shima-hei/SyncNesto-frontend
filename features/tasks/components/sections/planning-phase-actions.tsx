@@ -16,9 +16,12 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
-import { FormApiError } from "@/components/shared/forms/form-api-error";
+import {
+  PlanningCellInput,
+  type CellExit,
+} from "../shared/planning-cell-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,
@@ -27,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getConflictCurrent } from "@/lib/api/conflict";
+
 import type {
   PhaseAssignment,
   PhaseRead,
@@ -141,14 +144,6 @@ export function PlanningPhaseActions({
         </TableCell>
       </TableRow>
     );
-  const closeNameEditor = () => {
-    setNameEditor(undefined);
-    requestAnimationFrame(() =>
-      (nameEditor === null ? createTrigger.current : heading.current)?.focus({
-        preventScroll: true,
-      }),
-    );
-  };
   const saveName = useMutation({
     mutationFn: ({ name, phase }: { name: string; phase: PhaseRead | null }) =>
       phase
@@ -164,13 +159,13 @@ export function PlanningPhaseActions({
                 -1,
               ) + 1,
           }),
+    onError: () => invalidateTaskProjectSurfaces(client, projectId),
     onSuccess: async (phase, { phase: previous }) => {
       await invalidateTaskProjectSurfaces(client, projectId);
       if (!previous) setNewPhaseId(phase.id);
       setResult({
         message: `工程「${phase.name}」を${previous ? "更新" : "追加"}しました。`,
       });
-      closeNameEditor();
     },
   });
   const canPlace =
@@ -183,66 +178,48 @@ export function PlanningPhaseActions({
     saveName.reset();
     setNameEditor(phase);
   };
-  const conflict = getConflictCurrent<PhaseRead>(saveName.error);
-  const nameForm = (phase: PhaseRead | null) => (
-    <form
-      className="flex min-w-0 flex-wrap items-center gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        const name = String(
-          new FormData(event.currentTarget).get("name"),
-        ).trim();
-        if (name && name !== phase?.name && !conflict && !saveName.isPending)
-          saveName.mutate({ name, phase });
-      }}
-    >
-      <Input
-        name="name"
-        aria-label="工程名"
-        className="min-w-28 flex-1"
-        defaultValue={phase?.name ?? ""}
+  const nameForm = (phase: PhaseRead | null) => {
+    const adjacent = (backwards: boolean) =>
+      phase
+        ? visiblePhases[
+            visiblePhases.findIndex((p) => p.id === phase.id) +
+              (backwards ? -1 : 1)
+          ]
+        : undefined;
+    function exit(how: CellExit) {
+      const next =
+        how === "next" || how === "previous"
+          ? adjacent(how === "previous")
+          : undefined;
+      setNameEditor(next);
+      if (next || how === "blur") return;
+      requestAnimationFrame(() => {
+        const trigger = phase
+          ? document.querySelector<HTMLElement>(
+              `[data-rename-phase="${phase.id}"]`,
+            )
+          : createTrigger.current;
+        (trigger ?? heading.current)?.focus({ preventScroll: true });
+      });
+    }
+    return (
+      <PlanningCellInput
+        key={phase?.id ?? "new"}
+        label="工程名"
+        initial={phase?.name ?? ""}
         required
         maxLength={100}
-        autoFocus
-        disabled={saveName.isPending}
+        onTab={(backwards) => Boolean(adjacent(backwards))}
+        onExit={exit}
+        onSave={async (name) => {
+          await saveName.mutateAsync({ name, phase });
+        }}
       />
-      <Button
-        size="sm"
-        type="submit"
-        disabled={saveName.isPending || Boolean(conflict)}
-      >
-        {phase ? "保存" : "追加"}
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        type="button"
-        disabled={saveName.isPending}
-        onClick={closeNameEditor}
-      >
-        キャンセル
-      </Button>
-      {conflict ? (
-        <div role="alert" className="basis-full text-sm">
-          工程が更新されています。最新の名前は「{conflict.name}」です。
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => editName(conflict)}
-          >
-            最新の版で編集
-          </Button>
-        </div>
-      ) : (
-        <FormApiError error={saveName.error} />
-      )}
-    </form>
-  );
-
+    );
+  };
   return (
     <section
-      aria-label="工程一覧"
+      aria-label="工程管理"
       className={styles.workspace + " flex min-w-0 flex-col gap-3"}
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -293,7 +270,7 @@ export function PlanningPhaseActions({
               onClick={() => setPlacementOpen(true)}
             >
               <FolderPlusIcon data-icon="inline-start" />
-              所属を変更
+              タスクを検索して移動
             </Button>
           ) : null}
         </div>
@@ -355,7 +332,19 @@ export function PlanningPhaseActions({
                 data-gantt-scroll
                 className="max-h-[68dvh] overflow-auto rounded-md border [&_[data-slot=table-container]]:overflow-visible"
               >
-                <Table aria-label="工程と工数">
+                <Table
+                  aria-label="工程と工数"
+                  className="min-w-[50rem] table-fixed"
+                >
+                  <colgroup>
+                    <col className="w-[26%]" />
+                    <col className="w-[8%]" />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col className="w-44" />
+                  </colgroup>
                   <TableHeader className="sticky top-0 z-10 bg-muted">
                     <TableRow>
                       <TableHead scope="col">工程</TableHead>
@@ -393,42 +382,42 @@ export function PlanningPhaseActions({
                             data-gantt-order-group="planning-phases"
                           >
                             <TableCell className="whitespace-normal">
-                              {nameEditor?.id === phase.id ? (
-                                nameForm(nameEditor)
-                              ) : (
-                                <div className="flex min-w-0 items-center gap-1">
-                                  {canManage && visiblePhases.length > 1 && (
-                                    <GanttOrderHandle
-                                      id={phase.id}
-                                      group="planning-phases"
-                                      label={phase.name}
-                                      previous={visiblePhases[index - 1]?.id}
-                                      next={visiblePhases[index + 1]?.id}
-                                      disabled={
-                                        order.isPending ||
-                                        nameEditor !== undefined
-                                      }
-                                      save={(move, label, trigger) =>
-                                        order.mutate({
-                                          kind: "phase",
-                                          move,
-                                          label,
-                                          trigger,
-                                        })
-                                      }
-                                    />
-                                  )}
-                                  {phase.color && (
-                                    <span
-                                      aria-hidden="true"
-                                      className={`size-2.5 shrink-0 rounded-full ${phaseColors[phase.color].className}`}
-                                    />
-                                  )}
+                              <div className="flex min-w-0 items-center gap-1">
+                                {canManage && visiblePhases.length > 1 && (
+                                  <GanttOrderHandle
+                                    id={phase.id}
+                                    group="planning-phases"
+                                    label={phase.name}
+                                    previous={visiblePhases[index - 1]?.id}
+                                    next={visiblePhases[index + 1]?.id}
+                                    disabled={
+                                      order.isPending ||
+                                      nameEditor !== undefined
+                                    }
+                                    save={(move, label, trigger) =>
+                                      order.mutate({
+                                        kind: "phase",
+                                        move,
+                                        label,
+                                        trigger,
+                                      })
+                                    }
+                                  />
+                                )}
+                                {phase.color && (
+                                  <span
+                                    aria-hidden="true"
+                                    className={`size-2.5 shrink-0 rounded-full ${phaseColors[phase.color].className}`}
+                                  />
+                                )}
+                                {nameEditor?.id === phase.id ? (
+                                  nameForm(nameEditor)
+                                ) : (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-auto min-h-7 min-w-20 max-w-96 justify-start px-1 whitespace-normal wrap-anywhere"
+                                    className="h-7 min-w-0 max-w-full justify-start px-1"
                                     aria-expanded={expanded.includes(key)}
                                     onClick={() => toggle(key)}
                                   >
@@ -437,15 +426,17 @@ export function PlanningPhaseActions({
                                     ) : (
                                       <ChevronRightIcon />
                                     )}
-                                    {phase.name}
+                                    <span className="truncate">
+                                      {phase.name}
+                                    </span>
                                     {phase.archived_at && (
                                       <span className="ml-1 text-xs text-muted-foreground">
                                         アーカイブ済み
                                       </span>
                                     )}
                                   </Button>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
                               {phase.task_count}
@@ -503,6 +494,7 @@ export function PlanningPhaseActions({
                                         nameEditor !== undefined ||
                                         order.isPending
                                       }
+                                      data-rename-phase={phase.id}
                                       aria-label={`${phase.name}を編集`}
                                       onClick={() => editName(phase)}
                                     >

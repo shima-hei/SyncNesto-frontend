@@ -34,12 +34,14 @@ export function TaskEffortPlanEditor({
   projectId,
   taskId,
   detail,
+  canCopyEstimate,
   canUpdate,
   refresh,
 }: {
   projectId: number;
   taskId: number;
   detail: TaskEstimateRead;
+  canCopyEstimate: boolean;
   canUpdate: boolean;
   refresh: () => Promise<TaskEstimateRead | undefined>;
 }) {
@@ -90,6 +92,24 @@ export function TaskEffortPlanEditor({
             else setDraft(undefined);
           }}
         >
+          {canCopyEstimate && detail.current.minutes != null && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={save.isPending || Boolean(conflict)}
+              onClick={() =>
+                setDraft({
+                  version: detail.version,
+                  ...draft,
+                  planned_minutes: toHourInput(detail.current.minutes),
+                })
+              }
+            >
+              見積 {formatEstimateHours(detail.current.minutes)}{" "}
+              を計画欄にコピー
+            </Button>
+          )}
           <fieldset
             disabled={save.isPending}
             className="grid gap-2 sm:grid-cols-2"

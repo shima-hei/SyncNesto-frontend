@@ -1,20 +1,13 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { UserRoundIcon } from "lucide-react";
 
-import { UserAvatar } from "@/components/shared/display/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { TaskRead } from "@/lib/api/generated/model";
 
 import { getTaskStatusLabel } from "../../constants/task-options";
@@ -23,7 +16,7 @@ import {
   getTaskPlanningValues,
   type TaskPlanningValues,
 } from "../../lib/task-planning";
-import { TaskUserSelectField } from "../forms/task-user-select-field";
+
 import { TaskStatusBadge } from "../shared/task-badges";
 import {
   TaskPlanningDateFields,
@@ -55,7 +48,8 @@ export function GanttPlanningCells({
     values.startDate || values.dueDate
       ? `${dateLabel(values.startDate)} – ${dateLabel(values.dueDate)}`
       : "未日程";
-  const commit = (changes: Changes) => void planning.commit(task, changes);
+  const commit = (baseline: TaskRead, changes: Changes) =>
+    void planning.commit(baseline, changes);
   const common = { task, values, editable, commit };
   return (
     <>
@@ -100,49 +94,6 @@ export function GanttStatusProgress({
   );
 }
 
-export function GanttAssigneeCell({
-  task,
-  planning,
-  editable,
-  name,
-  avatarUrl,
-}: {
-  task: TaskRead;
-  planning: TaskPlanningController;
-  editable: boolean;
-  name: string;
-  avatarUrl?: string | null;
-}) {
-  const values = planning.rows[task.id]?.values ?? getTaskPlanningValues(task);
-  return (
-    <PlanningCell
-      task={task}
-      values={values}
-      editable={editable}
-      commit={(changes) => void planning.commit(task, changes)}
-      label="担当者"
-      value={name}
-      immediate
-      icon={
-        values.assigneeId ? (
-          <UserAvatar name={name} src={avatarUrl} size="sm" />
-        ) : (
-          <UserRoundIcon className="size-4 text-muted-foreground" />
-        )
-      }
-    >
-      {(current, change) => (
-        <TaskUserSelectField
-          projectId={task.project_id}
-          label="担当者"
-          value={current.assigneeId}
-          onChange={(assigneeId) => change({ assigneeId })}
-        />
-      )}
-    </PlanningCell>
-  );
-}
-
 function PlanningCell({
   task,
   label,
@@ -150,8 +101,6 @@ function PlanningCell({
   values,
   editable,
   children,
-  immediate = false,
-  icon,
   display,
   commit,
 }: {
@@ -160,22 +109,24 @@ function PlanningCell({
   value: string;
   values: TaskPlanningValues;
   editable: boolean;
-  immediate?: boolean;
-  icon?: ReactNode;
   display?: ReactNode;
-  commit: (changes: Changes) => void;
+  commit: (baseline: TaskRead, changes: Changes) => void;
   children: (
     values: TaskPlanningValues,
     onChange: (changes: Changes) => void,
   ) => ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [baseline, setBaseline] = useState<{
+    task: TaskRead;
+    values: TaskPlanningValues;
+  } | null>(null);
   const [changes, setChanges] = useState<Changes>({});
   const ariaLabel = `${task.task_code}の${label} ${value}`;
   const apply = (next: Changes) => {
-    setOpen(false);
+    if (!baseline) return;
+    setBaseline(null);
     setChanges({});
-    commit(next);
+    commit(baseline.task, next);
   };
   const trigger = (
     <PopoverTrigger asChild>
@@ -183,67 +134,49 @@ function PlanningCell({
         type="button"
         variant="ghost"
         size="sm"
-        className={
-          icon
-            ? "size-8 rounded-sm p-0"
-            : "h-8 w-full min-w-0 justify-start rounded-sm px-1.5 text-xs tabular-nums"
-        }
+        className="h-8 w-full min-w-0 justify-start rounded-sm px-1.5 text-xs tabular-nums"
         aria-label={ariaLabel}
-        title={icon ? undefined : value}
+        title={value}
       >
-        {icon ? (
-          <span aria-hidden>{icon}</span>
-        ) : (
-          (display ?? <span className="truncate">{value}</span>)
-        )}
+        {display ?? <span className="truncate">{value}</span>}
       </Button>
     </PopoverTrigger>
   );
   return editable ? (
     <Popover
-      open={open}
+      open={Boolean(baseline)}
       onOpenChange={(next) => {
-        setOpen(next);
+        setBaseline(next ? { task, values } : null);
         if (!next) setChanges({});
       }}
     >
-      {icon ? (
-        <Tooltip>
-          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-          <TooltipContent>{value}</TooltipContent>
-        </Tooltip>
-      ) : (
-        trigger
-      )}
+      {trigger}
       <PopoverContent
         className="w-64 space-y-2"
         align="start"
         aria-label={`${task.task_code}の${label}`}
       >
-        {children({ ...values, ...changes }, (next) => {
-          if (immediate) apply(next);
-          else setChanges((previous) => ({ ...previous, ...next }));
-        })}
-        {immediate ? null : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (Object.keys(changes).length) apply(changes);
+          }}
+          className="space-y-2"
+        >
+          {children({ ...(baseline?.values ?? values), ...changes }, (next) => {
+            setChanges((previous) => ({ ...previous, ...next }));
+          })}
+
           <Button
-            type="button"
+            type="submit"
             size="sm"
             disabled={!Object.keys(changes).length}
-            onClick={() => apply(changes)}
           >
             適用
           </Button>
-        )}
+        </form>
       </PopoverContent>
     </Popover>
-  ) : icon ? (
-    <span
-      className="inline-flex size-8 items-center justify-center"
-      title={value}
-    >
-      <span aria-hidden>{icon}</span>
-      <span className="sr-only">{ariaLabel}</span>
-    </span>
   ) : (
     <span
       className="min-w-0 truncate px-1.5 text-xs tabular-nums"

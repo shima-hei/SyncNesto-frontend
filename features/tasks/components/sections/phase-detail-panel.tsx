@@ -37,6 +37,7 @@ import { getConflictCurrent } from "@/lib/api/conflict";
 import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
 import { phaseColors } from "../../lib/phase-colors";
 
+import { TaskPhaseCell } from "../shared/task-phase-cell";
 import { TaskStatusBadge } from "../shared/task-badges";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { toHourInput, parseEstimateHours } from "../../lib/task-estimate";
@@ -141,17 +142,73 @@ export function PhaseTaskRows({
           所属タスクはありません。
         </p>
       )}
+      {canUpdate && selectedTasks.length > 0 && (
+        <form
+          className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 p-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (target && !move.isPending) move.mutate(target.assignment);
+          }}
+        >
+          <label className="flex items-center gap-2 whitespace-nowrap text-sm">
+            {selectedTasks.length}件選択 · 移動先
+            <select
+              className="h-8 rounded-md border bg-background px-2"
+              disabled={move.isPending}
+              value={destinationKey}
+              onChange={(event) => setDestinationKey(event.target.value)}
+              required
+            >
+              <option value="">移動先を選択</option>
+              {choices.map(({ key, label }) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              type="submit"
+              disabled={!target || move.isPending}
+            >
+              所属を変更
+            </Button>
+            <Button
+              size="sm"
+              type="button"
+              variant="ghost"
+              disabled={move.isPending}
+              onClick={() => {
+                setSelected({});
+                move.reset();
+                void list.refetch();
+              }}
+            >
+              選択を解除
+            </Button>
+          </div>
+          <FormApiError error={move.error} />
+        </form>
+      )}
       <div className="overflow-auto">
         <table className={styles.sheet}>
           <thead>
             <tr>
-              {["タスク", "担当", "状態", "見積", "実績", "予定期間"].map(
-                (h) => (
-                  <th scope="col" key={h}>
-                    {h}
-                  </th>
-                ),
-              )}
+              {[
+                "タスク",
+                "工程",
+                "担当",
+                "状態",
+                "見積",
+                "実績",
+                "予定期間",
+              ].map((h) => (
+                <th scope="col" key={h}>
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -192,6 +249,15 @@ export function PhaseTaskRows({
                   </div>
                 </th>
                 <td>
+                  <TaskPhaseCell
+                    task={task}
+                    phases={phases}
+                    editable={
+                      canUpdate && !move.isPending && !selectedTasks.length
+                    }
+                  />
+                </td>
+                <td>
                   {task.assignee_id == null
                     ? "担当なし"
                     : getTaskUserLabel(task.assignee_id)}
@@ -219,55 +285,6 @@ export function PhaseTaskRows({
           currentCount={list.data.items.length}
           onPageChange={setPage}
         />
-      )}
-      {canUpdate && selectedTasks.length > 0 && (
-        <form
-          className="space-y-2 border-t pt-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (target && !move.isPending) move.mutate(target.assignment);
-          }}
-        >
-          <label className="grid gap-1 text-sm">
-            {selectedTasks.length}件の移動先
-            <select
-              className={selectClass}
-              value={destinationKey}
-              onChange={(event) => setDestinationKey(event.target.value)}
-              required
-            >
-              <option value="">移動先を選択</option>
-              {choices.map(({ key, label }) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              type="submit"
-              disabled={!target || move.isPending}
-            >
-              所属を変更
-            </Button>
-            <Button
-              size="sm"
-              type="button"
-              variant="ghost"
-              disabled={move.isPending}
-              onClick={() => {
-                setSelected({});
-                move.reset();
-                void list.refetch();
-              }}
-            >
-              選択を解除
-            </Button>
-          </div>
-          <FormApiError error={move.error} />
-        </form>
       )}
     </section>
   );

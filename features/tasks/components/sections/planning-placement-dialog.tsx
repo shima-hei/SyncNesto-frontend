@@ -202,7 +202,7 @@ export function PlanningPlacementDialog({
         <DialogHeader>
           <DialogTitle>タスクの所属を変更</DialogTitle>
           <DialogDescription>
-            ガントの表示対象からタスクを選び、所属先を指定します。
+            タスクを検索し、移動先の工程を選択します。
           </DialogDescription>
         </DialogHeader>
         <form

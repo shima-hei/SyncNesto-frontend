@@ -92,6 +92,9 @@ export function useTaskPlanning(projectId: number) {
     const handleUndo = (event: KeyboardEvent) => {
       if (
         !undoAction.current ||
+        (event.target instanceof HTMLElement &&
+          (event.target.isContentEditable ||
+            event.target.closest("input, textarea, select"))) ||
         event.isComposing ||
         event.repeat ||
         !(event.ctrlKey || event.metaKey) ||

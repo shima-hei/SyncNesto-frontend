@@ -6,7 +6,15 @@ import {
   ChevronRightIcon,
   CornerDownRightIcon,
 } from "lucide-react";
-import { UserAvatar } from "@/components/shared/display/user-avatar";
+import { TaskPhaseCell } from "../shared/task-phase-cell";
+import { PlanningAssigneeCell } from "../shared/planning-assignee-cell";
+import type { TaskPlanningController } from "../../hooks/use-task-planning";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { getGanttTaskTree } from "../../lib/planning-phases";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
@@ -24,16 +32,14 @@ import { formatEstimateHours, taskPhaseLabel } from "../../lib/task-effort";
 import { estimateMethodLabels } from "../../lib/task-estimate";
 import { TaskStatusBadge } from "../shared/task-badges";
 import { measureNote, measureValue, PhaseDot } from "./effort-controls";
-import {
-  EffortInlineCell,
-  type EditableEffortField,
-} from "./effort-inline-cell";
+import { EffortInlineCell, type EditableMinutes } from "./effort-inline-cell";
 import { EstimatePanel } from "./task-estimate-panel";
 import styles from "./effort-workspace.module.css";
 
 const PAGE = 30;
 function navigateCells(event: KeyboardEvent<HTMLTableElement>) {
   if (
+    event.defaultPrevented ||
     event.altKey ||
     event.ctrlKey ||
     event.metaKey ||
@@ -79,6 +85,7 @@ export function mayLeaveEffortEditor() {
 
 export function TaskEstimateWorkbench({
   active,
+  planning,
   projectId,
   canUpdate,
   canConfirm,
@@ -89,6 +96,7 @@ export function TaskEstimateWorkbench({
   onSelect,
 }: {
   active: boolean;
+  planning: TaskPlanningController;
   projectId: number;
   canUpdate: boolean;
   canConfirm: boolean;
@@ -102,7 +110,7 @@ export function TaskEstimateWorkbench({
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const [editing, setEditing] = useState<{
     task: TaskRead;
-    field: EditableEffortField;
+    field: EditableMinutes;
   } | null>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
   const { usersById, getTaskUserLabel } = useTaskUserMap(projectId);
@@ -152,40 +160,104 @@ export function TaskEstimateWorkbench({
         : table.current?.parentElement
       )?.focus({ preventScroll: true }),
     );
-  const editCell = (
-    task: TaskRead,
-    field: EditableEffortField,
-    label: string,
-  ) => (
+  const [methodChoice, setMethodChoice] = useState<{
+    taskId: number;
+    method: keyof typeof estimateMethodLabels;
+    serial: number;
+  }>();
+  const requestedCell = useRef<{ id: number; field: EditableMinutes } | null>(
+    null,
+  );
+  const nextCell = useRef<{ id: number; field: string } | null>(null);
+  const editCell = (task: TaskRead, field: EditableMinutes, label: string) => (
     <EffortInlineCell
+      key={task.id + field}
       task={task}
       field={field}
-      phases={phases}
       label={label}
-      onClose={() => {
+      onTab={(backwards) => {
+        const cells = Array.from(
+          table.current?.querySelectorAll<HTMLElement>(
+            "[data-cell]:not([data-cell=title]), input[data-effort-dirty]",
+          ) ?? [],
+        );
+        const index = cells.indexOf(document.activeElement as HTMLElement);
+        const next = cells[index + (backwards ? -1 : 1)];
+        if (!next?.dataset.cell) return false;
+        nextCell.current = {
+          id: Number(next.closest("tr")?.dataset.task),
+          field: next.dataset.cell,
+        };
+        return true;
+      }}
+      onClose={(exit) => {
+        const destination =
+          exit === "next" || exit === "previous" ? nextCell.current : null;
+        nextCell.current = null;
+        const requested = requestedCell.current;
+        requestedCell.current = null;
         setEditing(null);
+        if (exit === "blur") {
+          if (requested)
+            requestAnimationFrame(() =>
+              table.current
+                ?.querySelector<HTMLButtonElement>(
+                  `tr[data-task="${requested.id}"] [data-cell="${requested.field}"]`,
+                )
+                ?.click(),
+            );
+          return;
+        }
         requestAnimationFrame(() => {
-          const row = table.current?.querySelector(
-            `tr[data-task="${task.id}"]`,
+          const target = table.current?.querySelector<HTMLButtonElement>(
+            `tr[data-task="${destination?.id ?? task.id}"] [data-cell="${destination?.field ?? field}"]`,
           );
-          const button =
-            row?.querySelector<HTMLButtonElement>(
-              `button[data-cell="${field}"]`,
-            ) ?? row?.querySelector<HTMLButtonElement>("button");
-          (button ?? table.current?.parentElement)?.focus({
-            preventScroll: true,
-          });
+          const fallback = table.current?.querySelector<HTMLButtonElement>(
+            `tr[data-task] [data-cell="${field}"]`,
+          );
+          (target ?? fallback ?? table.current?.parentElement)?.focus();
+          if (
+            destination &&
+            destination.field.endsWith("_minutes") &&
+            !target?.disabled
+          )
+            target?.click();
         });
       }}
     />
   );
-  const select = (task: TaskRead, button: HTMLButtonElement) => {
-    if (editing || (current?.id !== task.id && !mayLeaveEffortEditor())) return;
+  const select = (
+    task: TaskRead,
+    button: HTMLButtonElement,
+    method?: keyof typeof estimateMethodLabels,
+  ) => {
+    if (!mayLeaveEffortEditor()) return;
     trigger.current = button;
+    if (
+      task.estimated_basis === "own" &&
+      method === "simple" &&
+      (!methodById.get(task.id) || methodById.get(task.id) === "simple")
+    ) {
+      onSelect(null);
+      setEditing({ task, field: "estimated_minutes" });
+      return;
+    }
+    if (method)
+      setMethodChoice((old) => ({
+        taskId: task.id,
+        method,
+        serial: (old?.serial ?? 0) + 1,
+      }));
+    else setMethodChoice(undefined);
     onSelect(task.id);
   };
   return (
     <section aria-label="工数見積" className={styles.workspace}>
+      {canUpdate && (
+        <p className="mb-2 text-xs text-muted-foreground">
+          単純見積は見積工数のセルに入力できます。計算式は見積手法から、履歴と計画への反映はタスク名から開きます。
+        </p>
+      )}
       {methods.isError && (
         <DataLoadError
           resourceName="見積手法"
@@ -244,7 +316,6 @@ export function TaskEstimateWorkbench({
                           <button
                             className={styles.groupButton}
                             aria-expanded={!closed}
-                            disabled={Boolean(editing)}
                             onClick={() =>
                               setCollapsed(
                                 closed
@@ -289,6 +360,10 @@ export function TaskEstimateWorkbench({
                       </tr>
                       {!closed &&
                         items.map((task) => {
+                          const assigneeId = Number(
+                            planning.rows[task.id]?.values.assigneeId ??
+                              task.assignee_id,
+                          );
                           const method = methodById.get(task.id),
                             rollup = task.estimated_basis === "rollup";
                           return (
@@ -321,78 +396,111 @@ export function TaskEstimateWorkbench({
                                   <span className="truncate">{task.title}</span>
                                 </button>
                               </th>
-                              {(["phase", "assignee_id"] as const).map(
-                                (field) => {
-                                  const phaseField = field === "phase",
-                                    label = phaseField ? "工程" : "担当者";
-                                  const content = phaseField ? (
-                                    <>
-                                      <PhaseDot phase={phaseByKey.get(key)} />
-                                      <span className="truncate">
-                                        {taskPhaseLabel(task)}
-                                      </span>
-                                    </>
-                                  ) : task.assignee_id == null ? (
-                                    "担当なし"
-                                  ) : (
-                                    <>
-                                      <UserAvatar
-                                        size="sm"
-                                        name={getTaskUserLabel(
-                                          task.assignee_id,
-                                        )}
-                                        src={
-                                          usersById.get(task.assignee_id)
-                                            ?.avatar_url
-                                        }
-                                      />
-                                      <span className="truncate">
-                                        {getTaskUserLabel(task.assignee_id)}
-                                      </span>
-                                    </>
-                                  );
-                                  return (
-                                    <td key={field}>
-                                      {editing?.task.id === task.id &&
-                                      editing.field === field ? (
-                                        editCell(editing.task, field, label)
-                                      ) : canUpdate ? (
-                                        <button
-                                          data-cell={field}
-                                          aria-label={
-                                            task.title + "の" + label + "を編集"
-                                          }
-                                          className="inline-flex max-w-full min-h-7 items-center gap-1 rounded px-1 hover:bg-accent"
-                                          disabled={Boolean(editing)}
-                                          onClick={() =>
-                                            setEditing({ task, field })
-                                          }
-                                        >
-                                          {content}
-                                        </button>
-                                      ) : (
-                                        <span className="inline-flex max-w-full items-center gap-1">
-                                          {content}
-                                        </span>
-                                      )}
-                                    </td>
-                                  );
-                                },
-                              )}
                               <td>
-                                <button
-                                  data-cell="method"
-                                  className="rounded border bg-muted/40 px-1.5 py-0.5 text-xs"
-                                  onClick={(e) => select(task, e.currentTarget)}
-                                >
-                                  {rollup
-                                    ? "子の集計"
-                                    : method
-                                      ? estimateMethodLabels[method]
-                                      : methods.isSuccess
-                                        ? "未設定"
-                                        : "—"}
-                                </button>
+                                <TaskPhaseCell
+                                  task={task}
+                                  phases={phases}
+                                  editable={canUpdate && !planning.pendingDraft}
+                                />
+                              </td>
+                              <td>
+                                <PlanningAssigneeCell
+                                  task={task}
+                                  planning={planning}
+                                  editable={canUpdate}
+                                  name={getTaskUserLabel(assigneeId)}
+                                  avatarUrl={
+                                    assigneeId
+                                      ? usersById.get(assigneeId)?.avatar_url
+                                      : undefined
+                                  }
+                                />
+                              </td>
+                              <td>
+                                {canUpdate &&
+                                !rollup &&
+                                methodById.has(task.id) ? (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button
+                                        data-cell="method"
+                                        aria-label={
+                                          task.title + "の見積手法を選択"
+                                        }
+                                        className="inline-flex max-w-full items-center gap-1 rounded border bg-muted/40 px-1.5 py-1 text-xs"
+                                      >
+                                        <span className="truncate">
+                                          {method
+                                            ? estimateMethodLabels[method]
+                                            : "手法を選択"}
+                                        </span>
+                                        <ChevronDownIcon size={12} />
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                      align="start"
+                                      onCloseAutoFocus={(e) => {
+                                        if (
+                                          table.current?.querySelector(
+                                            "input[data-effort-dirty]",
+                                          ) ||
+                                          document.querySelector(
+                                            "aside h3:focus",
+                                          )
+                                        )
+                                          e.preventDefault();
+                                      }}
+                                    >
+                                      {(
+                                        [
+                                          "simple",
+                                          "pert",
+                                          "parametric",
+                                          "analogous",
+                                        ] as const
+                                      ).map((choice) => (
+                                        <DropdownMenuItem
+                                          key={choice}
+                                          onSelect={() => {
+                                            const button =
+                                              table.current?.querySelector<HTMLButtonElement>(
+                                                `tr[data-task="${task.id}"] [data-cell=method]`,
+                                              );
+                                            if (button)
+                                              select(
+                                                task,
+                                                button,
+                                                choice === "pert" &&
+                                                  method === "triangular"
+                                                  ? "triangular"
+                                                  : choice,
+                                              );
+                                          }}
+                                        >
+                                          {choice === "pert"
+                                            ? "3点見積"
+                                            : estimateMethodLabels[choice]}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                ) : (
+                                  <button
+                                    data-cell="method"
+                                    className="text-xs"
+                                    onClick={(e) =>
+                                      select(task, e.currentTarget)
+                                    }
+                                  >
+                                    {rollup
+                                      ? "子の集計"
+                                      : method
+                                        ? estimateMethodLabels[method]
+                                        : methods.isSuccess
+                                          ? "未設定"
+                                          : "—"}
+                                  </button>
+                                )}
                               </td>
                               {effortMeasures.map((m) => {
                                 const field = `${m.key}_minutes` as const;
@@ -400,6 +508,22 @@ export function TaskEstimateWorkbench({
                                   excluded =
                                     m.key === "remaining" &&
                                     !isActiveEffort(task);
+                                const basis =
+                                  m.key === "estimated" || m.key === "actual"
+                                    ? task[`${m.key}_basis`]
+                                    : "own";
+                                const displayValue = excluded
+                                  ? "対象外"
+                                  : basis === "rollup"
+                                    ? "子の集計"
+                                    : basis !== "own"
+                                      ? value == null
+                                        ? "未確認"
+                                        : formatEstimateHours(value) +
+                                          "（未確認）"
+                                      : value == null
+                                        ? "未入力"
+                                        : formatEstimateHours(value);
                                 const editable =
                                   canUpdate &&
                                   !excluded &&
@@ -422,16 +546,28 @@ export function TaskEstimateWorkbench({
                                       <button
                                         data-cell={field}
                                         className={styles.cell}
-                                        disabled={Boolean(editing)}
                                         aria-label={`${task.title}の${m.label}を編集`}
                                         onClick={() => {
+                                          if (editing) {
+                                            requestedCell.current = {
+                                              id: task.id,
+                                              field: field as EditableMinutes,
+                                            };
+                                            return;
+                                          }
                                           setEditing({
                                             task,
-                                            field: field as EditableEffortField,
+                                            field: field as EditableMinutes,
                                           });
                                         }}
                                       >
-                                        {formatEstimateHours(value)}
+                                        {value == null ? (
+                                          <span className="text-xs text-muted-foreground">
+                                            未入力
+                                          </span>
+                                        ) : (
+                                          formatEstimateHours(value)
+                                        )}
                                       </button>
                                     ) : (
                                       <span
@@ -441,10 +577,7 @@ export function TaskEstimateWorkbench({
                                             : undefined
                                         }
                                       >
-                                        {excluded ||
-                                        (rollup && m.key === "estimated")
-                                          ? "—"
-                                          : formatEstimateHours(value)}
+                                        {displayValue}
                                       </span>
                                     )}
                                   </td>
@@ -468,10 +601,8 @@ export function TaskEstimateWorkbench({
             </table>
           </div>
           <div className="flex flex-wrap justify-between gap-2 px-1 py-2 text-xs text-muted-foreground">
-            <span>{tasks.length}件 · — 未入力／対象外</span>
-            <span>
-              矢印キーでセル移動　Enter で開く・保存　Esc でセル編集を取消
-            </span>
+            <span>{tasks.length}件</span>
+            <span>矢印でセル移動　Enter で確定　Tab で次へ　Esc で取消</span>
           </div>
           {ordered.length > PAGE && (
             <DataPagination
@@ -488,7 +619,18 @@ export function TaskEstimateWorkbench({
         {current && (
           <EstimatePanel
             active={active}
-            key={current.id}
+            key={
+              current.id +
+              "-" +
+              (methodChoice?.taskId === current.id
+                ? methodChoice.serial
+                : "detail")
+            }
+            initialMethod={
+              methodChoice?.taskId === current.id
+                ? methodChoice.method
+                : undefined
+            }
             projectId={projectId}
             task={current}
             canUpdate={canUpdate}

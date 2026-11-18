@@ -57,14 +57,21 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const canUpdate = canUpdateTask(currentProjectRole);
   const planning = useTaskPlanning(projectId);
   const { getTaskUserLabel } = useTaskUserMap(projectId);
-  const [mode, setMode] = useUrlFilterState("planningView", "gantt");
   const ganttTab = useRef<HTMLButtonElement>(null);
-  const activeView = mode === "effort" ? "effort" : "gantt";
-  const [effortView, setEffortView] = useUrlFilterState("effortView", "phases");
-  const activeEffortView =
-    effortView === "summary" || effortView === "estimate"
-      ? effortView
-      : "phases";
+  const route = searchParams.get("planningView");
+  const view =
+    route === "effort" ? (searchParams.get("effortView") ?? "phases") : route;
+  const activeView =
+    view === "phases" || view === "estimate" || view === "summary"
+      ? view
+      : "gantt";
+  const goToView = (value: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("planningView", value);
+    url.searchParams.delete("effortView");
+    window.history.pushState(null, "", url);
+    if (value !== "gantt") setUnscheduledGroup(null);
+  };
   const [effortFilter, setEffortFilter] = useState(initialEffortFilter);
   const [effortRevision, setEffortRevision] = useState(0);
   const estimateTab = useRef<HTMLButtonElement>(null);
@@ -136,7 +143,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const projectGantt = useGantt(
     projectId,
     {},
-    activeView === "effort" || needsDependencyTasks,
+    activeView !== "gantt" || needsDependencyTasks,
   );
   const effortTasks =
     projectGantt.isPlaceholderData || projectGantt.error
@@ -194,17 +201,23 @@ export function PlanningPage({ projectId }: { projectId: number }) {
       <TaskPlanningWorkspace planning={planning} canUpdate={canUpdate} />
       <Tabs
         value={activeView}
-        onValueChange={(value) => {
-          setMode(value);
-          if (value !== "gantt") setUnscheduledGroup(null);
-        }}
+        onValueChange={goToView}
+        activationMode="manual"
         className="min-w-0 gap-2"
       >
-        <TabsList variant="line" className="w-full justify-start border-b">
+        <TabsList
+          variant="line"
+          aria-label="計画の画面"
+          className="h-10 w-full justify-start border-b sm:w-fit [&_[aria-selected=true]]:after:bg-[var(--status-info-chart)]"
+        >
           <TabsTrigger ref={ganttTab} value="gantt">
             ガント
           </TabsTrigger>
-          <TabsTrigger value="effort">工程・工数</TabsTrigger>
+          <TabsTrigger value="phases">工程管理</TabsTrigger>
+          <TabsTrigger ref={estimateTab} value="estimate">
+            工数見積
+          </TabsTrigger>
+          <TabsTrigger value="summary">工数分析</TabsTrigger>
         </TabsList>
         <TabsContent
           value="gantt"
@@ -304,130 +317,109 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               }
               unscheduledGroup={unscheduledGroup}
               onUnscheduledGroupChange={setUnscheduledGroup}
+              onEstimate={(task) => {
+                if (!mayLeaveEffortEditor()) return;
+                setEffortFilter({
+                  ...initialEffortFilter,
+                  search: task.task_code,
+                });
+                setEffortRevision((n) => n + 1);
+                setEstimateTask(task.id);
+                goToView("estimate");
+              }}
               onMilestoneSelect={setEditingMilestone}
             />
           )}
         </TabsContent>
         <TabsContent
-          value="effort"
+          value="phases"
           forceMount
-          className={activeView === "effort" ? "min-w-0 space-y-3" : "hidden"}
+          className={activeView === "phases" ? "min-w-0" : "hidden"}
         >
-          <Tabs
-            value={activeEffortView}
-            onValueChange={setEffortView}
-            activationMode="manual"
-            className="min-w-0 gap-3"
-          >
-            <TabsList
-              aria-label="工程・工数の表示"
-              className="[&_[aria-selected=true]]:border-[var(--status-info-border)] [&_[aria-selected=true]]:bg-[var(--status-info-bg)] [&_[aria-selected=true]]:text-[var(--status-info-fg)]"
-            >
-              <TabsTrigger value="phases" className="px-3">
-                工程一覧
-              </TabsTrigger>
-              <TabsTrigger ref={estimateTab} value="estimate" className="px-3">
-                工数見積
-              </TabsTrigger>
-              <TabsTrigger value="summary" className="px-3">
-                工数集計
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent
-              value="phases"
-              forceMount
-              className={activeEffortView === "phases" ? "min-w-0" : "hidden"}
-            >
-              <PlanningPhaseActions
-                active={
-                  activeView === "effort" && activeEffortView === "phases"
-                }
-                projectId={projectId}
-                phases={phases}
-                tasks={effortTasks}
-                canManage={currentProjectRole?.role?.key === "project_admin"}
-                canUpdate={canUpdate}
-                canCreate={canCreate}
-                planning={planning}
-              />
-            </TabsContent>
-            {activeEffortView !== "phases" && (
-              <EffortControls
-                value={effortFilter}
-                onChange={(next) => {
-                  if (!mayLeaveEffortEditor()) return;
-                  setEstimateTask(null);
-                  setEffortRevision((n) => n + 1);
-                  setEffortFilter(next);
-                }}
-                phases={phases.data ?? []}
-                tasks={effortTasks ?? []}
-                userLabel={getTaskUserLabel}
-              />
-            )}
-            {activeView === "effort" && projectGantt.error && (
-              <DataLoadError
-                resourceName="工程・工数のタスク"
-                isRetrying={projectGantt.isFetching}
-                onRetry={() => void projectGantt.refetch()}
-              />
-            )}
-            {activeView === "effort" && !projectGantt.error && !effortTasks && (
-              <p role="status">タスクを取得中…</p>
-            )}
-            <TabsContent
-              value="estimate"
-              forceMount
-              className={activeEffortView === "estimate" ? "min-w-0" : "hidden"}
-            >
-              {effortTasks && (
-                <TaskEstimateWorkbench
-                  key={effortRevision}
-                  tasks={filteredEffort}
-                  allTasks={effortTasks}
-                  phases={phases.data ?? []}
-                  currentId={estimateTask}
-                  onSelect={setEstimateTask}
-                  active={
-                    activeView === "effort" && activeEffortView === "estimate"
-                  }
-                  projectId={projectId}
-                  canUpdate={canUpdate}
-                  canConfirm={
-                    canUpdate &&
-                    currentProjectRole?.role?.key === "project_admin"
-                  }
-                />
-              )}
-            </TabsContent>
-            <TabsContent value="summary" className="min-w-0">
-              {activeView === "effort" && effortTasks && (
-                <PlanningEffortSummary
-                  filter={effortFilter}
-                  tasks={filteredEffort}
-                  phases={phases.data ?? []}
-                  userLabel={getTaskUserLabel}
-                  onDrill={(patch) => {
-                    if (!mayLeaveEffortEditor()) return;
-                    setEstimateTask(null);
-                    setEffortRevision((n) => n + 1);
-                    setEffortFilter({ ...effortFilter, ...patch });
-                    setEffortView("estimate");
-                    requestAnimationFrame(() =>
-                      estimateTab.current?.focus({ preventScroll: true }),
-                    );
-                  }}
-                  onGantt={(id) => {
-                    setAssigneeId(String(id));
-                    setMode("gantt");
-                    requestAnimationFrame(() =>
-                      ganttTab.current?.focus({ preventScroll: true }),
-                    );
-                  }}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
+          <PlanningPhaseActions
+            active={activeView === "phases"}
+            projectId={projectId}
+            phases={phases}
+            tasks={effortTasks}
+            canManage={currentProjectRole?.role?.key === "project_admin"}
+            canUpdate={canUpdate}
+            canCreate={canCreate}
+            planning={planning}
+          />
+        </TabsContent>
+        {(activeView === "summary" || activeView === "estimate") && (
+          <EffortControls
+            value={effortFilter}
+            onChange={(next) => {
+              if (!mayLeaveEffortEditor()) return;
+              setEstimateTask(null);
+              setEffortRevision((n) => n + 1);
+              setEffortFilter(next);
+            }}
+            phases={phases.data ?? []}
+            tasks={effortTasks ?? []}
+            userLabel={getTaskUserLabel}
+          />
+        )}
+        {activeView !== "gantt" && projectGantt.error && (
+          <DataLoadError
+            resourceName="工程・工数のタスク"
+            isRetrying={projectGantt.isFetching}
+            onRetry={() => void projectGantt.refetch()}
+          />
+        )}
+        {activeView !== "gantt" && !projectGantt.error && !effortTasks && (
+          <p role="status">タスクを取得中…</p>
+        )}
+        <TabsContent
+          value="estimate"
+          forceMount
+          className={activeView === "estimate" ? "min-w-0" : "hidden"}
+        >
+          {effortTasks && (
+            <TaskEstimateWorkbench
+              planning={planning}
+              key={effortRevision}
+              tasks={filteredEffort}
+              allTasks={effortTasks}
+              phases={phases.data ?? []}
+              currentId={estimateTask}
+              onSelect={setEstimateTask}
+              active={activeView === "estimate"}
+              projectId={projectId}
+              canUpdate={canUpdate}
+              canConfirm={
+                canUpdate && currentProjectRole?.role?.key === "project_admin"
+              }
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="summary" className="min-w-0">
+          {activeView !== "gantt" && effortTasks && (
+            <PlanningEffortSummary
+              filter={effortFilter}
+              tasks={filteredEffort}
+              phases={phases.data ?? []}
+              userLabel={getTaskUserLabel}
+              onDrill={(patch) => {
+                if (!mayLeaveEffortEditor()) return;
+                setEstimateTask(null);
+                setEffortRevision((n) => n + 1);
+                setEffortFilter({ ...effortFilter, ...patch });
+                goToView("estimate");
+                requestAnimationFrame(() =>
+                  estimateTab.current?.focus({ preventScroll: true }),
+                );
+              }}
+              onGantt={(id) => {
+                setAssigneeId(String(id));
+                goToView("gantt");
+                requestAnimationFrame(() =>
+                  ganttTab.current?.focus({ preventScroll: true }),
+                );
+              }}
+            />
+          )}
         </TabsContent>
       </Tabs>
       <MilestoneDialogs

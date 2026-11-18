@@ -32,6 +32,8 @@ import {
   type GanttTaskNode,
 } from "../../lib/planning-phases";
 import { useGanttOrder } from "../../hooks/use-gantt-order";
+import { PlanningAssigneeCell } from "../shared/planning-assignee-cell";
+import { TaskPhaseCell } from "../shared/task-phase-cell";
 import { phaseColors } from "../../lib/phase-colors";
 import type { TaskPlanningController } from "../../hooks/use-task-planning";
 import {
@@ -41,7 +43,6 @@ import {
 import { getTodayGanttRange } from "../../lib/gantt-range-controls";
 import {
   GANTT_COLUMNS,
-  GanttAssigneeCell,
   GanttPlanningCells,
   GanttStatusProgress,
 } from "../gantt/gantt-planning-cells";
@@ -102,6 +103,7 @@ type TasksGanttSectionProps = {
   gantt: GanttResponse | null;
   rangeTasks?: TaskRead[];
   dependencyTasks?: TaskRead[];
+  onEstimate?: (task: TaskRead) => void;
   phases: PhaseListItem[];
   canCreate: boolean;
   quickOpen: boolean;
@@ -139,6 +141,7 @@ export function TasksGanttSection({
   planning,
   unscheduledGroup,
   onUnscheduledGroupChange,
+  onEstimate,
   onMilestoneSelect,
 }: TasksGanttSectionProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
@@ -346,6 +349,9 @@ export function TasksGanttSection({
       siblingsByParent.set(parentId, siblings);
     }
     return nodes.map(({ task, children }) => {
+      const assigneeId = Number(
+        planning.rows[task.id]?.values.assigneeId ?? task.assignee_id,
+      );
       const parentId = task.parent_task_id ?? null;
       const orderControl = canUpdate
         ? getOrderControl(
@@ -365,18 +371,17 @@ export function TasksGanttSection({
           className={cn("divide-y", GANTT_ORDER_ROW)}
         >
           <GanttTaskRow
+            phases={phases}
             task={task}
             warnings={dependencyWarnings.get(task.id) ?? []}
             range={range}
             milestones={visibleMilestones}
             gridStyle={ganttGridStyle}
             assigneeLabel={
-              task.assignee_id ? getTaskUserLabel(task.assignee_id) : "未割当"
+              assigneeId ? getTaskUserLabel(assigneeId) : "担当なし"
             }
             assigneeAvatarUrl={
-              task.assignee_id
-                ? usersById.get(task.assignee_id)?.avatar_url
-                : undefined
+              assigneeId ? usersById.get(assigneeId)?.avatar_url : undefined
             }
             orderControl={orderControl}
             addChild={
@@ -706,6 +711,13 @@ export function TasksGanttSection({
         </div>
       </div>
       <TaskDetailSheet
+        onEstimate={
+          onEstimate &&
+          ((task) => {
+            setSelectedTaskId(null);
+            onEstimate(task);
+          })
+        }
         projectId={projectId}
         taskId={selectedTaskId}
         triggerRef={detailTrigger}
@@ -721,6 +733,7 @@ export function TasksGanttSection({
 }
 
 function GanttTaskRow({
+  phases,
   task,
   warnings,
   range,
@@ -745,6 +758,7 @@ function GanttTaskRow({
   onDropDateHover,
   onDropDateClear,
 }: {
+  phases: PhaseListItem[];
   task: TaskRead;
   warnings: readonly GanttDependencyWarning[];
   range: DateRange;
@@ -871,7 +885,19 @@ function GanttTaskRow({
           <GanttRowTitle
             task={task}
             orderControl={orderControl}
-            addChild={addChild}
+            addChild={
+              <>
+                {canUpdate && (
+                  <TaskPhaseCell
+                    task={task}
+                    phases={phases}
+                    editable={!planning.pendingDraft}
+                    compact
+                  />
+                )}
+                {addChild}
+              </>
+            }
             warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
@@ -883,7 +909,8 @@ function GanttTaskRow({
             planning={planning}
             editable={canUpdate}
           >
-            <GanttAssigneeCell
+            <PlanningAssigneeCell
+              compact
               task={task}
               planning={planning}
               editable={canUpdate}
@@ -896,7 +923,19 @@ function GanttTaskRow({
           <GanttRowTitle
             task={task}
             orderControl={orderControl}
-            addChild={addChild}
+            addChild={
+              <>
+                {canUpdate && (
+                  <TaskPhaseCell
+                    task={task}
+                    phases={phases}
+                    editable={!planning.pendingDraft}
+                    compact
+                  />
+                )}
+                {addChild}
+              </>
+            }
             warnings={warnings}
             hasChildren={hasChildren}
             isCollapsed={isCollapsed}
@@ -904,7 +943,8 @@ function GanttTaskRow({
             onOpenDetail={onOpenDetail}
           />
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <GanttAssigneeCell
+            <PlanningAssigneeCell
+              compact
               task={task}
               planning={planning}
               editable={canUpdate}
