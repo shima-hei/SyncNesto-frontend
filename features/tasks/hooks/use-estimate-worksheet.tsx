@@ -160,7 +160,13 @@ export function useEstimateWorksheet(
   const [conversion, setConversion] = useState<SheetDraft | null>(null);
   function convert(task: TaskRead) {
     const base = byId.get(task.id);
-    if (!base?.current.method || !writable || lock.current) return;
+    if (
+      task.estimated_basis !== "own" ||
+      !base?.current.method ||
+      !writable ||
+      lock.current
+    )
+      return;
     if (count >= 100) {
       toast.error("先に100件の変更を保存してください。");
       return;

@@ -524,6 +524,7 @@ export function TaskEstimateWorkbench({
                             draft = sheet.drafts[task.id];
                           const rollup = task.estimated_basis === "rollup";
                           const mismatch =
+                            task.estimated_basis === "own" &&
                             !!base?.current.method &&
                             base.current.method !== method &&
                             !draft;
