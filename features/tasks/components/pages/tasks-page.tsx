@@ -15,13 +15,6 @@ import { PageHeader } from "@/components/shared/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FieldGroup } from "@/components/ui/field";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   canCreateTask,
@@ -54,13 +47,16 @@ import {
   type TaskListScope,
 } from "../../lib/task-list-scope";
 import { getPlanningHref } from "../../lib/planning-route";
-import { defaultTaskFormValues } from "../../lib/task-mappers";
+import {
+  defaultTaskFormValues,
+  getChildTaskInitialValues,
+} from "../../lib/task-mappers";
 import { BOARD_TASK_LIMIT, getBoardTaskScope } from "../../lib/task-view-scope";
 import {
   TASK_STATUS_OPTIONS,
   getTaskPriorityLabel,
 } from "../../constants/task-options";
-import { TaskForm } from "../forms/task-form";
+import { TaskQuickCreate } from "../forms/task-quick-create";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
 import {
@@ -92,7 +88,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
   });
   const planningHref = getPlanningHref(projectId, searchParams);
   const taskTypes = useTaskTypes(projectId);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const listNavigationGuard = useRef<(action: () => void) => void>((action) =>
     action(),
   );
@@ -191,6 +186,31 @@ export function TasksPage({ projectId }: TasksPageProps) {
     isPending: isCreatePending,
     error: createError,
   } = useCreateTask(projectId);
+  const parentId =
+    taskListScope.scope.kind === "children"
+      ? taskListScope.scope.parentTaskId
+      : null;
+  const renderCreate = (visibleIds?: number[]) =>
+    canCreate &&
+    (!parentId || taskListScope.parentTask) && (
+      <TaskQuickCreate
+        key={parentId ?? "root"}
+        projectId={projectId}
+        titleId="new-task-title"
+        label={parentId ? "新しい子タスク" : "新しいタスク"}
+        initialValues={
+          taskListScope.parentTask
+            ? getChildTaskInitialValues(taskListScope.parentTask)
+            : defaultTaskFormValues
+        }
+        submitTask={(values) =>
+          createTask(values, { navigateAfterCreate: false })
+        }
+        isPending={isCreatePending}
+        error={createError}
+        visibleIds={visibleIds}
+      />
+    );
   const handleSearch = () => {
     setPage(1);
     setQ(searchInput.trim());
@@ -298,7 +318,12 @@ export function TasksPage({ projectId }: TasksPageProps) {
             </Button>
             <TaskPhaseDialog projectId={projectId} />
             {canCreate ? (
-              <Button type="button" onClick={() => setCreateDialogOpen(true)}>
+              <Button
+                type="button"
+                onClick={() =>
+                  document.getElementById("new-task-title")?.focus()
+                }
+              >
                 <PlusIcon data-icon="inline-start" />
                 タスク新規作成
               </Button>
@@ -461,6 +486,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
             />
           ) : null}
           <TaskListWorkbench
+            renderCreate={renderCreate}
             toolbar={
               <>
                 <div className="w-40 max-w-full">
@@ -490,6 +516,13 @@ export function TasksPage({ projectId }: TasksPageProps) {
         </TabsContent>
 
         <TabsContent value="board" className="flex flex-col gap-4">
+          {renderCreate(
+            isFetching || error
+              ? undefined
+              : boardScope.overLimit
+                ? []
+                : tasks.map((task) => task.id),
+          )}
           <TaskListScopeNav
             projectId={projectId}
             {...taskListScope}
@@ -608,26 +641,6 @@ export function TasksPage({ projectId }: TasksPageProps) {
           )}
         </TabsContent>
       </Tabs>
-
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
-          <DialogHeader>
-            <DialogTitle>タスク登録</DialogTitle>
-            <DialogDescription>
-              プロジェクトに新しいタスクを追加します。
-            </DialogDescription>
-          </DialogHeader>
-          <TaskForm
-            mode="create"
-            projectId={projectId}
-            initialValues={defaultTaskFormValues}
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={(values) => createTask(values)}
-            onSuccess={() => setCreateDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

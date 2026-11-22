@@ -38,6 +38,7 @@ export function TaskListWorkbench({
   enabled,
   selectionResetRef,
   toolbar,
+  renderCreate,
 }: {
   projectId: number;
   query: ListTasksProjectsProjectIdTasksGetParams;
@@ -47,6 +48,7 @@ export function TaskListWorkbench({
   enabled: boolean;
   selectionResetRef: RefObject<() => void>;
   toolbar?: ReactNode;
+  renderCreate: (visibleIds?: number[]) => ReactNode;
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -196,6 +198,12 @@ export function TaskListWorkbench({
         aria-label="タスク一覧"
         className="flex min-w-0 flex-col gap-3"
       >
+        {enabled &&
+          renderCreate(
+            busy || isFetching || error
+              ? undefined
+              : taskRows.map((row) => row.task.id),
+          )}
         {!activeId || error ? <TaskListDraftNotice editor={editor} /> : null}
         {canUpdate && !busy && !error ? (
           <TaskBulkActions

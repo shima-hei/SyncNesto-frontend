@@ -411,3 +411,44 @@ test("worksheet ranges preserve quoted references and reject stale or uneven rec
   });
   assert.equal(bounds([8], fields, first, last), null);
 });
+
+test("restored planning fields are excluded from task entry and section saves", () => {
+  const current = {
+    id: 7,
+    version: 4,
+    title: "既存",
+    task_code: "TASK-007",
+    actual_minutes: 30,
+    estimated_minutes: 90,
+  };
+  const values = {
+    ...mapper.getTaskFormValues(current),
+    title: "改名",
+    actualMinutes: "0",
+    estimatedMinutes: "",
+    estimatedBasis: "rollup",
+  };
+  const created = mapper.toTaskCreate(values);
+  for (const field of [
+    "actual_minutes",
+    "estimated_minutes",
+    "actual_start_date",
+    "actual_end_date",
+    "estimated_basis",
+    "actual_basis",
+  ]) {
+    assert.equal(Object.hasOwn(created, field), false);
+  }
+  const patch = (section, input) =>
+    mapper.toTaskUpdate(
+      mapper.taskSectionValues(section, current, input),
+      4,
+      current,
+    );
+  assert.deepEqual(patch("title", values), { version: 4, title: "改名" });
+  assert.deepEqual(patch("actual", values), { version: 4, actual_minutes: 0 });
+  assert.deepEqual(patch("actual", { ...values, actualMinutes: "" }), {
+    version: 4,
+    actual_minutes: null,
+  });
+});

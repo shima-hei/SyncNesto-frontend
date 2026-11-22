@@ -7,10 +7,9 @@ import { useCreateRequirementTaskRequirementsRequirementIdTasksPost } from "@/li
 
 import { TASK_MESSAGES } from "../constants/task-messages";
 import {
-  invalidateGantt,
+  invalidateTaskProjectSurfaces,
   invalidateRequirementTaskList,
   invalidateRequirementTaskProgress,
-  invalidateTaskList,
 } from "../lib/task-cache";
 import { toRequirementTaskCreate } from "../lib/task-mappers";
 import type { TaskFormValues } from "../types/task-form";
@@ -24,8 +23,7 @@ export function useCreateRequirementTask(
     mutation: {
       onSuccess: async () => {
         await Promise.all([
-          invalidateTaskList(queryClient, projectId),
-          invalidateGantt(queryClient, projectId),
+          invalidateTaskProjectSurfaces(queryClient, projectId),
           invalidateRequirementTaskList(queryClient, requirementId),
           invalidateRequirementTaskProgress(queryClient, requirementId),
         ]);

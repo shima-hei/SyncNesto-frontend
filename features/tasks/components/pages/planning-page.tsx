@@ -77,7 +77,10 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const [estimateView, setEstimateView] = useState<SheetMethod | "">("");
   const [effortRevision, setEffortRevision] = useState(0);
   const estimateTab = useRef<HTMLButtonElement>(null);
-  const [estimateTask, setEstimateTask] = useState<number | null>(null);
+  const [estimateTask, setEstimateTask] = useUrlFilterState<number | null>(
+    "estimateTask",
+    null,
+  );
   const [search, setSearch] = useUrlFilterState("ganttSearch", "");
   const [quickOpen, setQuickOpen] = useState(false);
   const [unscheduledGroup, setUnscheduledGroup] = useState<string | null>(null);

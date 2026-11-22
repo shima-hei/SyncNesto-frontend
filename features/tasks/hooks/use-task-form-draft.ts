@@ -19,6 +19,7 @@ export function useTaskFormDraft({
   projectId,
   mode,
   currentTaskId,
+  section,
   initialValues,
   values,
   onRestore,
@@ -26,6 +27,7 @@ export function useTaskFormDraft({
   projectId: number;
   mode: "create" | "update";
   currentTaskId?: number;
+  section?: string;
   initialValues: TaskFormValues;
   values: TaskFormValues;
   onRestore: (values: TaskFormValues) => void;
@@ -35,12 +37,13 @@ export function useTaskFormDraft({
     null,
   );
   const [storageError, setStorageError] = useState(false);
-  const scope = getTaskFormDraftScope(
+  const baseScope = getTaskFormDraftScope(
     projectId,
     mode,
     initialValues,
     currentTaskId,
   );
+  const scope = section ? baseScope + ":" + section : baseScope;
   const draft = useFormDraft({
     userId: storageError ? null : user?.id,
     scope,

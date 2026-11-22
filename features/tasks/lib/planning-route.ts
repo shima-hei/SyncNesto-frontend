@@ -29,3 +29,7 @@ export function getPlanningHref(
   }
   return `/projects/joined/${projectId}/planning${params.size ? `?${params}` : ""}`;
 }
+
+export function getTaskEstimateHref(projectId: number, taskId: number) {
+  return `/projects/joined/${projectId}/planning?planningView=estimate&estimateTask=${taskId}`;
+}

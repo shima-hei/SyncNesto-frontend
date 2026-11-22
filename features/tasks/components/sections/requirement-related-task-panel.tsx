@@ -1,16 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -27,10 +20,10 @@ import { TASK_RELATION_TYPE_OPTIONS } from "../../constants/task-options";
 import { useCreateRequirementTask } from "../../hooks/use-create-requirement-task";
 import { useCreateRequirementTaskRelation } from "../../hooks/use-create-requirement-task-relation";
 import { defaultTaskFormValues } from "../../lib/task-mappers";
-import { TaskForm } from "../forms/task-form";
+import { TaskQuickCreate } from "../forms/task-quick-create";
 import { TaskParentSelectField } from "../forms/task-parent-select-field";
 
-type RequirementRelatedTaskDialogProps = {
+type RequirementRelatedTaskPanelProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: number;
@@ -38,67 +31,53 @@ type RequirementRelatedTaskDialogProps = {
   linkedTaskIds: number[];
 };
 
-export function RequirementRelatedTaskDialog({
+export function RequirementRelatedTaskPanel({
   open,
   onOpenChange,
   projectId,
   requirementId,
   linkedTaskIds,
-}: RequirementRelatedTaskDialogProps) {
-  const [createFormKey, setCreateFormKey] = useState(0);
+}: RequirementRelatedTaskPanelProps) {
   const {
     createRequirementTask,
     isPending: isCreatePending,
     error: createError,
   } = useCreateRequirementTask(projectId, requirementId);
-  const initialValues = useMemo(() => {
-    return {
-      ...defaultTaskFormValues,
-      requirementId: String(requirementId),
-    };
-  }, [requirementId]);
-
+  if (!open) return null;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
-        <DialogHeader>
-          <DialogTitle>関連タスク追加</DialogTitle>
-          <DialogDescription>
-            この要件を実装・確認するタスクを新規登録するか、既存タスクを関連付けます。
-          </DialogDescription>
-        </DialogHeader>
-
-        <Tabs defaultValue="create">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="create">新規タスク</TabsTrigger>
-            <TabsTrigger value="existing">既存タスク</TabsTrigger>
-          </TabsList>
-          <TabsContent value="create" className="pt-2">
-            <TaskForm
-              key={createFormKey}
-              mode="create"
-              projectId={projectId}
-              initialValues={initialValues}
-              isPending={isCreatePending}
-              error={createError}
-              onSubmit={createRequirementTask}
-              onSuccess={() => {
-                setCreateFormKey((current) => current + 1);
-                onOpenChange(false);
-              }}
-            />
-          </TabsContent>
-          <TabsContent value="existing" className="pt-2">
-            <RequirementTaskRelationForm
-              projectId={projectId}
-              requirementId={requirementId}
-              linkedTaskIds={linkedTaskIds}
-              onSuccess={() => onOpenChange(false)}
-            />
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+    <section
+      aria-label="関連タスク追加"
+      className="space-y-3 rounded-md border p-3"
+    >
+      <Tabs defaultValue="create">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="create">新規タスク</TabsTrigger>
+          <TabsTrigger value="existing">既存タスク</TabsTrigger>
+        </TabsList>
+        <TabsContent value="create" className="pt-2">
+          <TaskQuickCreate
+            key={requirementId}
+            projectId={projectId}
+            focusOnOpen
+            initialValues={{
+              ...defaultTaskFormValues,
+              requirementId: String(requirementId),
+            }}
+            isPending={isCreatePending}
+            error={createError}
+            submitTask={createRequirementTask}
+          />
+        </TabsContent>
+        <TabsContent value="existing" className="pt-2">
+          <RequirementTaskRelationForm
+            projectId={projectId}
+            requirementId={requirementId}
+            linkedTaskIds={linkedTaskIds}
+            onSuccess={() => onOpenChange(false)}
+          />
+        </TabsContent>
+      </Tabs>
+    </section>
   );
 }
 

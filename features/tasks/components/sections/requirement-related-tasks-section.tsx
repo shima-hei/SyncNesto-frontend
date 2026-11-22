@@ -36,7 +36,7 @@ import { useTaskProgress } from "../../hooks/use-task-progress";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
 import { TaskStatusBadge, TaskTypeBadge } from "../shared/task-badges";
 import { TaskDetailLink } from "../tables/tasks-table";
-import { RequirementRelatedTaskDialog } from "./requirement-related-task-dialog";
+import { RequirementRelatedTaskPanel } from "./requirement-related-task-panel";
 
 type RequirementRelatedTasksSectionProps = {
   projectId: number;
@@ -86,14 +86,25 @@ export function RequirementRelatedTasksSection({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setIsCreateOpen(true)}
+            aria-expanded={isCreateOpen}
+            onClick={() => setIsCreateOpen(!isCreateOpen)}
           >
             <PlusIcon data-icon="inline-start" />
-            関連タスク追加
+            {isCreateOpen ? "入力欄を閉じる" : "関連タスク追加"}
           </Button>
         ) : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        {canCreate ? (
+          <RequirementRelatedTaskPanel
+            open={isCreateOpen}
+            onOpenChange={setIsCreateOpen}
+            projectId={projectId}
+            requirementId={requirementId}
+            linkedTaskIds={linkedTaskIds}
+          />
+        ) : null}
+
         {isLoading ? (
           <TableListSkeleton widths={["w-56", "w-24", "w-20", "w-24"]} />
         ) : (
@@ -213,15 +224,6 @@ export function RequirementRelatedTasksSection({
           </div>
         )}
       </CardContent>
-      {canCreate ? (
-        <RequirementRelatedTaskDialog
-          open={isCreateOpen}
-          onOpenChange={setIsCreateOpen}
-          projectId={projectId}
-          requirementId={requirementId}
-          linkedTaskIds={linkedTaskIds}
-        />
-      ) : null}
       <ResourceDeleteDialog
         open={Boolean(deleteRelationId)}
         onOpenChange={(open) => !open && setDeleteRelationId(null)}

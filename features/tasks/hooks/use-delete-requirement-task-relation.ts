@@ -41,5 +41,6 @@ export function useDeleteRequirementTaskRelation(requirementId: number) {
   return {
     deleteRequirementTaskRelation,
     isPending: deleteRelationMutation.isPending,
+    error: deleteRelationMutation.error,
   };
 }

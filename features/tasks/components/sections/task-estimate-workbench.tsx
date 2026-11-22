@@ -93,7 +93,7 @@ export function TaskEstimateWorkbench({
   currentId: number | null;
   onSelect: (id: number | null) => void;
 }) {
-  const [requestedPage, setPage] = useState(1);
+  const [requestedPage, setPage] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const [editing, setEditing] = useState<{
     task: TaskRead;
@@ -123,7 +123,12 @@ export function TaskEstimateWorkbench({
     return orderedTasks;
   });
   const page = Math.min(
-    requestedPage,
+    requestedPage ??
+      Math.max(
+        1,
+        Math.floor(ordered.findIndex((task) => task.id === currentId) / PAGE) +
+          1,
+      ),
     Math.max(1, Math.ceil(ordered.length / PAGE)),
   );
   const visible = ordered.slice((page - 1) * PAGE, page * PAGE);
