@@ -77,10 +77,11 @@ export function PlanningPage({ projectId }: { projectId: number }) {
   const [estimateView, setEstimateView] = useState<SheetMethod | "">("");
   const [effortRevision, setEffortRevision] = useState(0);
   const estimateTab = useRef<HTMLButtonElement>(null);
-  const [estimateTask, setEstimateTask] = useUrlFilterState<number | null>(
+  const [linkedTask, setLinkedTask] = useUrlFilterState<number | null>(
     "estimateTask",
     null,
   );
+  const [estimateTask, setEstimateTask] = useState<number | null>(null);
   const [search, setSearch] = useUrlFilterState("ganttSearch", "");
   const [quickOpen, setQuickOpen] = useState(false);
   const [unscheduledGroup, setUnscheduledGroup] = useState<string | null>(null);
@@ -205,6 +206,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
       onChange={(next) => {
         if (!mayLeaveEffortEditor()) return;
         setEstimateTask(null);
+        setLinkedTask(null);
         if (document.querySelector('[data-effort-dirty="true"]'))
           setEffortRevision((n) => n + 1);
         setEffortFilter(next);
@@ -344,6 +346,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
                   search: task.task_code,
                 });
                 setEffortRevision((n) => n + 1);
+                setLinkedTask(null);
                 setEstimateTask(task.id);
                 goToView("estimate");
               }}
@@ -393,8 +396,12 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               tasks={filteredEffort}
               allTasks={effortTasks}
               phases={phases.data ?? []}
+              linkedId={linkedTask}
               currentId={estimateTask}
-              onSelect={setEstimateTask}
+              onSelect={(id) => {
+                setLinkedTask(null);
+                setEstimateTask(id);
+              }}
               active={activeView === "estimate"}
               projectId={projectId}
               canUpdate={canUpdate}
@@ -414,6 +421,7 @@ export function PlanningPage({ projectId }: { projectId: number }) {
               onDrill={(patch) => {
                 if (!mayLeaveEffortEditor()) return;
                 setEstimateTask(null);
+                setLinkedTask(null);
                 setEffortRevision((n) => n + 1);
                 setEffortFilter({ ...effortFilter, ...patch });
                 goToView("estimate");

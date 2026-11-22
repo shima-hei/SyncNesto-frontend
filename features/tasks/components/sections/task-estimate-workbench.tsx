@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -77,6 +77,7 @@ export function TaskEstimateWorkbench({
   tasks,
   allTasks,
   currentId,
+  linkedId,
   onSelect,
 }: {
   active: boolean;
@@ -91,6 +92,7 @@ export function TaskEstimateWorkbench({
   tasks: TaskRead[];
   allTasks: TaskRead[];
   currentId: number | null;
+  linkedId: number | null;
   onSelect: (id: number | null) => void;
 }) {
   const [requestedPage, setPage] = useState<number | null>(null);
@@ -122,12 +124,14 @@ export function TaskEstimateWorkbench({
     }
     return orderedTasks;
   });
+  const highlightedId = currentId ?? linkedId;
   const page = Math.min(
     requestedPage ??
       Math.max(
         1,
-        Math.floor(ordered.findIndex((task) => task.id === currentId) / PAGE) +
-          1,
+        Math.floor(
+          ordered.findIndex((task) => task.id === highlightedId) / PAGE,
+        ) + 1,
       ),
     Math.max(1, Math.ceil(ordered.length / PAGE)),
   );
@@ -146,6 +150,26 @@ export function TaskEstimateWorkbench({
   );
 
   const table = useRef<HTMLTableElement>(null);
+  const hasLinkedRow = visible.some((task) => task.id === linkedId);
+  const focusedEntry = useRef<number | null>(null);
+  useEffect(() => {
+    if (!linkedId) focusedEntry.current = null;
+    if (
+      !active ||
+      !hasLinkedRow ||
+      !linkedId ||
+      focusedEntry.current === linkedId
+    )
+      return;
+    const title = table.current?.querySelector<HTMLButtonElement>(
+      `tr[data-task="${linkedId}"] [data-cell="title"]`,
+    );
+    if (title) {
+      focusedEntry.current = linkedId;
+      title.focus({ preventScroll: true });
+      title.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }, [active, hasLinkedRow, linkedId]);
   const sheet = useEstimateWorksheet(
     table,
     projectId,
@@ -233,6 +257,7 @@ export function TaskEstimateWorkbench({
       !mayLeaveEffortEditor()
     )
       return;
+    setPage(page);
     trigger.current = button;
     onSelect(task.id);
   };
@@ -243,6 +268,9 @@ export function TaskEstimateWorkbench({
       data-effort-dirty={sheet.count > 0}
       data-effort-pending={sheet.pending}
     >
+      {active && linkedId && !allTasks.some((task) => task.id === linkedId) && (
+        <p role="status">指定のタスクを取得できませんでした。</p>
+      )}
       {standard.isError && (
         <DataLoadError
           resourceName="案件の標準見積方式"
@@ -570,7 +598,7 @@ export function TaskEstimateWorkbench({
                             <tr
                               key={task.id}
                               data-task={task.id}
-                              data-selected={currentId === task.id}
+                              data-selected={highlightedId === task.id}
                             >
                               <th scope="row" className={styles.rowTitle}>
                                 <button
