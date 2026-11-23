@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { toast } from "sonner";
 
 import type { TaskRead } from "@/lib/api/generated/model";
@@ -11,6 +12,7 @@ import { invalidateTaskProjectSurfaces } from "../lib/task-cache";
 import { toTaskDuplicateCreate } from "../lib/task-mappers";
 
 export function useDuplicateTask(projectId: number) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const duplicateMutation = useCreateTaskProjectsProjectIdTasksPost({
     mutation: {
@@ -27,7 +29,7 @@ export function useDuplicateTask(projectId: number) {
   const duplicateTask = async (task: TaskRead) => {
     return duplicateMutation.mutateAsync({
       projectId,
-      data: toTaskDuplicateCreate(task),
+      data: toTaskDuplicateCreate(task, user?.id),
     });
   };
 

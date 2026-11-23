@@ -18,6 +18,8 @@ type ChangeLogCardProps = {
   newValue?: unknown;
   valueDisplayMode?: ChangeLogValueDisplayMode;
   showRawValues?: boolean;
+  compact?: boolean;
+  changedAt?: string;
 };
 
 export function ChangeLogCard({
@@ -36,8 +38,75 @@ export function ChangeLogCard({
   newValue,
   valueDisplayMode = "updated",
   showRawValues = false,
+  compact = false,
+  changedAt,
 }: ChangeLogCardProps) {
   const valueLabels = getChangeLogValueLabels(valueDisplayMode);
+
+  const values = showRawValues ? (
+    <ChangeValuePair
+      oldLabel={valueLabels.oldLabel}
+      newLabel={valueLabels.newLabel}
+      oldValue={oldValue}
+      newValue={newValue}
+      fieldName={fieldName}
+      formatValue={formatValue}
+    />
+  ) : diffRows.length ? (
+    <ChangeLogDiffRows
+      rows={diffRows}
+      oldLabel={valueLabels.oldLabel}
+      newLabel={valueLabels.newLabel}
+    />
+  ) : (
+    <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
+      {missingFieldLabels.length
+        ? `変更項目は記録されていますが、変更前後の値がレスポンスに含まれていません: ${missingFieldLabels.join("、")}`
+        : "表示できる差分はありません。"}
+    </div>
+  );
+  if (compact) {
+    return (
+      <li className="relative border-s py-2 ps-4 before:absolute before:start-[-0.2rem] before:top-4 before:size-1.5 before:rounded-full before:bg-muted-foreground">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+          <time
+            className="text-xs tabular-nums text-muted-foreground"
+            dateTime={changedAt}
+          >
+            {changedAtLabel}
+          </time>
+          <span className="text-xs text-muted-foreground">{actorLabel}</span>
+          <span className="font-medium">{actionLabel}</span>
+          {fieldLabel && (
+            <span className="text-xs text-muted-foreground">{fieldLabel}</span>
+          )}
+        </div>
+        {updatedFieldLabels.length > 0 && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {updatedFieldLabels.join("、")}
+          </p>
+        )}
+        {(showRawValues ||
+          diffRows.length > 0 ||
+          missingFieldLabels.length > 0 ||
+          reason) && (
+          <details className="mt-1 text-xs">
+            <summary className="w-fit cursor-pointer text-muted-foreground">
+              変更内容を表示
+            </summary>
+            <div className="mt-2 space-y-2">
+              {reason && (
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  {reason}
+                </p>
+              )}
+              {values}
+            </div>
+          </details>
+        )}
+      </li>
+    );
+  }
 
   return (
     <div className="rounded-lg border p-3">
@@ -64,28 +133,7 @@ export function ChangeLogCard({
             理由: {reason}
           </p>
         ) : null}
-        {showRawValues ? (
-          <ChangeValuePair
-            oldLabel={valueLabels.oldLabel}
-            newLabel={valueLabels.newLabel}
-            oldValue={oldValue}
-            newValue={newValue}
-            fieldName={fieldName}
-            formatValue={formatValue}
-          />
-        ) : diffRows.length ? (
-          <ChangeLogDiffRows
-            rows={diffRows}
-            oldLabel={valueLabels.oldLabel}
-            newLabel={valueLabels.newLabel}
-          />
-        ) : (
-          <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
-            {missingFieldLabels.length
-              ? `変更項目は記録されていますが、変更前後の値がレスポンスに含まれていません: ${missingFieldLabels.join("、")}`
-              : "表示できる差分はありません。"}
-          </div>
-        )}
+        {values}
       </div>
     </div>
   );

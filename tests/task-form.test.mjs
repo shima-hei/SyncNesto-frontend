@@ -411,3 +411,143 @@ test("worksheet ranges preserve quoted references and reject stale or uneven rec
   });
   assert.equal(bounds([8], fields, first, last), null);
 });
+
+test("restored planning fields are excluded from task entry and section saves", () => {
+  const current = {
+    id: 7,
+    version: 4,
+    title: "既存",
+    task_code: "TASK-007",
+    actual_minutes: 30,
+    estimated_minutes: 90,
+  };
+  const values = {
+    ...mapper.getTaskFormValues(current),
+    title: "改名",
+    actualMinutes: "0",
+    estimatedMinutes: "",
+    estimatedBasis: "rollup",
+  };
+  const created = mapper.toTaskCreate(values);
+  for (const field of [
+    "actual_minutes",
+    "estimated_minutes",
+    "actual_start_date",
+    "actual_end_date",
+    "estimated_basis",
+    "actual_basis",
+  ]) {
+    assert.equal(Object.hasOwn(created, field), false);
+  }
+  const patch = (section, input) =>
+    mapper.toTaskUpdate(
+      mapper.taskSectionValues(section, current, input),
+      4,
+      current,
+    );
+  assert.deepEqual(patch("title", values), { version: 4, title: "改名" });
+  assert.deepEqual(patch("actual", values), { version: 4, actual_minutes: 0 });
+  assert.deepEqual(patch("actual", { ...values, actualMinutes: "" }), {
+    version: 4,
+    actual_minutes: null,
+  });
+});
+
+const creation = await load("../features/tasks/lib/task-create-route.ts");
+const columns = await load("../features/tasks/lib/task-list-columns.ts");
+
+test("detailed creation carries parent, requirement, phase and return route through navigation", () => {
+  const list = "/projects/joined/5/tasks";
+  const source =
+    "/projects/joined/5/planning?planningView=gantt&ganttAssigneeId=4";
+  const draftId = "01234567-0123-4123-a123-0123456789ab";
+  const href = creation.getTaskCreateHref(
+    5,
+    {
+      parentTaskId: "83",
+      requirementId: "29",
+      phaseAssignment: "phase:20",
+    },
+    source,
+    { draftId },
+  );
+  const url = new URL(href, "https://syncnesto.invalid");
+  assert.equal(url.pathname, list + "/new");
+  assert.equal(
+    creation.readTaskCreateReturn(5, url.searchParams.get("returnTo")),
+    source,
+  );
+  assert.deepEqual(creation.readTaskCreateContext(url.searchParams), {
+    parentId: 83,
+    requirementId: 29,
+    phaseAssignment: "phase:20",
+    requirementOrigin: false,
+    draftId,
+  });
+});
+
+test("task creation accepts same-project source routes and discards external or unrelated routes", () => {
+  const source = "/projects/joined/5/requirements/22/items/29?tab=related";
+  assert.equal(creation.readTaskCreateReturn(5, source), source);
+  for (const value of [
+    "//example.org/projects/joined/5/tasks",
+    "/projects/joined/2/tasks",
+    "/projects/joined/5/tasks/new",
+    "/projects/joined/5/settings",
+  ]) {
+    assert.equal(creation.readTaskCreateReturn(5, value), null);
+  }
+  assert.deepEqual(
+    creation.readTaskCreateContext(
+      new URLSearchParams(
+        "parent=-1&requirement=2147483648&phase=phase:0&draft=invalid",
+      ),
+    ),
+    {
+      parentId: null,
+      requirementId: null,
+      phaseAssignment: null,
+      draftId: null,
+      requirementOrigin: false,
+    },
+  );
+});
+
+test("list column links retain known values in display order and allow all optional columns to be hidden", () => {
+  assert.deepEqual(columns.readTaskListColumns(""), [
+    "status",
+    "assignee",
+    "due",
+    "phase",
+    "priority",
+  ]);
+  assert.deepEqual(columns.readTaskListColumns("tags,priority,unknown,tags"), [
+    "priority",
+    "tags",
+  ]);
+  assert.deepEqual(columns.readTaskListColumns("none"), []);
+});
+
+test("date-only inline editing sends only the chosen date with the original version", () => {
+  const task = {
+    id: 12,
+    project_id: 5,
+    version: 7,
+    title: "予定",
+    task_code: "TASK-012",
+    start_date: "2026-12-03",
+    due_date: "2026-12-06",
+    actual_minutes: 0,
+  };
+  const input = {
+    ...mapper.getTaskFormValues(task),
+    dueDate: "2026-12-04",
+    actualMinutes: "60",
+    title: "別の下書き",
+  };
+  const contextual = mapper.taskSectionValues("dueDate", task, input);
+  assert.deepEqual(mapper.toTaskUpdate(contextual, task.version, task), {
+    version: 7,
+    due_date: "2026-12-04",
+  });
+});

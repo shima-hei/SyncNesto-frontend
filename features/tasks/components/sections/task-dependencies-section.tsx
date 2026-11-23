@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -47,21 +46,22 @@ export function TaskDependenciesSection({
     useUpdateTaskDependency(projectId, taskId);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <CardTitle>依存関係</CardTitle>
+    <section className="space-y-2 border-t pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">依存関係</h2>
         {canUpdate ? (
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={() => setCreateDialogOpen(true)}
           >
             <PlusIcon data-icon="inline-start" />
             依存関係追加
           </Button>
         ) : null}
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      </div>
+      <div className="flex flex-col gap-4">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">
             依存関係を読み込んでいます。
@@ -85,7 +85,7 @@ export function TaskDependenciesSection({
             依存関係はありません。
           </p>
         )}
-      </CardContent>
+      </div>
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="max-h-[90vh] w-[min(92vw,900px)] overflow-y-auto sm:max-w-none">
           <DialogHeader>
@@ -104,7 +104,7 @@ export function TaskDependenciesSection({
           />
         </DialogContent>
       </Dialog>
-    </Card>
+    </section>
   );
 }
 
@@ -134,7 +134,7 @@ function TaskDependencyItem({
   const canSubmit = isDirty && /^\d+$/.test(lagDays);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-3">
+    <div className="flex flex-col gap-2 border-b py-2">
       <div className="text-sm">
         <TaskIdentity
           task={predecessorTask}

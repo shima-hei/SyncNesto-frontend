@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Select,
@@ -12,7 +13,10 @@ import {
 import type { PhaseRead, TaskRead } from "@/lib/api/generated/model";
 import { transferPhaseTasksProjectsProjectIdPhasesTransferTasksPost } from "@/lib/api/generated/phase-transfers/phase-transfers";
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
-import { invalidateTaskProjectSurfaces } from "../../lib/task-cache";
+import {
+  invalidateTaskChangeLogs,
+  invalidateTaskProjectSurfaces,
+} from "../../lib/task-cache";
 import { getTaskPhaseOptions } from "../../lib/task-phase-options";
 import { getPlanningPhaseKey } from "../../lib/planning-phases";
 import { toPhaseAssignment } from "../../lib/task-mappers";
@@ -24,11 +28,13 @@ export function TaskPhaseCell({
   phases,
   editable,
   compact = false,
+  quiet = false,
 }: {
   task: TaskRead;
   phases: PhaseRead[];
   editable: boolean;
   compact?: boolean;
+  quiet?: boolean;
 }) {
   const client = useQueryClient();
   const trigger = useRef<HTMLButtonElement>(null);
@@ -54,9 +60,12 @@ export function TaskPhaseCell({
       toast.success(task.title + "の工程を変更しました。");
     },
     onSettled: async () => {
-      await invalidateTaskProjectSurfaces(client, task.project_id, {
-        includeBoard: true,
-      });
+      await Promise.all([
+        invalidateTaskProjectSurfaces(client, task.project_id, {
+          includeBoard: true,
+        }),
+        invalidateTaskChangeLogs(client, task.id),
+      ]);
       requestAnimationFrame(() => {
         if (
           document.activeElement !== document.body ||
@@ -117,7 +126,11 @@ export function TaskPhaseCell({
         data-cell="phase"
         aria-busy={save.isPending}
         data-effort-pending={save.isPending}
-        className="max-w-full shrink-0 gap-1 rounded-sm border-transparent px-1 text-xs hover:bg-accent dark:bg-transparent"
+        className={cn(
+          "max-w-full shrink-0 gap-1 rounded-sm border-transparent px-1 text-xs hover:bg-accent dark:bg-transparent",
+          quiet &&
+            "cursor-pointer dark:hover:bg-accent focus-visible:bg-accent [&>svg:last-child]:hidden",
+        )}
       >
         {dot}
         {!compact && <span className="min-w-0 truncate">{label}</span>}

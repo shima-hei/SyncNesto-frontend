@@ -5,6 +5,7 @@ import { VerificationEntry } from "@/features/requirement-verifications/componen
 import { useState } from "react";
 import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
 import { useListNavigation } from "@/hooks/use-list-navigation";
+import { useUrlTabState } from "@/hooks/use-url-tab-state";
 import Link from "next/link";
 import {
   ArrowLeftIcon,
@@ -62,6 +63,15 @@ import { RequirementRevisionsSection } from "../sections/requirement-revisions-s
 import { RequirementTargetCommentsSection } from "../sections/requirement-target-comments-section";
 import { RequirementTestItemsSection } from "../sections/requirement-test-items-section";
 
+const REQUIREMENT_DETAIL_TABS = [
+  "overview",
+  "details",
+  "relations",
+  "reviews",
+  "approvals",
+  "history",
+] as const;
+
 type RequirementDetailPageProps = {
   projectId: number;
   documentId: number;
@@ -83,6 +93,10 @@ export function RequirementDetailPage({
   const { returnTo, withReturn } = useListNavigation(
     `/projects/joined/${projectId}/requirements/${documentId}?tab=requirements`,
   );
+  const [activeTab, setActiveTab] = useUrlTabState({
+    values: REQUIREMENT_DETAIL_TABS,
+    defaultValue: "overview",
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementCommentAnchor | null>(null);
@@ -212,7 +226,11 @@ export function RequirementDetailPage({
       </div>
 
       <div className="grid gap-4 @min-[64rem]/requirement-detail:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/requirement-detail:items-start @min-[80rem]/requirement-detail:grid-cols-[minmax(0,1fr)_24rem]">
-        <Tabs defaultValue="overview" className="min-w-0 gap-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="min-w-0 gap-4"
+        >
           <TabsList
             variant="line"
             className="w-full justify-start overflow-x-auto border-b"

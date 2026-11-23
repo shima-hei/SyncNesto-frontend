@@ -3,7 +3,8 @@
 import { useState } from "react";
 
 import { ChangeLogCard } from "@/components/shared/change-log/change-log-card";
-import { ChangeLogListCard } from "@/components/shared/change-log/change-log-list-card";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import {
   getChangeLogHeaderFieldLabel,
   getVisibleChangeLogs,
@@ -31,31 +32,43 @@ type TaskChangeLogsSectionProps = {
 export function TaskChangeLogsSection({ taskId }: TaskChangeLogsSectionProps) {
   const [page, setPage] = useState(1);
   const { name: typeName } = useTaskTypes();
-  const { changeLogs, total, pageSize, isLoading, isFetching } =
+  const { changeLogs, total, pageSize, isLoading, isFetching, error, refetch } =
     useTaskChangeLogs(taskId, page);
   const visibleChangeLogs = getVisibleChangeLogs(changeLogs);
+  if (error)
+    return (
+      <DataLoadError resourceName="変更履歴" onRetry={() => void refetch()} />
+    );
 
   return (
-    <ChangeLogListCard
-      title="変更履歴"
-      items={visibleChangeLogs}
-      isLoading={isLoading}
-      renderItem={(changeLog) => (
-        <TaskChangeLogItem
-          key={changeLog.id}
-          changeLog={changeLog}
-          typeName={typeName}
-        />
+    <div className="space-y-3">
+      {isLoading ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          変更履歴を読み込み中…
+        </p>
+      ) : visibleChangeLogs.length ? (
+        <ol className="ml-1">
+          {visibleChangeLogs.map((changeLog) => (
+            <TaskChangeLogItem
+              key={changeLog.id}
+              changeLog={changeLog}
+              typeName={typeName}
+            />
+          ))}
+        </ol>
+      ) : (
+        <p className="text-sm text-muted-foreground">変更履歴はありません。</p>
       )}
-      pagination={{
-        page,
-        pageSize,
-        total,
-        currentCount: visibleChangeLogs.length,
-        isFetching,
-        onPageChange: setPage,
-      }}
-    />
+      <DataPagination
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        currentCount={visibleChangeLogs.length}
+        isFetching={isFetching}
+        isLoading={isLoading}
+        onPageChange={setPage}
+      />
+    </div>
   );
 }
 
@@ -86,6 +99,8 @@ function TaskChangeLogItem({
 
   return (
     <ChangeLogCard
+      compact
+      changedAt={changeLog.created_at}
       actionLabel={formatTaskChangeLogAction(changeLog.action)}
       actorLabel={formatTaskChangeLogActor(changeLog)}
       changedAtLabel={formatDateTime(changeLog.created_at)}

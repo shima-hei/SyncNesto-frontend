@@ -7,26 +7,33 @@ import { TaskRequirementLinks } from "../shared/task-requirement-links";
 
 import { type ReactNode, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { readTaskCreateReturn } from "../../lib/task-create-route";
+import {
+  getTaskPriorityLabel,
+  getTaskTypeLabel,
+} from "../../constants/task-options";
+import type { TaskEditSection } from "../../lib/task-mappers";
+import { TaskPhaseCell } from "../shared/task-phase-cell";
+import { usePlanningPhases } from "../../hooks/use-planning-phases";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ArrowLeftIcon,
+  ArrowUpRightIcon,
   CopyIcon,
-  PencilIcon,
-  PlusIcon,
+  EllipsisIcon,
   Trash2Icon,
 } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
-import { PageHeader } from "@/components/shared/layout/page-header";
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   canCreateTask,
@@ -36,24 +43,17 @@ import {
 } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { formatDate, formatDateTime } from "@/lib/format/date";
-import {
-  formatEffortMetric,
-  taskPhaseLabel,
-  effortBasisLabel,
-} from "../../lib/task-effort";
+import { formatEffortMetric, effortBasisLabel } from "../../lib/task-effort";
 import type { TaskRead } from "@/lib/api/generated/model";
 
-import { useCreateTask } from "../../hooks/use-create-task";
 import { useDeleteTask } from "../../hooks/use-delete-task";
 import { useDuplicateTask } from "../../hooks/use-duplicate-task";
 import { useTask } from "../../hooks/use-task";
 import { useTaskUserMap } from "../../hooks/use-task-user-map";
-import { useUpdateTask } from "../../hooks/use-update-task";
-import {
-  defaultTaskFormValues,
-  getTaskFormValues,
-} from "../../lib/task-mappers";
-import { TaskForm } from "../forms/task-form";
+import { getTaskEstimateHref } from "../../lib/planning-route";
+import { TaskEditableSection } from "../forms/task-editable-section";
+import { TaskAssignee } from "../shared/task-assignee";
+import { TaskRequirementEditor } from "../forms/task-requirement-editor";
 import { TaskDependenciesSection } from "../sections/task-dependencies-section";
 import { TaskChangeLogsSection } from "../sections/task-change-logs-section";
 import { TaskCommentsSection } from "../sections/task-comments-section";
@@ -61,10 +61,8 @@ import { TaskHierarchySection } from "../sections/task-hierarchy-section";
 import { TaskTestCasesSection } from "../sections/task-test-cases-section";
 import {
   TaskFlagBadges,
-  TaskPriorityBadge,
   TaskStatusBadge,
   TaskTags,
-  TaskTypeBadge,
 } from "../shared/task-badges";
 
 type TaskDetailPageProps = {
@@ -76,30 +74,23 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
   const { returnTo } = useListNavigation(
     `/projects/joined/${projectId}/tasks?tab=list`,
   );
+  const params = useSearchParams();
+  const createReturn = readTaskCreateReturn(
+    projectId,
+    params.get("createReturn"),
+  );
+  const [activity, setActivity] = useState("comments");
+  const phases = usePlanningPhases(projectId);
   const origin = createTaskOrigin(projectId, taskId, returnTo);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [childTaskDialogOpen, setChildTaskDialogOpen] = useState(false);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
-  const { getTaskUserLabel } = useTaskUserMap(projectId);
+  const { getTaskUserLabel, usersById } = useTaskUserMap(projectId);
   const { task, isLoading, error } = useTask(taskId);
   const { task: parentTask } = useTask(task?.parent_task_id);
-  const {
-    updateTask,
-    conflictCurrent,
-    resetConflict,
-    isPending: isUpdatePending,
-    error: updateError,
-  } = useUpdateTask(projectId, taskId);
   const { deleteTask, isPending: isDeletePending } = useDeleteTask(
     projectId,
     taskId,
   );
-  const {
-    createTask,
-    isPending: isCreatePending,
-    error: createError,
-  } = useCreateTask(projectId);
   const { duplicateTask, isPending: isDuplicatePending } =
     useDuplicateTask(projectId);
   const canCreate = canCreateTask(currentProjectRole);
@@ -109,7 +100,7 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
     return <TaskDetailSkeleton />;
   }
 
-  if (error || !task) {
+  if (error || !task || task.project_id !== projectId) {
     return (
       <div className="text-sm text-muted-foreground">
         タスクを取得できませんでした。
@@ -117,283 +108,327 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
     );
   }
 
+  const canDelete = canDeleteTask(currentProjectRole);
+  const edit = (section: TaskEditSection, label: string, value?: ReactNode) => (
+    <TaskEditableSection
+      task={task}
+      section={section}
+      label={label}
+      canUpdate={canUpdate}
+    >
+      {value}
+    </TaskEditableSection>
+  );
+  const properties = (
+    <>
+      <TaskProperty label="ステータス">
+        {edit(
+          "status",
+          "ステータスを編集",
+          <TaskStatusBadge status={task.status} />,
+        )}
+      </TaskProperty>
+      <TaskProperty label="担当者">
+        {edit(
+          "assignee",
+          "担当者を編集",
+          <TaskAssignee
+            userId={task.assignee_id}
+            user={
+              task.assignee_id ? usersById.get(task.assignee_id) : undefined
+            }
+          />,
+        )}
+      </TaskProperty>
+      <TaskProperty label="優先度">
+        {edit("priority", "優先度を編集", getTaskPriorityLabel(task.priority))}
+      </TaskProperty>
+      <TaskProperty label="種別">
+        {edit(
+          "type",
+          "種別を編集",
+          getTaskTypeLabel(task.task_type, task.task_type_name),
+        )}
+      </TaskProperty>
+      <TaskProperty label="工程">
+        <TaskPhaseCell
+          task={task}
+          quiet
+          phases={phases.data ?? []}
+          editable={canUpdate && phases.isSuccess}
+        />
+      </TaskProperty>
+      <TaskProperty label="開始日">
+        {edit("startDate", "開始日を編集", formatDate(task.start_date))}
+      </TaskProperty>
+      <TaskProperty label="終了予定日">
+        {edit("dueDate", "終了予定日を編集", formatDate(task.due_date))}
+      </TaskProperty>
+      <TaskProperty label="親タスク">
+        {task.parent_task_id ? (
+          <Link
+            className="break-words underline-offset-4 hover:underline"
+            href={`/projects/joined/${projectId}/tasks/${task.parent_task_id}`}
+          >
+            {getTaskReferenceLabel(parentTask, task.parent_task_id)}
+          </Link>
+        ) : (
+          "なし"
+        )}
+      </TaskProperty>
+      <TaskProperty label="進捗率">
+        {edit("progress", "進捗率を編集", `${task.progress_percent ?? 0}%`)}
+      </TaskProperty>
+      <TaskProperty label="タグ">
+        {task.tags?.length ? <TaskTags tags={task.tags} /> : "未設定"}
+      </TaskProperty>
+    </>
+  );
   return (
-    <div className="@container/task-detail flex min-w-0 flex-col gap-6">
+    <div
+      key={task.id}
+      className="@container/task-detail flex min-w-0 flex-col gap-4"
+    >
       <OverviewReturn projectId={projectId} />
-      <Button asChild variant="outline" size="sm" className="w-fit">
-        <Link href={returnTo}>
-          <ArrowLeftIcon data-icon="inline-start" />
-          タスク一覧へ戻る
+      <Button asChild variant="ghost" size="sm" className="w-fit">
+        <Link href={createReturn ?? returnTo}>
+          <ArrowLeftIcon aria-hidden />
+          {createReturn ? "起票元へ戻る" : "タスク一覧へ戻る"}
         </Link>
       </Button>
-      <PageHeader
-        title={task.title}
-        description={task.task_code}
-        actions={
-          <>
-            {canCreate ? (
+      <header className="flex items-start justify-between gap-3 border-b pb-4">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="text-xs font-medium tabular-nums text-muted-foreground">
+            {task.task_code}
+          </p>
+          {edit("title", "タスク名を編集")}
+          <TaskFlagBadges
+            isOverdue={task.is_overdue}
+            isBlocked={task.is_blocked}
+          />
+        </div>
+        {(canCreate || canDelete) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
-                type="button"
-                onClick={() => setChildTaskDialogOpen(true)}
-              >
-                <PlusIcon data-icon="inline-start" />
-                子タスク作成
-              </Button>
-            ) : null}
-            {canUpdate ? (
-              <Button
-                type="button"
+                size="icon-sm"
                 variant="outline"
-                onClick={() => setEditDialogOpen(true)}
+                aria-label="タスクの操作"
               >
-                <PencilIcon data-icon="inline-start" />
-                編集
+                <EllipsisIcon />
               </Button>
-            ) : null}
-            {canCreate ? (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isDuplicatePending}
-                onClick={() => duplicateTask(task).catch(() => undefined)}
-              >
-                <CopyIcon data-icon="inline-start" />
-                複製
-              </Button>
-            ) : null}
-            {canDeleteTask(currentProjectRole) ? (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2Icon data-icon="inline-start" />
-                削除
-              </Button>
-            ) : null}
-          </>
-        }
-      />
-      <div className="flex flex-wrap gap-2">
-        <TaskTypeBadge type={task.task_type} name={task.task_type_name} />
-        <TaskStatusBadge status={task.status} />
-        <TaskPriorityBadge priority={task.priority} />
-        <TaskFlagBadges
-          isOverdue={task.is_overdue}
-          isBlocked={task.is_blocked}
-        />
-      </div>
-      <div className="grid gap-4 @min-[64rem]/task-detail:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/task-detail:items-start @min-[80rem]/task-detail:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="@container/task-content flex min-w-0 flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>説明</CardTitle>
-            </CardHeader>
-            <CardContent>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canCreate && (
+                <DropdownMenuItem
+                  disabled={isDuplicatePending}
+                  onSelect={() =>
+                    void duplicateTask(task).catch(() => undefined)
+                  }
+                >
+                  <CopyIcon />
+                  複製
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2Icon />
+                  削除
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </header>
+      <div className="grid min-w-0 items-start gap-x-8 gap-y-5 @min-[57rem]/task-detail:grid-cols-[minmax(0,1fr)_19rem] @min-[57rem]/task-detail:grid-rows-[max-content_1fr] @min-[74rem]/task-detail:grid-cols-[minmax(0,1fr)_23rem]">
+        <div className="min-w-0 space-y-4">
+          <section className="min-w-0 space-y-2">
+            <TaskEditableSection
+              task={task}
+              section="description"
+              heading="説明"
+              label="説明を編集"
+              canUpdate={canUpdate}
+            >
               <MarkdownPreview
                 value={task.description ?? ""}
                 emptyMessage="説明はありません。"
-                className="min-h-24"
+                className="min-h-0 min-w-0 rounded-none border-0 bg-transparent p-0"
               />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>基本情報</CardTitle>
-            </CardHeader>
-            <CardContent className="grid min-w-0 gap-4 @min-[24rem]/task-content:grid-cols-2 @min-[52rem]/task-content:grid-cols-4">
-              <TaskInfo
-                label="担当者"
-                value={getTaskUserLabel(task.assignee_id)}
-              />
-              <TaskInfo
-                label="報告者"
-                value={getTaskUserLabel(task.reporter_id)}
-              />
-              <TaskInfo label="開始日" value={formatDate(task.start_date)} />
-              <TaskInfo label="終了予定日" value={formatDate(task.due_date)} />
-              <TaskInfo
-                label="実績開始日"
-                value={formatDate(task.actual_start_date)}
-              />
-              <TaskInfo
-                label="実績終了日"
-                value={formatDate(task.actual_end_date)}
-              />
-              <TaskInfo
-                label="進捗率"
-                value={`${task.progress_percent ?? 0}%`}
-              />
-              <TaskInfo label="工程所属" value={taskPhaseLabel(task)} />
-              <TaskInfo
-                label="工数の根拠（見積 / 実績）"
-                value={`${effortBasisLabel(task.estimated_basis)} / ${effortBasisLabel(task.actual_basis)}`}
-              />
-              <TaskInfo
-                label="子を含む見積"
-                value={formatEffortMetric(task.effort_totals?.estimated)}
-              />
-              <TaskInfo
-                label="子を含む実績"
-                value={formatEffortMetric(task.effort_totals?.actual)}
-              />
-              <TaskInfo
-                label="見積/実績（入力値）"
-                value={`${task.estimated_minutes ?? "-"} / ${
-                  task.actual_minutes ?? "-"
-                } 分`}
-              />
-              <TaskInfo
-                label="親タスク"
-                value={getTaskReferenceLabel(parentTask, task.parent_task_id)}
-              />
-              <TaskInfo
-                label="登録日時"
-                value={
-                  <time dateTime={task.created_at}>
-                    {formatDateTime(task.created_at)}
-                  </time>
-                }
-              />
-              <TaskInfo
-                label="更新日時"
-                value={formatDateTime(task.updated_at)}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>関連要件・タグ</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 @min-[32rem]/task-content:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <span className="text-xs text-muted-foreground">関連要件</span>
-                {task.requirements?.length ? (
-                  <TaskRequirementLinks
-                    requirements={task.requirements}
-                    origin={origin}
-                  />
-                ) : null}
-                {!task.requirements?.length ? (
-                  <span className="text-sm text-muted-foreground">
-                    関連要件はありません。
-                  </span>
-                ) : null}
-              </div>
-              <div className="flex flex-col gap-2">
-                <span className="text-xs text-muted-foreground">タグ</span>
-                <TaskTags tags={task.tags} />
-                {!task.tags?.length ? (
-                  <span className="text-sm text-muted-foreground">
-                    タグはありません。
-                  </span>
-                ) : null}
-              </div>
-            </CardContent>
-          </Card>
-
-          {task.task_type === "bug" && (
-            <TaskTestCasesSection projectId={projectId} taskId={taskId} />
-          )}
-
+            </TaskEditableSection>
+          </section>
           <TaskHierarchySection
+            key={task.id}
             projectId={projectId}
             task={task}
-            parentTask={parentTask}
+            canCreate={canCreate}
           />
+        </div>
 
+        <aside
+          aria-label="プロパティと工数"
+          className="min-w-0 space-y-5 border-y py-4 @min-[57rem]/task-detail:col-start-2 @min-[57rem]/task-detail:row-span-2 @min-[57rem]/task-detail:row-start-1 @min-[57rem]/task-detail:border-y-0 @min-[57rem]/task-detail:border-l @min-[57rem]/task-detail:py-0 @min-[57rem]/task-detail:pl-5"
+        >
+          <section className="space-y-2">
+            <TaskEditableSection
+              task={task}
+              section="properties"
+              heading="プロパティ"
+              label="プロパティを編集"
+              canUpdate={canUpdate}
+            >
+              <dl>{properties}</dl>
+            </TaskEditableSection>
+          </section>
+          <section className="space-y-2 border-t pt-4">
+            <div className="flex min-h-7 items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">見積</h2>
+              <Button
+                asChild
+                size="icon-sm"
+                variant="ghost"
+                className="shrink-0 text-muted-foreground"
+              >
+                <Link
+                  href={getTaskEstimateHref(projectId, task.id)}
+                  aria-label={canUpdate ? "見積を入力" : "見積を確認"}
+                  title={canUpdate ? "見積を入力" : "見積を確認"}
+                >
+                  <ArrowUpRightIcon aria-hidden />
+                </Link>
+              </Button>
+            </div>
+            <dl>
+              <TaskProperty label="見積工数">
+                {formatMinutes(task.estimated_minutes)}
+              </TaskProperty>
+              <TaskProperty label="見積の根拠">
+                {effortBasisLabel(task.estimated_basis)}
+              </TaskProperty>
+              <TaskProperty label="子を含む見積">
+                {formatEffortMetric(task.effort_totals?.estimated)}
+              </TaskProperty>
+            </dl>
+          </section>
+          <section className="space-y-2 border-t pt-4">
+            <TaskEditableSection
+              task={task}
+              section="actual"
+              heading="実績"
+              label="実績を編集"
+              canUpdate={canUpdate}
+            >
+              <dl>
+                <TaskProperty label="実績工数">
+                  {formatMinutes(task.actual_minutes)}
+                </TaskProperty>
+                <TaskProperty label="実績の根拠">
+                  {effortBasisLabel(task.actual_basis)}
+                </TaskProperty>
+                <TaskProperty label="子を含む実績">
+                  {formatEffortMetric(task.effort_totals?.actual)}
+                </TaskProperty>
+                <TaskProperty label="実績開始日">
+                  {formatDate(task.actual_start_date)}
+                </TaskProperty>
+                <TaskProperty label="実績終了日">
+                  {formatDate(task.actual_end_date)}
+                </TaskProperty>
+              </dl>
+            </TaskEditableSection>
+          </section>
+          <details className="border-t pt-3 text-sm">
+            <summary className="cursor-pointer font-medium">管理情報</summary>
+            <dl className="mt-2">
+              <TaskProperty label="報告者">
+                {edit(
+                  "reporter",
+                  "報告者を編集",
+                  task.reporter_id
+                    ? getTaskUserLabel(task.reporter_id)
+                    : "未設定",
+                )}
+              </TaskProperty>
+              <TaskProperty label="登録日時">
+                <time dateTime={task.created_at}>
+                  {formatDateTime(task.created_at)}
+                </time>
+              </TaskProperty>
+              <TaskProperty label="更新日時">
+                <time dateTime={task.updated_at}>
+                  {formatDateTime(task.updated_at)}
+                </time>
+              </TaskProperty>
+              <TaskProperty label="並び順">{task.sort_order ?? 0}</TaskProperty>
+            </dl>
+          </details>
+        </aside>
+
+        <div className="min-w-0 space-y-5 @min-[57rem]/task-detail:col-start-1 @min-[57rem]/task-detail:row-start-2">
+          <section className="space-y-2 border-t pt-4">
+            <h2 className="text-sm font-semibold">関連要件</h2>
+            {task.requirements?.length ? (
+              <TaskRequirementLinks
+                requirements={task.requirements}
+                origin={origin}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                関連要件はありません。
+              </p>
+            )}
+            {canUpdate && <TaskRequirementEditor key={task.id} task={task} />}
+          </section>
           <TaskDependenciesSection
             projectId={projectId}
             taskId={taskId}
             canUpdate={canUpdate}
           />
-
-          <TaskChangeLogsSection taskId={taskId} />
           <RelatedSpecifications
             projectId={projectId}
             origin={origin}
             targetType="task"
             targetId={String(taskId)}
           />
+          {task.task_type === "bug" && (
+            <TaskTestCasesSection projectId={projectId} taskId={taskId} />
+          )}
+
+          <section
+            aria-label="アクティビティ"
+            className="space-y-2 border-t pt-4"
+          >
+            <h2 className="text-sm font-semibold">アクティビティ</h2>
+            <Tabs value={activity} onValueChange={setActivity}>
+              <TabsList variant="line" className="justify-start border-b">
+                <TabsTrigger value="comments">コメント</TabsTrigger>
+                <TabsTrigger value="history">変更履歴</TabsTrigger>
+              </TabsList>
+              <TabsContent
+                value="comments"
+                forceMount
+                hidden={activity !== "comments"}
+                className="pt-2"
+              >
+                <TaskCommentsSection
+                  projectId={projectId}
+                  task={task}
+                  taskId={taskId}
+                  canComment={canCommentTask(currentProjectRole)}
+                  canUpdateStatus={canUpdate}
+                  embedded
+                />
+              </TabsContent>
+              <TabsContent value="history" className="pt-2">
+                <TaskChangeLogsSection taskId={taskId} />
+              </TabsContent>
+            </Tabs>
+          </section>
         </div>
-
-        <aside className="min-w-0 @min-[64rem]/task-detail:sticky @min-[64rem]/task-detail:top-20">
-          <TaskCommentsSection
-            projectId={projectId}
-            task={task}
-            taskId={taskId}
-            canComment={canCommentTask(currentProjectRole)}
-            canUpdateStatus={canUpdate}
-            className="@min-[64rem]/task-detail:max-h-[calc(100dvh-6rem)] @min-[64rem]/task-detail:overflow-hidden"
-            contentClassName="@min-[64rem]/task-detail:max-h-none @min-[64rem]/task-detail:min-h-0 @min-[64rem]/task-detail:overflow-y-auto @min-[64rem]/task-detail:overscroll-contain"
-          />
-        </aside>
       </div>
-
-      <Dialog open={childTaskDialogOpen} onOpenChange={setChildTaskDialogOpen}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
-          <DialogHeader>
-            <DialogTitle>子タスク作成</DialogTitle>
-            <DialogDescription>
-              {task.task_code} の子タスクを追加します。
-            </DialogDescription>
-          </DialogHeader>
-          <TaskForm
-            mode="create"
-            projectId={projectId}
-            currentTaskId={taskId}
-            initialValues={getChildTaskInitialValues(task)}
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={(values) =>
-              createTask(values, { navigateAfterCreate: false })
-            }
-            onSuccess={() => setChildTaskDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] w-[min(94vw,960px)] overflow-y-auto p-6 sm:max-w-none">
-          <DialogHeader>
-            <DialogTitle>タスク編集</DialogTitle>
-            <DialogDescription>
-              {task.task_code} {task.title}
-            </DialogDescription>
-          </DialogHeader>
-          <TaskForm
-            key={task.version}
-            mode="update"
-            projectId={projectId}
-            currentTaskId={taskId}
-            initialValues={getTaskFormValues(task)}
-            isPending={isUpdatePending}
-            error={updateError}
-            conflictValues={
-              conflictCurrent ? getTaskFormValues(conflictCurrent) : null
-            }
-            onCloseConflict={resetConflict}
-            onResolveConflict={(values, onSaved) => {
-              if (!conflictCurrent) {
-                return Promise.resolve();
-              }
-
-              return updateTask(
-                values,
-                conflictCurrent.version,
-                conflictCurrent,
-                onSaved,
-              );
-            }}
-            onSubmit={(values, onSaved) =>
-              updateTask(values, task.version, task, onSaved)
-            }
-            onSuccess={() => setEditDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
 
       <ResourceDeleteDialog
         open={deleteDialogOpen}
@@ -410,16 +445,25 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
   );
 }
 
-function TaskInfo({ label, value }: { label: string; value: ReactNode }) {
+function TaskProperty({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm break-words [overflow-wrap:anywhere]">
-        {value}
-      </span>
+    <div className="grid min-w-0 grid-cols-[6.25rem_minmax(0,1fr)] items-baseline gap-2 py-1 text-sm">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 break-words [overflow-wrap:anywhere]">
+        {children}
+      </dd>
     </div>
   );
 }
+
+const formatMinutes = (value: number | null | undefined) =>
+  value == null ? "未入力" : `${value} 分`;
 
 function TaskDetailSkeleton() {
   return (
@@ -440,19 +484,4 @@ const getTaskReferenceLabel = (
   }
 
   return fallbackTaskId ? `タスクID: ${fallbackTaskId}` : "-";
-};
-
-const getChildTaskInitialValues = (task: TaskRead) => {
-  return {
-    ...defaultTaskFormValues,
-    parentTaskId: String(task.id),
-    taskType: task.task_type ?? defaultTaskFormValues.taskType,
-    priority: task.priority ?? defaultTaskFormValues.priority,
-    reporterId: task.reporter_id ? String(task.reporter_id) : "",
-    requirementId:
-      task.requirements?.length === 1 ? String(task.requirements[0].id) : "",
-    relationType:
-      task.requirements?.[0]?.relation_type ??
-      defaultTaskFormValues.relationType,
-  };
 };

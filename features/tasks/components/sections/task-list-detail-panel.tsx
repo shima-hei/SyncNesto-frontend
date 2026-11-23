@@ -28,6 +28,7 @@ import {
   getTaskPriorityLabel,
   getTaskTypeLabel,
 } from "../../constants/task-options";
+import { TaskAssignee } from "../shared/task-assignee";
 import { TaskListQuickEdit, TaskListDraftNotice } from "./task-list-quick-edit";
 import type { TaskListEditingController } from "../../hooks/use-task-list-editing";
 
@@ -143,6 +144,7 @@ export function TaskListDetailPanel({
                 projectId={projectId}
                 task={task}
                 editor={editor}
+                usersById={usersById}
               />
             ) : null}
             <section aria-label="タスクの説明" className="flex flex-col gap-2">
@@ -165,12 +167,16 @@ export function TaskListDetailPanel({
                   </dd>
                   <dt>優先度</dt>
                   <dd>{getTaskPriorityLabel(task.priority)}</dd>
-                  <dt>担当</dt>
+                  <dt>担当者</dt>
                   <dd>
-                    {task.assignee_id
-                      ? (usersById.get(task.assignee_id)?.name ??
-                        "担当者を確認できません")
-                      : "未割当"}
+                    <TaskAssignee
+                      userId={task.assignee_id}
+                      user={
+                        task.assignee_id
+                          ? usersById.get(task.assignee_id)
+                          : undefined
+                      }
+                    />
                   </dd>
                   <dt>期限</dt>
                   <dd>

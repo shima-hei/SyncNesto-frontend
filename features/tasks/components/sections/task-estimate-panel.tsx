@@ -35,6 +35,7 @@ import {
   formatEstimateHours,
   formatEffortMetric,
 } from "../../lib/task-effort";
+import { TaskEditableSection } from "../forms/task-editable-section";
 import { TaskEstimateBaseline } from "./task-estimate-baseline";
 import { TaskEffortPlanEditor } from "./task-effort-plan-editor";
 
@@ -115,6 +116,12 @@ export function EstimatePanel({
           タスク詳細
         </Link>
       </p>
+      <TaskEditableSection
+        task={task}
+        section="estimate"
+        label="工程・集計根拠を編集"
+        canUpdate={canUpdate}
+      />
       {details.isError && (
         <DataLoadError
           resourceName="見積明細"

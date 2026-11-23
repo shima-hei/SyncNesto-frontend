@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
@@ -58,6 +58,7 @@ export function TaskCommentForm({
   onSubmit,
   onSuccess,
 }: TaskCommentFormProps) {
+  const statusId = useId();
   const [values, setValues] = useState(initialValues ?? defaultValues);
   const [errors, setErrors] = useState<TaskCommentFormErrors>({});
 
@@ -113,14 +114,14 @@ export function TaskCommentForm({
 
         {enableStatusChange ? (
           <Field>
-            <FieldLabel>ステータスも変更</FieldLabel>
+            <FieldLabel htmlFor={statusId}>ステータスも変更</FieldLabel>
             <Select
               value={values.status}
               onValueChange={(status) =>
                 setValues((current) => ({ ...current, status }))
               }
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id={statusId} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

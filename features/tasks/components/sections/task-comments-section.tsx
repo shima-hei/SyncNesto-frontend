@@ -33,6 +33,7 @@ type TaskCommentsSectionProps = {
   canUpdateStatus: boolean;
   className?: string;
   contentClassName?: string;
+  embedded?: boolean;
 };
 
 export function TaskCommentsSection({
@@ -43,6 +44,7 @@ export function TaskCommentsSection({
   canUpdateStatus,
   className,
   contentClassName,
+  embedded = false,
 }: TaskCommentsSectionProps) {
   const [deleteTarget, setDeleteTarget] = useState<TaskCommentRead | null>(
     null,
@@ -84,14 +86,19 @@ export function TaskCommentsSection({
     }
   };
 
+  const Container = embedded ? "div" : Card;
+  const Content = embedded ? "div" : CardContent;
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>コメント</CardTitle>
-      </CardHeader>
-      <CardContent
+    <Container className={className}>
+      {!embedded && (
+        <CardHeader>
+          <CardTitle>コメント</CardTitle>
+        </CardHeader>
+      )}
+      <Content
         className={cn(
-          "flex max-h-[640px] flex-col gap-4 overflow-y-auto",
+          "flex flex-col gap-4",
+          !embedded && "max-h-[640px] overflow-y-auto",
           contentClassName,
         )}
       >
@@ -186,8 +193,8 @@ export function TaskCommentsSection({
             setDeleteTarget(null);
           }}
         />
-      </CardContent>
-    </Card>
+      </Content>
+    </Container>
   );
 }
 

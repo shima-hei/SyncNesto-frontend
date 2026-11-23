@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { toast } from "sonner";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 
@@ -22,16 +22,15 @@ export function useCreateTask(projectId: number) {
   const { withReturn } = useListNavigation(
     `/projects/joined/${projectId}/tasks`,
   );
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const taskFormRequirementIdRef = useRef<number | null>(null);
-  const shouldNavigateAfterCreateRef = useRef(true);
   const createTaskMutation = useCreateTaskProjectsProjectIdTasksPost({
     mutation: {
-      onSuccess: async (task) => {
+      onSuccess: async (_task, { data }) => {
         const invalidations: Array<Promise<unknown>> = [
           invalidateTaskProjectSurfaces(queryClient, projectId),
         ];
-        const requirementId = taskFormRequirementIdRef.current;
+        const requirementId = data.requirement_id;
 
         if (requirementId) {
           invalidations.push(
@@ -42,11 +41,6 @@ export function useCreateTask(projectId: number) {
 
         await Promise.all(invalidations);
         toast.success(TASK_MESSAGES.task.createSuccess);
-        if (shouldNavigateAfterCreateRef.current) {
-          router.push(
-            withReturn(`/projects/joined/${projectId}/tasks/${task.id}`),
-          );
-        }
       },
       onError: () => {
         toast.error(TASK_MESSAGES.task.createError);
@@ -58,15 +52,14 @@ export function useCreateTask(projectId: number) {
     values: TaskFormValues,
     options?: { navigateAfterCreate?: boolean },
   ) => {
-    taskFormRequirementIdRef.current = values.requirementId
-      ? Number(values.requirementId)
-      : null;
-    shouldNavigateAfterCreateRef.current = options?.navigateAfterCreate ?? true;
-
-    return createTaskMutation.mutateAsync({
+    const task = await createTaskMutation.mutateAsync({
       projectId,
-      data: toTaskCreate(values),
+      data: toTaskCreate(values, user?.id),
     });
+    if (options?.navigateAfterCreate ?? true) {
+      router.push(withReturn(`/projects/joined/${projectId}/tasks/${task.id}`));
+    }
+    return task;
   };
 
   return {

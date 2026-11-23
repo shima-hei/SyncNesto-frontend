@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listIssueTestCasesProjectsProjectIdTasksTaskIdTestCasesGet as listTestCases } from "@/lib/api/generated/test-issues/test-issues";
 
 const statuses: Record<string, string> = {
@@ -27,11 +26,11 @@ export function TaskTestCasesSection({
     queryFn: () => listTestCases(projectId, taskId),
   });
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>関連テストケース</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
+    <section className="space-y-2 border-t pt-4">
+      <div>
+        <h2 className="text-sm font-semibold">関連テストケース</h2>
+      </div>
+      <div className="space-y-2">
         {query.isLoading && <p className="text-sm">読み込み中…</p>}
         {query.error && (
           <p role="alert" className="text-sm">
@@ -64,7 +63,7 @@ export function TaskTestCasesSection({
             )}
           </Link>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
