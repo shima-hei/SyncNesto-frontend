@@ -10,7 +10,7 @@ import {
   useTenant,
 } from "@/features/tenants/providers/tenant-provider";
 
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { getJoinedProjectId } from "@/features/projects/constants/joined-project-navigation";
 
 import { AppSidebar } from "./app-sidebar";
 import { SiteHeader } from "../header/site-header";
@@ -79,35 +79,35 @@ function ShellFrame({
   scope: "system" | "organization";
   canManageTenant?: boolean;
 }) {
+  const pathname = usePathname();
+  const joinedProject =
+    scope === "organization" && getJoinedProjectId(pathname);
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
+    <div className="flex min-h-svh w-full">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:border focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:outline-2 focus:outline-offset-2 focus:outline-primary"
       >
         本文へ移動
       </a>
-      <AppSidebar
-        variant="inset"
-        scope={scope}
-        canManageTenant={canManageTenant}
-      />
-      <SidebarInset className="min-w-0">
-        <SiteHeader scope={scope} />
+      <AppSidebar scope={scope} canManageTenant={canManageTenant} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <SiteHeader scope={scope} canManageTenant={canManageTenant} />
         <DemoBanner />
-        <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-            {children}
-          </div>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex min-w-0 flex-1 flex-col"
+        >
+          {joinedProject ? (
+            children
+          ) : (
+            <div className="@container/main flex min-w-0 flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+              {children}
+            </div>
+          )}
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </div>
   );
 }

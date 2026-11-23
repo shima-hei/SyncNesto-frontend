@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProjectNavigation } from "./projectNavigation";
 
 /**
  * プロジェクト読み取り時に返すschema。
@@ -17,6 +18,7 @@ export interface ProjectRead {
   end_date?: string | null;
   id: number;
   version: number;
+  navigation?: ProjectNavigation | null;
   created_by?: number | null;
   updated_by?: number | null;
   created_at: string;

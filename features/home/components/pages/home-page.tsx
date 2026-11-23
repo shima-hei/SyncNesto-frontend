@@ -31,7 +31,9 @@ export function HomePage() {
           ) : null
         }
       />
-      <TodayWorkSection query={tasksQuery} />
+      <div id="my-work" tabIndex={-1} className="scroll-mt-4">
+        <TodayWorkSection query={tasksQuery} />
+      </div>
       <Separator />
       <NotificationSummary />
       <Separator />

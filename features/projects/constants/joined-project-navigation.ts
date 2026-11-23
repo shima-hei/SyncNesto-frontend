@@ -1,132 +1,103 @@
-import type { CurrentProjectRoleRead } from "@/lib/api/generated/model";
+import type { ProjectNavigation } from "@/lib/api/generated/model";
 import {
-  BookOpenCheckIcon,
   CalendarRangeIcon,
-  ClipboardListIcon,
-  FileCheck2Icon,
-  FileStackIcon,
+  FilesIcon,
+  FileTextIcon,
+  FlaskConicalIcon,
+  LayersIcon,
   LayoutDashboardIcon,
   ListChecksIcon,
-  PanelsTopLeftIcon,
-  ShieldCheckIcon,
-  Trash2Icon,
-  UsersIcon,
-  type LucideIcon,
 } from "lucide-react";
-import {
-  canViewProjectFeature,
-  canUpdateDocument,
-} from "@/features/auth/utils/authorization";
 
-export type JoinedProjectNavigationItem = {
-  group: string;
-  purpose: string;
-  label: string;
-  icon: LucideIcon;
-  href: (projectId: number) => string;
-  canShow: (role: CurrentProjectRoleRead | null) => boolean;
-};
-
-export const joinedProjectNavigationItems: JoinedProjectNavigationItem[] = [
+export const projectNavigationSections = [
   {
+    key: "overview",
     label: "概要",
     icon: LayoutDashboardIcon,
-    group: "目標・現在地",
-    purpose: "プロジェクトの目的と状況",
-    href: (projectId) => `/projects/joined/${projectId}`,
-    canShow: canViewProjectFeature,
+    paths: ["", "activities"],
   },
   {
-    label: "メンバー",
-    icon: UsersIcon,
-    group: "管理・その他",
-    purpose: "参加者を確認する",
-    href: (projectId) => `/projects/joined/${projectId}/members`,
-    canShow: canViewProjectFeature,
+    key: "requirements",
+    label: "要件",
+    icon: FileTextIcon,
+    paths: [
+      "requirements",
+      "fixed-approvals",
+      "requirement-verifications",
+      "requirement-verdicts",
+    ],
   },
+  { key: "design", label: "設計", icon: LayersIcon, paths: ["specifications"] },
+  { key: "tasks", label: "タスク", icon: ListChecksIcon, paths: ["tasks"] },
   {
-    label: "要件定義書",
-    icon: BookOpenCheckIcon,
-    group: "何を満たすか",
-    purpose: "要件と受け入れ条件を確認する",
-    href: (projectId) => `/projects/joined/${projectId}/requirements`,
-    canShow: canViewProjectFeature,
-  },
-  {
-    label: "タスク",
-    icon: ClipboardListIcon,
-    group: "誰が・いつ進めるか",
-    purpose: "作業・担当・日程を確認する",
-    href: (projectId) => `/projects/joined/${projectId}/tasks`,
-    canShow: canViewProjectFeature,
-  },
-  {
+    key: "planning",
     label: "計画",
     icon: CalendarRangeIcon,
-    group: "誰が・いつ進めるか",
-    purpose: "工程・担当・日程・見積を決める",
-    href: (projectId) => `/projects/joined/${projectId}/planning`,
-    canShow: canViewProjectFeature,
+    paths: ["planning"],
   },
   {
-    label: "合意・承認",
-    icon: ShieldCheckIcon,
-    group: "何を満たすか",
-    purpose: "判断が必要な内容と合意履歴を確認する",
-    href: (projectId) => `/projects/joined/${projectId}/fixed-approvals`,
-    canShow: canViewProjectFeature,
+    key: "tests",
+    label: "テスト",
+    icon: FlaskConicalIcon,
+    paths: ["test-designs", "test-cases"],
   },
   {
-    label: "画面・API設計",
-    icon: PanelsTopLeftIcon,
-    group: "どう作るか",
-    purpose: "画面やAPIの設計を確認する",
-    href: (projectId) => `/projects/joined/${projectId}/specifications`,
-    canShow: canViewProjectFeature,
+    key: "documents",
+    label: "資料",
+    icon: FilesIcon,
+    paths: ["documents", "artifact-releases", "artifact-publications"],
   },
-  {
-    label: "テスト設計書",
-    icon: FileCheck2Icon,
-    group: "どう確かめるか",
-    purpose: "テスト項目と組み合わせを設計する",
-    href: (projectId) => `/projects/joined/${projectId}/test-designs`,
-    canShow: canViewProjectFeature,
-  },
-  {
-    label: "テストケース",
-    icon: ListChecksIcon,
-    group: "どう確かめるか",
-    purpose: "テストを実行し、結果を確認する",
-    href: (projectId) => `/projects/joined/${projectId}/test-cases`,
-    canShow: canViewProjectFeature,
-  },
-  {
-    label: "ドキュメント",
-    icon: FileStackIcon,
-    group: "補足の文書・添付",
-    purpose: "文書と添付ファイルを確認する",
-    href: (projectId) => `/projects/joined/${projectId}/documents`,
-    canShow: canViewProjectFeature,
-  },
-  {
-    label: "ごみ箱",
-    icon: Trash2Icon,
-    group: "管理・その他",
-    purpose: "削除した情報を確認・復元する",
-    href: (projectId) => `/projects/joined/${projectId}/trash`,
-    canShow: canUpdateDocument,
-  },
-];
-
-export const joinedProjectNavigationGroups = [
-  "目標・現在地",
-  "何を満たすか",
-  "どう作るか",
-  "誰が・いつ進めるか",
-  "どう確かめるか",
-  "補足の文書・添付",
-  "管理・その他",
 ] as const;
+
+export type ProjectSection = (typeof projectNavigationSections)[number];
+
+export const defaultProjectNavigation: ProjectNavigation = {
+  items: projectNavigationSections.map(({ key }) => ({
+    key,
+    placement: "primary",
+  })),
+  requirements_view: "requirements",
+  tests_view: "test-designs",
+};
+
+export const projectSubviewLinks = {
+  requirements: [
+    { path: "requirements", label: "要件定義書" },
+    { path: "fixed-approvals", label: "合意・承認" },
+  ],
+  tests: [
+    { path: "test-designs", label: "テスト設計書" },
+    { path: "test-cases", label: "テストケース" },
+  ],
+} as const;
+
+export function getProjectSection(pathname: string, projectId: number) {
+  return projectNavigationSections.find((section) =>
+    section.paths.some((path) =>
+      isJoinedProjectNavigationActive(
+        pathname,
+        getJoinedProjectHref(projectId, path),
+        projectId,
+      ),
+    ),
+  )?.key;
+}
+
+export function getProjectSectionHref(
+  projectId: number,
+  section: ProjectSection,
+  navigation: ProjectNavigation,
+) {
+  let target: string = section.paths[0];
+  if (section.key === "requirements")
+    target = navigation.requirements_view ?? target;
+  if (section.key === "tests") target = navigation.tests_view ?? target;
+  return getJoinedProjectHref(projectId, target);
+}
+
+export function getJoinedProjectHref(projectId: number, path = "") {
+  return `/projects/joined/${projectId}${path ? `/${path}` : ""}`;
+}
 
 export function getJoinedProjectId(pathname: string): number | null {
   const match = /^\/projects\/joined\/([1-9]\d*)(?:\/|$)/.exec(pathname);
@@ -139,6 +110,6 @@ export function isJoinedProjectNavigationActive(
   href: string,
   projectId: number,
 ): boolean {
-  if (href === `/projects/joined/${projectId}`) return pathname === href;
+  if (href === getJoinedProjectHref(projectId)) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }

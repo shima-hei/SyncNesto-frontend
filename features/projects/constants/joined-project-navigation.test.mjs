@@ -27,54 +27,70 @@ function load(file) {
   return mod.exports;
 }
 const {
-  joinedProjectNavigationItems: items,
-  joinedProjectNavigationGroups: groups,
+  defaultProjectNavigation,
   getJoinedProjectId,
+  getProjectSection,
+  getProjectSectionHref,
   isJoinedProjectNavigationActive: active,
+  projectNavigationSections,
 } = load(
   resolve(root, "features/projects/constants/joined-project-navigation.ts"),
 );
 
-test("既存10入口を保持し、タスクと同じ分類に計画を追加する", () => {
-  const paths = items.map((item) => item.href(7));
-  assert.equal(paths.length, 11);
-  for (const suffix of [
-    "",
-    "/members",
-    "/requirements",
-    "/tasks",
-    "/planning",
-    "/specifications",
-    "/test-designs",
-    "/test-cases",
-    "/documents",
-    "/trash",
-    "/fixed-approvals",
-  ])
-    assert.ok(paths.includes(`/projects/joined/7${suffix}`));
-  assert.equal(groups.length, 7);
+test("既存URLを案件の水平ナビに分類し、深いURLも同じ現在地とする", () => {
   assert.deepEqual(
-    items
-      .filter((item) => item.group === "誰が・いつ進めるか")
-      .map((item) => item.label),
-    ["タスク", "計画"],
+    defaultProjectNavigation.items.map(({ key }) => key),
+    [
+      "overview",
+      "requirements",
+      "design",
+      "tasks",
+      "planning",
+      "tests",
+      "documents",
+    ],
   );
-  assert.equal(
-    items.filter((item) => item.group === "どう確かめるか").length,
-    2,
-  );
-  assert.equal(items.filter((item) => item.group === "管理・その他").length, 2);
+  for (const [path, key] of [
+    ["", "overview"],
+    ["/requirements/12", "requirements"],
+    ["/fixed-approvals/4", "requirements"],
+    ["/specifications", "design"],
+    ["/tasks/51", "tasks"],
+    ["/planning", "planning"],
+    ["/test-designs/10", "tests"],
+    ["/test-cases", "tests"],
+    ["/documents", "documents"],
+  ])
+    assert.equal(getProjectSection(`/projects/joined/7${path}`, 7), key);
+  assert.equal(getProjectSection("/projects/joined/7/members", 7), undefined);
+  assert.equal(getProjectSection("/projects/joined/8/tasks", 7), undefined);
 });
 
-test("既存canShowを維持し、Projectロールなしはsystem_adminでも業務メニューを出さない", () => {
-  for (const role of [null, { role: null, is_system_admin: true }])
-    assert.equal(items.filter((item) => item.canShow(role)).length, 0);
-  for (const key of ["project_admin", "manager", "member", "viewer"]) {
-    const visible = items.filter((item) =>
-      item.canShow({ role: { key }, is_system_admin: false }),
-    );
-    assert.equal(visible.length, key === "viewer" ? 10 : 11);
-  }
+test("選択済みの初期画面は親ナビに適用し、直接URLの分類は変わらない", () => {
+  const [requirements, tests] = ["requirements", "tests"].map((key) =>
+    projectNavigationSections.find((entry) => entry.key === key),
+  );
+  const custom = {
+    ...defaultProjectNavigation,
+    requirements_view: "fixed-approvals",
+    tests_view: "test-cases",
+  };
+  assert.equal(
+    getProjectSectionHref(7, requirements, defaultProjectNavigation),
+    "/projects/joined/7/requirements",
+  );
+  assert.equal(
+    getProjectSectionHref(7, requirements, custom),
+    "/projects/joined/7/fixed-approvals",
+  );
+  assert.equal(
+    getProjectSectionHref(7, tests, custom),
+    "/projects/joined/7/test-cases",
+  );
+  assert.equal(
+    getProjectSection("/projects/joined/7/test-designs", 7),
+    "tests",
+  );
 });
 
 test("深いURLの現在地を判定し、概要・別案件・類似prefixを誤選択しない", () => {

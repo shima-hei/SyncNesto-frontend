@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Trash2Icon, UsersIcon } from "lucide-react";
+import { SettingsIcon, Trash2Icon, UsersIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
@@ -51,6 +51,12 @@ export function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
         description={project.project_code}
         actions={
           <>
+            <Button asChild variant="outline">
+              <Link href={`/projects/joined/${project.id}/navigation`}>
+                <SettingsIcon data-icon="inline-start" />
+                案件メニュー設定
+              </Link>
+            </Button>
             <Button asChild variant="outline">
               <Link href={`/projects/management/${project.id}/members`}>
                 <UsersIcon data-icon="inline-start" />
