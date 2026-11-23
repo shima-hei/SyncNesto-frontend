@@ -29,18 +29,19 @@ export default async function* reporter(source) {
           { mode: 0o600 },
         );
       }
-      yield JSON.stringify({
-        status: result.status,
-        complete: result.complete,
-        counts,
-        seconds: result.seconds,
-        failure_count: failures.length,
-      }) + "\n";
+      yield (
+        JSON.stringify({
+          status: result.status,
+          complete: result.complete,
+          counts,
+          seconds: result.seconds,
+          failure_count: failures.length,
+        }) + "\n"
+      );
       for (const failure of failures.slice(0, 3))
-        yield failure.name.slice(0, 240) +
-          "\n" +
-          failure.error.slice(-1600) +
-          "\n";
+        yield (
+          failure.name.slice(0, 240) + "\n" + failure.error.slice(-1600) + "\n"
+        );
     }
   }
 }
