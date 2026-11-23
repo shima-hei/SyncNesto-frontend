@@ -23,6 +23,7 @@ export function useTaskFormDraft({
   initialValues,
   values,
   onRestore,
+  draftScope,
 }: {
   projectId: number;
   mode: "create" | "update";
@@ -31,6 +32,7 @@ export function useTaskFormDraft({
   initialValues: TaskFormValues;
   values: TaskFormValues;
   onRestore: (values: TaskFormValues) => void;
+  draftScope?: string;
 }) {
   const { user } = useAuth();
   const [restoreConflict, setRestoreConflict] = useState<TaskFormDraft | null>(
@@ -43,7 +45,7 @@ export function useTaskFormDraft({
     initialValues,
     currentTaskId,
   );
-  const scope = section ? baseScope + ":" + section : baseScope;
+  const scope = draftScope ?? (section ? baseScope + ":" + section : baseScope);
   const draft = useFormDraft({
     userId: storageError ? null : user?.id,
     scope,

@@ -1,5 +1,6 @@
 "use client";
 
+import type { SelectableUser } from "@/components/shared/forms/user-select";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import {
 } from "../../constants/task-options";
 import { getListEditValues, listEditChanges } from "../../lib/task-list-edit";
 import type { TaskListEditingController } from "../../hooks/use-task-list-editing";
+import { TaskFormActions } from "../forms/task-form-actions";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 
 export function TaskListDraftNotice({
@@ -66,10 +68,12 @@ export function TaskListQuickEdit({
   projectId,
   task,
   editor,
+  usersById,
 }: {
   projectId: number;
   task: TaskRead;
   editor: TaskListEditingController;
+  usersById: ReadonlyMap<number, SelectableUser>;
 }) {
   const row = editor.rows[task.id];
   const values = row?.values ?? getListEditValues(task);
@@ -169,6 +173,8 @@ export function TaskListQuickEdit({
           <TaskUserSelectField
             projectId={projectId}
             label="担当者"
+            assigneeDisplay
+            retainedUser={usersById.get(Number(values.assigneeId))}
             value={values.assigneeId}
             placeholder="未割当"
             disabled={disabled}
@@ -202,32 +208,24 @@ export function TaskListQuickEdit({
           <AlertDescription>{row.message}</AlertDescription>
         </Alert>
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" size="sm" disabled={!dirty.length || disabled}>
-          {pending ? "保存結果を確認中…" : "変更を保存"}
+      {blocked && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="self-end"
+          disabled={pending}
+          onClick={() => void editor.confirm(task.id)}
+        >
+          最新の値を確認
         </Button>
-        {!blocked ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!dirty.length || pending}
-            onClick={() => editor.discard(task.id)}
-          >
-            入力を元に戻す
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={() => void editor.confirm(task.id)}
-          >
-            最新の値を確認
-          </Button>
-        )}
-      </div>
+      )}
+      <TaskFormActions
+        isPending={pending}
+        disabled={!dirty.length || disabled}
+        onCancel={!blocked ? () => editor.discard(task.id) : undefined}
+        cancelDisabled={!dirty.length}
+      />
     </form>
   );
 }

@@ -29,6 +29,7 @@ export type SelectableUser = Pick<
 
 type UserSelectProps = {
   triggerId?: string;
+  renderTriggerUser?: (user: SelectableUser | null) => React.ReactNode;
   triggerInvalid?: boolean;
   triggerDescriptionId?: string;
   users: SelectableUser[];
@@ -49,6 +50,7 @@ type UserSelectProps = {
 
 export function UserSelect({
   triggerId,
+  renderTriggerUser,
   triggerInvalid,
   triggerDescriptionId,
   users,
@@ -86,7 +88,9 @@ export function UserSelect({
             !selectedUser && "text-muted-foreground",
           )}
         >
-          {selectedUser ? (
+          {renderTriggerUser ? (
+            renderTriggerUser(selectedUser)
+          ) : selectedUser ? (
             <span className="flex min-w-0 items-center gap-2">
               <UserAvatar
                 name={selectedUser.name}

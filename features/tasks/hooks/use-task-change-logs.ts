@@ -27,5 +27,6 @@ export function useTaskChangeLogs(taskId: number, page = 1) {
     isLoading: changeLogsQuery.isLoading,
     isFetching: changeLogsQuery.isFetching,
     error: changeLogsQuery.error,
+    refetch: changeLogsQuery.refetch,
   };
 }

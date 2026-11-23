@@ -1,6 +1,12 @@
 "use client";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useId, useRef, useState } from "react";
 import { PencilIcon } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { TaskRead } from "@/lib/api/generated/model";
 import { useUpdateTask } from "../../hooks/use-update-task";
@@ -11,30 +17,42 @@ import {
 } from "../../lib/task-mappers";
 import { TaskForm } from "./task-form";
 
+const valueButtonClass =
+  "max-w-full cursor-pointer rounded px-1 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-2 focus-visible:outline-ring";
+
 export function TaskEditableSection({
   task,
   section,
   label,
   canUpdate,
   children,
+  heading,
+  presentation = "inline",
 }: {
   task: TaskRead;
   section: TaskEditSection;
   label: string;
   canUpdate: boolean;
   children?: ReactNode;
+  heading?: string;
+  presentation?: "inline" | "popover";
 }) {
   const [baseline, setBaseline] = useState<TaskRead | null>(null);
   const editor = useUpdateTask(task.project_id, task.id);
   const trigger = useRef<HTMLButtonElement>(null);
-  const close = () => {
+  const valueId = useId();
+  const close = (restoreFocus = true) => {
+    // 成功・取消後に元の編集操作へフォーカスを戻す。
     setBaseline(null);
     editor.resetConflict();
-    requestAnimationFrame(() =>
-      trigger.current?.focus({ preventScroll: true }),
-    );
+    if (restoreFocus) {
+      requestAnimationFrame(() =>
+        trigger.current?.focus({ preventScroll: true }),
+      );
+    }
   };
-  if (baseline && canUpdate) {
+  const form = (() => {
+    if (!baseline || !canUpdate) return null;
     const current = editor.conflictCurrent;
     return (
       <div
@@ -81,7 +99,64 @@ export function TaskEditableSection({
         />
       </div>
     );
+  })();
+  if (presentation === "popover" && canUpdate) {
+    return (
+      <Popover
+        open={Boolean(baseline)}
+        onOpenChange={(open) => {
+          if (open) setBaseline(task);
+          else if (!editor.isPending) close(false);
+        }}
+      >
+        <PopoverTrigger asChild>
+          <button
+            ref={trigger}
+            type="button"
+            className={cn(valueButtonClass, "inline-flex min-h-8 items-center")}
+            aria-label={`${task.title}の${label}`}
+            aria-describedby={valueId}
+          >
+            <span id={valueId} className="min-w-0">
+              {children}
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          aria-label={label}
+          className="max-w-[calc(100vw-2rem)] p-3"
+        >
+          {form}
+        </PopoverContent>
+      </Popover>
+    );
   }
+  if (heading) {
+    return (
+      <>
+        <div className="flex min-h-7 items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">{heading}</h2>
+          {canUpdate && !form && (
+            <Button
+              ref={trigger}
+              variant="ghost"
+              size="icon-sm"
+              type="button"
+              className="shrink-0 text-muted-foreground"
+              aria-label={label}
+              title={label}
+              onClick={() => setBaseline(task)}
+            >
+              <PencilIcon aria-hidden />
+            </Button>
+          )}
+        </div>
+        {form ?? children}
+      </>
+    );
+  }
+  if (form) return form;
   if (section === "title")
     return (
       <h1 className="text-2xl font-semibold tracking-tight break-words">
@@ -90,11 +165,10 @@ export function TaskEditableSection({
             type="button"
             ref={trigger}
             aria-label={task.title + "・" + label}
-            className="text-left hover:underline"
+            className={cn(valueButtonClass, "-ml-1 break-words")}
             onClick={() => setBaseline(task)}
           >
-            {task.title}{" "}
-            <PencilIcon className="inline size-4 text-muted-foreground" />
+            {task.title}
           </button>
         ) : (
           task.title
@@ -104,7 +178,12 @@ export function TaskEditableSection({
   if (
     section === "status" ||
     section === "priority" ||
-    section === "assignee"
+    section === "assignee" ||
+    section === "reporter" ||
+    section === "type" ||
+    section === "startDate" ||
+    section === "dueDate" ||
+    section === "progress"
   ) {
     return canUpdate ? (
       <button
@@ -112,11 +191,16 @@ export function TaskEditableSection({
         type="button"
         title={label}
         aria-label={label}
-        className="inline-flex w-fit items-center gap-1 text-left hover:underline"
+        aria-describedby={valueId}
+        className={cn(
+          valueButtonClass,
+          "-ml-1 inline-flex min-h-7 items-center",
+        )}
         onClick={() => setBaseline(task)}
       >
-        {children}
-        <PencilIcon aria-hidden className="size-3 text-muted-foreground" />
+        <span id={valueId} className="min-w-0">
+          {children}
+        </span>
       </button>
     ) : (
       children
@@ -134,7 +218,6 @@ export function TaskEditableSection({
           className="w-fit"
           onClick={() => setBaseline(task)}
         >
-          <PencilIcon />
           {label}
         </Button>
       )}

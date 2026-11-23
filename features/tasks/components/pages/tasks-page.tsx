@@ -11,7 +11,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { LoadingState } from "@/components/shared/feedback/loading-state";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
-import { PageHeader } from "@/components/shared/layout/page-header";
+import { useCurrentRoute } from "@/hooks/use-current-route";
+import { getTaskCreateHref } from "../../lib/task-create-route";
+import { readTaskListColumns } from "../../lib/task-list-columns";
+import { TaskListColumnsMenu } from "./controls/task-list-columns-menu";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FieldGroup } from "@/components/ui/field";
@@ -56,7 +59,10 @@ import {
   TASK_STATUS_OPTIONS,
   getTaskPriorityLabel,
 } from "../../constants/task-options";
-import { TaskQuickCreate } from "../forms/task-quick-create";
+import {
+  TaskQuickCreate,
+  type TaskQuickCreateHandle,
+} from "../forms/task-quick-create";
 import { TaskUserSelectField } from "../forms/task-user-select-field";
 import { TaskRequirementSelectField } from "../forms/task-requirement-select-field";
 import {
@@ -82,6 +88,11 @@ export function TasksPage({ projectId }: TasksPageProps) {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const currentRoute = useCurrentRoute();
+  const [quickOpen, setQuickOpen] = useState(false);
+  const quickCreate = useRef<TaskQuickCreateHandle>(null);
+  const [columnSetting, setColumnSetting] = useUrlFilterState("columns", "");
+  const columns = readTaskListColumns(columnSetting);
   const [activeTab, setActiveTab] = useUrlTabState({
     values: TASK_TABS,
     defaultValue: "list",
@@ -190,27 +201,58 @@ export function TasksPage({ projectId }: TasksPageProps) {
     taskListScope.scope.kind === "children"
       ? taskListScope.scope.parentTaskId
       : null;
+  const canCreateHere =
+    canCreate && (!parentId || Boolean(taskListScope.parentTask));
+  const initialValues = taskListScope.parentTask
+    ? getChildTaskInitialValues(taskListScope.parentTask)
+    : defaultTaskFormValues;
+  const createHref = getTaskCreateHref(projectId, initialValues, currentRoute);
+  const openQuick = () => {
+    if (quickOpen) document.getElementById("new-task-title")?.focus();
+    else setQuickOpen(true);
+  };
   const renderCreate = (visibleIds?: number[]) =>
-    canCreate &&
-    (!parentId || taskListScope.parentTask) && (
+    canCreateHere &&
+    (quickOpen ? (
       <TaskQuickCreate
         key={parentId ?? "root"}
         projectId={projectId}
         titleId="new-task-title"
         label={parentId ? "新しい子タスク" : "新しいタスク"}
-        initialValues={
-          taskListScope.parentTask
-            ? getChildTaskInitialValues(taskListScope.parentTask)
-            : defaultTaskFormValues
-        }
+        initialValues={initialValues}
         submitTask={(values) =>
           createTask(values, { navigateAfterCreate: false })
         }
         isPending={isCreatePending}
         error={createError}
         visibleIds={visibleIds}
+        focusOnOpen
+        onClose={() => {
+          setQuickOpen(false);
+          requestAnimationFrame(() =>
+            document.getElementById("open-task-quick-create")?.focus(),
+          );
+        }}
+        guardNavigation={
+          activeTab === "list"
+            ? (action) => listNavigationGuard.current(action)
+            : undefined
+        }
+        detailsRef={quickCreate}
       />
-    );
+    ) : (
+      <Button
+        id="open-task-quick-create"
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-9 justify-start"
+        onClick={openQuick}
+      >
+        <PlusIcon aria-hidden />
+        {parentId ? "子タスクを追加" : "タスクを追加"}
+      </Button>
+    ));
   const handleSearch = () => {
     setPage(1);
     setQ(searchInput.trim());
@@ -299,38 +341,45 @@ export function TasksPage({ projectId }: TasksPageProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <OverviewReturn projectId={projectId} />
-      <PageHeader
-        title="タスク"
-        description="一覧とボードでタスクの進捗を確認・更新します。"
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">タスク</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={planningHref}
+              onNavigate={(event) => {
+                if (activeTab !== "list") return;
+                event.preventDefault();
+                listNavigationGuard.current(() => router.push(planningHref));
+              }}
+            >
+              計画を開く
+            </Link>
+          </Button>
+          <TaskPhaseDialog projectId={projectId} />
+          {canCreateHere && (
+            <Button asChild size="sm">
               <Link
-                href={planningHref}
+                href={createHref}
+                aria-disabled={isCreatePending || undefined}
                 onNavigate={(event) => {
-                  if (activeTab !== "list") return;
                   event.preventDefault();
-                  listNavigationGuard.current(() => router.push(planningHref));
+                  if (isCreatePending) return;
+                  if (quickOpen && quickCreate.current) {
+                    quickCreate.current.openDetailed();
+                    return;
+                  }
+                  if (activeTab === "list")
+                    listNavigationGuard.current(() => router.push(createHref));
+                  else router.push(createHref);
                 }}
               >
-                計画を開く
+                <PlusIcon aria-hidden /> 詳細起票
               </Link>
             </Button>
-            <TaskPhaseDialog projectId={projectId} />
-            {canCreate ? (
-              <Button
-                type="button"
-                onClick={() =>
-                  document.getElementById("new-task-title")?.focus()
-                }
-              >
-                <PlusIcon data-icon="inline-start" />
-                タスク新規作成
-              </Button>
-            ) : null}
-          </div>
-        }
-      />
+          )}
+        </div>
+      </header>
 
       {activeTab !== "list" ? (
         <section
@@ -367,9 +416,12 @@ export function TasksPage({ projectId }: TasksPageProps) {
       <Tabs
         value={activeTab}
         onValueChange={(value) => {
-          if (activeTab === "list")
-            listNavigationGuard.current(() => setActiveTab(value));
-          else setActiveTab(value);
+          const switchTab = () => {
+            setQuickOpen(false);
+            setActiveTab(value);
+          };
+          if (activeTab === "list") listNavigationGuard.current(switchTab);
+          else switchTab();
         }}
       >
         <TabsList
@@ -383,13 +435,18 @@ export function TasksPage({ projectId }: TasksPageProps) {
         <TabsContent
           forceMount
           value="list"
-          className={activeTab === "list" ? "flex flex-col gap-4" : "hidden"}
+          className={activeTab === "list" ? "flex flex-col gap-2" : "hidden"}
         >
           <TaskFilters
             compact
             extraAdvancedCount={
-              Number(Boolean(requirementId)) +
-              Number(taskListScope.hierarchy !== "all")
+              appliedFilters.filter((filter) => filter.key !== "q").length
+            }
+            toolbarAction={
+              <TaskListColumnsMenu
+                columns={columns}
+                onChange={setColumnSetting}
+              />
             }
             help={
               <p className="text-muted-foreground">
@@ -487,20 +544,7 @@ export function TasksPage({ projectId }: TasksPageProps) {
           ) : null}
           <TaskListWorkbench
             renderCreate={renderCreate}
-            toolbar={
-              <>
-                <div className="w-40 max-w-full">
-                  <TaskFilterSelect
-                    compact
-                    label="並び順"
-                    value={sort}
-                    placeholder="並び順を選択"
-                    options={SORT_OPTIONS}
-                    onValueChange={(value) => setSort(value as typeof sort)}
-                  />
-                </div>
-              </>
-            }
+            columns={columns}
             selectionResetRef={listSelectionResetRef}
             enabled={
               activeTab === "list" &&

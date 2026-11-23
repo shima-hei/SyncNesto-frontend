@@ -67,7 +67,10 @@ export const getTaskFormValues = (task: TaskRead): TaskFormValues => {
   };
 };
 
-export const toTaskCreate = (values: TaskFormValues): TaskCreate => {
+export const toTaskCreate = (
+  values: TaskFormValues,
+  registeredBy?: number,
+): TaskCreate => {
   return {
     parent_task_id: toOptionalNumber(values.parentTaskId),
     ...(toOptionalString(values.taskCode)
@@ -79,7 +82,7 @@ export const toTaskCreate = (values: TaskFormValues): TaskCreate => {
     status: values.status,
     priority: values.priority,
     assignee_id: toOptionalNumber(values.assigneeId),
-    reporter_id: toOptionalNumber(values.reporterId),
+    reporter_id: toOptionalNumber(values.reporterId) ?? registeredBy ?? null,
     start_date: toOptionalString(values.startDate),
     due_date: toOptionalString(values.dueDate),
     progress_percent: toOptionalNumber(values.progressPercent) ?? 0,
@@ -93,11 +96,15 @@ export const toTaskCreate = (values: TaskFormValues): TaskCreate => {
 
 export const toRequirementTaskCreate = (
   values: TaskFormValues,
+  registeredBy?: number,
 ): RequirementTaskCreate => {
-  return toTaskCreate(values);
+  return toTaskCreate(values, registeredBy);
 };
 
-export const toTaskDuplicateCreate = (task: TaskRead): TaskCreate => {
+export const toTaskDuplicateCreate = (
+  task: TaskRead,
+  registeredBy?: number,
+): TaskCreate => {
   return {
     parent_task_id: task.parent_task_id ?? null,
     title: `${task.title} のコピー`,
@@ -106,7 +113,7 @@ export const toTaskDuplicateCreate = (task: TaskRead): TaskCreate => {
     status: "backlog",
     priority: task.priority ?? "medium",
     assignee_id: task.assignee_id ?? null,
-    reporter_id: task.reporter_id ?? null,
+    reporter_id: registeredBy ?? null,
     start_date: task.start_date ?? null,
     due_date: task.due_date ?? null,
     actual_start_date: null,
@@ -248,6 +255,11 @@ const sectionFields = {
   status: ["status", "progressPercent", "changeReason"],
   priority: ["priority"],
   assignee: ["assigneeId"],
+  reporter: ["reporterId"],
+  startDate: ["startDate"],
+  dueDate: ["dueDate"],
+  type: ["taskType"],
+  progress: ["progressPercent"],
   properties: [
     "taskType",
     "status",
@@ -286,7 +298,6 @@ export const getChildTaskInitialValues = (task: TaskRead) => {
     parentTaskId: String(task.id),
     taskType: task.task_type ?? defaultTaskFormValues.taskType,
     priority: task.priority ?? defaultTaskFormValues.priority,
-    reporterId: task.reporter_id ? String(task.reporter_id) : "",
     requirementId:
       task.requirements?.length === 1 ? String(task.requirements[0].id) : "",
     relationType:

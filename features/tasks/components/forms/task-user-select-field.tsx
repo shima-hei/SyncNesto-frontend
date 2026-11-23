@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { useProjectMemberUsers } from "@/features/projects";
 
+import { TaskAssignee } from "../shared/task-assignee";
 import { TaskFieldError } from "./task-form-fields";
 
 type TaskUserSelectFieldProps = {
@@ -18,6 +19,8 @@ type TaskUserSelectFieldProps = {
   value: string;
   placeholder?: string;
   showLabel?: boolean;
+  assigneeDisplay?: boolean;
+  retainedUser?: SelectableUser;
   disabled?: boolean;
   error?: string;
   onChange: (value: string) => void;
@@ -29,6 +32,8 @@ export function TaskUserSelectField({
   value,
   placeholder,
   showLabel = true,
+  assigneeDisplay = false,
+  retainedUser,
   disabled = false,
   error,
   onChange,
@@ -41,11 +46,12 @@ export function TaskUserSelectField({
     q: search.trim() || undefined,
     limit: 20,
   });
-  const selectedValue = getSelectedValue({
-    value,
-    users,
-    selectedUser,
-  });
+  const resolvedUser =
+    selectedUser?.id === Number(value)
+      ? selectedUser
+      : (users.find((user) => String(user.id) === value) ??
+        (retainedUser?.id === Number(value) ? retainedUser : undefined));
+  const selectedValue = resolvedUser ?? getFallbackSelectedUser(value);
 
   const handleSelect = (user: SelectableUser) => {
     setSelectedUser(user);
@@ -69,6 +75,16 @@ export function TaskUserSelectField({
             triggerDescriptionId={error ? `${triggerId}-error` : undefined}
             users={users}
             selectedUser={selectedValue}
+            renderTriggerUser={
+              assigneeDisplay
+                ? () => (
+                    <TaskAssignee
+                      user={resolvedUser}
+                      userId={value ? Number(value) : null}
+                    />
+                  )
+                : undefined
+            }
             open={open}
             search={search}
             isLoading={isLoading}
@@ -108,27 +124,4 @@ const getFallbackSelectedUser = (value: string): SelectableUser | null => {
     user_type: "internal",
     is_active: true,
   };
-};
-
-const getSelectedValue = ({
-  value,
-  users,
-  selectedUser,
-}: {
-  value: string;
-  users: SelectableUser[];
-  selectedUser: SelectableUser | null;
-}) => {
-  if (!value) {
-    return null;
-  }
-
-  if (selectedUser?.id === Number(value)) {
-    return selectedUser;
-  }
-
-  return (
-    users.find((user) => String(user.id) === value) ??
-    getFallbackSelectedUser(value)
-  );
 };

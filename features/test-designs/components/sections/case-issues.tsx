@@ -310,7 +310,7 @@ export function CaseIssues({
                 const created =
                   createdTask ??
                   (await createTask(projectId, {
-                    ...toTaskCreate(values),
+                    ...toTaskCreate(values, user?.id),
                     task_type: "bug",
                   }));
                 if (!createdTask) {

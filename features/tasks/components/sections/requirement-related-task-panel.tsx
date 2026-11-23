@@ -59,6 +59,7 @@ export function RequirementRelatedTaskPanel({
             key={requirementId}
             projectId={projectId}
             focusOnOpen
+            requirementOrigin
             initialValues={{
               ...defaultTaskFormValues,
               requirementId: String(requirementId),

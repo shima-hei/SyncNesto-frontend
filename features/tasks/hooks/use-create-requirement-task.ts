@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { toast } from "sonner";
 
 import { useCreateRequirementTaskRequirementsRequirementIdTasksPost } from "@/lib/api/generated/tasks/tasks";
@@ -18,6 +19,7 @@ export function useCreateRequirementTask(
   projectId: number,
   requirementId: number,
 ) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const mutation = useCreateRequirementTaskRequirementsRequirementIdTasksPost({
     mutation: {
@@ -38,10 +40,13 @@ export function useCreateRequirementTask(
   const createRequirementTask = async (values: TaskFormValues) => {
     return mutation.mutateAsync({
       requirementId,
-      data: toRequirementTaskCreate({
-        ...values,
-        requirementId: String(requirementId),
-      }),
+      data: toRequirementTaskCreate(
+        {
+          ...values,
+          requirementId: String(requirementId),
+        },
+        user?.id,
+      ),
     });
   };
 

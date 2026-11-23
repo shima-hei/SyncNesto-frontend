@@ -5,8 +5,7 @@ import { useId, useLayoutEffect, useRef, useState } from "react";
 import { ConflictResolutionDialog } from "@/components/shared/dialogs/conflict-resolution-dialog";
 import { DraftRestoreDialog } from "@/components/shared/dialogs/draft-restore-dialog";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
-import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
-import { Button } from "@/components/ui/button";
+import { TaskFormActions } from "./task-form-actions";
 import { MarkdownTextarea } from "@/components/shared/forms/markdown-textarea";
 import {
   Field,
@@ -55,6 +54,10 @@ type TaskFormProps = {
   mode: "create" | "update";
   projectId: number;
   fullWidth?: boolean;
+  detailedCreate?: boolean;
+  draftScope?: string;
+  startupValues?: TaskFormValues;
+  fixedRequirementLabel?: string;
   section?: TaskEditSection;
   onCancel?: () => void;
   currentTaskId?: number;
@@ -72,6 +75,10 @@ export function TaskForm({
   mode,
   projectId,
   fullWidth = false,
+  detailedCreate = false,
+  draftScope,
+  startupValues,
+  fixedRequirementLabel,
   section,
   onCancel,
   currentTaskId,
@@ -88,8 +95,14 @@ export function TaskForm({
   const titleId = useId();
   const descriptionId = useId();
   const reasonId = useId();
-  const [values, setValues] = useState(initialValues);
+  const [values, setValues] = useState(startupValues ?? initialValues);
+  const dirty = Object.keys(initialValues).some(
+    (key) =>
+      values[key as keyof TaskFormValues] !==
+      initialValues[key as keyof TaskFormValues],
+  );
   const [errors, setErrors] = useState<TaskFormErrors>({});
+  const saving = useRef(false);
   const submittedForm = useRef<HTMLFormElement | null>(null);
   const errorStatus = useRef<HTMLDivElement>(null);
 
@@ -134,6 +147,7 @@ export function TaskForm({
     initialValues,
     values,
     onRestore: setValues,
+    draftScope,
   });
   const save = async (next: TaskFormValues, submit: TaskFormSubmit) => {
     let completed = false;
@@ -143,15 +157,21 @@ export function TaskForm({
       draft.clearDraft();
       onSuccess?.();
     };
-    await submit(next, complete);
-    complete();
+    if (saving.current) return;
+    saving.current = true;
+    try {
+      await submit(next, complete);
+      complete();
+    } finally {
+      saving.current = false;
+    }
   };
 
   const handleSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
-    if (isPending) return;
+    if (isPending || (mode === "update" && !dirty)) return;
     if (errorStatus.current) errorStatus.current.textContent = "";
 
     const result = taskSchema.safeParse(values);
@@ -273,6 +293,83 @@ export function TaskForm({
         />
       </Field>
     ) : null;
+  const typeField = (
+    <TaskTypeField
+      projectId={projectId}
+      value={values.taskType}
+      error={errors.taskType}
+      onChange={(value) => updateValue("taskType", value)}
+    />
+  );
+  const reporterField = (
+    <TaskUserSelectField
+      projectId={projectId}
+      label="報告者"
+      value={values.reporterId}
+      error={errors.reporterId}
+      placeholder={mode === "create" ? "登録者（自分）" : "未設定"}
+      onChange={(value) => updateValue("reporterId", value)}
+    />
+  );
+  const startDateField = (
+    <DateField
+      label="開始日"
+      value={values.startDate}
+      onChange={(value) => updateValue("startDate", value)}
+    />
+  );
+  const dueDateField = (
+    <DateField
+      label="終了予定日"
+      value={values.dueDate}
+      onChange={(value) => updateValue("dueDate", value)}
+    />
+  );
+  const parentField = (
+    <TaskParentSelectField
+      projectId={projectId}
+      value={values.parentTaskId}
+      error={errors.parentTaskId}
+      excludedTaskId={currentTaskId}
+      onChange={(value) => updateValue("parentTaskId", value)}
+    />
+  );
+  const requirementField = fixedRequirementLabel ? (
+    <div className="space-y-1 text-sm">
+      <p className="font-medium">関連要件</p>
+      <p className="break-words text-muted-foreground">
+        {fixedRequirementLabel}
+      </p>
+    </div>
+  ) : (
+    <TaskRequirementSelectField
+      projectId={projectId}
+      value={values.requirementId}
+      error={errors.requirementId}
+      onChange={(value) => updateValue("requirementId", value)}
+    />
+  );
+  const tagsField = (
+    <TaskTagInput
+      projectId={projectId}
+      value={values.tags}
+      error={errors.tags}
+      onChange={(value) => updateValue("tags", value)}
+    />
+  );
+  const phaseField = (
+    <TaskPhaseSelectField
+      projectId={projectId}
+      value={values.phaseAssignment}
+      retainedValue={
+        mode === "update"
+          ? (conflictValues ?? initialValues).phaseAssignment
+          : undefined
+      }
+      error={errors.phaseAssignment}
+      onChange={(value) => updateValue("phaseAssignment", value)}
+    />
+  );
   const progressField = (
     <NumberField
       label="進捗率"
@@ -293,7 +390,11 @@ export function TaskForm({
             : undefined
         }
         data-effort-pending={section === "estimate" ? isPending : undefined}
-        className={fullWidth ? "w-full" : "mx-auto w-full max-w-4xl"}
+        className={
+          fullWidth
+            ? "@container/task-form w-full"
+            : "@container/task-form mx-auto w-full max-w-4xl"
+        }
         aria-label={mode === "create" ? "タスクを作成" : "タスクの編集"}
         onSubmit={handleSubmit}
       >
@@ -307,23 +408,24 @@ export function TaskForm({
                 <Input
                   id={titleId}
                   maxLength={255}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" &&
+                      (event.nativeEvent.isComposing ||
+                        event.nativeEvent.keyCode === 229)
+                    )
+                      event.preventDefault();
+                  }}
                   value={values.title}
                   placeholder="例：ログイン画面を確認する"
                   onChange={(event) => updateValue("title", event.target.value)}
                   aria-invalid={Boolean(errors.title)}
                   aria-describedby={
-                    errors.title
-                      ? `${titleId}-hint ${titleId}-error`
-                      : `${titleId}-hint`
+                    errors.title ? `${titleId}-error` : undefined
                   }
                   aria-required
                   autoFocus={mode === "create" || section === "title"}
                 />
-                <FieldDescription id={`${titleId}-hint`}>
-                  {mode === "create"
-                    ? "タスク名だけで作成できます。ほかの項目は後から設定できます。"
-                    : "変更する項目だけ編集してください。"}
-                </FieldDescription>
                 <TaskFieldError id={titleId} error={errors.title} />
               </Field>
             )}
@@ -347,45 +449,62 @@ export function TaskForm({
             )}
             {section === "priority" && priorityField}
             {section === "assignee" && assigneeField}
+            {section === "reporter" && reporterField}
+            {section === "type" && typeField}
+            {section === "startDate" && startDateField}
+            {section === "dueDate" && dueDateField}
+            {section === "progress" && progressField}
             {(!section || section === "properties") && (
               <>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <TaskTypeField
-                    projectId={projectId}
-                    value={values.taskType}
-                    error={errors.taskType}
-                    onChange={(value) => updateValue("taskType", value)}
-                  />
+                {detailedCreate && (
+                  <h2 className="border-t pt-4 text-sm font-semibold">
+                    基本情報
+                  </h2>
+                )}
+                <div className="grid gap-4 @min-[35rem]/task-form:grid-cols-3">
+                  {typeField}
                   {statusField}
                   {priorityField}
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 @min-[35rem]/task-form:grid-cols-3">
                   {assigneeField}
-                  <DateField
-                    label="終了予定日（任意）"
-                    value={values.dueDate}
-                    onChange={(value) => updateValue("dueDate", value)}
-                  />
-                  <DateField
-                    label="開始日（任意）"
-                    value={values.startDate}
-                    onChange={(value) => updateValue("startDate", value)}
-                  />
-                  {progressField}
+                  {startDateField}
+                  {dueDateField}
+                  {!detailedCreate && progressField}
                 </div>
-                <TaskTagInput
-                  projectId={projectId}
-                  value={values.tags}
-                  error={errors.tags}
-                  onChange={(value) => updateValue("tags", value)}
-                />
+                {detailedCreate ? (
+                  <section className="space-y-4 border-t pt-4">
+                    <h2 className="text-sm font-semibold">関連情報</h2>
+                    <div className="grid items-start gap-4 @min-[29rem]/task-form:grid-cols-2">
+                      {parentField}
+                      {requirementField}
+                      {tagsField}
+                      {initialValues.phaseAssignment !== "unclassified" &&
+                        phaseField}
+                      {values.requirementId && (
+                        <TaskSelectField
+                          label="関連種別"
+                          value={values.relationType}
+                          options={TASK_RELATION_TYPE_OPTIONS}
+                          onChange={(value) =>
+                            updateValue("relationType", value)
+                          }
+                        />
+                      )}
+                    </div>
+                  </section>
+                ) : (
+                  tagsField
+                )}
                 {reasonField}
                 <details
                   open={section === "properties" || undefined}
-                  className="rounded-lg border p-4"
+                  className={
+                    detailedCreate ? "border-t pt-4" : "rounded-lg border p-4"
+                  }
                 >
                   <summary className="cursor-pointer font-medium focus-visible:outline-2 focus-visible:outline-ring">
-                    関連・管理項目
+                    {detailedCreate ? "その他の項目" : "関連・管理項目"}
                   </summary>
                   <FieldGroup className="pt-4">
                     <Field data-invalid={errors.taskCode ? true : undefined}>
@@ -415,31 +534,11 @@ export function TaskForm({
                       <TaskFieldError id={taskCodeId} error={errors.taskCode} />
                     </Field>
 
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <TaskUserSelectField
-                        projectId={projectId}
-                        label="報告者"
-                        value={values.reporterId}
-                        error={errors.reporterId}
-                        onChange={(value) => updateValue("reporterId", value)}
-                      />
-                      <TaskParentSelectField
-                        projectId={projectId}
-                        value={values.parentTaskId}
-                        error={errors.parentTaskId}
-                        excludedTaskId={currentTaskId}
-                        onChange={(value) => updateValue("parentTaskId", value)}
-                      />
-                      {mode === "create" ? (
-                        <TaskRequirementSelectField
-                          projectId={projectId}
-                          value={values.requirementId}
-                          error={errors.requirementId}
-                          onChange={(value) =>
-                            updateValue("requirementId", value)
-                          }
-                        />
-                      ) : null}
+                    <div className="grid gap-4 @min-[29rem]/task-form:grid-cols-2">
+                      {reporterField}
+                      {!detailedCreate && parentField}
+                      {!detailedCreate && mode === "create" && requirementField}
+                      {detailedCreate && progressField}
                     </div>
 
                     <NumberField
@@ -448,7 +547,10 @@ export function TaskForm({
                       error={errors.sortOrder}
                       onChange={(value) => updateValue("sortOrder", value)}
                     />
-                    {mode === "create" ? (
+                    {detailedCreate &&
+                      initialValues.phaseAssignment === "unclassified" &&
+                      phaseField}
+                    {mode === "create" && !detailedCreate ? (
                       <TaskSelectField
                         label="関連種別"
                         value={values.relationType}
@@ -469,7 +571,7 @@ export function TaskForm({
                   error={errors.actualMinutes}
                   onChange={(v) => updateValue("actualMinutes", v)}
                 />
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 @min-[29rem]/task-form:grid-cols-2">
                   <DateField
                     label="実績開始日"
                     value={values.actualStartDate}
@@ -499,14 +601,7 @@ export function TaskForm({
             )}
             {section === "estimate" && (
               <>
-                <TaskPhaseSelectField
-                  projectId={projectId}
-                  value={values.phaseAssignment}
-                  retainedValue={
-                    (conflictValues ?? initialValues).phaseAssignment
-                  }
-                  onChange={(v) => updateValue("phaseAssignment", v)}
-                />
+                {phaseField}
                 <TaskSelectField
                   label="見積工数の集計根拠"
                   value={values.estimatedBasis}
@@ -529,30 +624,24 @@ export function TaskForm({
                 下書きを保存できません。画面を閉じる前に入力内容を控えてください。
               </p>
             ) : null}
-            <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-              <FormSubmitButton isPending={isPending}>
-                {mode === "create" ? "タスクを作成" : "保存"}
-              </FormSubmitButton>
-              {onCancel && (
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => {
-                    draft.clearDraft();
-                    onCancel();
-                  }}
-                >
-                  取消
-                </Button>
-              )}
-            </div>
+            <TaskFormActions
+              submitLabel={mode === "create" ? "タスクを作成" : "変更を保存"}
+              isPending={isPending}
+              disabled={mode === "update" && !dirty}
+              onCancel={
+                onCancel &&
+                (() => {
+                  draft.clearDraft();
+                  onCancel();
+                })
+              }
+            />
           </FieldGroup>
         </fieldset>
       </form>
 
       <DraftRestoreDialog
-        open={Boolean(draft.pendingDraft)}
+        open={!startupValues && Boolean(draft.pendingDraft)}
         updatedAt={draft.pendingDraft?.updatedAt}
         onRestore={draft.restoreDraft}
         onDiscard={draft.discardDraft}

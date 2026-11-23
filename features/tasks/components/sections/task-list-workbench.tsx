@@ -11,7 +11,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { TaskListDraftNotice } from "./task-list-quick-edit";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
-import { LoadingState } from "@/components/shared/feedback/loading-state";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import { useTaskOrigin } from "@/hooks/use-task-origin";
@@ -21,6 +20,7 @@ import type { ListTasksProjectsProjectIdTasksGetParams } from "@/lib/api/generat
 import { useTasks } from "../../hooks/use-tasks";
 import { useTaskTree } from "../../hooks/use-task-tree";
 import { useBulkUpdateTasks } from "../../hooks/use-bulk-update-tasks";
+import type { TaskListColumn } from "../../lib/task-list-columns";
 import { taskQueryHasFilters } from "../../lib/task-tree";
 import { NO_BULK_STATUS_CHANGE } from "../../constants/task-view-options";
 import { TaskBulkActions } from "../pages/controls/task-bulk-actions";
@@ -37,7 +37,7 @@ export function TaskListWorkbench({
   navigationGuardRef,
   enabled,
   selectionResetRef,
-  toolbar,
+  columns,
   renderCreate,
 }: {
   projectId: number;
@@ -47,7 +47,7 @@ export function TaskListWorkbench({
   navigationGuardRef: RefObject<(action: () => void) => void>;
   enabled: boolean;
   selectionResetRef: RefObject<() => void>;
-  toolbar?: ReactNode;
+  columns: TaskListColumn[];
   renderCreate: (visibleIds?: number[]) => ReactNode;
 }) {
   const params = useSearchParams();
@@ -154,6 +154,11 @@ export function TaskListWorkbench({
         ? [...new Set([...current, ...selectable.map((task) => task.id)])]
         : current.filter((id) => !selectable.some((task) => task.id === id)),
     );
+  const detailHref = (id: number, returnTo: string) =>
+    withOrigin(
+      withListReturn(`/projects/joined/${projectId}/tasks/${id}`, returnTo),
+    );
+  const listHref = `/projects/joined/${projectId}/tasks${params.size ? `?${params}` : ""}`;
   const openFull = (id: number) => {
     editor.guard(() => {
       const url = new URL(window.location.href);
@@ -163,14 +168,7 @@ export function TaskListWorkbench({
         "",
         `${url.pathname}${url.search}${url.hash}`,
       );
-      router.push(
-        withOrigin(
-          withListReturn(
-            `/projects/joined/${projectId}/tasks/${id}`,
-            `${url.pathname}${url.search}`,
-          ),
-        ),
-      );
+      router.push(detailHref(id, `${url.pathname}${url.search}`));
     });
   };
   const bulkApply = async () => {
@@ -198,12 +196,6 @@ export function TaskListWorkbench({
         aria-label="タスク一覧"
         className="flex min-w-0 flex-col gap-3"
       >
-        {enabled &&
-          renderCreate(
-            busy || isFetching || error
-              ? undefined
-              : taskRows.map((row) => row.task.id),
-          )}
         {!activeId || error ? <TaskListDraftNotice editor={editor} /> : null}
         {canUpdate && !busy && !error ? (
           <TaskBulkActions
@@ -255,9 +247,6 @@ export function TaskListWorkbench({
               {isFetching ? " · 更新中" : ""}
             </p>
           ) : null}
-          <div className="flex max-w-full flex-wrap items-end gap-2">
-            {toolbar}
-          </div>
         </div>
         {error ? (
           <DataLoadError
@@ -265,43 +254,53 @@ export function TaskListWorkbench({
             isRetrying={isFetching}
             onRetry={() => void refetch()}
           />
-        ) : busy ? (
-          <LoadingState message="タスクの表示範囲を確認しています。" />
-        ) : (
+        ) : null}
+        {!error && !busy && tree.parentLoading && (
+          <p role="status" className="text-sm text-muted-foreground">
+            親の文脈を読み込んでいます…
+          </p>
+        )}
+        {!error && !busy && tree.parentErrors.length > 0 && (
+          <DataLoadError resourceName="親の文脈" onRetry={tree.retryParents} />
+        )}
+        <TaskTreeTable
+          projectId={projectId}
+          rows={busy || error ? [] : tree.rows}
+          expanded={tree.expanded}
+          contextIds={tree.state.context}
+          filtered={filtered}
+          canUpdate={canUpdate}
+          selectedIds={selectedIds}
+          activeId={activeId}
+          columns={columns}
+          createRow={
+            enabled
+              ? renderCreate(
+                  busy || isFetching || error
+                    ? undefined
+                    : taskRows.map((row) => row.task.id),
+                )
+              : null
+          }
+          detailHref={(id) => detailHref(id, listHref)}
+          onNavigate={openFull}
+          onSelect={selectTask}
+          onToggle={tree.toggle}
+          onContext={tree.context}
+          onMore={tree.more}
+          onRetry={tree.retry}
+          onCheck={check}
+          onCheckAll={checkAll}
+          emptyMessage={
+            busy
+              ? "タスクを読み込んでいます…"
+              : error
+                ? "タスクを取得できませんでした。"
+                : undefined
+          }
+        />
+        {!error && !busy && (
           <>
-            {tree.parentLoading ? (
-              <p role="status" className="text-sm text-muted-foreground">
-                親の文脈を読み込んでいます…
-              </p>
-            ) : null}
-            {tree.parentErrors.length ? (
-              <DataLoadError
-                resourceName="親の文脈"
-                onRetry={tree.retryParents}
-              />
-            ) : null}
-            <p className="text-xs text-muted-foreground xl:hidden">
-              横にスクロールすると、状態・進捗・担当・期限などを確認できます。
-            </p>
-            <TaskTreeTable
-              projectId={projectId}
-              rows={tree.rows}
-              expanded={tree.expanded}
-              contextIds={tree.state.context}
-              filtered={filtered}
-              canUpdate={canUpdate}
-              selectedIds={selectedIds}
-              activeId={activeId}
-              showDetails
-              showProgress
-              onSelect={selectTask}
-              onToggle={tree.toggle}
-              onContext={tree.context}
-              onMore={tree.more}
-              onRetry={tree.retry}
-              onCheck={check}
-              onCheckAll={checkAll}
-            />
             <p className="text-xs text-muted-foreground">
               {filtered
                 ? "条件に一致したタスク20件単位。文脈行は一致件数に加算しません。"

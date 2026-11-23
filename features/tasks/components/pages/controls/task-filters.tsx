@@ -55,6 +55,7 @@ export function TaskFilters({
   extraAdvancedCount = 0,
   compact = false,
   help,
+  toolbarAction,
 }: {
   searchInput: string;
   status: TaskStatusFilter;
@@ -80,20 +81,20 @@ export function TaskFilters({
   extraAdvancedCount?: number;
   compact?: boolean;
   help?: ReactNode;
+  toolbarAction?: ReactNode;
 }) {
   const advancedId = useId();
   const taskTypes = useTaskTypes();
   const keywordId = useId();
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const advancedCount =
-    [
-      priority !== ALL_PRIORITIES,
-      taskType !== ALL_TYPES,
-      overdue !== ALL_OVERDUE,
-      Boolean(tag),
-      Boolean(startDateFrom),
-      Boolean(dueDateTo),
-    ].filter(Boolean).length + extraAdvancedCount;
+  const advancedCount = [
+    priority !== ALL_PRIORITIES,
+    taskType !== ALL_TYPES,
+    overdue !== ALL_OVERDUE,
+    Boolean(tag),
+    Boolean(startDateFrom),
+    Boolean(dueDateTo),
+  ].filter(Boolean).length;
 
   const advancedTrigger = (
     <Button
@@ -106,11 +107,11 @@ export function TaskFilters({
     >
       <SlidersHorizontalIcon data-icon="inline-start" aria-hidden="true" />
       {compact ? "絞り込み" : "詳細条件"}
-      {advancedCount
-        ? compact
-          ? `（詳細${advancedCount}件）`
-          : `（${advancedCount}件適用中）`
-        : ""}
+      {compact && extraAdvancedCount
+        ? `（${extraAdvancedCount}）`
+        : !compact && advancedCount
+          ? `（${advancedCount}件適用中）`
+          : ""}
     </Button>
   );
 
@@ -124,55 +125,61 @@ export function TaskFilters({
     >
       {compact ? (
         <>
-          <form
-            aria-label="キーワード検索"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onSearch();
-            }}
-          >
-            <FieldGroup className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
-              <Field>
-                <FieldLabel htmlFor={keywordId}>キーワード</FieldLabel>
+          <div className="flex flex-wrap items-center gap-2">
+            <form
+              className="flex min-w-0 max-w-md flex-1 basis-56 items-center gap-1"
+              aria-label="キーワード検索"
+              onSubmit={(event) => {
+                event.preventDefault();
+                onSearch();
+              }}
+            >
+              <Field className="min-w-0">
+                <FieldLabel className="sr-only" htmlFor={keywordId}>
+                  キーワード
+                </FieldLabel>
                 <Input
                   id={keywordId}
+                  className="h-8"
                   value={searchInput}
                   placeholder="コード・名称・説明で検索"
                   onChange={(event) => onSearchInputChange(event.target.value)}
                 />
               </Field>
-              <Button type="submit" variant="outline">
-                <SearchIcon data-icon="inline-start" />
-                検索
+              <Button
+                type="submit"
+                variant="outline"
+                size="icon-sm"
+                aria-label="検索"
+                title="検索"
+              >
+                <SearchIcon />
               </Button>
-              {advancedTrigger}
-              {help ? (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="絞り込みの使い方"
-                    >
-                      <CircleHelpIcon />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="end"
-                    className="w-80 max-w-[calc(100vw-2rem)]"
+            </form>
+            {advancedTrigger}
+            {toolbarAction}
+            {help ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="絞り込みの使い方"
                   >
-                    <PopoverTitle>検索・絞り込みの使い方</PopoverTitle>
-                    {help}
-                  </PopoverContent>
-                </Popover>
-              ) : null}
-            </FieldGroup>
-          </form>
-          <FieldGroup className="grid gap-2 sm:grid-cols-2">
-            <TaskStatusFilterControl value={status} onChange={onStatusChange} />
-            {basicExtra}
-          </FieldGroup>
+                    <CircleHelpIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  className="w-80 max-w-[calc(100vw-2rem)]"
+                >
+                  <PopoverTitle>検索・絞り込みの使い方</PopoverTitle>
+                  {help}
+                </PopoverContent>
+              </Popover>
+            ) : null}
+          </div>
         </>
       ) : (
         <SearchFilterBar
@@ -202,71 +209,93 @@ export function TaskFilters({
         className={
           isAdvancedOpen
             ? compact
-              ? "grid gap-3 rounded-lg border p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              ? "grid gap-3 border-y py-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               : "grid gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             : "hidden"
         }
       >
-        {advancedExtra}
-        <TaskFilterSelect
-          label="優先度"
-          value={priority}
-          placeholder="優先度を選択"
-          allValue={ALL_PRIORITIES}
-          allLabel="すべての優先度"
-          options={TASK_PRIORITY_OPTIONS}
-          onValueChange={onPriorityChange}
-        />
-        <TaskFilterSelect
-          label="種別"
-          value={taskType}
-          placeholder="種別を選択"
-          allValue={ALL_TYPES}
-          allLabel="すべての種別"
-          options={taskTypes.options(
-            taskType === ALL_TYPES ? undefined : taskType,
-            true,
-          )}
-          onValueChange={onTaskTypeChange}
-        />
-        <TaskFilterSelect
-          label="期限"
-          value={overdue}
-          placeholder="期限を選択"
-          allValue={ALL_OVERDUE}
-          allLabel="すべての期限"
-          options={[{ value: "overdue", label: "期限超過" }]}
-          onValueChange={onOverdueChange}
-        />
-        <Field>
-          <FieldLabel htmlFor="task-list-tag-filter">タグ</FieldLabel>
-          <Input
-            id="task-list-tag-filter"
-            value={tag}
-            placeholder="タグで絞り込み"
-            onChange={(event) => onTagChange(event.target.value)}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="task-list-start-date-filter">開始日</FieldLabel>
-          <Input
-            id="task-list-start-date-filter"
-            type="date"
-            value={startDateFrom}
-            onChange={(event) => onStartDateFromChange(event.target.value)}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="task-list-due-date-filter">
-            終了予定日
-          </FieldLabel>
-          <Input
-            id="task-list-due-date-filter"
-            type="date"
-            value={dueDateTo}
-            onChange={(event) => onDueDateToChange(event.target.value)}
-          />
-        </Field>
+        {isAdvancedOpen && (
+          <>
+            {compact && (
+              <>
+                <TaskStatusFilterControl
+                  value={status}
+                  onChange={onStatusChange}
+                />
+                {basicExtra}
+                <TaskFilterSelect
+                  label="並び順"
+                  value={sort}
+                  placeholder="並び順を選択"
+                  options={SORT_OPTIONS}
+                  onValueChange={onSortChange}
+                />
+              </>
+            )}
+            {advancedExtra}
+            <TaskFilterSelect
+              label="優先度"
+              value={priority}
+              placeholder="優先度を選択"
+              allValue={ALL_PRIORITIES}
+              allLabel="すべての優先度"
+              options={TASK_PRIORITY_OPTIONS}
+              onValueChange={onPriorityChange}
+            />
+            <TaskFilterSelect
+              label="種別"
+              value={taskType}
+              placeholder="種別を選択"
+              allValue={ALL_TYPES}
+              allLabel="すべての種別"
+              options={taskTypes.options(
+                taskType === ALL_TYPES ? undefined : taskType,
+                true,
+              )}
+              onValueChange={onTaskTypeChange}
+            />
+            <TaskFilterSelect
+              label="期限"
+              value={overdue}
+              placeholder="期限を選択"
+              allValue={ALL_OVERDUE}
+              allLabel="すべての期限"
+              options={[{ value: "overdue", label: "期限超過" }]}
+              onValueChange={onOverdueChange}
+            />
+            <Field>
+              <FieldLabel htmlFor="task-list-tag-filter">タグ</FieldLabel>
+              <Input
+                id="task-list-tag-filter"
+                value={tag}
+                placeholder="タグで絞り込み"
+                onChange={(event) => onTagChange(event.target.value)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="task-list-start-date-filter">
+                開始日
+              </FieldLabel>
+              <Input
+                id="task-list-start-date-filter"
+                type="date"
+                value={startDateFrom}
+                onChange={(event) => onStartDateFromChange(event.target.value)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="task-list-due-date-filter">
+                終了予定日
+              </FieldLabel>
+              <Input
+                id="task-list-due-date-filter"
+                type="date"
+                value={dueDateTo}
+                onChange={(event) => onDueDateToChange(event.target.value)}
+              />
+            </Field>
+          </>
+        )}
       </FieldGroup>
     </div>
   );
