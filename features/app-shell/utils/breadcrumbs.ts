@@ -40,6 +40,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   joined: "プロジェクト",
   management: "プロジェクト管理",
   members: "メンバー",
+  navigation: "案件メニュー設定",
   notifications: "通知",
   organization: "組織",
   tenants: "全体の組織管理",

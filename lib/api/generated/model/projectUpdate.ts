@@ -4,12 +4,14 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProjectNavigation } from "./projectNavigation";
 
 /**
  * プロジェクト更新リクエストで受け取るschema。
  */
 export interface ProjectUpdate {
   version: number;
+  navigation?: ProjectNavigation | null;
   project_code?: string | null;
   name?: string | null;
   description?: string | null;

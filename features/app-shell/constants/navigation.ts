@@ -1,6 +1,7 @@
 import {
   FolderKanbanIcon,
   HomeIcon,
+  ListTodoIcon,
   SearchIcon,
   SettingsIcon,
   UsersIcon,
@@ -32,14 +33,19 @@ export const mainNavigation: AppNavigationItem[] = [
     icon: HomeIcon,
   },
   {
-    title: "横断検索",
-    href: "/search",
-    icon: SearchIcon,
-  },
-  {
-    title: "プロジェクト",
+    title: "案件",
     href: "/projects/joined",
     icon: FolderKanbanIcon,
+  },
+  {
+    title: "自分の作業",
+    href: "/#my-work",
+    icon: ListTodoIcon,
+  },
+  {
+    title: "検索",
+    href: "/search",
+    icon: SearchIcon,
   },
 ];
 
@@ -63,5 +69,3 @@ export const managementNavigation: AppNavigationItem[] = [
     requiredSystemRoles: [SYSTEM_ROLE_KEYS.systemAdmin],
   },
 ];
-
-export const secondaryNavigation: AppNavigationItem[] = [];

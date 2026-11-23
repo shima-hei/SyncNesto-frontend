@@ -56,20 +56,20 @@ const { getBreadcrumbItems } = load(
 test("daily navigation is direct and keeps existing routes", () => {
   assert.equal(
     mainNavigation.map((item) => `${item.title}:${item.href}`).join(","),
-    "ホーム:/,横断検索:/search,プロジェクト:/projects/joined",
+    "ホーム:/,案件:/projects/joined,自分の作業:/#my-work,検索:/search",
   );
   assert.equal(
     mainNavigation.some((item) => item.children?.length),
     false,
   );
+  const projects = mainNavigation.find(
+    (item) => item.href === "/projects/joined",
+  );
   assert.equal(
-    isNavigationItemActive(mainNavigation[2], "/projects/joined/7/tasks/12"),
+    isNavigationItemActive(projects, "/projects/joined/7/tasks/12"),
     true,
   );
-  assert.equal(
-    isNavigationItemActive(mainNavigation[2], "/projects/management"),
-    false,
-  );
+  assert.equal(isNavigationItemActive(projects, "/projects/management"), false);
 });
 
 test("project roles do not expose system management navigation", () => {
