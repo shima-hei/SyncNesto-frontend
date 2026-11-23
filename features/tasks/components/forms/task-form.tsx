@@ -514,7 +514,6 @@ export function TaskForm({
                       <Input
                         id={taskCodeId}
                         value={values.taskCode}
-                        placeholder="TASK-001"
                         readOnly={mode === "update"}
                         onChange={(event) => {
                           if (mode === "create") {
@@ -528,7 +527,7 @@ export function TaskForm({
                       />
                       {mode === "create" ? (
                         <FieldDescription>
-                          未入力の場合は自動採番されます。
+                          未入力の場合は種別に応じて自動採番されます。
                         </FieldDescription>
                       ) : null}
                       <TaskFieldError id={taskCodeId} error={errors.taskCode} />

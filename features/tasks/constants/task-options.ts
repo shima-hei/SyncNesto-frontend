@@ -1,5 +1,5 @@
 export const TASK_TYPE_OPTIONS = [
-  { value: "other", label: "タスク（一般）" },
+  { value: "other", label: "タスク" },
   { value: "bug", label: "不具合" },
   { value: "frontend", label: "フロントエンド" },
   { value: "backend", label: "バックエンド" },
