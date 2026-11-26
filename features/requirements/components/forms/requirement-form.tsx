@@ -1,5 +1,6 @@
 "use client";
 
+import { LinkTextarea } from "@/components/shared/smart-links/link-textarea";
 import { useId, useRef, useState } from "react";
 import { initialRequirementValues } from "../../constants/requirement-form";
 import { useListNavigation } from "@/hooks/use-list-navigation";
@@ -280,7 +281,7 @@ export function RequirementForm({
                 <FieldLabel htmlFor={descriptionId}>
                   要件の内容（任意）
                 </FieldLabel>
-                <Textarea
+                <LinkTextarea
                   id={descriptionId}
                   name="description"
                   className="min-h-32"
@@ -289,9 +290,7 @@ export function RequirementForm({
                   value={values.description}
                   aria-describedby={`${descriptionId}-help`}
                   placeholder="例：利用者は登録済みのメールアドレスとパスワードを使ってログインできる…"
-                  onChange={(event) =>
-                    updateValue("description", event.target.value)
-                  }
+                  onValueChange={(value) => updateValue("description", value)}
                 />
                 <FieldDescription id={`${descriptionId}-help`}>
                   誰が、どの場面で、何をできる必要があるかを記入します。
@@ -301,7 +300,7 @@ export function RequirementForm({
                 <FieldLabel htmlFor={acceptanceCriteriaId}>
                   受け入れ条件（任意）
                 </FieldLabel>
-                <Textarea
+                <LinkTextarea
                   id={acceptanceCriteriaId}
                   name="acceptanceCriteria"
                   className="min-h-24"
@@ -310,8 +309,8 @@ export function RequirementForm({
                   value={values.acceptanceCriteria}
                   aria-describedby={`${acceptanceCriteriaId}-help`}
                   placeholder="例：正しい情報でログインするとホーム画面が開く。誤った情報ではエラーが表示される…"
-                  onChange={(event) =>
-                    updateValue("acceptanceCriteria", event.target.value)
+                  onValueChange={(value) =>
+                    updateValue("acceptanceCriteria", value)
                   }
                 />
                 <FieldDescription id={`${acceptanceCriteriaId}-help`}>

@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { RequirementDocumentRead } from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { cn } from "@/lib/utils";
+import { selectedTextForLinkSource } from "@/lib/smart-links/quote";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { CommentIconButton } from "@/components/shared/comments/comment-thread-actions";
@@ -866,7 +867,9 @@ function ReviewablePreviewBlock({
   const handleMouseUp = async (event: React.MouseEvent<HTMLElement>) => {
     const selection = window.getSelection();
     const currentTarget = event.currentTarget;
-    const rawQuote = selection?.toString();
+    const rawQuote =
+      selectedTextForLinkSource(currentTarget, sourceText, selection) ??
+      selection?.toString();
     const quote = rawQuote?.trim();
 
     if (

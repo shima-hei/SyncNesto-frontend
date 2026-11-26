@@ -1,5 +1,6 @@
 "use client";
 
+import { reconcileMentions } from "@/lib/comments/mentions";
 import { useId, useState } from "react";
 import { useWorkbenchState } from "../../hooks/use-workbench-state";
 
@@ -191,12 +192,22 @@ export function RequirementTargetCommentForm({
           <FormApiError error={error} />
           <CommentComposeTools
             media={media}
-            onInsertLink={(url) =>
+            body={values.body}
+            editor={() =>
+              document.getElementById(bodyId) as HTMLTextAreaElement | null
+            }
+            onLinkChange={({ value, start, end }) => {
               setValues((current) => ({
                 ...current,
-                body: current.body + (current.body.trim() ? "\n" : "") + url,
-              }))
-            }
+                body: value,
+                mentions: reconcileMentions(
+                  current.body,
+                  value,
+                  current.mentions ?? [],
+                  { start, end },
+                ),
+              }));
+            }}
             onMention={() => {
               setValues((current) => ({
                 ...current,

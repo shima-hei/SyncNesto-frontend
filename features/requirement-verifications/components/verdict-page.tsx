@@ -454,7 +454,11 @@ function VerdictBody({
             <div className="flex flex-col gap-3 py-3">
               {["description", "acceptance_criteria"].map((key) =>
                 label(subject[key]) ? (
-                  <MarkdownPreview key={key} value={label(subject[key])} />
+                  <MarkdownPreview
+                    liveLinks={false}
+                    key={key}
+                    value={label(subject[key])}
+                  />
                 ) : null,
               )}
             </div>
@@ -480,12 +484,19 @@ function VerdictBody({
                       </AlertDescription>
                     </Alert>
                   ) : null}
-                  <MarkdownPreview value={label(entry.reason)} />
+                  <MarkdownPreview
+                    liveLinks={false}
+                    value={label(entry.reason)}
+                  />
                   {label(entry.checked_content) ? (
-                    <MarkdownPreview value={label(entry.checked_content)} />
+                    <MarkdownPreview
+                      liveLinks={false}
+                      value={label(entry.checked_content)}
+                    />
                   ) : null}
                   {label(execution.actual_result ?? entry.actual_result) ? (
                     <MarkdownPreview
+                      liveLinks={false}
                       value={label(
                         execution.actual_result ?? entry.actual_result,
                       )}

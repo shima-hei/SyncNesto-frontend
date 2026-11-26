@@ -15,7 +15,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { LinkedText } from "@/components/shared/smart-links/linked-text";
+import { LinkTextarea } from "@/components/shared/smart-links/link-textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -112,25 +113,18 @@ export function TextField({
       </div>
       {readOnly ? (
         <p className="min-h-8 whitespace-pre-wrap break-words text-sm">
-          {link && value && /^https?:\/\//i.test(value) ? (
-            <a
-              href={value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-4"
-            >
-              {value}
-            </a>
+          {value && (link || multiline) ? (
+            <LinkedText text={value} />
           ) : (
             value || "未記入"
           )}
         </p>
       ) : multiline ? (
-        <Textarea
+        <LinkTextarea
           id={`${id}-input`}
           name={path}
           value={value ?? ""}
-          onChange={(e) => onChange?.(e.target.value)}
+          onValueChange={(value) => onChange?.(value)}
           placeholder={placeholder}
           maxLength={maxLength}
           rows={3}

@@ -157,6 +157,7 @@ export function PublicNode({
             >
               {typeof value === "string" ? (
                 <MarkdownPreview
+                  liveLinks={false}
                   inert
                   className={
                     reader

@@ -4,31 +4,67 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
 import type {
+  FindSmartLinksSearchSmartLinksGetParams,
   HTTPValidationError,
   SearchProjectsRead,
   SearchProjectsSearchProjectsGetParams,
   SearchRead,
   SearchResourcesSearchGetParams,
+  SmartLinkRead,
+  SmartLinkResolve,
 } from "../model";
 
 import { apiClient } from "../../client";
-import type { ErrorType } from "../../client";
+import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
 
 const withQueryKey = <T extends object, K>(
   query: T,
@@ -47,6 +83,317 @@ const withQueryKey = <T extends object, K>(
   }
   return result;
 };
+
+export const getResolveSmartLinksSearchSmartLinksResolvePostUrl = () => {
+  return `/search/smart-links/resolve`;
+};
+
+/**
+ * 公開情報とは分離し、認可済みのタイトルまたは概要を返す。
+ * @summary Resolve Smart Links
+ */
+export const resolveSmartLinksSearchSmartLinksResolvePost = async (
+  smartLinkResolve: SmartLinkResolve,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<SmartLinkRead[]> => {
+  return apiClient<SmartLinkRead[]>(
+    getResolveSmartLinksSearchSmartLinksResolvePostUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: getHeaders(
+        { "Content-Type": "application/json" },
+        options?.headers,
+      ),
+      body: JSON.stringify(smartLinkResolve),
+    },
+  );
+};
+
+export const getResolveSmartLinksSearchSmartLinksResolvePostMutationKey = () =>
+  ["resolveSmartLinksSearchSmartLinksResolvePost"] as const;
+
+export const getResolveSmartLinksSearchSmartLinksResolvePostMutationOptions = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resolveSmartLinksSearchSmartLinksResolvePost>>,
+    TError,
+    ResolveSmartLinksSearchSmartLinksResolvePostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiClient>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resolveSmartLinksSearchSmartLinksResolvePost>>,
+  TError,
+  ResolveSmartLinksSearchSmartLinksResolvePostMutationVariables,
+  TContext
+> => {
+  const mutationKey =
+    getResolveSmartLinksSearchSmartLinksResolvePostMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resolveSmartLinksSearchSmartLinksResolvePost>>,
+    ResolveSmartLinksSearchSmartLinksResolvePostMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return resolveSmartLinksSearchSmartLinksResolvePost(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResolveSmartLinksSearchSmartLinksResolvePostMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof resolveSmartLinksSearchSmartLinksResolvePost>>
+  >;
+export type ResolveSmartLinksSearchSmartLinksResolvePostMutationBody =
+  BodyType<SmartLinkResolve>;
+export type ResolveSmartLinksSearchSmartLinksResolvePostMutationError =
+  ErrorType<HTTPValidationError>;
+export type ResolveSmartLinksSearchSmartLinksResolvePostMutationVariables = {
+  data: BodyType<SmartLinkResolve>;
+};
+
+/**
+ * 公開情報とは分離し、認可済みのタイトルまたは概要を返す。
+ * @summary Resolve Smart Links
+ */
+export const useResolveSmartLinksSearchSmartLinksResolvePost = <
+  TError = ErrorType<HTTPValidationError>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resolveSmartLinksSearchSmartLinksResolvePost>>,
+      TError,
+      ResolveSmartLinksSearchSmartLinksResolvePostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resolveSmartLinksSearchSmartLinksResolvePost>>,
+  TError,
+  ResolveSmartLinksSearchSmartLinksResolvePostMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getResolveSmartLinksSearchSmartLinksResolvePostMutationOptions(options),
+    queryClient,
+  );
+};
+export const getFindSmartLinksSearchSmartLinksGetUrl = (
+  params: FindSmartLinksSearchSmartLinksGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/search/smart-links?${stringifiedParams}`
+    : `/search/smart-links`;
+};
+
+/**
+ * 文章に挿入できる成果物を名称と表示IDで検索する。
+ * @summary Find Smart Links
+ */
+export const findSmartLinksSearchSmartLinksGet = async (
+  params: FindSmartLinksSearchSmartLinksGetParams,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<SmartLinkRead[]> => {
+  return apiClient<SmartLinkRead[]>(
+    getFindSmartLinksSearchSmartLinksGetUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getFindSmartLinksSearchSmartLinksGetQueryKey = (
+  params?: FindSmartLinksSearchSmartLinksGetParams,
+) => {
+  return [`/search/smart-links`, ...(params ? [params] : [])] as const;
+};
+
+export const getFindSmartLinksSearchSmartLinksGetQueryOptions = <
+  TData = Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: FindSmartLinksSearchSmartLinksGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getFindSmartLinksSearchSmartLinksGetQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>
+  > = ({ signal }) =>
+    findSmartLinksSearchSmartLinksGet(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type FindSmartLinksSearchSmartLinksGetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>
+>;
+export type FindSmartLinksSearchSmartLinksGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 文章に挿入できる成果物を名称と表示IDで検索する。
+ * @summary Find Smart Links
+ */
+export function useFindSmartLinksSearchSmartLinksGet<
+  TData = Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: FindSmartLinksSearchSmartLinksGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+          TError,
+          Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 文章に挿入できる成果物を名称と表示IDで検索する。
+ * @summary Find Smart Links
+ */
+export function useFindSmartLinksSearchSmartLinksGet<
+  TData = Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: FindSmartLinksSearchSmartLinksGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+          TError,
+          Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 文章に挿入できる成果物を名称と表示IDで検索する。
+ * @summary Find Smart Links
+ */
+export function useFindSmartLinksSearchSmartLinksGet<
+  TData = Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: FindSmartLinksSearchSmartLinksGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 文章に挿入できる成果物を名称と表示IDで検索する。
+ * @summary Find Smart Links
+ */
+export function useFindSmartLinksSearchSmartLinksGet<
+  TData = Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: FindSmartLinksSearchSmartLinksGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof findSmartLinksSearchSmartLinksGet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getFindSmartLinksSearchSmartLinksGetQueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export const getSearchResourcesSearchGetUrl = (
   params: SearchResourcesSearchGetParams,
@@ -124,6 +471,10 @@ export type SearchResourcesSearchGetQueryResult = NonNullable<
 >;
 export type SearchResourcesSearchGetQueryError = ErrorType<HTTPValidationError>;
 
+/**
+ * 所属内の種類別閲覧権限を満たす業務データを検索する。
+ * @summary Search Resources
+ */
 export function useSearchResourcesSearchGet<
   TData = Awaited<ReturnType<typeof searchResourcesSearchGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -151,6 +502,10 @@ export function useSearchResourcesSearchGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 所属内の種類別閲覧権限を満たす業務データを検索する。
+ * @summary Search Resources
+ */
 export function useSearchResourcesSearchGet<
   TData = Awaited<ReturnType<typeof searchResourcesSearchGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -178,6 +533,10 @@ export function useSearchResourcesSearchGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 所属内の種類別閲覧権限を満たす業務データを検索する。
+ * @summary Search Resources
+ */
 export function useSearchResourcesSearchGet<
   TData = Awaited<ReturnType<typeof searchResourcesSearchGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -198,9 +557,9 @@ export function useSearchResourcesSearchGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 所属内の種類別閲覧権限を満たす業務データを検索する。
  * @summary Search Resources
  */
-
 export function useSearchResourcesSearchGet<
   TData = Awaited<ReturnType<typeof searchResourcesSearchGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -311,6 +670,10 @@ export type SearchProjectsSearchProjectsGetQueryResult = NonNullable<
 export type SearchProjectsSearchProjectsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 検索できる案件を名前・コードで選択する候補を返す。
+ * @summary Search Projects
+ */
 export function useSearchProjectsSearchProjectsGet<
   TData = Awaited<ReturnType<typeof searchProjectsSearchProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -338,6 +701,10 @@ export function useSearchProjectsSearchProjectsGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 検索できる案件を名前・コードで選択する候補を返す。
+ * @summary Search Projects
+ */
 export function useSearchProjectsSearchProjectsGet<
   TData = Awaited<ReturnType<typeof searchProjectsSearchProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -365,6 +732,10 @@ export function useSearchProjectsSearchProjectsGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 検索できる案件を名前・コードで選択する候補を返す。
+ * @summary Search Projects
+ */
 export function useSearchProjectsSearchProjectsGet<
   TData = Awaited<ReturnType<typeof searchProjectsSearchProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -385,9 +756,9 @@ export function useSearchProjectsSearchProjectsGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 検索できる案件を名前・コードで選択する候補を返す。
  * @summary Search Projects
  */
-
 export function useSearchProjectsSearchProjectsGet<
   TData = Awaited<ReturnType<typeof searchProjectsSearchProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,

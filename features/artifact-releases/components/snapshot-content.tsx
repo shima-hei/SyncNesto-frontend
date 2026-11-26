@@ -77,6 +77,7 @@ export function SnapshotNode({ node }: { node: ArtifactNodeRead }) {
                   <dt className="text-xs text-muted-foreground">{label}</dt>
                   <dd className="text-sm">
                     <MarkdownPreview
+                      liveLinks={false}
                       className="min-h-0"
                       value={String(node.payload[key])}
                     />

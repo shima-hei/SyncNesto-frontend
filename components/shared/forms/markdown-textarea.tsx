@@ -21,7 +21,6 @@ import {
   Heading2Icon,
   Heading3Icon,
   ItalicIcon,
-  LinkIcon,
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
@@ -30,6 +29,15 @@ import {
   TableIcon,
   WorkflowIcon,
 } from "lucide-react";
+import { DraftLinkPreview } from "@/components/shared/smart-links/draft-link-preview";
+import { LinkInsertPopover } from "@/components/shared/smart-links/link-insert-popover";
+import { SmartLink } from "@/components/shared/smart-links/smart-link";
+import {
+  linkDisplay,
+  safeLinkDestination,
+  smartLinkAutoTitle,
+  smartLinkUrlTitle,
+} from "@/lib/smart-links/markup";
 import ReactMarkdown, { type ExtraProps } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "next-themes";
@@ -132,12 +140,6 @@ export function MarkdownTextarea({
                 cursorOffset: 1,
               },
               {
-                label: "リンク",
-                icon: <LinkIcon />,
-                template: "[リンク](https://example.com)",
-                cursorOffset: 1,
-              },
-              {
                 label: "引用",
                 icon: <QuoteIcon />,
                 template: "\n> 引用\n\n",
@@ -189,6 +191,13 @@ export function MarkdownTextarea({
             ]}
             onSelect={insertTemplate}
           />
+          {mode === "edit" ? (
+            <LinkInsertPopover
+              editor={() => textareaRef.current}
+              onChange={({ value }) => onChange(value)}
+              disabled={disabled}
+            />
+          ) : null}
         </div>
         <div className="flex gap-2">
           <Button
@@ -212,15 +221,18 @@ export function MarkdownTextarea({
         </div>
       </div>
       {mode === "edit" ? (
-        <Textarea
-          ref={textareaRef}
-          id={id}
-          disabled={disabled}
-          value={value}
-          placeholder={placeholder}
-          className="min-h-48 font-mono"
-          onChange={(event) => onChange(event.target.value)}
-        />
+        <>
+          <Textarea
+            ref={textareaRef}
+            id={id}
+            disabled={disabled}
+            value={value}
+            placeholder={placeholder}
+            className="min-h-48 font-mono"
+            onChange={(event) => onChange(event.target.value)}
+          />
+          <DraftLinkPreview value={value} />
+        </>
       ) : (
         <MarkdownPreview
           value={value}
@@ -284,6 +296,7 @@ type MarkdownPreviewProps = {
   className?: string;
   highlightQuotes?: string[];
   inert?: boolean;
+  liveLinks?: boolean;
 };
 
 const MarkdownContext = createContext<{
@@ -362,6 +375,7 @@ export function MarkdownPreview({
   className,
   highlightQuotes = [],
   inert = false,
+  liveLinks = true,
 }: MarkdownPreviewProps) {
   if (!value.trim()) {
     return (
@@ -391,6 +405,56 @@ export function MarkdownPreview({
           rehypePlugins={[[rehypeMarkdownTaskPositions, { value }]]}
           components={{
             input: MarkdownTaskCheckbox,
+            a: ({ href, children, title, node }) => {
+              if (inert)
+                return (
+                  <span>
+                    {children}
+                    {href ? `（${href}）` : ""}
+                  </span>
+                );
+              const destination = href && safeLinkDestination(href);
+              if (!destination)
+                return (
+                  <a
+                    href={href}
+                    title={title}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary underline underline-offset-4"
+                  >
+                    {renderHighlightedMarkdownChildren(
+                      children,
+                      highlightQuotes,
+                    )}
+                  </a>
+                );
+              const offset = node?.position?.start.offset;
+              const end = node?.position?.end.offset;
+              const source =
+                offset !== undefined && end !== undefined
+                  ? value.slice(offset, end)
+                  : undefined;
+              const explicit =
+                offset !== undefined
+                  ? value[offset] === "["
+                  : typeof children !== "string" || children !== href;
+              return (
+                <SmartLink
+                  href={destination}
+                  display={linkDisplay(title, explicit)}
+                  live={liveLinks}
+                  source={source}
+                  title={
+                    title === smartLinkAutoTitle || title === smartLinkUrlTitle
+                      ? undefined
+                      : title
+                  }
+                >
+                  {renderHighlightedMarkdownChildren(children, highlightQuotes)}
+                </SmartLink>
+              );
+            },
             h1: ({ children }) => (
               <h1 className="mb-3 mt-1 text-2xl font-semibold leading-tight">
                 {renderHighlightedMarkdownChildren(children, highlightQuotes)}
@@ -429,22 +493,6 @@ export function MarkdownPreview({
                   </span>
                 )
               : undefined,
-            a: ({ children, href }) =>
-              inert ? (
-                <span>
-                  {children}
-                  {href ? `（${href}）` : ""}
-                </span>
-              ) : (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-primary underline underline-offset-4"
-                >
-                  {renderHighlightedMarkdownChildren(children, highlightQuotes)}
-                </a>
-              ),
             strong: ({ children }) => (
               <strong>
                 {renderHighlightedMarkdownChildren(children, highlightQuotes)}

@@ -127,6 +127,7 @@ export function DocumentHistory({
                 版 {revision.data.number}・{revision.data.title}
               </h2>
               <MarkdownPreview
+                liveLinks={false}
                 value={revision.data.body}
                 className="break-words"
               />

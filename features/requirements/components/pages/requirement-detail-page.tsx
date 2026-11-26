@@ -1,4 +1,6 @@
 "use client";
+import { LinkedText } from "@/components/shared/smart-links/linked-text";
+import { selectedTextForLinkSource } from "@/lib/smart-links/quote";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { VerificationEntry } from "@/features/requirement-verifications/components/verification-entry";
 
@@ -908,16 +910,7 @@ function RequirementInfo({
                 event.preventDefault();
             }}
             onClick={() => {
-              const selection = window.getSelection();
-              const content = valueRef.current;
-              const quote =
-                content &&
-                selection?.anchorNode &&
-                selection.focusNode &&
-                content.contains(selection.anchorNode) &&
-                content.contains(selection.focusNode)
-                  ? selection.toString().trim()
-                  : undefined;
+              const quote = selectedTextForLinkSource(valueRef.current, value);
               onSelectTargetAnchor(
                 createRequirementFieldCommentAnchor(field, label, quote),
               );
@@ -929,7 +922,12 @@ function RequirementInfo({
         ) : null}
       </div>
       <span ref={valueRef} className="whitespace-pre-wrap break-words text-sm">
-        {displayValue ?? renderHighlightedValue(value, fieldAnchors)}
+        {displayValue ?? (
+          <LinkedText
+            text={value}
+            renderText={(text) => renderHighlightedValue(text, fieldAnchors)}
+          />
+        )}
       </span>
     </div>
   );
