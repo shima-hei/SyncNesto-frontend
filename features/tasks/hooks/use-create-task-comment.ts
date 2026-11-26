@@ -39,6 +39,7 @@ export function useCreateTaskComment(taskId: number) {
         parent_comment_id: parentCommentId ?? null,
         body: values.body,
         mentions: values.mentions ?? [],
+        image_ids: values.imageIds?.length ? values.imageIds : undefined,
       },
     });
   };

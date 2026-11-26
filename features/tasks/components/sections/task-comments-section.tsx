@@ -85,7 +85,7 @@ export function TaskCommentsSection({
     ) {
       await updateTaskStatus(task, values.status, {
         changeReason: values.body,
-      });
+      }).catch(() => undefined);
     }
   };
 
@@ -223,6 +223,7 @@ function TaskCommentBody({
 }) {
   return (
     <CommentMessage
+      images={comment.images}
       author={comment.created_by_user?.name ?? getUserLabel(comment.created_by)}
       avatarUrl={comment.created_by_user?.avatar_url}
       createdAt={comment.created_at}

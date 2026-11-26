@@ -4,6 +4,9 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { CheckIcon, CornerDownRightIcon } from "lucide-react";
+import { CommentIconButton } from "@/components/shared/comments/comment-thread-actions";
+import { CommentContent } from "@/components/shared/comments/comment-content";
 import { CommentMessage } from "@/components/shared/comments/comment-message";
 import {
   CommentComposer,
@@ -292,7 +295,7 @@ function Thread({
         }
       >
         <p className="whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">
-          {thread.body}
+          <CommentContent body={thread.body} />
         </p>
         <details onToggle={(event) => setExpanded(event.currentTarget.open)}>
           <summary className="cursor-pointer text-sm font-medium">
@@ -311,7 +314,7 @@ function Thread({
                     key={index}
                     className="border-s ps-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere]"
                   >
-                    {body}
+                    <CommentContent body={body} />
                   </li>
                 ))}
               </ul>
@@ -332,20 +335,16 @@ function Thread({
             ) : null}
             <div className="flex flex-wrap gap-2">
               {thread.available_actions.includes("reply") ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
+                <CommentIconButton
+                  label="返信"
                   onClick={() => setAction("reply")}
                 >
-                  返信
-                </Button>
+                  <CornerDownRightIcon aria-hidden="true" />
+                </CommentIconButton>
               ) : null}
               {thread.available_actions.includes("resolve") ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
+                <CommentIconButton
+                  label="解決する"
                   disabled={mutation.isPending}
                   onClick={() =>
                     mutation.mutate({
@@ -354,8 +353,8 @@ function Thread({
                     })
                   }
                 >
-                  解決する
-                </Button>
+                  <CheckIcon aria-hidden="true" />
+                </CommentIconButton>
               ) : null}
               {thread.available_actions.includes("reopen") ? (
                 <Button

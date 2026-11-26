@@ -30,7 +30,11 @@ export function UserAvatar({
         <AvatarImage src={src} alt={decorative ? "" : (name ?? "ユーザー")} />
       ) : null}
       <AvatarFallback
-        className={hue === undefined ? undefined : "user-avatar-tint"}
+        className={
+          hue === undefined
+            ? undefined
+            : "user-avatar-tint text-[0.67rem] group-data-[size=lg]/avatar:text-xs"
+        }
         style={
           hue === undefined
             ? undefined
@@ -50,7 +54,11 @@ const getUserFallback = (name?: string | null) => {
     return null;
   }
 
-  return Array.from(trimmedName).slice(0, 2).join("").toUpperCase();
+  const normalized = trimmedName.normalize("NFKC");
+  return Array.from(normalized)
+    .slice(0, /^[a-z]/i.test(normalized) ? 2 : 1)
+    .join("")
+    .toUpperCase();
 };
 
 export function UserDisplay({

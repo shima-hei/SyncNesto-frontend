@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SendIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Button } from "@/components/ui/button";
@@ -182,7 +183,7 @@ export function GuestRequirementReviewRequest({
                         name="reviewers"
                         value={person.grant_id}
                       />
-                      {person.name}
+                      <UserDisplay name={person.name} emptyLabel="担当者" />
                     </label>
                   ))
                 ) : (

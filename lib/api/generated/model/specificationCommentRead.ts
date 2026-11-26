@@ -4,11 +4,14 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentImageRead } from "./commentImageRead";
 
 export interface SpecificationCommentRead {
+  images?: CommentImageRead[];
   id: number;
   author_id: number;
   author_name?: string;
+  author_avatar_url?: string | null;
   field_path: string;
   field_snapshot: string;
   specification_version: number;

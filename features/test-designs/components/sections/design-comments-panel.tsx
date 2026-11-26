@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import {
+  CommentComposeTools,
+  useCommentComposeMedia,
+} from "@/components/shared/comments/comment-compose-media";
 import { CommentContent } from "@/components/shared/comments/comment-content";
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import type { Mention } from "@/lib/comments/mentions";
@@ -75,6 +79,7 @@ function CommentComposer({
   projectId,
   initialMentions = [],
   initial = "",
+  allowImages = true,
   label,
   onSubmit,
   onClose,
@@ -82,28 +87,32 @@ function CommentComposer({
   projectId: number;
   initialMentions?: Mention[];
   initial?: string;
+  allowImages?: boolean;
   label: string;
-  onSubmit: (body: string, mentions: Mention[]) => Promise<boolean>;
+  onSubmit: (
+    body: string,
+    mentions: Mention[],
+    imageIds: string[],
+  ) => Promise<boolean>;
   onClose?: () => void;
 }) {
   const [body, setBody] = useState(initial);
   const [mentions, setMentions] = useState(initialMentions);
-  const [busy, setBusy] = useState(false);
+  const media = useCommentComposeMedia(
+    projectId,
+    allowImages ? "test_design" : undefined,
+  );
   return (
     <form
       className="flex flex-col gap-2"
+      {...media.formEvents}
       onSubmit={async (event) => {
         event.preventDefault();
-        if (busy || !body.trim()) return;
-        setBusy(true);
-        try {
-          if (await onSubmit(body, mentions)) {
-            setBody("");
-            setMentions([]);
-            onClose?.();
-          }
-        } finally {
-          setBusy(false);
+        if (!body.trim()) return;
+        if (await media.send((ids) => onSubmit(body, mentions, ids))) {
+          setBody("");
+          setMentions([]);
+          onClose?.();
         }
       }}
     >
@@ -115,18 +124,32 @@ function CommentComposer({
             aria-label={label}
             placeholder="コメントを入力…"
             mentions={mentions}
-            className="min-h-12"
+            className="min-h-12 max-h-32 resize-none overflow-y-auto"
             rows={2}
             maxLength={20000}
+            disabled={media.sending}
             value={body}
             onChange={(body, mentions) => {
               setBody(body);
               setMentions(mentions);
             }}
           />
-          <CommentSubmit pending={busy} body={body} onCancel={onClose}>
-            {label}
-          </CommentSubmit>
+          <CommentComposeTools
+            media={media}
+            onInsertLink={(url) => {
+              const text = body + (body.trim() ? "\n" : "") + url;
+              if (text.length > 20000) return false;
+              setBody(text);
+            }}
+          >
+            <CommentSubmit
+              pending={media.sending}
+              body={body}
+              onCancel={onClose}
+            >
+              {label}
+            </CommentSubmit>
+          </CommentComposeTools>
         </div>
       </CommentComposerLayout>
     </form>
@@ -321,12 +344,13 @@ export function DesignCommentsPanel({
           projectId={projectId}
           key={targetKey(currentTarget)}
           label="選択した対象にコメント"
-          onSubmit={(body, mentions) =>
+          onSubmit={(body, mentions, imageIds) =>
             mutate(() =>
               createComment(projectId, designId, {
                 ...currentTarget,
                 body,
                 mentions,
+                image_ids: imageIds.length ? imageIds : undefined,
               }),
             )
           }
@@ -343,7 +367,9 @@ export function DesignCommentsPanel({
         canReplyComment={(comment) => !comment.deleted_at}
         renderCommentBody={({ comment, onEdit, onReply }) => (
           <CommentMessage
+            images={comment.images}
             author={comment.author_name}
+            avatarUrl={comment.author_avatar_url}
             createdAt={comment.created_at}
             reply={Boolean(comment.parent_comment_id)}
             resolved={comment.is_resolved}
@@ -432,6 +458,7 @@ export function DesignCommentsPanel({
         renderEditForm={({ comment, onClose }) => (
           <CommentComposer
             projectId={projectId}
+            allowImages={false}
             initial={comment.body}
             initialMentions={comment.mentions}
             label="コメントを編集"
@@ -452,7 +479,7 @@ export function DesignCommentsPanel({
             projectId={projectId}
             label="返信"
             onClose={onClose}
-            onSubmit={(body, mentions) =>
+            onSubmit={(body, mentions, imageIds) =>
               mutate(() =>
                 createComment(projectId, designId, {
                   target_type:
@@ -462,6 +489,7 @@ export function DesignCommentsPanel({
                   parent_comment_id: comment.id,
                   body,
                   mentions,
+                  image_ids: imageIds.length ? imageIds : undefined,
                 }),
               )
             }

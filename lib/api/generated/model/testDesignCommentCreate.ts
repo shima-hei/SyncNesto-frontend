@@ -11,6 +11,8 @@ import type { TestDesignCommentCreateTargetType } from "./testDesignCommentCreat
  * 対象を指定した設計コメント投稿。
  */
 export interface TestDesignCommentCreate {
+  /** @maxItems 4 */
+  image_ids?: string[];
   /** @maxItems 100 */
   mentions?: CommentMentionOccurrence[];
   target_type: TestDesignCommentCreateTargetType;

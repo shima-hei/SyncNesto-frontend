@@ -6,6 +6,8 @@
  */
 
 export interface SpecificationCommentCreate {
+  /** @maxItems 4 */
+  image_ids?: string[];
   /** @minimum 1 */
   specification_version: number;
   /**

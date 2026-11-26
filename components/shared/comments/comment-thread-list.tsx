@@ -62,11 +62,10 @@ export function CommentThreadList<TComment>({
   if (isLoading) return loadingFallback ?? <LoadingState />;
   if (!roots.length) return <EmptyState message={emptyMessage} />;
 
-  const renderItem = (comment: TComment): ReactNode => {
+  const renderItem = (comment: TComment, replies?: ReactNode): ReactNode => {
     const id = getCommentId(comment);
-    const replies = byParent.get(id);
     return (
-      <li key={id} className="flex min-w-0 flex-col gap-3 py-2">
+      <li key={id} className="flex min-w-0 flex-col gap-2 py-2.5">
         {renderCommentBody({
           comment,
           onEdit: setEditingTarget,
@@ -88,18 +87,31 @@ export function CommentThreadList<TComment>({
             {renderReplyForm({ comment, onClose: () => setReplyTarget(null) })}
           </div>
         ) : null}
-        {replies?.length ? (
-          <ul role="list" className="ms-2 min-w-0 border-s ps-3 sm:ms-4">
-            {replies.map(renderItem)}
-          </ul>
-        ) : null}
+        {replies}
       </li>
     );
   };
 
   return (
-    <ul role="list" className="min-w-0 divide-y">
-      {roots.map(renderItem)}
+    <ul role="list" className="min-w-0 divide-y divide-border/60">
+      {roots.map((root) => {
+        const replies = [...(byParent.get(getCommentId(root)) ?? [])];
+        for (let index = 0; index < replies.length; index++) {
+          replies.push(...(byParent.get(getCommentId(replies[index])) ?? []));
+        }
+        return renderItem(
+          root,
+          replies.length ? (
+            <ul
+              role="list"
+              aria-label={`${replies.length}件の返信`}
+              className="mb-2 ms-4 min-w-0 border-s border-border/60 ps-2"
+            >
+              {replies.map((reply) => renderItem(reply))}
+            </ul>
+          ) : null,
+        );
+      })}
     </ul>
   );
 }

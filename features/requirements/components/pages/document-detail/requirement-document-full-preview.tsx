@@ -94,7 +94,7 @@ export function RequirementDocumentFullPreview({
         {includeUnsaved
           ? `未保存の章本文を含む（${unsaved.length}件）`
           : "保存済み内容"}
-        。正式承認・固定版・顧客公開とは異なります。
+        。内容確認用。
       </p>
       <div
         data-print-hidden
@@ -114,8 +114,7 @@ export function RequirementDocumentFullPreview({
         </Button>
       </div>
       <p data-print-hidden className="text-sm text-muted-foreground">
-        現在の文書・章・要件を確認する表示です。正式承認・固定版の作成・顧客公開は別の操作です。
-        ファイル出力とは表示内容・並び順が異なる場合があります。
+        文書・章・要件を続けて読めます。ファイル出力時は、出力設定で指定した内容と並び順が使われます。
       </p>
       <Field data-print-hidden orientation="horizontal" className="w-fit">
         <Checkbox

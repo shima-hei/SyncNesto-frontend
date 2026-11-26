@@ -251,7 +251,7 @@ export function RequirementReviewManagement(
                     </span>
                     <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       {item.assignee_name ? (
-                        <span>{item.assignee_name}</span>
+                        <UserDisplay name={item.assignee_name} />
                       ) : null}
                       <Badge variant="outline">
                         {correctionStatus[item.status]}

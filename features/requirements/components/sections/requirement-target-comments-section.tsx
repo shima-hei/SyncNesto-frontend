@@ -11,7 +11,7 @@ import {
 } from "@/components/shared/comments/comment-thread-actions";
 import { CommentMessage } from "@/components/shared/comments/comment-message";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageSquareIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import type { RequirementTargetCommentRead } from "@/lib/api/generated/model";
@@ -106,7 +106,7 @@ export function RequirementTargetCommentsSection({
     isPending: isStatePending,
   } = useToggleTargetCommentState(projectId, targetType, targetId);
 
-  const content = (
+  const filters = (
     <>
       {targetLabel ? (
         <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
@@ -125,108 +125,155 @@ export function RequirementTargetCommentsSection({
           aria-label="指摘コメントの表示"
           className="self-start"
         >
+          <ToggleGroupItem value="all">すべて</ToggleGroupItem>
           <ToggleGroupItem value="open">未解決</ToggleGroupItem>
           <ToggleGroupItem value="resolved">解決済み</ToggleGroupItem>
-          <ToggleGroupItem value="all">すべて</ToggleGroupItem>
         </ToggleGroup>
       ) : null}
-      <CommentThreadList
-        comments={visibleComments}
-        isLoading={isLoading}
-        canComment={canComment}
-        emptyMessage={
-          filter === "all" || !actionableRoots.length
-            ? "コメントはありません。"
-            : filter === "open"
-              ? "未解決の指摘はありません。"
-              : "解決済みの指摘はありません。"
-        }
-        getCommentId={(comment) => comment.id}
-        getParentCommentId={(comment) => comment.parent_comment_id}
-        canEditComment={canMutateComment}
-        canReplyComment={() => canComment}
-        loadingFallback={<RequirementSectionSkeleton />}
-        renderCommentBody={({ comment, onEdit, onReply }) => (
-          <CommentBody
-            comment={comment}
-            canComment={canComment}
-            canMutate={canMutateComment(comment)}
-            isStatePending={isStatePending}
-            onEdit={onEdit}
-            onReply={onReply}
-            onDelete={setDeleteTarget}
-            onResolve={resolveTargetComment}
-            onReopen={reopenTargetComment}
-            onTargetAnchorClick={onTargetAnchorClick}
-            getTargetAnchorStatus={getTargetAnchorStatus}
-          />
-        )}
-        renderEditForm={({ comment, onClose }) => (
-          <>
-            <CommentInlineHeader label="コメント編集" onClose={onClose} />
-            <RequirementTargetCommentForm
-              projectId={projectId}
-              memoryKey={`comment:edit:${comment.id}:${comment.version}`}
-              initialValues={{
-                body: comment.body,
-                mentions: comment.mentions,
-                targetAnchor: getRequirementCommentAnchorLabel(
-                  comment.target_anchor,
-                ),
-                reason: "",
-              }}
-              submitLabel="コメント更新"
-              resetOnSuccess={false}
-              showReason
-              isPending={isUpdatePending}
-              error={updateError}
-              onSubmit={(values) =>
-                updateTargetComment(comment.id, comment.version, values)
-              }
-              onSuccess={onClose}
-            />
-          </>
-        )}
-        renderReplyForm={({ comment, onClose }) => (
-          <>
-            <CommentInlineHeader label="返信" onClose={onClose} />
-            <RequirementTargetCommentForm
-              projectId={projectId}
-              memoryKey={`comment:reply:${comment.id}`}
-              initialValues={{ body: "", targetAnchor: "", reason: "" }}
-              submitLabel="返信追加"
-              showTargetAnchorInput={false}
-              isPending={isCreatePending}
-              error={createError}
-              onSubmit={(values) => createTargetComment(values, comment.id)}
-              onSuccess={onClose}
-            />
-          </>
-        )}
-      />
-
-      {canComment ? (
-        <RequirementTargetCommentForm
-          projectId={projectId}
-          memoryKey={`comment:create:${JSON.stringify(selectedTargetAnchor)}`}
-          key={JSON.stringify(selectedTargetAnchor)}
-          initialValues={{
-            body: "",
-            targetAnchor: selectedTargetAnchor
-              ? JSON.stringify(selectedTargetAnchor)
-              : "",
-            reason: "",
-          }}
-          showTargetAnchorInput={showTargetAnchorInput}
-          targetAnchorLabel={getRequirementCommentAnchorLabel(
-            selectedTargetAnchor,
-          )}
-          isPending={isCreatePending}
-          error={createError}
-          onSubmit={(values) => createTargetComment(values)}
+    </>
+  );
+  const thread = (
+    <CommentThreadList
+      comments={visibleComments}
+      isLoading={isLoading}
+      canComment={canComment}
+      emptyMessage={
+        filter === "all" || !actionableRoots.length
+          ? "コメントはありません。"
+          : filter === "open"
+            ? "未解決の指摘はありません。"
+            : "解決済みの指摘はありません。"
+      }
+      getCommentId={(comment) => comment.id}
+      getParentCommentId={(comment) => comment.parent_comment_id}
+      canEditComment={canMutateComment}
+      canReplyComment={() => canComment}
+      loadingFallback={<RequirementSectionSkeleton />}
+      renderCommentBody={({ comment, onEdit, onReply }) => (
+        <CommentBody
+          comment={comment}
+          canComment={canComment}
+          canMutate={canMutateComment(comment)}
+          isStatePending={isStatePending}
+          onEdit={onEdit}
+          onReply={onReply}
+          onDelete={setDeleteTarget}
+          onResolve={resolveTargetComment}
+          onReopen={reopenTargetComment}
+          onTargetAnchorClick={onTargetAnchorClick}
+          getTargetAnchorStatus={getTargetAnchorStatus}
         />
-      ) : null}
+      )}
+      renderEditForm={({ comment, onClose }) => (
+        <>
+          <CommentInlineHeader label="コメント編集" onClose={onClose} />
+          <RequirementTargetCommentForm
+            projectId={projectId}
+            memoryKey={`comment:edit:${comment.id}:${comment.version}`}
+            initialValues={{
+              body: comment.body,
+              mentions: comment.mentions,
+              targetAnchor: getRequirementCommentAnchorLabel(
+                comment.target_anchor,
+              ),
+              reason: "",
+            }}
+            submitLabel="コメント更新"
+            resetOnSuccess={false}
+            showReason
+            isPending={isUpdatePending}
+            error={updateError}
+            onSubmit={(values) =>
+              updateTargetComment(comment.id, comment.version, values)
+            }
+            onSuccess={onClose}
+          />
+        </>
+      )}
+      renderReplyForm={({ comment, onClose }) => (
+        <>
+          <CommentInlineHeader label="返信" onClose={onClose} />
+          <RequirementTargetCommentForm
+            projectId={projectId}
+            memoryKey={`comment:reply:${comment.id}`}
+            initialValues={{ body: "", targetAnchor: "", reason: "" }}
+            submitLabel="返信追加"
+            showTargetAnchorInput={false}
+            isPending={isCreatePending}
+            error={createError}
+            onSubmit={(values) => createTargetComment(values, comment.id)}
+            onSuccess={onClose}
+          />
+        </>
+      )}
+    />
+  );
+  const composer = canComment ? (
+    <RequirementTargetCommentForm
+      projectId={projectId}
+      memoryKey={`comment:create:${JSON.stringify(selectedTargetAnchor)}`}
+      key={JSON.stringify(selectedTargetAnchor)}
+      initialValues={{
+        body: "",
+        targetAnchor: selectedTargetAnchor
+          ? JSON.stringify(selectedTargetAnchor)
+          : "",
+        reason: "",
+      }}
+      showTargetAnchorInput={showTargetAnchorInput}
+      targetAnchorLabel={getRequirementCommentAnchorLabel(selectedTargetAnchor)}
+      isPending={isCreatePending}
+      error={createError}
+      onSubmit={(values) => createTargetComment(values)}
+    />
+  ) : null;
 
+  return (
+    <section
+      className={cn("flex min-h-0 min-w-0 flex-col", className)}
+      aria-label={embedded ? title : undefined}
+    >
+      {!embedded ? (
+        <header className="flex shrink-0 items-center justify-between gap-2 px-3 py-1">
+          <h3 className="flex min-w-0 items-center gap-2 font-semibold">
+            <MessageSquareIcon aria-hidden="true" className="size-4" />
+            {title}
+            {comments.length > 0 ? (
+              <span className="text-sm font-normal text-muted-foreground">
+                {comments.length}
+              </span>
+            ) : null}
+          </h3>
+          {headerAction}
+        </header>
+      ) : null}
+      <div
+        className={cn(
+          "shrink-0 space-y-2 empty:hidden",
+          !embedded && "border-b border-border/60 px-3 pb-2",
+        )}
+      >
+        {filters}
+      </div>
+      <div
+        className={cn(
+          "min-h-0 min-w-0 flex-1",
+          !embedded && "px-3",
+          contentClassName,
+        )}
+      >
+        {thread}
+      </div>
+      {composer ? (
+        <div
+          className={cn(
+            "shrink-0 border-t border-border/60 pt-3",
+            !embedded && "px-3 pb-2",
+          )}
+        >
+          {composer}
+        </div>
+      ) : null}
       <ResourceDeleteDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
@@ -242,22 +289,7 @@ export function RequirementTargetCommentsSection({
           setDeleteTarget(null);
         }}
       />
-    </>
-  );
-  return embedded ? (
-    <div className={cn("flex flex-col gap-4", className, contentClassName)}>
-      {content}
-    </div>
-  ) : (
-    <Card className={className}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">{title}</CardTitle>
-        {headerAction}
-      </CardHeader>
-      <CardContent className={cn("flex flex-col gap-4", contentClassName)}>
-        {content}
-      </CardContent>
-    </Card>
+    </section>
   );
 }
 
@@ -323,6 +355,7 @@ function CommentBody({
 
   return (
     <CommentMessage
+      images={comment.images}
       author={comment.author?.name}
       avatarUrl={comment.author?.avatar_url}
       createdAt={comment.created_at}

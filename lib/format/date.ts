@@ -46,3 +46,19 @@ export const formatRelativeDate = (dateTime: string, now = new Date()) => {
   if (seconds < 86400 * 7) return `${Math.floor(seconds / 86400)}日前`;
   return formatDate(dateTime);
 };
+
+export const formatCommentDate = (dateTime: string, now = new Date()) => {
+  const date = new Date(dateTime);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat(
+    "ja-JP",
+    date.toDateString() === now.toDateString()
+      ? { timeStyle: "short" }
+      : {
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        },
+  ).format(date);
+};
