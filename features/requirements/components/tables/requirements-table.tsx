@@ -519,7 +519,7 @@ function RequirementInlineSelect({
         >
           <RequirementPriorityBadge priority={value} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" align="start" collisionPadding={8}>
           <SelectGroup>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
