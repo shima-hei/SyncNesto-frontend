@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useState } from "react";
 import { MessageSquarePlusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
@@ -143,8 +144,13 @@ export function RequirementRelationsSection({
                     {relation.description || "説明はありません。"}
                   </p>
                   <span className="text-xs text-muted-foreground">
-                    作成者: {relation.created_by_user?.name ?? "-"} /{" "}
-                    {formatDateTime(relation.created_at)}
+                    作成者:{" "}
+                    <UserDisplay
+                      name={relation.created_by_user?.name}
+                      src={relation.created_by_user?.avatar_url}
+                      emptyLabel="作成者不明"
+                    />{" "}
+                    / {formatDateTime(relation.created_at)}
                   </span>
                 </div>
                 {canLink || onSelectCommentAnchor ? (

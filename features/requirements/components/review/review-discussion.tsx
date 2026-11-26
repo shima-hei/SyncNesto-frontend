@@ -24,7 +24,8 @@ import {
   listWorkflowReviewThreadsProjectsProjectIdRequirementWorkflowRequestIdReviewThreadsGet as listThreads,
   readWorkflowReviewThreadProjectsProjectIdRequirementWorkflowRequestIdReviewThreadsThreadIdGet as readThread,
 } from "@/lib/api/generated/requirement-workflow/requirement-workflow";
-import { formatDateTime } from "@/lib/format/date";
+import { CommentMessage } from "@/components/shared/comments/comment-message";
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 
 const actionLabels = {
   reply: "返信",
@@ -273,76 +274,80 @@ export function ReviewDiscussion({
               key={thread.id}
               ref={thread.id === initialThreadId ? focusedThread : undefined}
               tabIndex={thread.id === initialThreadId ? -1 : undefined}
-              className="min-w-0 rounded-lg border bg-muted/35 p-3 focus-visible:outline-2 focus-visible:outline-ring"
+              className="min-w-0 border-b py-3 focus-visible:outline-2 focus-visible:outline-ring"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-medium">
-                  {actorName(thread.author_id)}
-                </span>
-                <Badge
-                  variant="outline"
-                  className={
-                    thread.kind === "correction" && thread.status !== "resolved"
-                      ? "border-[var(--status-warning-border)] text-[var(--status-warning-fg)]"
-                      : undefined
-                  }
-                >
-                  {thread.kind === "comment"
-                    ? thread.status === "resolved"
-                      ? "解決済み"
-                      : "コメント"
-                    : correctionStatus[thread.status]}
-                </Badge>
-              </div>
-              {thread.field && thread.quote ? (
-                <button
-                  type="button"
-                  className="mt-3 max-w-full rounded-sm border-s-2 ps-2 text-start text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-ring [overflow-wrap:anywhere]"
-                  onClick={() => onHighlight(thread.field!, thread.quote!)}
-                >
-                  {thread.quote}
-                </button>
-              ) : null}
-              <p className="my-3 whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">
-                {thread.body}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDateTime(thread.created_at)}
-                {thread.assignee_id
-                  ? ` ・ 担当 ${actorName(thread.assignee_id)}`
-                  : ""}
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="mt-1 px-0"
-                aria-expanded={expanded === thread.id}
-                aria-controls={
-                  expanded === thread.id
-                    ? `review-thread-${thread.id}`
-                    : undefined
-                }
-                onClick={() =>
-                  setExpanded(expanded === thread.id ? null : thread.id)
+              <CommentMessage
+                author={actorName(thread.author_id)}
+                createdAt={thread.created_at}
+                menu={
+                  <Badge
+                    variant="outline"
+                    className={
+                      thread.kind === "correction" &&
+                      thread.status !== "resolved"
+                        ? "border-[var(--status-warning-border)] text-[var(--status-warning-fg)]"
+                        : undefined
+                    }
+                  >
+                    {thread.kind === "comment"
+                      ? thread.status === "resolved"
+                        ? "解決済み"
+                        : "コメント"
+                      : correctionStatus[thread.status]}
+                  </Badge>
                 }
               >
-                <ChevronDownIcon
-                  data-icon="inline-start"
-                  className={expanded === thread.id ? "rotate-180" : undefined}
-                />
-                履歴・返信
-              </Button>
-              {expanded === thread.id ? (
-                <ReviewThreadDetails
-                  projectId={projectId}
-                  requestId={requestId}
-                  queryKey={queryKey}
-                  actorName={actorName}
-                  refresh={refresh}
-                  threadId={thread.id}
-                />
-              ) : null}
+                {thread.field && thread.quote ? (
+                  <button
+                    type="button"
+                    className="self-start max-w-full rounded-sm border-s-2 ps-2 text-start text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-ring [overflow-wrap:anywhere]"
+                    onClick={() => onHighlight(thread.field!, thread.quote!)}
+                  >
+                    {thread.quote}
+                  </button>
+                ) : null}
+                <p className="whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">
+                  {thread.body}
+                </p>
+                {thread.assignee_id ? (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    担当 <UserDisplay name={actorName(thread.assignee_id)} />
+                  </div>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 px-0"
+                  aria-expanded={expanded === thread.id}
+                  aria-controls={
+                    expanded === thread.id
+                      ? `review-thread-${thread.id}`
+                      : undefined
+                  }
+                  onClick={() =>
+                    setExpanded(expanded === thread.id ? null : thread.id)
+                  }
+                >
+                  <ChevronDownIcon
+                    data-icon="inline-start"
+                    className={
+                      expanded === thread.id ? "rotate-180" : undefined
+                    }
+                  />
+                  履歴・返信
+                </Button>
+                {expanded === thread.id ? (
+                  <ReviewThreadDetails
+                    projectId={projectId}
+                    requestId={requestId}
+                    queryKey={queryKey}
+                    actorName={actorName}
+                    refresh={refresh}
+                    threadId={thread.id}
+                  />
+                ) : null}
+              </CommentMessage>
             </li>
           ))}
         </ul>
@@ -457,16 +462,20 @@ function ReviewThreadDetails({
             <ol className="grid gap-3">
               {detail.events.map((event) => (
                 <li key={event.id} className="min-w-0 border-s-2 ps-2 text-sm">
-                  <p className="text-xs text-muted-foreground">
-                    {actorName(event.actor_id)} ・{" "}
-                    {formatDateTime(event.created_at)}
-                  </p>
-                  <p className="font-medium">{activityLabels[event.action]}</p>
-                  {event.body ? (
-                    <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
-                      {event.body}
+                  <CommentMessage
+                    author={actorName(event.actor_id)}
+                    createdAt={event.created_at}
+                    reply
+                  >
+                    <p className="font-medium">
+                      {activityLabels[event.action]}
                     </p>
-                  ) : null}
+                    {event.body ? (
+                      <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+                        {event.body}
+                      </p>
+                    ) : null}
+                  </CommentMessage>
                 </li>
               ))}
             </ol>

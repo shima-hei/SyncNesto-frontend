@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import {
   StatusBadge,
+  PriorityIndicator,
   type StatusTone,
 } from "@/components/shared/display/status-badge";
 
@@ -36,8 +37,18 @@ export function RequirementPriorityBadge({
 }: {
   priority?: string | null;
 }) {
+  const level =
+    priority === "must"
+      ? "critical"
+      : priority === "should"
+        ? "high"
+        : priority === "could"
+          ? "normal"
+          : "low";
   return (
-    <Badge variant="secondary">{getRequirementPriorityLabel(priority)}</Badge>
+    <PriorityIndicator level={level}>
+      {getRequirementPriorityLabel(priority)}
+    </PriorityIndicator>
   );
 }
 
@@ -46,8 +57,8 @@ export function RequirementTypeBadge({ type }: { type?: string | null }) {
 }
 
 const requirementStatusTones: Record<string, StatusTone> = {
-  reviewing: "warning",
-  requested: "warning",
+  reviewing: "info",
+  requested: "info",
   implementing: "progress",
   in_review: "progress",
   approved: "success",

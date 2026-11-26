@@ -1,3 +1,4 @@
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { formatDateTime } from "@/lib/format/date";
@@ -97,8 +98,12 @@ export function EvidenceRecord({ value }: { value: EvidenceEntryDetail }) {
       {entry.kind === "execution" ? (
         <>
           <p>
-            元の実行者：{text(execution.executed_by_name) || "記録なし"} ·
-            実行日時：
+            元の実行者：
+            <UserDisplay
+              name={text(execution.executed_by_name)}
+              emptyLabel="実行者の記録なし"
+            />{" "}
+            · 実行日時：
             {execution.executed_at
               ? formatDateTime(text(execution.executed_at))
               : "記録なし"}
@@ -128,7 +133,9 @@ export function EvidenceRecord({ value }: { value: EvidenceEntryDetail }) {
         今回の根拠・対応の再確認：{text(entry.reason)}
       </p>
       <p>
-        提出・今回の確認：{value.actor_name} · サーバー受付：
+        提出・今回の確認：
+        <UserDisplay name={value.actor_name} emptyLabel="操作者不明" /> ·
+        サーバー受付：
         {formatDateTime(value.received_at)}
       </p>
       {entry.kind === "execution" ? (

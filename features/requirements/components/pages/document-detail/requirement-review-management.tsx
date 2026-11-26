@@ -1,5 +1,7 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
+
 import { useState, type ComponentProps } from "react";
 import Link from "next/link";
 import { ChevronRightIcon, CircleAlertIcon } from "lucide-react";
@@ -151,7 +153,10 @@ export function RequirementReviewManagement(
                       key={person.user_id}
                       className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
                     >
-                      <span>{person.name ?? "案件メンバー"}</span>
+                      <UserDisplay
+                        name={person.name}
+                        emptyLabel="案件メンバー"
+                      />
                       <span className="text-muted-foreground">
                         {person.status === "pending"
                           ? "確認待ち"

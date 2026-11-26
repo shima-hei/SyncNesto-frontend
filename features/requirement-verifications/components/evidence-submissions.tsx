@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -188,7 +189,10 @@ export function EvidenceSubmissions({
                       </TableCell>
                       <TableCell>確認表 {i.plan_version}版</TableCell>
                       <TableCell>
-                        {i.actor_name}
+                        <UserDisplay
+                          name={i.actor_name}
+                          emptyLabel="操作者不明"
+                        />
                         <p className="text-xs text-muted-foreground">
                           {formatDateTime(i.created_at)}
                         </p>

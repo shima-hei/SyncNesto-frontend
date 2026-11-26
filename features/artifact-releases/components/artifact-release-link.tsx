@@ -13,7 +13,7 @@ export function ArtifactReleaseLink({
   kind,
   sourceId,
   version,
-  label = "固定版と添付",
+  label = "バージョン履歴・添付資料",
 }: {
   projectId: number;
   kind: ArtifactKind;

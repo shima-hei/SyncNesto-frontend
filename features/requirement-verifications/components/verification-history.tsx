@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTenant } from "@/features/tenants/providers/tenant-provider";
@@ -64,8 +65,12 @@ export function VerificationHistory({
             .map((revision) => (
               <details key={revision.version} className="rounded-lg border p-3">
                 <summary className="cursor-pointer text-sm">
-                  {revision.version}版 · {revision.actor_name} ·{" "}
-                  {formatDateTime(revision.created_at)}{" "}
+                  {revision.version}版 ·{" "}
+                  <UserDisplay
+                    name={revision.actor_name}
+                    emptyLabel="操作者不明"
+                  />{" "}
+                  · {formatDateTime(revision.created_at)}{" "}
                   <Badge variant="outline">
                     {revision.checklist.coverage ? "対応を確認" : "下書き"}
                   </Badge>

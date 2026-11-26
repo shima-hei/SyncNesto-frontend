@@ -29,7 +29,9 @@ import type {
   VerificationCreate,
   VerificationDetail,
   VerificationList,
+  VerificationPreparation,
   VerificationRevisionPage,
+  VerificationStart,
   VerificationUpdate,
 } from "../model";
 
@@ -37,6 +39,36 @@ import { apiClient } from "../../client";
 import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
 
 const withQueryKey = <T extends object, K>(
   query: T,
@@ -183,6 +215,7 @@ export type ListVerificationPlansProjectsProjectIdRequirementVerificationPlansGe
 export type ListVerificationPlansProjectsProjectIdRequirementVerificationPlansGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/** @summary List Verification Plans */
 export function useListVerificationPlansProjectsProjectIdRequirementVerificationPlansGet<
   TData = Awaited<
     ReturnType<
@@ -229,6 +262,7 @@ export function useListVerificationPlansProjectsProjectIdRequirementVerification
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary List Verification Plans */
 export function useListVerificationPlansProjectsProjectIdRequirementVerificationPlansGet<
   TData = Awaited<
     ReturnType<
@@ -273,6 +307,7 @@ export function useListVerificationPlansProjectsProjectIdRequirementVerification
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary List Verification Plans */
 export function useListVerificationPlansProjectsProjectIdRequirementVerificationPlansGet<
   TData = Awaited<
     ReturnType<
@@ -301,10 +336,7 @@ export function useListVerificationPlansProjectsProjectIdRequirementVerification
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-/**
- * @summary List Verification Plans
- */
-
+/** @summary List Verification Plans */
 export function useListVerificationPlansProjectsProjectIdRequirementVerificationPlansGet<
   TData = Awaited<
     ReturnType<
@@ -362,27 +394,6 @@ export const createVerificationPlanProjectsProjectIdRequirementVerificationPlans
     verificationCreate: VerificationCreate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<VerificationDetail> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<VerificationDetail>(
       getCreateVerificationPlanProjectsProjectIdRequirementVerificationPlansPostUrl(
         projectId,
@@ -390,10 +401,10 @@ export const createVerificationPlanProjectsProjectIdRequirementVerificationPlans
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(verificationCreate),
       },
     );
@@ -473,9 +484,7 @@ export type CreateVerificationPlanProjectsProjectIdRequirementVerificationPlansP
 export type CreateVerificationPlanProjectsProjectIdRequirementVerificationPlansPostMutationVariables =
   { projectId: number; data: BodyType<VerificationCreate> };
 
-/**
- * @summary Create Verification Plan
- */
+/** @summary Create Verification Plan */
 export const useCreateVerificationPlanProjectsProjectIdRequirementVerificationPlansPost =
   <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
     options?: {
@@ -504,6 +513,419 @@ export const useCreateVerificationPlanProjectsProjectIdRequirementVerificationPl
   > => {
     return useMutation(
       getCreateVerificationPlanProjectsProjectIdRequirementVerificationPlansPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getPrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetUrl =
+  (projectId: number, requirementId: number) => {
+    return `/projects/${projectId}/requirement-verification-plans/preparation/${requirementId}`;
+  };
+
+/**
+ * @summary Prepare Verification Start
+ */
+export const prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet =
+  async (
+    projectId: number,
+    requirementId: number,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<VerificationPreparation> => {
+    return apiClient<VerificationPreparation>(
+      getPrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetUrl(
+        projectId,
+        requirementId,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getPrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetQueryKey =
+  (projectId: number, requirementId: number) => {
+    return [
+      `/projects/${projectId}/requirement-verification-plans/preparation/${requirementId}`,
+    ] as const;
+  };
+
+export const getPrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    requirementId: number,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getPrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetQueryKey(
+        projectId,
+        requirementId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+        >
+      >
+    > = ({ signal }) =>
+      prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet(
+        projectId,
+        requirementId,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        requirementId !== null &&
+        requirementId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type PrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+      >
+    >
+  >;
+export type PrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Prepare Verification Start */
+export function usePrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  requirementId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Prepare Verification Start */
+export function usePrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  requirementId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Prepare Verification Start */
+export function usePrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  requirementId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Prepare Verification Start */
+export function usePrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  requirementId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof prepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getPrepareVerificationStartProjectsProjectIdRequirementVerificationPlansPreparationRequirementIdGetQueryOptions(
+      projectId,
+      requirementId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getStartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/requirement-verification-plans/start`;
+  };
+
+/**
+ * @summary Start Verification Plan
+ */
+export const startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost =
+  async (
+    projectId: number,
+    verificationStart: VerificationStart,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<VerificationDetail> => {
+    return apiClient<VerificationDetail>(
+      getStartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(verificationStart),
+      },
+    );
+  };
+
+export const getStartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationKey =
+  () =>
+    [
+      "startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost",
+    ] as const;
+
+export const getStartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost
+        >
+      >,
+      TError,
+      StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost
+      >
+    >,
+    TError,
+    StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getStartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost
+        >
+      >,
+      StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationVariables
+    > = (props) => {
+      const { projectId, data } = props ?? {};
+
+      return startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost(
+        projectId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost
+      >
+    >
+  >;
+export type StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationBody =
+  BodyType<VerificationStart>;
+export type StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationVariables =
+  { projectId: number; data: BodyType<VerificationStart> };
+
+/** @summary Start Verification Plan */
+export const useStartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost
+          >
+        >,
+        TError,
+        StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof startVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPost
+      >
+    >,
+    TError,
+    StartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getStartVerificationPlanProjectsProjectIdRequirementVerificationPlansStartPostMutationOptions(
         options,
       ),
       queryClient,
@@ -621,6 +1043,7 @@ export type GetVerificationPlanProjectsProjectIdRequirementVerificationPlansPlan
 export type GetVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/** @summary Get Verification Plan */
 export function useGetVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdGet<
   TData = Awaited<
     ReturnType<
@@ -665,6 +1088,7 @@ export function useGetVerificationPlanProjectsProjectIdRequirementVerificationPl
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary Get Verification Plan */
 export function useGetVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdGet<
   TData = Awaited<
     ReturnType<
@@ -709,6 +1133,7 @@ export function useGetVerificationPlanProjectsProjectIdRequirementVerificationPl
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary Get Verification Plan */
 export function useGetVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdGet<
   TData = Awaited<
     ReturnType<
@@ -737,10 +1162,7 @@ export function useGetVerificationPlanProjectsProjectIdRequirementVerificationPl
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-/**
- * @summary Get Verification Plan
- */
-
+/** @summary Get Verification Plan */
 export function useGetVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdGet<
   TData = Awaited<
     ReturnType<
@@ -799,27 +1221,6 @@ export const updateVerificationPlanProjectsProjectIdRequirementVerificationPlans
     verificationUpdate: VerificationUpdate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<VerificationDetail> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<VerificationDetail>(
       getUpdateVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdPutUrl(
         projectId,
@@ -828,10 +1229,10 @@ export const updateVerificationPlanProjectsProjectIdRequirementVerificationPlans
       {
         ...options,
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(verificationUpdate),
       },
     );
@@ -912,9 +1313,7 @@ export type UpdateVerificationPlanProjectsProjectIdRequirementVerificationPlansP
 export type UpdateVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdPutMutationVariables =
   { projectId: number; planId: string; data: BodyType<VerificationUpdate> };
 
-/**
- * @summary Update Verification Plan
- */
+/** @summary Update Verification Plan */
 export const useUpdateVerificationPlanProjectsProjectIdRequirementVerificationPlansPlanIdPut =
   <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
     options?: {
@@ -1086,6 +1485,7 @@ export type ListVerificationRevisionsProjectsProjectIdRequirementVerificationPla
 export type ListVerificationRevisionsProjectsProjectIdRequirementVerificationPlansPlanIdRevisionsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/** @summary List Verification Revisions */
 export function useListVerificationRevisionsProjectsProjectIdRequirementVerificationPlansPlanIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -1133,6 +1533,7 @@ export function useListVerificationRevisionsProjectsProjectIdRequirementVerifica
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary List Verification Revisions */
 export function useListVerificationRevisionsProjectsProjectIdRequirementVerificationPlansPlanIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -1178,6 +1579,7 @@ export function useListVerificationRevisionsProjectsProjectIdRequirementVerifica
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary List Verification Revisions */
 export function useListVerificationRevisionsProjectsProjectIdRequirementVerificationPlansPlanIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -1207,10 +1609,7 @@ export function useListVerificationRevisionsProjectsProjectIdRequirementVerifica
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-/**
- * @summary List Verification Revisions
- */
-
+/** @summary List Verification Revisions */
 export function useListVerificationRevisionsProjectsProjectIdRequirementVerificationPlansPlanIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -1394,6 +1793,7 @@ export type ListVerificationExecutionCandidatesProjectsProjectIdRequirementVerif
 export type ListVerificationExecutionCandidatesProjectsProjectIdRequirementVerificationPlansPlanIdExecutionCandidatesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/** @summary List Verification Execution Candidates */
 export function useListVerificationExecutionCandidatesProjectsProjectIdRequirementVerificationPlansPlanIdExecutionCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -1441,6 +1841,7 @@ export function useListVerificationExecutionCandidatesProjectsProjectIdRequireme
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary List Verification Execution Candidates */
 export function useListVerificationExecutionCandidatesProjectsProjectIdRequirementVerificationPlansPlanIdExecutionCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -1486,6 +1887,7 @@ export function useListVerificationExecutionCandidatesProjectsProjectIdRequireme
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/** @summary List Verification Execution Candidates */
 export function useListVerificationExecutionCandidatesProjectsProjectIdRequirementVerificationPlansPlanIdExecutionCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -1515,10 +1917,7 @@ export function useListVerificationExecutionCandidatesProjectsProjectIdRequireme
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-/**
- * @summary List Verification Execution Candidates
- */
-
+/** @summary List Verification Execution Candidates */
 export function useListVerificationExecutionCandidatesProjectsProjectIdRequirementVerificationPlansPlanIdExecutionCandidatesGet<
   TData = Awaited<
     ReturnType<

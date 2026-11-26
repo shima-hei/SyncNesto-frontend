@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import Link from "next/link";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 import { EditIcon, ExternalLinkIcon } from "lucide-react";
@@ -143,10 +144,13 @@ function SelectedRequirementSummaryContent({
             <RequirementSummaryInfo
               label="担当者"
               value={
-                requirement.owner?.name ??
-                (requirement.owner_id
-                  ? `ID: ${requirement.owner_id}`
-                  : "未設定")
+                <UserDisplay
+                  name={requirement.owner?.name}
+                  src={requirement.owner?.avatar_url}
+                  emptyLabel={
+                    requirement.owner_id ? "担当者情報なし" : "未割り当て"
+                  }
+                />
               }
             />
             <RequirementSummaryInfo
@@ -205,7 +209,7 @@ function RequirementSummaryInfo({
   value,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">

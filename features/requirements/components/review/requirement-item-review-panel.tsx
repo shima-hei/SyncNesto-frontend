@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { useRequirementItemWorkflow } from "../../hooks/use-requirement-item-workflow";
 import { useProjectMemberUsers } from "@/features/projects/hooks/use-project-member-users";
+import { UserDisplay } from "@/components/shared/display/user-avatar";
+import { StatusIndicator } from "@/components/shared/display/status-badge";
+import { useRequirementReviewRequest } from "../../hooks/use-requirement-review-request";
 import { RequirementItemReviewBadge } from "./requirement-item-workflow";
-import {
-  listWorkflowReviewThreadsProjectsProjectIdRequirementWorkflowRequestIdReviewThreadsGet as listThreads,
-  readRequirementWorkflowProjectsProjectIdRequirementWorkflowRequestIdGet as readRequest,
-} from "@/lib/api/generated/requirement-workflow/requirement-workflow";
+import { listWorkflowReviewThreadsProjectsProjectIdRequirementWorkflowRequestIdReviewThreadsGet as listThreads } from "@/lib/api/generated/requirement-workflow/requirement-workflow";
 import { listOpenIssuesProjectsProjectIdOpenIssuesGet as listIssues } from "@/lib/api/generated/requirements/requirements";
 import { formatDateTime } from "@/lib/format/date";
 import { getRequirementOpenIssueStatusLabel } from "../../constants/requirement-options";
@@ -35,12 +35,7 @@ export function RequirementItemReviewPanel({
   const state = workflow.data?.[0];
   const requestId = state?.review_request_id ?? "";
   const itemNodeId = state?.review_item_node_id ?? "";
-  const request = useQuery({
-    queryKey: ["requirement-item-review", projectId, requestId],
-    queryFn: ({ signal }) => readRequest(projectId, requestId, { signal }),
-    enabled: Boolean(requestId),
-    retry: false,
-  });
+  const request = useRequirementReviewRequest(projectId, requestId);
   const threads = useQuery({
     queryKey: [
       "requirement-item-review-threads",
@@ -135,13 +130,30 @@ export function RequirementItemReviewPanel({
                   key={person.user_id}
                   className="flex flex-wrap justify-between gap-1 py-2 text-sm"
                 >
-                  <span>{person.name ?? "担当者"}</span>
-                  <span className="text-muted-foreground">
-                    {person.status === "confirmed"
-                      ? "確認済み"
-                      : person.status === "changes_requested"
-                        ? "修正依頼あり"
-                        : "確認待ち"}
+                  <UserDisplay
+                    name={person.name}
+                    src={
+                      users.find((user) => user.id === person.user_id)
+                        ?.avatar_url
+                    }
+                    emptyLabel="名前を取得できない担当者"
+                  />
+                  <span className="flex flex-wrap items-center gap-1 text-muted-foreground">
+                    <StatusIndicator
+                      tone={
+                        person.status === "confirmed"
+                          ? "success"
+                          : person.status === "changes_requested"
+                            ? "warning"
+                            : "info"
+                      }
+                    >
+                      {person.status === "confirmed"
+                        ? "確認済み"
+                        : person.status === "changes_requested"
+                          ? "修正依頼あり"
+                          : "確認待ち"}
+                    </StatusIndicator>
                     {person.responded_at
                       ? ` ・ ${formatDateTime(person.responded_at)}`
                       : ""}

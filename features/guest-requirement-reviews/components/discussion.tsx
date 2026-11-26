@@ -4,6 +4,12 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { CommentMessage } from "@/components/shared/comments/comment-message";
+import {
+  CommentComposer,
+  CommentSubmit,
+} from "@/components/shared/comments/comment-composer";
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
@@ -44,6 +50,7 @@ export function GuestReviewDiscussion({
 }) {
   const [page, setPage] = useState(1);
   const [composing, setComposing] = useState(false);
+  const [draftBody, setDraftBody] = useState("");
   const bodyId = useId();
   const visibleComposer = composing || Boolean(anchor);
   const threads = useQuery({
@@ -70,6 +77,7 @@ export function GuestReviewDiscussion({
     onSuccess: async () => {
       clearAnchor();
       setComposing(false);
+      setDraftBody("");
       toast.success("指摘・コメントを登録しました");
       await onRefresh();
     },
@@ -113,66 +121,64 @@ export function GuestReviewDiscussion({
         ) : null}
       </div>
       {review.can_discuss && visibleComposer ? (
-        <form
-          className="grid min-w-0 gap-2 rounded-md border p-3"
-          onSubmit={submit}
-        >
-          {anchor ? (
-            <blockquote className="border-s-2 ps-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">
-              {anchor.quote}
-            </blockquote>
-          ) : null}
-          {review.can_respond ? (
-            <fieldset
-              className="flex flex-wrap gap-3 text-xs"
-              disabled={create.isPending}
-            >
-              <legend className="sr-only">指摘の種類</legend>
-              <label className="flex items-center gap-1">
-                <input
-                  type="radio"
-                  name="kind"
-                  value="comment"
-                  defaultChecked
-                />
-                コメント
+        <form className="min-w-0" onSubmit={submit}>
+          <CommentComposer>
+            <div className="grid gap-2">
+              {anchor ? (
+                <blockquote className="border-s-2 ps-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                  {anchor.quote}
+                </blockquote>
+              ) : null}
+              {review.can_respond ? (
+                <fieldset
+                  className="flex flex-wrap gap-3 text-xs"
+                  disabled={create.isPending}
+                >
+                  <legend className="sr-only">指摘の種類</legend>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="kind"
+                      value="comment"
+                      defaultChecked
+                    />
+                    コメント
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input type="radio" name="kind" value="correction" />
+                    修正依頼
+                  </label>
+                </fieldset>
+              ) : null}
+              <label htmlFor={bodyId} className="sr-only">
+                指摘・コメントの内容
               </label>
-              <label className="flex items-center gap-1">
-                <input type="radio" name="kind" value="correction" />
-                修正依頼
-              </label>
-            </fieldset>
-          ) : null}
-          <label htmlFor={bodyId} className="sr-only">
-            指摘・コメントの内容
-          </label>
-          <Textarea
-            id={bodyId}
-            name="body"
-            required
-            maxLength={4000}
-            readOnly={create.isPending}
-            placeholder="指摘・コメントの内容"
-          />
-          <FormApiError error={create.error} />
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={create.isPending}
-              onClick={() => {
-                setComposing(false);
-                clearAnchor();
-                create.reset();
-              }}
-            >
-              閉じる
-            </Button>
-            <Button type="submit" size="sm" disabled={create.isPending}>
-              登録する
-            </Button>
-          </div>
+              <Textarea
+                id={bodyId}
+                name="body"
+                required
+                maxLength={4000}
+                readOnly={create.isPending}
+                value={draftBody}
+                rows={2}
+                onChange={(event) => setDraftBody(event.currentTarget.value)}
+                placeholder="指摘・コメントの内容"
+              />
+              <FormApiError error={create.error} />
+              <CommentSubmit
+                body={draftBody}
+                pending={create.isPending}
+                onCancel={() => {
+                  if (create.isPending) return;
+                  setComposing(false);
+                  clearAnchor();
+                  create.reset();
+                }}
+              >
+                コメントを投稿
+              </CommentSubmit>
+            </div>
+          </CommentComposer>
         </form>
       ) : null}
       {threads.error ? (
@@ -232,6 +238,7 @@ function Thread({
   onRefresh: () => Promise<void>;
   onAccessError: (error: unknown) => boolean;
 }) {
+  const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [replyPage, setReplyPage] = useState(1);
   const [action, setAction] = useState<"reply" | "reopen" | null>(null);
@@ -273,109 +280,115 @@ function Thread({
     if (body) mutation.mutate({ action, body, version: thread.version });
   }
   return (
-    <article className="grid min-w-0 gap-2 rounded-md border bg-muted/30 p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs text-muted-foreground">
-          {thread.kind === "correction" ? "修正依頼" : "コメント"}
-        </span>
-        <Badge variant="outline">{correctionStatus[thread.status]}</Badge>
-      </div>
-      <p className="whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">
-        {thread.body}
-      </p>
-      <details onToggle={(event) => setExpanded(event.currentTarget.open)}>
-        <summary className="cursor-pointer text-sm font-medium">
-          返信・対応
-        </summary>
-        <div className="grid gap-2 pt-2">
-          {replies.error ? (
-            <DataLoadError
-              resourceName="返信"
-              onRetry={() => void replies.refetch()}
-            />
-          ) : replies.data?.items.length ? (
-            <ul className="grid gap-2">
-              {replies.data.items.map((body, index) => (
-                <li
-                  key={index}
-                  className="border-s ps-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere]"
-                >
-                  {body}
-                </li>
-              ))}
-            </ul>
-          ) : replies.data ? (
-            <p className="text-xs text-muted-foreground">
-              返信はまだありません。
-            </p>
-          ) : null}
-          {replies.data && (replies.data.total > pageSize || replyPage > 1) ? (
-            <DataPagination
-              page={replyPage}
-              pageSize={pageSize}
-              total={replies.data.total}
-              currentCount={replies.data.items.length}
-              onPageChange={setReplyPage}
-            />
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            {thread.available_actions.includes("reply") ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => setAction("reply")}
-              >
-                返信
-              </Button>
-            ) : null}
-            {thread.available_actions.includes("resolve") ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={mutation.isPending}
-                onClick={() =>
-                  mutation.mutate({
-                    action: "resolve",
-                    version: thread.version,
-                  })
-                }
-              >
-                解決する
-              </Button>
-            ) : null}
-            {thread.available_actions.includes("reopen") ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setAction("reopen")}
-              >
-                再対応を依頼
-              </Button>
-            ) : null}
-          </div>
-          {action ? (
-            <form onSubmit={send} className="grid gap-2">
-              <label htmlFor={inputId} className="text-xs font-medium">
-                {action === "reply" ? "返信内容" : "再対応が必要な理由"}
-              </label>
-              <Textarea
-                id={inputId}
-                name="reply"
-                required
-                maxLength={4000}
-                readOnly={mutation.isPending}
+    <div className="min-w-0 border-b py-2">
+      <CommentMessage
+        author={user?.name ?? "ご自身"}
+        avatarUrl={user?.avatar_url}
+        createdAt={thread.created_at}
+        menu={
+          thread.kind === "correction" ? (
+            <Badge variant="outline">{correctionStatus[thread.status]}</Badge>
+          ) : null
+        }
+      >
+        <p className="whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">
+          {thread.body}
+        </p>
+        <details onToggle={(event) => setExpanded(event.currentTarget.open)}>
+          <summary className="cursor-pointer text-sm font-medium">
+            返信・対応
+          </summary>
+          <div className="grid gap-2 pt-2">
+            {replies.error ? (
+              <DataLoadError
+                resourceName="返信"
+                onRetry={() => void replies.refetch()}
               />
-              <Button type="submit" size="sm" disabled={mutation.isPending}>
-                保存
-              </Button>
-            </form>
-          ) : null}
-          <FormApiError error={mutation.error} />
-        </div>
-      </details>
-    </article>
+            ) : replies.data?.items.length ? (
+              <ul className="grid gap-2">
+                {replies.data.items.map((body, index) => (
+                  <li
+                    key={index}
+                    className="border-s ps-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere]"
+                  >
+                    {body}
+                  </li>
+                ))}
+              </ul>
+            ) : replies.data ? (
+              <p className="text-xs text-muted-foreground">
+                返信はまだありません。
+              </p>
+            ) : null}
+            {replies.data &&
+            (replies.data.total > pageSize || replyPage > 1) ? (
+              <DataPagination
+                page={replyPage}
+                pageSize={pageSize}
+                total={replies.data.total}
+                currentCount={replies.data.items.length}
+                onPageChange={setReplyPage}
+              />
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              {thread.available_actions.includes("reply") ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setAction("reply")}
+                >
+                  返信
+                </Button>
+              ) : null}
+              {thread.available_actions.includes("resolve") ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={mutation.isPending}
+                  onClick={() =>
+                    mutation.mutate({
+                      action: "resolve",
+                      version: thread.version,
+                    })
+                  }
+                >
+                  解決する
+                </Button>
+              ) : null}
+              {thread.available_actions.includes("reopen") ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAction("reopen")}
+                >
+                  再対応を依頼
+                </Button>
+              ) : null}
+            </div>
+            {action ? (
+              <form onSubmit={send} className="grid gap-2">
+                <label htmlFor={inputId} className="text-xs font-medium">
+                  {action === "reply" ? "返信内容" : "再対応が必要な理由"}
+                </label>
+                <Textarea
+                  id={inputId}
+                  name="reply"
+                  required
+                  maxLength={4000}
+                  readOnly={mutation.isPending}
+                />
+                <Button type="submit" size="sm" disabled={mutation.isPending}>
+                  保存
+                </Button>
+              </form>
+            ) : null}
+            <FormApiError error={mutation.error} />
+          </div>
+        </details>
+      </CommentMessage>
+    </div>
   );
 }

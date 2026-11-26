@@ -4,7 +4,10 @@ import { useId, useState } from "react";
 
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
-import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
+import {
+  CommentComposer,
+  CommentSubmit,
+} from "@/components/shared/comments/comment-composer";
 import {
   Field,
   FieldError,
@@ -50,7 +53,7 @@ const defaultValues: TaskCommentFormValues = {
 export function TaskCommentForm({
   projectId,
   initialValues,
-  submitLabel = "コメント追加",
+  submitLabel = "コメントを投稿",
   resetOnSuccess = true,
   enableStatusChange = false,
   isPending,
@@ -60,12 +63,14 @@ export function TaskCommentForm({
 }: TaskCommentFormProps) {
   const statusId = useId();
   const [values, setValues] = useState(initialValues ?? defaultValues);
+  const bodyId = useId();
   const [errors, setErrors] = useState<TaskCommentFormErrors>({});
 
   const handleSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
+    if (isPending || !values.body.trim()) return;
 
     const result = taskCommentSchema.safeParse(values);
 
@@ -91,58 +96,68 @@ export function TaskCommentForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <FieldGroup>
-        <Field data-invalid={errors.body ? true : undefined}>
-          <FieldLabel>コメント</FieldLabel>
-          <MentionTextarea
-            projectId={projectId}
-            permission="task:read"
-            mentions={values.mentions}
-            value={values.body}
-            onChange={(body, mentions) => {
-              setValues((current) => ({
-                ...current,
-                body,
-                mentions,
-              }));
-              setErrors((current) => ({ ...current, body: undefined }));
-            }}
-            aria-invalid={Boolean(errors.body)}
-          />
-          {errors.body ? <FieldError>{errors.body}</FieldError> : null}
-        </Field>
-
-        {enableStatusChange ? (
-          <Field>
-            <FieldLabel htmlFor={statusId}>ステータスも変更</FieldLabel>
-            <Select
-              value={values.status}
-              onValueChange={(status) =>
-                setValues((current) => ({ ...current, status }))
-              }
-            >
-              <SelectTrigger id={statusId} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value={TASK_COMMENT_STATUS_UNCHANGED}>
-                    変更しない
-                  </SelectItem>
-                  {TASK_STATUS_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+      <CommentComposer>
+        <FieldGroup className="gap-2">
+          <Field data-invalid={errors.body ? true : undefined}>
+            <FieldLabel htmlFor={bodyId} className="sr-only">
+              コメント本文
+            </FieldLabel>
+            <MentionTextarea
+              id={bodyId}
+              rows={2}
+              placeholder="コメントを入力…"
+              className="min-h-12"
+              projectId={projectId}
+              permission="task:read"
+              mentions={values.mentions}
+              value={values.body}
+              onChange={(body, mentions) => {
+                setValues((current) => ({
+                  ...current,
+                  body,
+                  mentions,
+                }));
+                setErrors((current) => ({ ...current, body: undefined }));
+              }}
+              aria-invalid={Boolean(errors.body)}
+            />
+            {errors.body ? <FieldError>{errors.body}</FieldError> : null}
           </Field>
-        ) : null}
 
-        <FormApiError error={error} />
-        <FormSubmitButton isPending={isPending}>{submitLabel}</FormSubmitButton>
-      </FieldGroup>
+          {enableStatusChange ? (
+            <Field>
+              <FieldLabel htmlFor={statusId}>ステータスも変更</FieldLabel>
+              <Select
+                value={values.status}
+                onValueChange={(status) =>
+                  setValues((current) => ({ ...current, status }))
+                }
+              >
+                <SelectTrigger id={statusId} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value={TASK_COMMENT_STATUS_UNCHANGED}>
+                      変更しない
+                    </SelectItem>
+                    {TASK_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+          ) : null}
+
+          <FormApiError error={error} />
+          <CommentSubmit pending={isPending} body={values.body}>
+            {submitLabel}
+          </CommentSubmit>
+        </FieldGroup>
+      </CommentComposer>
     </form>
   );
 }

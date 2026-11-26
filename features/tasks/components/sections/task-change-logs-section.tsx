@@ -103,6 +103,7 @@ function TaskChangeLogItem({
       changedAt={changeLog.created_at}
       actionLabel={formatTaskChangeLogAction(changeLog.action)}
       actorLabel={formatTaskChangeLogActor(changeLog)}
+      actorAvatarUrl={changeLog.created_by_user?.avatar_url}
       changedAtLabel={formatDateTime(changeLog.created_at)}
       fieldName={changeLog.field_name}
       fieldLabel={headerFieldLabel}

@@ -83,7 +83,7 @@ export function ArtifactReleasesPage({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="固定版と添付"
+        title="バージョン履歴・添付資料"
         description="レビューする時点の本文と添付を残し、あとから同じ内容を確認できます。"
         actions={
           <Button asChild variant="outline">
@@ -206,7 +206,7 @@ function ReleaseWorkspace({
   return (
     <>
       <Alert>
-        <AlertTitle>プロジェクト内で確認する固定版</AlertTitle>
+        <AlertTitle>プロジェクト内で参照できる版</AlertTitle>
         <AlertDescription>
           作成しただけでは顧客に公開されず、正式な承認にもなりません。添付は本文の固定後に選びます。
         </AlertDescription>
@@ -295,7 +295,7 @@ function ReleaseWorkspace({
                     {save.isPending ? (
                       <Spinner data-icon="inline-start" />
                     ) : null}
-                    この内容で固定版を保存
+                    現在の版を保存
                   </Button>
                 </div>
                 <FormApiError error={save.error} />
@@ -309,7 +309,7 @@ function ReleaseWorkspace({
       ) : null}
       <Card>
         <CardHeader>
-          <CardTitle>保存した固定版</CardTitle>
+          <CardTitle>保存した版</CardTitle>
           <CardDescription>
             対象を選ぶと、保存した本文と添付の保全状況を確認できます。
           </CardDescription>
@@ -327,7 +327,7 @@ function ReleaseWorkspace({
               <EmptyHeader>
                 <EmptyTitle>固定版はまだありません</EmptyTitle>
                 <EmptyDescription>
-                  元の要件・要件定義書・画面やAPI設計の「固定版と添付」から保存できます。
+                  元の要件・要件定義書・画面やAPI設計の「バージョン履歴・添付資料」から保存できます。
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -385,11 +385,11 @@ function ReleaseWorkspace({
       {selected && /^[0-9a-f-]{36}$/i.test(selected) ? (
         <section
           className="flex min-w-0 flex-col gap-6"
-          aria-label="選択した固定版"
+          aria-label="選択した版"
         >
           <Card>
             <CardHeader>
-              <CardTitle>{row?.title ?? "選択した固定版の本文"}</CardTitle>
+              <CardTitle>{row?.title ?? "選択した版の本文"}</CardTitle>
               <CardDescription>
                 {row
                   ? `元の版 ${row.source_version}・${displayDate(row.captured_at)} 時点`

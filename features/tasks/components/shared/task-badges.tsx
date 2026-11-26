@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import {
   StatusBadge,
+  PriorityIndicator,
   type StatusTone,
 } from "@/components/shared/display/status-badge";
 import type { TaskRequirementSummary } from "@/lib/api/generated/model";
@@ -30,10 +31,19 @@ export function TaskStatusBadge({ status }: { status?: string | null }) {
 }
 
 export function TaskPriorityBadge({ priority }: { priority?: string | null }) {
-  const variant =
-    priority === "critical" || priority === "high" ? "destructive" : "outline";
-
-  return <Badge variant={variant}>{getTaskPriorityLabel(priority)}</Badge>;
+  const level =
+    priority === "critical"
+      ? "critical"
+      : priority === "high"
+        ? "high"
+        : priority === "medium"
+          ? "normal"
+          : "low";
+  return (
+    <PriorityIndicator level={level}>
+      {getTaskPriorityLabel(priority)}
+    </PriorityIndicator>
+  );
 }
 
 export function TaskFlagBadges({
@@ -92,10 +102,10 @@ export function TaskRequirementBadges({
 }
 
 const taskStatusTones: Record<string, StatusTone> = {
-  todo: "info",
+  todo: "neutral",
   in_progress: "progress",
   resolved: "resolved",
-  in_review: "warning",
+  in_review: "info",
   returned: "returned",
   done: "success",
   blocked: "danger",

@@ -13,6 +13,7 @@ import {
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
 import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
 import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,7 +35,6 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { formatDateTime } from "@/lib/format/date";
 import type { RequirementRead } from "@/lib/api/generated/model";
@@ -216,10 +216,7 @@ export function RequirementsTable({
                       onSelectReviewAnchor={onSelectReviewAnchor}
                     >
                       <RequirementInlineSelect
-                        value={requirement.priority ?? "must"}
-                        label={getRequirementPriorityLabel(
-                          requirement.priority,
-                        )}
+                        value={requirement.priority ?? ""}
                         ariaLabel={`${requirement.requirement_code} 優先度`}
                         disabled={isPending}
                         options={REQUIREMENT_PRIORITY_OPTIONS}
@@ -248,7 +245,10 @@ export function RequirementsTable({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   {state ? (
-                    <RequirementItemReviewBadge review={state.review} />
+                    <RequirementItemReviewBadge
+                      review={state.review}
+                      pending={Boolean(state.review_request_id)}
+                    />
                   ) : (
                     <span className="text-xs text-muted-foreground">
                       {workflow.isError
@@ -260,13 +260,13 @@ export function RequirementsTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <span
-                    className="block max-w-48 truncate"
-                    title={requirement.owner?.name}
-                  >
-                    {requirement.owner?.name ??
-                      (requirement.owner_id ? "担当者情報なし" : "未設定")}
-                  </span>
+                  <UserDisplay
+                    name={requirement.owner?.name}
+                    src={requirement.owner?.avatar_url}
+                    emptyLabel={
+                      requirement.owner_id ? "担当者情報なし" : "未割り当て"
+                    }
+                  />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                   {coverageState === "loading"
@@ -495,14 +495,12 @@ function ReviewableRequirementText({
 
 function RequirementInlineSelect({
   value,
-  label,
   ariaLabel,
   disabled,
   options,
   onValueChange,
 }: {
   value: string;
-  label: string;
   ariaLabel: string;
   disabled: boolean;
   options: readonly { value: string; label: string }[];
@@ -514,14 +512,18 @@ function RequirementInlineSelect({
       onKeyDown={(event) => event.stopPropagation()}
     >
       <Select value={value} disabled={disabled} onValueChange={onValueChange}>
-        <SelectTrigger className="h-8 w-32" aria-label={ariaLabel}>
-          <SelectValue>{label}</SelectValue>
+        <SelectTrigger
+          size="sm"
+          className="h-auto gap-1 border-0 bg-transparent p-0 shadow-none dark:bg-transparent"
+          aria-label={ariaLabel}
+        >
+          <RequirementPriorityBadge priority={value} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                <RequirementPriorityBadge priority={option.value} />
               </SelectItem>
             ))}
           </SelectGroup>

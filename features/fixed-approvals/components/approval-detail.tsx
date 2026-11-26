@@ -1,4 +1,5 @@
 "use client";
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { ApprovalNextActions } from "@/features/notifications/components/approval-next-actions";
 
 import { useId, useState } from "react";
@@ -487,7 +488,10 @@ export function ApprovalDetail({
               <div key={event.id} className="flex flex-col gap-1 border-b pb-3">
                 <p className="text-sm font-medium">
                   {statusLabels[event.action] ?? event.action}・
-                  {event.actor_name ?? `ID ${event.actor_id}`}
+                  <UserDisplay
+                    name={event.actor_name}
+                    emptyLabel="操作者不明"
+                  />
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDateTime(event.occurred_at)}

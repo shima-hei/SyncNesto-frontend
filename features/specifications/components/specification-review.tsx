@@ -11,12 +11,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import type { SpecificationRead } from "@/lib/api/generated/model";
-import { formatDateTime } from "@/lib/format/date";
+import { CommentMessage } from "@/components/shared/comments/comment-message";
+import {
+  CommentComposer,
+  CommentSubmit,
+} from "@/components/shared/comments/comment-composer";
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 import { listComments, createComment, resolveComment } from "../lib/api";
 import {
@@ -117,35 +120,34 @@ export function SpecificationReview({
           <p className="text-sm font-medium">
             指摘先: {reviewPathLabel(values, target)}
           </p>
-          <Field>
-            <FieldLabel htmlFor="specification-comment-body">
-              確認したこと・修正してほしいこと
-            </FieldLabel>
-            <Textarea
-              id="specification-comment-body"
-              name="comment"
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              required
-              maxLength={5000}
-              rows={4}
-              placeholder="例: 入力エラー時に、どの項目を直せばよいか分かる表示を追加してください…"
-              disabled={post.isPending}
-            />
-          </Field>
-          <FormApiError error={post.error} />
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={post.isPending}>
-              {post.isPending ? "投稿中…" : "指摘を投稿"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onTarget(null)}
-            >
-              取消
-            </Button>
-          </div>
+          <CommentComposer>
+            <div className="flex flex-col gap-2">
+              <Field>
+                <FieldLabel htmlFor="specification-comment-body">
+                  確認したこと・修正してほしいこと
+                </FieldLabel>
+                <Textarea
+                  id="specification-comment-body"
+                  name="comment"
+                  value={body}
+                  onChange={(event) => setBody(event.target.value)}
+                  required
+                  maxLength={5000}
+                  rows={2}
+                  placeholder="例: 入力エラー時に、どの項目を直せばよいか分かる表示を追加してください…"
+                  disabled={post.isPending}
+                />
+              </Field>
+              <FormApiError error={post.error} />
+              <CommentSubmit
+                body={body}
+                pending={post.isPending}
+                onCancel={() => onTarget(null)}
+              >
+                指摘を投稿
+              </CommentSubmit>
+            </div>
+          </CommentComposer>
         </form>
       )}
       <Button
@@ -176,75 +178,69 @@ export function SpecificationReview({
         </p>
       ) : (
         (showResolved ? comments : unresolved).map((comment) => (
-          <article
-            key={comment.id}
-            className="flex min-w-0 flex-col gap-2 border-b pb-4"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={comment.is_resolved ? "secondary" : "outline"}>
-                {comment.is_resolved ? "解決済み" : "未解決"}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {comment.author_name}・版 {comment.specification_version}・
-                {formatDateTime(comment.created_at)}
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="link"
-              className="h-auto justify-start whitespace-normal p-0 text-left"
-              onClick={() => onNavigate(comment.field_path)}
+          <div key={comment.id} className="min-w-0 border-b py-3">
+            <CommentMessage
+              author={comment.author_name}
+              createdAt={comment.created_at}
+              resolved={comment.is_resolved}
             >
-              {reviewPathLabel(values, comment.field_path)}
-            </Button>
-            <p className="whitespace-pre-wrap break-words text-sm">
-              {comment.body}
-            </p>
-            {comment.anchor_changed && (
-              <Alert>
-                <AlertTitle>指摘後に対象が変わっています</AlertTitle>
-                <AlertDescription>
-                  現在の内容と指摘を照らし合わせて、対応を確認してください。
-                  {comment.field_snapshot && (
-                    <details>
-                      <summary className="cursor-pointer">
-                        指摘時の内容（先頭800文字）
-                      </summary>
-                      <p className="mt-2 whitespace-pre-wrap break-words text-xs">
-                        {comment.field_snapshot}
-                      </p>
-                    </details>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
-            {canEdit && (
-              <div className="flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="outline">
-                  <Link
-                    href={`${specificationHref(projectId, row.id)}/edit?focus=${encodeURIComponent(comment.field_path)}`}
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto justify-start whitespace-normal p-0 text-left"
+                onClick={() => onNavigate(comment.field_path)}
+              >
+                {reviewPathLabel(values, comment.field_path)}
+              </Button>
+              <p className="whitespace-pre-wrap break-words text-sm">
+                {comment.body}
+              </p>
+              {comment.anchor_changed && (
+                <Alert>
+                  <AlertTitle>指摘後に対象が変わっています</AlertTitle>
+                  <AlertDescription>
+                    現在の内容と指摘を照らし合わせて、対応を確認してください。
+                    {comment.field_snapshot && (
+                      <details>
+                        <summary className="cursor-pointer">
+                          指摘時の内容（先頭800文字）
+                        </summary>
+                        <p className="mt-2 whitespace-pre-wrap break-words text-xs">
+                          {comment.field_snapshot}
+                        </p>
+                      </details>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {canEdit && (
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      href={`${specificationHref(projectId, row.id)}/edit?focus=${encodeURIComponent(comment.field_path)}`}
+                    >
+                      この箇所を修正
+                    </Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={resolve.isPending}
+                    onClick={() =>
+                      resolve.mutate({
+                        id: comment.id,
+                        version: comment.version,
+                        is_resolved: !comment.is_resolved,
+                      })
+                    }
                   >
-                    この箇所を修正
-                  </Link>
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={resolve.isPending}
-                  onClick={() =>
-                    resolve.mutate({
-                      id: comment.id,
-                      version: comment.version,
-                      is_resolved: !comment.is_resolved,
-                    })
-                  }
-                >
-                  {comment.is_resolved ? "再オープン" : "対応を確認して解決"}
-                </Button>
-              </div>
-            )}
-          </article>
+                    {comment.is_resolved ? "再オープン" : "対応を確認して解決"}
+                  </Button>
+                </div>
+              )}
+            </CommentMessage>
+          </div>
         ))
       )}
       <span id={reviewElementId("review")} className="sr-only" />

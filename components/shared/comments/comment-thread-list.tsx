@@ -48,76 +48,58 @@ export function CommentThreadList<TComment>({
 }: CommentThreadListProps<TComment>) {
   const [editingTarget, setEditingTarget] = useState<TComment | null>(null);
   const [replyTarget, setReplyTarget] = useState<TComment | null>(null);
-  const rootComments = comments.filter(
-    (comment) => !getParentCommentId(comment),
-  );
-
-  if (isLoading) {
-    return loadingFallback ?? <LoadingState />;
+  const byParent = new Map<number | null, TComment[]>();
+  const ids = new Set(comments.map(getCommentId));
+  for (const comment of comments) {
+    const parent = getParentCommentId(comment);
+    const parentId = parent != null && ids.has(parent) ? parent : null;
+    const siblings = byParent.get(parentId) ?? [];
+    siblings.push(comment);
+    byParent.set(parentId, siblings);
   }
+  const roots = byParent.get(null) ?? [];
 
-  if (!rootComments.length) {
-    return <EmptyState message={emptyMessage} />;
-  }
+  if (isLoading) return loadingFallback ?? <LoadingState />;
+  if (!roots.length) return <EmptyState message={emptyMessage} />;
+
+  const renderItem = (comment: TComment): ReactNode => {
+    const id = getCommentId(comment);
+    const replies = byParent.get(id);
+    return (
+      <li key={id} className="flex min-w-0 flex-col gap-3 py-2">
+        {renderCommentBody({
+          comment,
+          onEdit: setEditingTarget,
+          onReply: setReplyTarget,
+        })}
+        {canComment &&
+        editingTarget &&
+        getCommentId(editingTarget) === id &&
+        (canEditComment?.(comment) ?? true) ? (
+          <div className="ms-8 min-w-0">
+            {renderEditForm({ comment, onClose: () => setEditingTarget(null) })}
+          </div>
+        ) : null}
+        {canComment &&
+        replyTarget &&
+        getCommentId(replyTarget) === id &&
+        (canReplyComment?.(comment) ?? true) ? (
+          <div className="ms-8 min-w-0">
+            {renderReplyForm({ comment, onClose: () => setReplyTarget(null) })}
+          </div>
+        ) : null}
+        {replies?.length ? (
+          <ul role="list" className="ms-2 min-w-0 border-s ps-3 sm:ms-4">
+            {replies.map(renderItem)}
+          </ul>
+        ) : null}
+      </li>
+    );
+  };
 
   return (
-    <div className="flex flex-col gap-3">
-      {rootComments.map((comment) => {
-        const commentId = getCommentId(comment);
-        const replies = comments.filter(
-          (reply) => getParentCommentId(reply) === commentId,
-        );
-        const isEditing = editingTarget
-          ? getCommentId(editingTarget) === commentId
-          : false;
-        const isReplying = replyTarget
-          ? getCommentId(replyTarget) === commentId
-          : false;
-
-        return (
-          <div key={commentId} className="rounded-lg border p-3">
-            {renderCommentBody({
-              comment,
-              onEdit: setEditingTarget,
-              onReply: setReplyTarget,
-            })}
-
-            {canComment && isEditing && (canEditComment?.(comment) ?? true) ? (
-              <div className="mt-3 rounded-lg bg-muted p-3">
-                {renderEditForm({
-                  comment,
-                  onClose: () => setEditingTarget(null),
-                })}
-              </div>
-            ) : null}
-
-            {canComment &&
-            isReplying &&
-            (canReplyComment?.(comment) ?? true) ? (
-              <div className="mt-3 rounded-lg bg-muted p-3">
-                {renderReplyForm({
-                  comment,
-                  onClose: () => setReplyTarget(null),
-                })}
-              </div>
-            ) : null}
-
-            {replies.length ? (
-              <div className="mt-3 flex flex-col gap-2 border-l pl-3">
-                {replies.map((reply) => (
-                  <div key={getCommentId(reply)}>
-                    {renderCommentBody({
-                      comment: reply,
-                      onEdit: setEditingTarget,
-                      onReply: setReplyTarget,
-                    })}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
+    <ul role="list" className="min-w-0 divide-y">
+      {roots.map(renderItem)}
+    </ul>
   );
 }

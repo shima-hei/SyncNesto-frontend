@@ -38,7 +38,6 @@ type RequirementChangeLogsSectionProps = {
   targetType?: string;
   targetId?: number;
   compact?: boolean;
-  timeline?: boolean;
 };
 
 export function RequirementChangeLogsSection({
@@ -48,7 +47,6 @@ export function RequirementChangeLogsSection({
   targetType,
   targetId,
   compact = false,
-  timeline = false,
 }: RequirementChangeLogsSectionProps) {
   const [page, setPage] = useState(1);
   const { sections } = useRequirementSections(projectId, documentId);
@@ -86,43 +84,6 @@ export function RequirementChangeLogsSection({
       requirements[index].data?.requirement_code,
     ]),
   );
-  if (timeline) {
-    return (
-      <div className="space-y-3">
-        {error ? (
-          <DataLoadError resourceName={title} onRetry={() => void refetch()} />
-        ) : isLoading ? (
-          <p role="status" className="text-sm text-muted-foreground">
-            変更履歴を読み込み中…
-          </p>
-        ) : visibleChangeLogs.length ? (
-          <ol className="ml-1">
-            {visibleChangeLogs.map((row) => (
-              <ChangeLogItem
-                key={row.id}
-                changeLog={row}
-                timeline
-                labels={labels}
-              />
-            ))}
-          </ol>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            変更履歴はありません。
-          </p>
-        )}
-        <DataPagination
-          page={page}
-          pageSize={20}
-          total={total}
-          currentCount={visibleChangeLogs.length}
-          isFetching={isFetching}
-          isLoading={isLoading}
-          onPageChange={setPage}
-        />
-      </div>
-    );
-  }
   if (compact) {
     return (
       <section aria-label={title} className="grid min-w-0 gap-3">
@@ -158,7 +119,11 @@ export function RequirementChangeLogsSection({
                     />
                   </summary>
                   <div className="pb-3">
-                    <ChangeLogItem changeLog={row} labels={labels} hideTarget />
+                    <RequirementChangeLogItem
+                      changeLog={row}
+                      labels={labels}
+                      hideTarget
+                    />
                   </div>
                 </details>
               </li>
@@ -189,7 +154,7 @@ export function RequirementChangeLogsSection({
       isLoading={isLoading}
       loadingFallback={<RequirementSectionSkeleton />}
       renderItem={(changeLog) => (
-        <ChangeLogItem
+        <RequirementChangeLogItem
           key={changeLog.id}
           changeLog={changeLog}
           labels={labels}
@@ -233,7 +198,7 @@ function formatDocumentChangeSummary(
   return `${target} ・ ${formatRequirementChangeLogAction(row.action)}`;
 }
 
-function ChangeLogItem({
+export function RequirementChangeLogItem({
   changeLog,
   timeline = false,
   hideTarget = false,
@@ -258,12 +223,16 @@ function ChangeLogItem({
     formatRequirementChangeLogField,
   );
   const fieldCount = Math.max(updatedFieldLabels.length, diffRows.length);
+  const changedField =
+    headerFieldLabel && headerFieldLabel !== "複数項目"
+      ? headerFieldLabel
+      : (updatedFieldLabels[0] ?? diffRows[0]?.label);
   const actionLabel =
     timeline && changeLog.action === "updated"
       ? fieldCount > 1
         ? `要件を更新（${fieldCount}項目）`
-        : headerFieldLabel && headerFieldLabel !== "複数項目"
-          ? `${headerFieldLabel}を変更`
+        : changedField
+          ? `${changedField}を変更`
           : "要件を更新"
       : timeline && changeLog.action === "created"
         ? "要件を作成"
@@ -275,6 +244,7 @@ function ChangeLogItem({
       changedAt={changeLog.changed_at}
       actionLabel={actionLabel}
       actorLabel={formatRequirementChangeLogActor(changeLog)}
+      actorAvatarUrl={changeLog.changed_by_user?.avatar_url}
       changedAtLabel={formatDateTime(changeLog.changed_at)}
       targetLabel={
         timeline || hideTarget
@@ -283,7 +253,15 @@ function ChangeLogItem({
       }
       fieldName={changeLog.field_name}
       fieldLabel={timeline ? undefined : headerFieldLabel}
-      updatedFieldLabels={updatedFieldLabels}
+      updatedFieldLabels={
+        timeline &&
+        changeLog.action === "updated" &&
+        fieldCount === 1 &&
+        updatedFieldLabels.length === 1 &&
+        updatedFieldLabels[0] === changedField
+          ? undefined
+          : updatedFieldLabels
+      }
       reason={changeLog.reason}
       oldValue={changeLog.old_value}
       newValue={changeLog.new_value}

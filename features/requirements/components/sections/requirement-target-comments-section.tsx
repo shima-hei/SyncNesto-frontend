@@ -5,13 +5,16 @@ import { useState } from "react";
 
 import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
 import { CommentThreadList } from "@/components/shared/comments/comment-thread-list";
-import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
+import {
+  CommentMessageMenu,
+  CommentThreadActions,
+} from "@/components/shared/comments/comment-thread-actions";
+import { CommentMessage } from "@/components/shared/comments/comment-message";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import type { RequirementTargetCommentRead } from "@/lib/api/generated/model";
-import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { useCreateTargetComment } from "../../hooks/use-create-target-comment";
@@ -23,6 +26,7 @@ import { getRequirementCommentAnchorLabel } from "../../lib/requirement-comment-
 import type { ReviewAnchorStatus } from "../../lib/requirement-review-anchor";
 import { RequirementTargetCommentForm } from "../forms/requirement-target-comment-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type RequirementTargetCommentsSectionProps = {
   projectId: number;
@@ -40,6 +44,7 @@ type RequirementTargetCommentsSectionProps = {
   className?: string;
   contentClassName?: string;
   embedded?: boolean;
+  headerAction?: React.ReactNode;
 };
 
 export function RequirementTargetCommentsSection({
@@ -56,6 +61,7 @@ export function RequirementTargetCommentsSection({
   className,
   contentClassName,
   embedded = false,
+  headerAction,
 }: RequirementTargetCommentsSectionProps) {
   const { user } = useAuth();
   const { currentProjectRole } = useCurrentProjectRole(projectId);
@@ -69,6 +75,19 @@ export function RequirementTargetCommentsSection({
     targetType,
     targetId,
   );
+  const [filter, setFilter] = useState("all");
+  const actionableRoots = comments.filter(
+    (comment) => !comment.parent_comment_id && isActionableComment(comment),
+  );
+  const visibleComments =
+    filter === "all" || !actionableRoots.length
+      ? comments
+      : filterCommentThreads(
+          comments,
+          actionableRoots.filter(
+            (comment) => comment.is_resolved === (filter === "resolved"),
+          ),
+        );
   const {
     createTargetComment,
     isPending: isCreatePending,
@@ -95,33 +114,33 @@ export function RequirementTargetCommentsSection({
         </div>
       ) : null}
 
-      {canComment ? (
-        <RequirementTargetCommentForm
-          projectId={projectId}
-          memoryKey={`comment:create:${JSON.stringify(selectedTargetAnchor)}`}
-          key={JSON.stringify(selectedTargetAnchor)}
-          initialValues={{
-            body: "",
-            targetAnchor: selectedTargetAnchor
-              ? JSON.stringify(selectedTargetAnchor)
-              : "",
-            reason: "",
+      {actionableRoots.length ? (
+        <ToggleGroup
+          type="single"
+          value={filter}
+          onValueChange={(value) => {
+            if (value) setFilter(value);
           }}
-          showTargetAnchorInput={showTargetAnchorInput}
-          targetAnchorLabel={getRequirementCommentAnchorLabel(
-            selectedTargetAnchor,
-          )}
-          isPending={isCreatePending}
-          error={createError}
-          onSubmit={(values) => createTargetComment(values)}
-        />
+          size="sm"
+          aria-label="指摘コメントの表示"
+          className="self-start"
+        >
+          <ToggleGroupItem value="open">未解決</ToggleGroupItem>
+          <ToggleGroupItem value="resolved">解決済み</ToggleGroupItem>
+          <ToggleGroupItem value="all">すべて</ToggleGroupItem>
+        </ToggleGroup>
       ) : null}
-
       <CommentThreadList
-        comments={comments}
+        comments={visibleComments}
         isLoading={isLoading}
         canComment={canComment}
-        emptyMessage="スレッドコメントはありません。"
+        emptyMessage={
+          filter === "all" || !actionableRoots.length
+            ? "コメントはありません。"
+            : filter === "open"
+              ? "未解決の指摘はありません。"
+              : "解決済みの指摘はありません。"
+        }
         getCommentId={(comment) => comment.id}
         getParentCommentId={(comment) => comment.parent_comment_id}
         canEditComment={canMutateComment}
@@ -186,6 +205,28 @@ export function RequirementTargetCommentsSection({
         )}
       />
 
+      {canComment ? (
+        <RequirementTargetCommentForm
+          projectId={projectId}
+          memoryKey={`comment:create:${JSON.stringify(selectedTargetAnchor)}`}
+          key={JSON.stringify(selectedTargetAnchor)}
+          initialValues={{
+            body: "",
+            targetAnchor: selectedTargetAnchor
+              ? JSON.stringify(selectedTargetAnchor)
+              : "",
+            reason: "",
+          }}
+          showTargetAnchorInput={showTargetAnchorInput}
+          targetAnchorLabel={getRequirementCommentAnchorLabel(
+            selectedTargetAnchor,
+          )}
+          isPending={isCreatePending}
+          error={createError}
+          onSubmit={(values) => createTargetComment(values)}
+        />
+      ) : null}
+
       <ResourceDeleteDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
@@ -209,14 +250,34 @@ export function RequirementTargetCommentsSection({
     </div>
   ) : (
     <Card className={className}>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">{title}</CardTitle>
+        {headerAction}
       </CardHeader>
       <CardContent className={cn("flex flex-col gap-4", contentClassName)}>
         {content}
       </CardContent>
     </Card>
   );
+}
+
+function isActionableComment(comment: RequirementTargetCommentRead) {
+  return Boolean(comment.target_anchor || comment.is_resolved);
+}
+
+function filterCommentThreads(
+  comments: RequirementTargetCommentRead[],
+  roots: RequirementTargetCommentRead[],
+) {
+  const byId = new Map(comments.map((item) => [item.id, item]));
+  const selected = new Set(roots.map((root) => root.id));
+  return comments.filter((comment) => {
+    let ancestor: RequirementTargetCommentRead | undefined = comment;
+    while (ancestor?.parent_comment_id != null) {
+      ancestor = byId.get(ancestor.parent_comment_id);
+    }
+    return ancestor && selected.has(ancestor.id);
+  });
 }
 
 type CommentBodyProps = {
@@ -251,72 +312,89 @@ function CommentBody({
   const targetAnchorStatus = comment.target_anchor
     ? getTargetAnchorStatus?.(comment.target_anchor)
     : null;
+  const anchor = comment.target_anchor;
+  const quote = typeof anchor?.quote === "string" ? anchor.quote : null;
+  const anchorLabel =
+    typeof anchor?.label === "string"
+      ? anchor.label
+      : quote
+        ? "対象の文章"
+        : getRequirementCommentAnchorLabel(anchor);
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex min-w-0 flex-col gap-1 text-xs leading-5 text-muted-foreground">
-        <span className="truncate">
-          {comment.author?.name ?? `投稿者ID: ${comment.author_id}`}
-        </span>
-        <span>{formatDateTime(comment.created_at)}</span>
-        <span>{comment.is_resolved ? "解決済み" : "未解決"}</span>
-      </div>
+    <CommentMessage
+      author={comment.author?.name}
+      avatarUrl={comment.author?.avatar_url}
+      createdAt={comment.created_at}
+      reply={Boolean(comment.parent_comment_id)}
+      resolved={comment.is_resolved}
+      menu={
+        canMutate ? (
+          <CommentMessageMenu
+            onEdit={() => onEdit(comment)}
+            onDelete={() => onDelete(comment)}
+          />
+        ) : null
+      }
+    >
+      {anchor && anchorLabel ? (
+        <div className="border-s-2 ps-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">
+          {onTargetAnchorClick ? (
+            <button
+              type="button"
+              className="text-start font-medium underline-offset-2 hover:underline"
+              onClick={() => onTargetAnchorClick(anchor)}
+            >
+              {anchorLabel}
+            </button>
+          ) : (
+            <span className="font-medium">{anchorLabel}</span>
+          )}
+          {quote && quote.length > 110 ? (
+            <details>
+              <summary className="cursor-pointer">
+                {quote.slice(0, 110)}…
+              </summary>
+              <blockquote className="whitespace-pre-wrap">{quote}</blockquote>
+            </details>
+          ) : quote ? (
+            <blockquote className="whitespace-pre-wrap">{quote}</blockquote>
+          ) : null}
+          {targetAnchorStatus && targetAnchorStatus !== "current" ? (
+            <p>{getTargetAnchorStatusLabel(targetAnchorStatus)}</p>
+          ) : null}
+        </div>
+      ) : null}
+      <p className="whitespace-pre-wrap break-words text-sm">
+        <CommentContent body={comment.body} mentions={comment.mentions} />
+      </p>
       {canComment ? (
         <CommentThreadActions
           comment={comment}
           isResolved={comment.is_resolved}
           isStatePending={isStatePending}
-          resolvePlacement="first"
           reopenLabel="再開"
-          canEdit={canMutate}
-          canDelete={canMutate}
+          canResolve={
+            !comment.parent_comment_id && isActionableComment(comment)
+          }
           onReply={onReply}
-          onEdit={onEdit}
-          onDelete={onDelete}
           onResolve={() => onResolve(comment.id, comment.version)}
           onReopen={() => onReopen(comment.id, comment.version)}
         />
       ) : null}
-      {comment.target_anchor ? (
-        <button
-          type="button"
-          className="w-full rounded-md border bg-muted px-3 py-2 text-left text-xs leading-5 text-muted-foreground hover:bg-accent"
-          onClick={() => onTargetAnchorClick?.(comment.target_anchor ?? {})}
-        >
-          <span className="flex flex-col gap-1">
-            <span className="text-[11px] font-medium text-muted-foreground">
-              対象
-            </span>
-            <span className="break-words">
-              {getRequirementCommentAnchorLabel(comment.target_anchor)}
-            </span>
-            {typeof comment.target_anchor.quote === "string" ? (
-              <blockquote className="border-l-2 pl-2 whitespace-pre-wrap break-words">
-                {comment.target_anchor.quote}
-              </blockquote>
-            ) : null}
-            {targetAnchorStatus ? (
-              <span>{getTargetAnchorStatusLabel(targetAnchorStatus)}</span>
-            ) : null}
-          </span>
-        </button>
-      ) : null}
-      <p className="whitespace-pre-wrap break-words text-sm">
-        <CommentContent body={comment.body} mentions={comment.mentions} />
-      </p>
-    </div>
+    </CommentMessage>
   );
 }
 
 const getTargetAnchorStatusLabel = (status: ReviewAnchorStatus) => {
   switch (status) {
     case "current":
-      return "アンカー状態: 現在";
+      return "";
     case "moved":
-      return "アンカー状態: 位置変更";
+      return "対象の位置が変わりました";
     case "changed":
-      return "アンカー状態: 対象更新";
+      return "対象の内容が変わりました";
     case "missing":
-      return "アンカー状態: 失効";
+      return "元の対象を確認できません";
   }
 };

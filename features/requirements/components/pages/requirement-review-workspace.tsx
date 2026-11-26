@@ -1,5 +1,7 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
+
 import { useId, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -820,7 +822,7 @@ function ReviewProgress({
                 key={person.user_id}
                 className="flex flex-wrap justify-between gap-2"
               >
-                <span>{person.name ?? "担当者"}</span>
+                <UserDisplay name={person.name} emptyLabel="担当者" />
                 <span className="text-muted-foreground">
                   {participantStatus[person.status]}
                 </span>

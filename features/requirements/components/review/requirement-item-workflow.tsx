@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import {
+  StatusIndicator,
+  type IndicatorTone,
+} from "@/components/shared/display/status-badge";
 import { Button } from "@/components/ui/button";
 import { RequirementVerdict } from "@/features/projects/components/joined/requirement-verdict";
 import type { useRequirementVerdicts } from "@/features/projects/hooks/use-requirement-verdicts";
 import type {
   RequirementItemWorkflowState,
   RequirementRead,
+  RequirementWorkflowRead,
 } from "@/lib/api/generated/model";
 import type { useRequirementItemWorkflow } from "../../hooks/use-requirement-item-workflow";
 import { requirementWorkflowHref } from "../../lib/requirement-workflow-review";
@@ -33,24 +37,29 @@ const approvalLabels = {
   restricted: "閲覧制限",
 };
 
+const reviewTones: Record<
+  RequirementItemWorkflowState["review"],
+  IndicatorTone
+> = {
+  not_reviewed: "neutral",
+  changes_requested: "warning",
+  confirmed: "success",
+  changed: "changed",
+  restricted: "neutral",
+};
+
 export function RequirementItemReviewBadge({
   review,
+  pending = false,
 }: {
   review: RequirementItemWorkflowState["review"];
+  pending?: boolean;
 }) {
+  const waiting = review === "not_reviewed" && pending;
   return (
-    <Badge
-      variant="outline"
-      className={
-        review === "changes_requested" || review === "changed"
-          ? "text-[var(--status-warning-fg)]"
-          : review === "confirmed"
-            ? "text-[var(--status-success-fg)]"
-            : undefined
-      }
-    >
-      {reviewLabels[review]}
-    </Badge>
+    <StatusIndicator tone={waiting ? "info" : reviewTones[review]}>
+      {waiting ? "確認待ち" : reviewLabels[review]}
+    </StatusIndicator>
   );
 }
 
@@ -60,26 +69,41 @@ export function RequirementItemWorkflow({
   returnTo,
   query,
   verdicts,
+  approvalStatus,
 }: {
   projectId: number;
   requirement: RequirementRead;
   returnTo: string;
   query: ReturnType<typeof useRequirementItemWorkflow>;
   verdicts: ReturnType<typeof useRequirementVerdicts>;
+  approvalStatus?: RequirementWorkflowRead["status"];
 }) {
   const state = query.data?.[0];
+  const pendingApproval =
+    state?.approval === "not_approved" && approvalStatus === "requested";
+  const returnedApproval =
+    state?.approval === "not_approved" && approvalStatus === "returned";
   return (
     <dl className="grid gap-2 border-t pt-3 text-sm [&>div]:grid [&>div]:grid-cols-[6.5rem_minmax(0,1fr)] [&>div]:items-baseline [&>div]:gap-2">
       {state ? (
         <>
           <div className="grid gap-1">
             <dt className="text-muted-foreground">作成状態</dt>
-            <dd>{authoringLabels[state.authoring]}</dd>
+            <dd>
+              <StatusIndicator
+                tone={state.authoring === "defined" ? "info" : "neutral"}
+              >
+                {authoringLabels[state.authoring]}
+              </StatusIndicator>
+            </dd>
           </div>
           <div className="grid gap-1">
             <dt className="text-muted-foreground">レビュー状況</dt>
             <dd className="flex flex-wrap items-center gap-2">
-              <RequirementItemReviewBadge review={state.review} />
+              <RequirementItemReviewBadge
+                review={state.review}
+                pending={Boolean(state.review_request_id)}
+              />
               {state.review_request_id ? (
                 <Link
                   className="text-xs underline"
@@ -96,18 +120,25 @@ export function RequirementItemWorkflow({
           <div className="grid gap-1">
             <dt className="text-muted-foreground">正式承認状況</dt>
             <dd className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant="outline"
-                className={
-                  state.approval === "changed"
-                    ? "text-[var(--status-warning-fg)]"
-                    : state.approval === "approved"
-                      ? "text-[var(--status-success-fg)]"
-                      : undefined
+              <StatusIndicator
+                tone={
+                  pendingApproval
+                    ? "info"
+                    : returnedApproval
+                      ? "danger"
+                      : state.approval === "changed"
+                        ? "changed"
+                        : state.approval === "approved"
+                          ? "success"
+                          : "neutral"
                 }
               >
-                {approvalLabels[state.approval]}
-              </Badge>
+                {pendingApproval
+                  ? "承認待ち"
+                  : returnedApproval
+                    ? "差し戻し"
+                    : approvalLabels[state.approval]}
+              </StatusIndicator>
               {state.approved_request_id ? (
                 <Link
                   className="text-xs underline"

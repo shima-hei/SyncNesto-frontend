@@ -86,8 +86,10 @@ export function VerificationSummary({
   return (
     <section aria-label="確認項目の状況" className="min-w-0 space-y-3">
       <p className="text-sm text-muted-foreground">
-        固定した要件版 {String(plan.fixed_subject.source_version ?? "")} ・
-        確認表 {plan.current_version}版
+        検証対象{" "}
+        {plan.target_version_label ??
+          `要件版 ${String(plan.fixed_subject.source_version ?? "")}`}{" "}
+        ・ 確認表 {plan.current_version}版
       </p>
       <dl className="grid grid-cols-3 gap-2 rounded-lg border px-3 py-2.5 text-sm sm:gap-5">
         <div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTime } from "@/lib/format/date";
@@ -320,8 +321,12 @@ export function VerdictComposer({
                   }}
                 >
                   <summary className="cursor-pointer py-2">
-                    {set.actor_name} · {formatDateTime(set.created_at)} · 根拠{" "}
-                    {set.entry_count}件 · 添付 {set.file_count}件
+                    <UserDisplay
+                      name={set.actor_name}
+                      emptyLabel="操作者不明"
+                    />{" "}
+                    · {formatDateTime(set.created_at)} · 根拠 {set.entry_count}
+                    件 · 添付 {set.file_count}件
                   </summary>
                   {expanded.includes(set.id) ? (
                     <SelectEntries

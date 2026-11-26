@@ -8,8 +8,10 @@ export const objectiveFieldLabels = {
 
 export function ProjectObjectiveFields({
   values,
+  document = false,
 }: {
   values: Partial<Record<keyof typeof objectiveFieldLabels, string | null>>;
+  document?: boolean;
 }) {
   return (
     <dl className="flex min-w-0 flex-col gap-5">
@@ -18,7 +20,11 @@ export function ProjectObjectiveFields({
           <dt className="text-sm font-medium">{label}</dt>
           <dd className="min-w-0 text-sm">
             <MarkdownPreview
-              className="min-h-0 break-words"
+              className={
+                document
+                  ? "min-h-0 border-0 bg-transparent p-0 [overflow-wrap:anywhere]"
+                  : "min-h-0 break-words"
+              }
               value={values[key as keyof typeof objectiveFieldLabels] ?? ""}
               emptyMessage="未登録です。必要に応じて要件定義書で追記できます。"
             />

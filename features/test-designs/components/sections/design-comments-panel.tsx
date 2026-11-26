@@ -7,7 +7,15 @@ import { toast } from "sonner";
 import { CommentContent } from "@/components/shared/comments/comment-content";
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import type { Mention } from "@/lib/comments/mentions";
-import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
+import {
+  CommentMessageMenu,
+  CommentThreadActions,
+} from "@/components/shared/comments/comment-thread-actions";
+import {
+  CommentComposer as CommentComposerLayout,
+  CommentSubmit,
+} from "@/components/shared/comments/comment-composer";
+import { CommentMessage } from "@/components/shared/comments/comment-message";
 import { CommentThreadList } from "@/components/shared/comments/comment-thread-list";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -86,7 +94,7 @@ function CommentComposer({
       className="flex flex-col gap-2"
       onSubmit={async (event) => {
         event.preventDefault();
-        if (!body.trim()) return;
+        if (busy || !body.trim()) return;
         setBusy(true);
         try {
           if (await onSubmit(body, mentions)) {
@@ -99,29 +107,28 @@ function CommentComposer({
         }
       }}
     >
-      <label className="block text-sm font-medium">{label}</label>
-      <MentionTextarea
-        projectId={projectId}
-        permission="test_plan:read"
-        mentions={mentions}
-        className="min-h-20 w-full rounded-md border p-2 text-sm"
-        maxLength={20000}
-        value={body}
-        onChange={(body, mentions) => {
-          setBody(body);
-          setMentions(mentions);
-        }}
-      />
-      <div className="flex gap-2">
-        <Button size="sm" type="submit" disabled={busy || !body.trim()}>
-          投稿
-        </Button>
-        {onClose && (
-          <Button size="sm" type="button" variant="outline" onClick={onClose}>
-            キャンセル
-          </Button>
-        )}
-      </div>
+      <CommentComposerLayout>
+        <div className="flex flex-col gap-2">
+          <MentionTextarea
+            projectId={projectId}
+            permission="test_plan:read"
+            aria-label={label}
+            placeholder="コメントを入力…"
+            mentions={mentions}
+            className="min-h-12"
+            rows={2}
+            maxLength={20000}
+            value={body}
+            onChange={(body, mentions) => {
+              setBody(body);
+              setMentions(mentions);
+            }}
+          />
+          <CommentSubmit pending={busy} body={body} onCancel={onClose}>
+            {label}
+          </CommentSubmit>
+        </div>
+      </CommentComposerLayout>
     </form>
   );
 }
@@ -335,15 +342,37 @@ export function DesignCommentsPanel({
         canEditComment={canEdit}
         canReplyComment={(comment) => !comment.deleted_at}
         renderCommentBody={({ comment, onEdit, onReply }) => (
-          <div className="space-y-2 text-sm">
-            <p className="text-xs text-muted-foreground">
-              {comment.author_name ?? `投稿者 ${comment.author_id}`} ·{" "}
-              {formatDateTime(comment.created_at)} ·{" "}
-              {comment.is_resolved ? "解決済み" : "未解決"}
-            </p>
+          <CommentMessage
+            author={comment.author_name}
+            createdAt={comment.created_at}
+            reply={Boolean(comment.parent_comment_id)}
+            resolved={comment.is_resolved}
+            menu={
+              canEdit(comment) && !disabled && !comment.deleted_at ? (
+                <CommentMessageMenu
+                  onEdit={() => onEdit(comment)}
+                  onDelete={() =>
+                    confirm({
+                      title: "コメントを削除しますか？",
+                      description:
+                        "返信と変更履歴は保持し、本文を非表示にします。",
+                      confirmLabel: "削除",
+                      destructive: true,
+                      onConfirm: () =>
+                        void mutate(() =>
+                          deleteComment(projectId, designId, comment.id, {
+                            version: comment.version,
+                          }),
+                        ),
+                    })
+                  }
+                />
+              ) : null
+            }
+          >
             <button
               type="button"
-              className="rounded border px-2 py-1 text-left text-xs hover:bg-muted"
+              className="self-start border-s-2 ps-2 text-start text-xs text-muted-foreground hover:underline"
               onClick={() =>
                 onSelectTarget?.(
                   {
@@ -359,12 +388,11 @@ export function DesignCommentsPanel({
             >
               {resolveTargetLabel?.(comment) ??
                 targetDisplayLabel(comment, customFieldLabels, itemCodes)}{" "}
-              ·{" "}
               {comment.target_status === "missing"
-                ? "対象削除済み"
+                ? "（対象削除済み）"
                 : comment.target_status === "changed"
-                  ? "対象に変更あり"
-                  : "現在の対象"}
+                  ? "（対象に変更あり）"
+                  : null}
             </button>
             <p className="whitespace-pre-wrap break-words">
               <CommentContent body={comment.body} mentions={comment.mentions} />
@@ -379,25 +407,8 @@ export function DesignCommentsPanel({
                 comment={comment}
                 isResolved={comment.is_resolved}
                 isStatePending={busy}
-                canEdit={canEdit(comment)}
-                canDelete={canEdit(comment)}
+                canResolve={!comment.parent_comment_id}
                 onReply={onReply}
-                onEdit={onEdit}
-                onDelete={() =>
-                  confirm({
-                    title: "コメントを削除しますか？",
-                    description:
-                      "返信と変更履歴は保持し、本文を非表示にします。",
-                    confirmLabel: "削除",
-                    destructive: true,
-                    onConfirm: () =>
-                      void mutate(() =>
-                        deleteComment(projectId, designId, comment.id, {
-                          version: comment.version,
-                        }),
-                      ),
-                  })
-                }
                 onResolve={() =>
                   void mutate(() =>
                     updateComment(projectId, designId, comment.id, {
@@ -416,7 +427,7 @@ export function DesignCommentsPanel({
                 }
               />
             )}
-          </div>
+          </CommentMessage>
         )}
         renderEditForm={({ comment, onClose }) => (
           <CommentComposer

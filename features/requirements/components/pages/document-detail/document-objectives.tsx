@@ -20,10 +20,7 @@ export function DocumentObjectives({
   ].some((value) => value?.trim());
   const fields = (
     <div className="flex min-w-0 flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
-        この文書を概要の出典に指定すると、以下をチームの共通目標として参照できます。
-      </p>
-      <ProjectObjectiveFields values={document} />
+      <ProjectObjectiveFields values={document} document />
     </div>
   );
   if (!hasObjectives) {

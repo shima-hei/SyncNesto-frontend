@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -228,9 +229,17 @@ export function SharedNotificationsPage() {
                       </time>
                     </span>
                     <span className="text-sm font-medium break-words">
-                      {notice.action === "cancelled"
-                        ? "依頼元が取り消しました"
-                        : `${notice.requester_name}からの判断依頼`}
+                      {notice.action === "cancelled" ? (
+                        "依頼元が取り消しました"
+                      ) : (
+                        <>
+                          <UserDisplay
+                            name={notice.requester_name}
+                            emptyLabel="依頼者不明"
+                          />{" "}
+                          からの判断依頼
+                        </>
+                      )}
                     </span>
                     <span className="text-sm break-words">{notice.title}</span>
                     <span className="text-xs text-muted-foreground">

@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,27 +13,13 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTenant } from "@/features/tenants/providers/tenant-provider";
-import type { ArtifactPreview } from "@/lib/api/generated/model";
-import {
-  previewRelease,
-  createRelease,
-  readNodes,
-} from "@/features/artifact-releases/lib/api";
-import { listPlans, createPlan } from "../lib/api";
+import { listPlans } from "../lib/api";
+import { VerificationPreparation } from "./verification-preparation";
 import { verificationHref } from "../lib/navigation";
 const VerificationPage = dynamic(() =>
   import("./verification-page").then((module) => module.VerificationPage),
@@ -61,8 +47,7 @@ export function VerificationEntry({
   const [cursor, setCursor] = useState<string | undefined>();
   const [selectedPlan, setSelectedPlan] = useState<string>();
   const cache = useQueryClient();
-  const [preview, setPreview] = useState<ArtifactPreview | null>(null);
-  const request = useRef<{ artifact: string; plan: string } | null>(null);
+  const [preparing, setPreparing] = useState(false);
   const enabled = Boolean(
     user?.user_type === "internal" && !user.demo && tenant,
   );
@@ -80,67 +65,6 @@ export function VerificationEntry({
       listPlans(projectId, { requirement_id: requirementId, cursor }),
     enabled,
     retry: false,
-  });
-  const prepare = useMutation({
-    mutationFn: () =>
-      previewRelease(projectId, {
-        source: { kind: "requirement", id: requirementId, version },
-        included_sources: [],
-      }),
-    onSuccess: (value) => {
-      request.current = {
-        artifact: crypto.randomUUID(),
-        plan: crypto.randomUUID(),
-      };
-      setPreview(value);
-    },
-  });
-  const create = useMutation({
-    mutationFn: async () => {
-      if (!preview || !request.current)
-        throw new Error("固定する内容を確認してください");
-      const release = await createRelease(projectId, {
-        source: preview.source,
-        included_sources: [],
-        projection_version: preview.projection_version,
-        expected_scope_digest: preview.scope_digest,
-        request_id: request.current.artifact,
-      });
-      const nodes = await readNodes(projectId, release.id, { page_size: 1 });
-      const node = nodes.items.find(
-        (item) =>
-          item.node_kind === "requirement" && item.source_id === requirementId,
-      );
-      if (!node)
-        throw new Error(
-          "固定した要件を取得できませんでした。再試行してください",
-        );
-      return createPlan(projectId, {
-        source_requirement_id: requirementId,
-        release_id: release.id,
-        target_node_id: node.id,
-        expected_release_digest: release.content_digest,
-        request_id: request.current.plan,
-      });
-    },
-    onSuccess: (plan) => {
-      if (embedded) {
-        setPreview(null);
-        request.current = null;
-        setSelectedPlan(plan.id);
-        void cache.invalidateQueries({
-          queryKey: [
-            "verification-plans",
-            tenant?.id,
-            user?.id,
-            projectId,
-            requirementId,
-          ],
-        });
-      } else {
-        router.push(verificationHref(projectId, plan.id, origin));
-      }
-    },
   });
   if (!enabled) return null;
   if (query.isPending)
@@ -168,6 +92,7 @@ export function VerificationEntry({
       </Alert>
     );
   const planId = selectedPlan ?? query.data.items?.[0]?.id;
+  const showPreparation = query.data.can_prepare && (preparing || !planId);
   return (
     <Card
       className={
@@ -176,14 +101,16 @@ export function VerificationEntry({
           : undefined
       }
     >
-      <CardHeader className={embedded ? "px-0" : undefined}>
-        <CardTitle>確認表</CardTitle>
-        {!embedded ? (
-          <CardDescription>
-            固定した要件の確認項目と証跡を管理します。
-          </CardDescription>
-        ) : null}
-      </CardHeader>
+      {!embedded || !showPreparation ? (
+        <CardHeader className={embedded ? "px-0" : undefined}>
+          <CardTitle>確認表</CardTitle>
+          {!embedded ? (
+            <CardDescription>
+              検証対象、確認項目、証跡を管理します。
+            </CardDescription>
+          ) : null}
+        </CardHeader>
+      ) : null}
       <CardContent
         className={
           embedded ? "flex flex-col gap-3 px-0" : "flex flex-col gap-3"
@@ -219,7 +146,7 @@ export function VerificationEntry({
               </Button>
             ))
           : null}
-        {!query.data.items?.length ? (
+        {!showPreparation && !query.data.items?.length ? (
           <p className="text-sm text-muted-foreground">
             確認表はまだありません。必要な項目から追加できます。
           </p>
@@ -245,20 +172,42 @@ export function VerificationEntry({
             最初の確認表へ
           </Button>
         ) : null}
-        {query.data.can_prepare ? (
+        {query.data.can_prepare && planId ? (
           <Button
             className="self-start"
-            variant={embedded && planId ? "outline" : "default"}
-            size={embedded ? "sm" : "default"}
-            disabled={prepare.isPending}
-            onClick={() => prepare.mutate()}
+            variant="outline"
+            size="sm"
+            onClick={() => setPreparing(!preparing)}
           >
-            現在の内容から確認表を作る
+            {preparing ? "確認表へ戻る" : "新しい検証を準備"}
           </Button>
         ) : null}
-        <FormApiError error={prepare.error} />
+        {showPreparation ? (
+          <VerificationPreparation
+            key={requirementId}
+            projectId={projectId}
+            requirementId={requirementId}
+            version={version}
+            onStart={(plan) => {
+              setSelectedPlan(plan.id);
+              setPreparing(false);
+              setCursor(undefined);
+              void cache.invalidateQueries({
+                queryKey: [
+                  "verification-plans",
+                  tenant?.id,
+                  user?.id,
+                  projectId,
+                  requirementId,
+                ],
+              });
+              if (!embedded)
+                router.push(verificationHref(projectId, plan.id, origin));
+            }}
+          />
+        ) : null}
       </CardContent>
-      {embedded && planId ? (
+      {embedded && planId && !showPreparation ? (
         <CardContent className="px-0">
           <VerificationPage
             key={planId}
@@ -269,38 +218,6 @@ export function VerificationEntry({
           />
         </CardContent>
       ) : null}
-      <Dialog
-        open={Boolean(preview)}
-        onOpenChange={(open) => {
-          if (!create.isPending && !open) setPreview(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>この要件を固定して確認表を作成</DialogTitle>
-            <DialogDescription>
-              「{preview?.title}」の要件版 {preview?.source.version}{" "}
-              を保存します。後から要件を編集しても、この確認表の対象は変わりません。
-            </DialogDescription>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            最初は確認項目0件で作成し、必要な確認方法を後から追加します。
-          </p>
-          <FormApiError error={create.error} />
-          <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={create.isPending}
-              onClick={() => setPreview(null)}
-            >
-              戻る
-            </Button>
-            <Button disabled={create.isPending} onClick={() => create.mutate()}>
-              {create.isPending ? "作成中…" : "固定して作成する"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }

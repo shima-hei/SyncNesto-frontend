@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";
@@ -829,7 +830,9 @@ function CaseForm({
       <h3 className="text-sm font-semibold">実行情報</h3>
       <dl className="grid grid-cols-[10rem_1fr] gap-2 text-sm">
         <dt className="font-medium">実行者</dt>
-        <dd>{value.executed_by_name ?? "－"}</dd>
+        <dd>
+          <UserDisplay name={value.executed_by_name} emptyLabel="実行者不明" />
+        </dd>
         <dt className="font-medium">実行日時</dt>
         <dd>
           {value.executed_at

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { StatusIndicator } from "@/components/shared/display/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { useRequirementVerdicts } from "@/features/projects/hooks/use-requirement-verdicts";
@@ -49,17 +49,23 @@ export function RequirementVerdict({
   const hasFiles = Number(row.comparison?.file_count) > 0;
   return (
     <div className="flex flex-col items-start gap-1">
-      <Badge
-        variant={
-          state === "failed" || state === "requires_reassessment"
-            ? "destructive"
-            : "outline"
+      <StatusIndicator
+        tone={
+          state === "failed"
+            ? "danger"
+            : state === "requires_reassessment"
+              ? "warning"
+              : state === "passed"
+                ? "success"
+                : state === "requested"
+                  ? "info"
+                  : "neutral"
         }
       >
         {state === "passed" && hasFiles
           ? "合格記録・添付未再照合"
           : (verdictLabels[state] ?? state)}
-      </Badge>
+      </StatusIndicator>
       {showLinks && row.plan_version ? (
         <span className="text-xs text-muted-foreground">
           確認表 {row.plan_version}版

@@ -8,6 +8,7 @@ import {
   MessageSquareIcon,
   PencilIcon,
   PlusIcon,
+  PanelRightCloseIcon,
 } from "lucide-react";
 import { DocumentObjectives } from "./document-objectives";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -21,12 +22,10 @@ import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RequirementDocumentRead } from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
-import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import {
-  getRequirementDocumentStatusLabel,
   getRequirementPriorityLabel,
   getRequirementStatusLabel,
   getRequirementTypeLabel,
@@ -513,14 +512,6 @@ export function RequirementDocumentOverview({
                 </summary>
                 <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm">
                   <DocumentMeta
-                    label="ステータス"
-                    value={
-                      document.status
-                        ? getRequirementDocumentStatusLabel(document.status)
-                        : "-"
-                    }
-                  />
-                  <DocumentMeta
                     label="対象システム"
                     field="target_system_name"
                     value={document.target_system_name ?? "-"}
@@ -534,10 +525,6 @@ export function RequirementDocumentOverview({
                     label="ベンダー"
                     field="vendor_name"
                     value={document.vendor_name ?? "-"}
-                  />
-                  <DocumentMeta
-                    label="更新日時"
-                    value={formatDateTime(document.updated_at)}
                   />
                 </dl>
               </details>
@@ -678,33 +665,33 @@ export function RequirementDocumentOverview({
           )}
         >
           {commentsOpen ? (
-            <>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="mb-2"
-                onClick={() => {
-                  setCommentsOpen(false);
-                  commentToggleRef.current?.focus();
-                }}
-              >
-                コメントを閉じる
-              </Button>
-              <RequirementTargetCommentsSection
-                projectId={projectId}
-                targetType="document"
-                targetId={documentId}
-                title="要件定義書コメント"
-                canComment={canComment}
-                selectedTargetAnchor={selectedTargetAnchor}
-                onTargetAnchorClick={handleTargetAnchorClick}
-                getTargetAnchorStatus={getTargetAnchorStatus}
-                showTargetAnchorInput={false}
-                className="@min-[76rem]/document-overview:max-h-[calc(100dvh-8rem)] @min-[76rem]/document-overview:overflow-hidden"
-                contentClassName="@min-[76rem]/document-overview:min-h-0 @min-[76rem]/document-overview:overflow-y-auto @min-[76rem]/document-overview:overscroll-contain"
-              />
-            </>
+            <RequirementTargetCommentsSection
+              projectId={projectId}
+              targetType="document"
+              targetId={documentId}
+              title="要件定義書コメント"
+              canComment={canComment}
+              selectedTargetAnchor={selectedTargetAnchor}
+              onTargetAnchorClick={handleTargetAnchorClick}
+              getTargetAnchorStatus={getTargetAnchorStatus}
+              showTargetAnchorInput={false}
+              headerAction={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="コメントを閉じる"
+                  onClick={() => {
+                    setCommentsOpen(false);
+                    commentToggleRef.current?.focus();
+                  }}
+                >
+                  <PanelRightCloseIcon aria-hidden="true" />
+                </Button>
+              }
+              className="@min-[76rem]/document-overview:max-h-[calc(100dvh-8rem)] @min-[76rem]/document-overview:overflow-hidden"
+              contentClassName="@min-[76rem]/document-overview:min-h-0 @min-[76rem]/document-overview:overflow-y-auto @min-[76rem]/document-overview:overscroll-contain"
+            />
           ) : null}
         </aside>
       </div>

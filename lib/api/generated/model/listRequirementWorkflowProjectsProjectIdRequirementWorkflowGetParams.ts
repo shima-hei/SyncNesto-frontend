@@ -22,4 +22,6 @@ export type ListRequirementWorkflowProjectsProjectIdRequirementWorkflowGetParams
     kind?: ListRequirementWorkflowProjectsProjectIdRequirementWorkflowGetKind;
     status?: ListRequirementWorkflowProjectsProjectIdRequirementWorkflowGetStatus;
     q?: string | null;
+    /** 依頼時の対象版に含まれる個別要件ID */
+    requirement_id?: number | null;
   };

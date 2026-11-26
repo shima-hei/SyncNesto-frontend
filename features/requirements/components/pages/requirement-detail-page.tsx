@@ -2,7 +2,7 @@
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { VerificationEntry } from "@/features/requirement-verifications/components/verification-entry";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   RelatedSpecifications,
   useRelatedSpecifications,
@@ -25,6 +25,9 @@ import {
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { artifactReleasesHref } from "@/features/artifact-releases/lib/navigation";
 import { ActivityPanel } from "@/components/shared/detail/activity-panel";
+import { UserDisplay } from "@/components/shared/display/user-avatar";
+import { StatusIndicator } from "@/components/shared/display/status-badge";
+import { RequirementPriorityBadge } from "../shared/requirement-badges";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,7 +75,7 @@ import {
   isRequirementReviewTargetAnchor,
 } from "../../lib/requirement-review-anchor";
 import { RequirementApprovalsSection } from "../sections/requirement-approvals-section";
-import { RequirementChangeLogsSection } from "../sections/requirement-change-logs-section";
+import { RequirementItemActivity } from "../sections/requirement-item-activity";
 import { RequirementDetailsSection } from "../sections/requirement-details-section";
 import { RequirementLinksSection } from "../sections/requirement-links-section";
 import { RequirementRelationsSection } from "../sections/requirement-relations-section";
@@ -89,6 +92,9 @@ import { RequirementReviewRequestDialog } from "../forms/requirement-review-requ
 import { requirementPublicationHref } from "@/features/artifact-publications/lib/requirement-publication-navigation";
 import { RequirementItemWorkflow } from "../review/requirement-item-workflow";
 import { useRequirementItemWorkflow } from "../../hooks/use-requirement-item-workflow";
+import { useRequirementReviewRequest } from "../../hooks/use-requirement-review-request";
+import { useRequirementReviewManagement } from "../../hooks/use-requirement-review-management";
+import { requirementWorkflowHref } from "../../lib/requirement-workflow-review";
 
 const REQUIREMENT_DETAIL_TABS = [
   "overview",
@@ -129,9 +135,7 @@ export function RequirementDetailPage({
     requestedTab === "approvals" || requestedTab === "history";
   const activeTab =
     legacyHistory || requestedTab === "details" ? "overview" : requestedTab;
-  const [activity, setActivity] = useState(
-    legacyHistory ? "history" : "comments",
-  );
+  const [activity, setActivity] = useState("history");
   const [editRequested, setEditRequested] = useUrlFilterState("edit", "");
   const [editingFromHeader, setEditing] = useState(false);
   const editing = editingFromHeader || editRequested === "1";
@@ -178,6 +182,13 @@ export function RequirementDetailPage({
     projectId,
     summary ? [summary.requirement] : [],
   );
+  const reviewRequest = useRequirementReviewRequest(
+    projectId,
+    workflow.data?.[0]?.review_request_id,
+  );
+  const documentReview = useRequirementReviewManagement(projectId, documentId, {
+    enabled: Boolean(summary && user?.user_type === "internal" && !user.demo),
+  });
   const verdicts = useRequirementVerdicts(projectId, [requirementId]);
   const { comments: targetComments } = useTargetComments(
     projectId,
@@ -200,6 +211,11 @@ export function RequirementDetailPage({
   }
 
   const { requirement } = summary;
+  const activeReview =
+    reviewRequest.data?.status === "requested" ||
+    reviewRequest.data?.status === "changes_requested"
+      ? reviewRequest.data
+      : null;
   const approvedChanges = workflow.data?.[0]?.changed_fields ?? [];
   const designImpact = approvedChanges.some(
     (field) => field !== "requirement_code",
@@ -289,14 +305,40 @@ export function RequirementDetailPage({
       >
         <PageHeader
           title={requirement.title}
-          description={requirement.requirement_code}
+          metadata={
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">
+                {requirement.requirement_code}
+              </span>
+              <RequirementPriorityBadge priority={requirement.priority} />
+              {activeReview ? (
+                <StatusIndicator
+                  tone={
+                    activeReview.status === "requested" ? "info" : "warning"
+                  }
+                >
+                  {activeReview.status === "requested"
+                    ? "レビュー中"
+                    : "要修正"}
+                </StatusIndicator>
+              ) : null}
+            </div>
+          }
           actions={
             <>
-              {user?.user_type === "internal" &&
-              !user.demo &&
-              requirement.document_id === documentId &&
-              canReviewRequirement(currentProjectRole) &&
-              canUpdateRequirement(currentProjectRole) ? (
+              {activeReview ? (
+                <Button asChild>
+                  <Link
+                    href={requirementWorkflowHref(projectId, activeReview.id)}
+                  >
+                    レビューを確認
+                  </Link>
+                </Button>
+              ) : user?.user_type === "internal" &&
+                !user.demo &&
+                requirement.document_id === documentId &&
+                canReviewRequirement(currentProjectRole) &&
+                canUpdateRequirement(currentProjectRole) ? (
                 <RequestItemReview
                   projectId={projectId}
                   documentId={documentId}
@@ -344,7 +386,7 @@ export function RequirementDetailPage({
                             withReturn(itemPath),
                           )}
                         >
-                          <ArchiveIcon aria-hidden /> 固定版と添付
+                          <ArchiveIcon aria-hidden /> バージョン履歴・添付資料
                         </Link>
                       </DropdownMenuItem>
                     ) : null}
@@ -509,6 +551,7 @@ export function RequirementDetailPage({
                     activationMode="manual"
                     value={activity}
                     onValueChange={setActivity}
+                    historyLabel="タイムライン"
                     comments={
                       <RequirementTargetCommentsSection
                         projectId={projectId}
@@ -524,12 +567,11 @@ export function RequirementDetailPage({
                     }
                     history={
                       <>
-                        <RequirementChangeLogsSection
+                        <RequirementItemActivity
+                          key={requirementId}
                           projectId={projectId}
                           documentId={documentId}
-                          targetType="requirement"
-                          targetId={requirementId}
-                          timeline
+                          requirementId={requirementId}
                         />
                         <details className="mt-4 border-t pt-3">
                           <summary className="cursor-pointer text-sm font-medium">
@@ -572,12 +614,21 @@ export function RequirementDetailPage({
                 <RequirementInfo
                   label="優先度"
                   value={getRequirementPriorityLabel(requirement.priority)}
+                  displayValue={
+                    <RequirementPriorityBadge priority={requirement.priority} />
+                  }
                   field="priority"
                   inline
                 />
                 <RequirementInfo
                   label="担当者"
-                  value={requirement.owner?.name ?? "未設定"}
+                  value={requirement.owner?.name ?? "未割り当て"}
+                  displayValue={
+                    <UserDisplay
+                      name={requirement.owner?.name}
+                      src={requirement.owner?.avatar_url}
+                    />
+                  }
                   inline
                 />
                 <RequirementInfo
@@ -597,11 +648,15 @@ export function RequirementDetailPage({
                   returnTo={returnTo}
                   query={workflow}
                   verdicts={verdicts}
+                  approvalStatus={documentReview.data?.formal_approval?.status}
                 />
                 <RequirementRelatedSummary
                   projectId={projectId}
                   requirementId={requirementId}
-                  onOpen={() => setActiveTab("relations")}
+                  onOpen={(target) => {
+                    setRelatedCommentTarget(`[data-related-group="${target}"]`);
+                    setActiveTab("relations");
+                  }}
                 />
               </aside>
             </div>
@@ -610,28 +665,34 @@ export function RequirementDetailPage({
           <TabsContent value="relations">
             <div id="requirement-related-items" className="grid">
               <h2 className="mb-3 text-base font-semibold">関連成果物</h2>
-              <RelatedSpecifications
-                grouped
-                projectId={projectId}
-                targetType="requirement"
-                targetId={String(requirementId)}
-                needsImpactReview={designImpact}
-              />
-              <RequirementRelatedTasksSection
-                projectId={projectId}
-                requirementId={requirementId}
-                canCreate={canCreateTask(currentProjectRole)}
-                onSelectCommentAnchor={
-                  canCommentRequirement(currentProjectRole)
-                    ? chooseCommentAnchor
-                    : undefined
-                }
-              />
-              <RequirementTestItemsSection
-                projectId={projectId}
-                requirementId={requirementId}
-                needsImpactReview={testImpact}
-              />
+              <div data-related-group="design" className="min-w-0 scroll-mt-24">
+                <RelatedSpecifications
+                  grouped
+                  projectId={projectId}
+                  targetType="requirement"
+                  targetId={String(requirementId)}
+                  needsImpactReview={designImpact}
+                />
+              </div>
+              <div data-related-group="tasks" className="min-w-0 scroll-mt-24">
+                <RequirementRelatedTasksSection
+                  projectId={projectId}
+                  requirementId={requirementId}
+                  canCreate={canCreateTask(currentProjectRole)}
+                  onSelectCommentAnchor={
+                    canCommentRequirement(currentProjectRole)
+                      ? chooseCommentAnchor
+                      : undefined
+                  }
+                />
+              </div>
+              <div data-related-group="tests" className="min-w-0 scroll-mt-24">
+                <RequirementTestItemsSection
+                  projectId={projectId}
+                  requirementId={requirementId}
+                  needsImpactReview={testImpact}
+                />
+              </div>
               <RequirementLinksSection
                 projectId={projectId}
                 requirementId={requirementId}
@@ -742,7 +803,7 @@ function RequirementRelatedSummary({
 }: {
   projectId: number;
   requirementId: number;
-  onOpen: () => void;
+  onOpen: (target: string) => void;
 }) {
   const { query: designs, canRead } = useRelatedSpecifications(
     projectId,
@@ -754,11 +815,13 @@ function RequirementRelatedSummary({
   const counts = [
     {
       label: "画面・API設計",
+      target: "design",
       count: canRead ? designs.data?.length : undefined,
     },
-    { label: "タスク", count: tasks.progress?.task_count },
+    { label: "タスク", target: "tasks", count: tasks.progress?.task_count },
     {
       label: "テスト項目",
+      target: "tests",
       count: tests.data?.filter((item) => !item.item_deleted).length,
     },
   ];
@@ -767,7 +830,7 @@ function RequirementRelatedSummary({
     <section className="grid gap-1 border-t pt-3" aria-label="関連情報">
       <h2 className="text-sm font-semibold">関連情報</h2>
       <dl className="grid gap-1 text-sm">
-        {counts.map(({ label, count }) => (
+        {counts.map(({ label, target, count }) => (
           <div
             key={label}
             className="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-2"
@@ -780,7 +843,7 @@ function RequirementRelatedSummary({
                 <button
                   type="button"
                   className="rounded-sm text-xs underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                  onClick={onOpen}
+                  onClick={() => onOpen(target)}
                   aria-label={`${label} ${count}件を開く`}
                 >
                   {count}件
@@ -797,6 +860,7 @@ function RequirementRelatedSummary({
 function RequirementInfo({
   label,
   value,
+  displayValue,
   field,
   targetAnchors = [],
   onSelectTargetAnchor,
@@ -804,6 +868,7 @@ function RequirementInfo({
 }: {
   label: string;
   value: string;
+  displayValue?: ReactNode;
   inline?: boolean;
   field?: string;
   targetAnchors?: RequirementReviewFieldAnchor[];
@@ -864,7 +929,7 @@ function RequirementInfo({
         ) : null}
       </div>
       <span ref={valueRef} className="whitespace-pre-wrap break-words text-sm">
-        {renderHighlightedValue(value, fieldAnchors)}
+        {displayValue ?? renderHighlightedValue(value, fieldAnchors)}
       </span>
     </div>
   );

@@ -6,12 +6,14 @@ export function ActivityPanel({
   onValueChange,
   comments,
   history,
+  historyLabel = "変更履歴",
   activationMode = "automatic",
 }: {
   value: string;
   onValueChange: (value: string) => void;
   comments: ReactNode;
   history: ReactNode;
+  historyLabel?: string;
   activationMode?: "automatic" | "manual";
 }) {
   return (
@@ -31,7 +33,7 @@ export function ActivityPanel({
           className="justify-start border-b"
         >
           <TabsTrigger value="comments">コメント</TabsTrigger>
-          <TabsTrigger value="history">変更履歴</TabsTrigger>
+          <TabsTrigger value="history">{historyLabel}</TabsTrigger>
         </TabsList>
         <TabsContent
           value="comments"

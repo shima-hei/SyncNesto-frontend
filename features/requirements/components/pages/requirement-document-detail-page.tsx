@@ -68,6 +68,7 @@ import { useWorkbenchReturnNavigation } from "../../hooks/use-workbench-return-n
 import { getRequirementDocumentStatusLabel } from "../../constants/requirement-options";
 import { UNCLASSIFIED_SECTION_ID } from "../../constants/requirement-view-options";
 import { formatDateTime } from "@/lib/format/date";
+import { StatusIndicator } from "@/components/shared/display/status-badge";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
@@ -206,13 +207,30 @@ function RequirementDocumentDetailContent({
       </Link>
       <PageHeader
         title={document.title}
-        description={[
-          document.document_code,
-          workflowStatus,
-          `更新 ${formatDateTime(document.updated_at)}`,
-        ]
-          .filter(Boolean)
-          .join(" ・ ")}
+        metadata={
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {document.document_code}
+            {workflowStatus ? (
+              <StatusIndicator
+                tone={
+                  workflowStatus === "レビュー中" ||
+                  workflowStatus === "正式承認待ち"
+                    ? "info"
+                    : workflowStatus === "差し戻し"
+                      ? "danger"
+                      : workflowStatus === "承認済み版あり"
+                        ? "success"
+                        : "neutral"
+                }
+              >
+                {workflowStatus}
+              </StatusIndicator>
+            ) : null}
+            <time dateTime={document.updated_at}>
+              更新 {formatDateTime(document.updated_at)}
+            </time>
+          </div>
+        }
         actions={
           <>
             {internal &&
@@ -275,7 +293,7 @@ function RequirementDocumentDetailContent({
                       )}
                     >
                       <ArchiveIcon />
-                      版を保存
+                      バージョン履歴・添付資料
                     </Link>
                   </DropdownMenuItem>
                 ) : null}

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useState } from "react";
 import { RequirementBaselineComparison } from "./requirement-baseline-comparison";
 import { ApprovedRequirementVersionExport } from "./approved-requirement-version-export";
@@ -297,7 +298,12 @@ function RequirementVersions({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {formatDateTime(row.finalized_at ?? row.created_at)}
-                  {row.requester_name ? ` ・ ${row.requester_name}` : ""}
+                  {row.requester_name ? (
+                    <>
+                      {" "}
+                      ・ <UserDisplay name={row.requester_name} />
+                    </>
+                  ) : null}
                 </p>
                 {row.note ? (
                   <p className="whitespace-pre-wrap text-sm text-muted-foreground [overflow-wrap:anywhere]">
