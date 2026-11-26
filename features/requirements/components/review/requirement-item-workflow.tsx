@@ -77,7 +77,7 @@ export function RequirementItemWorkflow({
             <dd>{authoringLabels[state.authoring]}</dd>
           </div>
           <div className="grid gap-1">
-            <dt className="text-muted-foreground">レビュー確認状況</dt>
+            <dt className="text-muted-foreground">レビュー状況</dt>
             <dd className="flex flex-wrap items-center gap-2">
               <RequirementItemReviewBadge review={state.review} />
               {state.review_request_id ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { ChevronRightIcon } from "lucide-react";
 import { ChangeLogCard } from "@/components/shared/change-log/change-log-card";
 import { ChangeLogListCard } from "@/components/shared/change-log/change-log-list-card";
@@ -10,6 +11,7 @@ import {
   getChangeLogHeaderFieldLabel,
   getVisibleChangeLogs,
 } from "@/lib/change-log/display";
+import { getReadRequirementProjectsProjectIdRequirementsRequirementIdGetQueryOptions as requirementQuery } from "@/lib/api/generated/requirements/requirements";
 import type { RequirementChangeLogRead } from "@/lib/api/generated/model";
 import { formatDateTime } from "@/lib/format/date";
 import { useProjectMemberUsers } from "@/features/projects/hooks/use-project-member-users";
@@ -62,6 +64,28 @@ export function RequirementChangeLogsSection({
       page,
     });
   const visibleChangeLogs = getVisibleChangeLogs(changeLogs);
+  const itemIds = compact
+    ? [
+        ...new Set(
+          visibleChangeLogs
+            .filter((row) => row.target_type === "requirement")
+            .map((row) => row.target_id),
+        ),
+      ]
+    : [];
+  const requirements = useQueries({
+    queries: itemIds.map((id) =>
+      requirementQuery(projectId, id, {
+        query: { retry: false, staleTime: 30_000 },
+      }),
+    ),
+  });
+  const codes = new Map(
+    itemIds.map((id, index) => [
+      id,
+      requirements[index].data?.requirement_code,
+    ]),
+  );
   if (timeline) {
     return (
       <div className="space-y-3">
@@ -114,9 +138,14 @@ export function RequirementChangeLogsSection({
                   <summary className="flex cursor-pointer list-none items-center gap-3 rounded-sm py-3 focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
                     <span className="grid min-w-0 flex-1 gap-1">
                       <span className="text-sm font-medium [overflow-wrap:anywhere]">
-                        {formatRequirementChangeLogTarget(row.target_type)} #
-                        {row.target_id} ・{" "}
-                        {formatRequirementChangeLogAction(row.action)}
+                        {formatDocumentChangeSummary(
+                          row,
+                          row.target_type === "requirement"
+                            ? codes.get(row.target_id)
+                            : row.target_type === "requirement_section"
+                              ? labels.chapters.get(row.target_id)
+                              : undefined,
+                        )}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {formatRequirementChangeLogActor(row)} ・{" "}
@@ -129,7 +158,7 @@ export function RequirementChangeLogsSection({
                     />
                   </summary>
                   <div className="pb-3">
-                    <ChangeLogItem changeLog={row} labels={labels} />
+                    <ChangeLogItem changeLog={row} labels={labels} hideTarget />
                   </div>
                 </details>
               </li>
@@ -170,13 +199,49 @@ export function RequirementChangeLogsSection({
   );
 }
 
+function formatDocumentChangeSummary(
+  row: RequirementChangeLogRead,
+  currentLabel?: string,
+) {
+  const storedLabel = [row.new_value, row.old_value]
+    .map((value) =>
+      value && typeof value === "object" && "requirement_code" in value
+        ? value.requirement_code
+        : undefined,
+    )
+    .find((value): value is string => typeof value === "string");
+  const target =
+    (typeof storedLabel === "string" ? storedLabel : currentLabel) ??
+    formatRequirementChangeLogTarget(row.target_type);
+  const updated = getRequirementChangeLogUpdatedFieldLabels(row);
+  if (row.action === "updated") {
+    const field =
+      row.field_name && formatRequirementChangeLogField(row.field_name);
+    const changed =
+      field && field !== "複数項目"
+        ? field
+        : updated.length === 1
+          ? updated[0]
+          : undefined;
+    if (changed) return `${target}の${changed}を変更`;
+    return updated.length > 1
+      ? `${target}を更新（${updated.length}項目）`
+      : `${target}を更新`;
+  }
+  if (row.action === "created") return `${target}を追加`;
+  if (row.action === "deleted") return `${target}を削除`;
+  return `${target} ・ ${formatRequirementChangeLogAction(row.action)}`;
+}
+
 function ChangeLogItem({
   changeLog,
   timeline = false,
+  hideTarget = false,
   labels,
 }: {
   changeLog: RequirementChangeLogRead;
   timeline?: boolean;
+  hideTarget?: boolean;
   labels: Parameters<typeof formatRequirementHistoryValue>[2];
 }) {
   const formatValue = (value: unknown, fieldName?: string | null) =>
@@ -212,7 +277,7 @@ function ChangeLogItem({
       actorLabel={formatRequirementChangeLogActor(changeLog)}
       changedAtLabel={formatDateTime(changeLog.changed_at)}
       targetLabel={
-        timeline
+        timeline || hideTarget
           ? undefined
           : `${formatRequirementChangeLogTarget(changeLog.target_type)} #${changeLog.target_id}`
       }

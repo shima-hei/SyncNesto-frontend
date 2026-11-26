@@ -239,7 +239,7 @@ export function SharedRequirementReviewWorkspace({
                   {review.version_label}
                 </span>
                 {review.due_on ? (
-                  <time dateTime={review.due_on}>
+                  <time dateTime={review.due_on} className="sm:ms-auto">
                     回答期限 {formatDate(review.due_on)}
                   </time>
                 ) : null}
@@ -261,7 +261,7 @@ export function SharedRequirementReviewWorkspace({
                 </label>
                 <progress
                   id="guest-review-progress"
-                  className="block h-2 w-full accent-primary"
+                  className="block h-2 w-full appearance-none overflow-hidden rounded-full bg-muted accent-[var(--status-success-fg)] [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-[var(--status-success-fg)] [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[var(--status-success-fg)]"
                   value={review.confirmed_count}
                   max={Math.max(1, review.requirement_count)}
                 />
@@ -307,8 +307,14 @@ export function SharedRequirementReviewWorkspace({
                         >
                           {states.get(item.id) === "confirmed" ? (
                             <CheckIcon
-                              className="me-1 inline size-3"
+                              className="me-1 inline size-3 text-[var(--status-success-fg)]"
                               aria-label="確認済み"
+                            />
+                          ) : states.get(item.id) === "changes_requested" ? (
+                            <span
+                              className="me-1 inline-block size-2 rounded-full bg-[var(--status-warning-fg)] align-middle"
+                              role="img"
+                              aria-label="修正依頼あり"
                             />
                           ) : null}
                           {reviewTargetTitle(item)}

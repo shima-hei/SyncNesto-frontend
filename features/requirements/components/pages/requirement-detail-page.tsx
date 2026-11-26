@@ -3,7 +3,10 @@ import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { VerificationEntry } from "@/features/requirement-verifications/components/verification-entry";
 
 import { useEffect, useRef, useState } from "react";
-import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
+import {
+  RelatedSpecifications,
+  useRelatedSpecifications,
+} from "@/features/specifications/components/related-specifications";
 import { useListNavigation } from "@/hooks/use-list-navigation";
 import { useUrlTabState } from "@/hooks/use-url-tab-state";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
@@ -32,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTaskProgress } from "@/features/tasks/hooks/use-task-progress";
 import { RequirementRelatedTasksSection } from "@/features/tasks/components/sections/requirement-related-tasks-section";
 import {
   canCreateTask,
@@ -75,7 +79,10 @@ import { RequirementRelationsSection } from "../sections/requirement-relations-s
 import { RequirementReviewsSection } from "../sections/requirement-reviews-section";
 import { RequirementRevisionsSection } from "../sections/requirement-revisions-section";
 import { RequirementTargetCommentsSection } from "../sections/requirement-target-comments-section";
-import { RequirementTestItemsSection } from "../sections/requirement-test-items-section";
+import {
+  RequirementTestItemsSection,
+  useRequirementTestItems,
+} from "../sections/requirement-test-items-section";
 import { RequirementInlineEditor } from "../forms/requirement-inline-editor";
 import { RequirementItemReviewPanel } from "../review/requirement-item-review-panel";
 import { RequirementReviewRequestDialog } from "../forms/requirement-review-request-dialog";
@@ -146,6 +153,8 @@ export function RequirementDetailPage({
     const jump = () => {
       const element = panel.querySelector(relatedCommentTarget);
       if (!element) return false;
+      const group = element.closest("details");
+      if (group) group.open = true;
       scrollToRequirementContent(element);
       setRelatedCommentTarget(null);
       return true;
@@ -589,6 +598,11 @@ export function RequirementDetailPage({
                   query={workflow}
                   verdicts={verdicts}
                 />
+                <RequirementRelatedSummary
+                  projectId={projectId}
+                  requirementId={requirementId}
+                  onOpen={() => setActiveTab("relations")}
+                />
               </aside>
             </div>
           </TabsContent>
@@ -718,6 +732,65 @@ function RequestItemReview({
         )
       }
     />
+  );
+}
+
+function RequirementRelatedSummary({
+  projectId,
+  requirementId,
+  onOpen,
+}: {
+  projectId: number;
+  requirementId: number;
+  onOpen: () => void;
+}) {
+  const { query: designs, canRead } = useRelatedSpecifications(
+    projectId,
+    "requirement",
+    String(requirementId),
+  );
+  const tasks = useTaskProgress(requirementId);
+  const tests = useRequirementTestItems(projectId, requirementId);
+  const counts = [
+    {
+      label: "画面・API設計",
+      count: canRead ? designs.data?.length : undefined,
+    },
+    { label: "タスク", count: tasks.progress?.task_count },
+    {
+      label: "テスト項目",
+      count: tests.data?.filter((item) => !item.item_deleted).length,
+    },
+  ];
+
+  return (
+    <section className="grid gap-1 border-t pt-3" aria-label="関連情報">
+      <h2 className="text-sm font-semibold">関連情報</h2>
+      <dl className="grid gap-1 text-sm">
+        {counts.map(({ label, count }) => (
+          <div
+            key={label}
+            className="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-2"
+          >
+            <dt className="text-xs text-muted-foreground">{label}</dt>
+            <dd>
+              {count === undefined ? (
+                "—"
+              ) : (
+                <button
+                  type="button"
+                  className="rounded-sm text-xs underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                  onClick={onOpen}
+                  aria-label={`${label} ${count}件を開く`}
+                >
+                  {count}件
+                </button>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 

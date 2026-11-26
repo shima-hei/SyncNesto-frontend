@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import {
   ArrowUpRightIcon,
   ChevronDownIcon,
@@ -23,7 +24,8 @@ import {
 } from "@/components/ui/dialog";
 import type { RequirementOpenIssueRead } from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
-import { formatDate } from "@/lib/format/date";
+import { useProjectMemberUsers } from "@/features/projects/hooks/use-project-member-users";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 
 import { getRequirementOpenIssueStatusLabel } from "../../constants/requirement-options";
 import { useCreateOpenIssue } from "../../hooks/use-create-open-issue";
@@ -61,6 +63,8 @@ export function RequirementOpenIssuesSection({
   resolved,
   onCreated,
 }: RequirementOpenIssuesSectionProps) {
+  const { users } = useProjectMemberUsers(projectId, { limit: 100 });
+  const names = new Map(users.map((user) => [user.id, user.name]));
   const [commentTargets, setCommentTargets] = useState<number[]>([]);
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementOpenIssueRead | null>(null);
@@ -182,36 +186,109 @@ export function RequirementOpenIssuesSection({
                     aria-hidden
                   />
                 </summary>
-                <div className="flex flex-col gap-3 pb-3 md:flex-row md:items-start md:justify-between">
-                  <div className="flex min-w-0 flex-col gap-1">
+                <section
+                  aria-label="未決事項の詳細"
+                  className="mb-3 space-y-4 rounded-lg border bg-card p-4"
+                >
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">論点</h4>
                     <p
                       data-open-issue-field="description"
+                      className="scroll-mt-24 whitespace-pre-wrap text-sm"
+                    >
+                      {issue.description || "論点の説明は未入力です。"}
+                    </p>
+                  </div>
+                  <dl className="grid min-w-0 grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">担当者</dt>
+                      <dd>
+                        {issue.assignee_id == null
+                          ? "未設定"
+                          : (names.get(issue.assignee_id) ??
+                            "氏名を表示できない担当者")}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">
+                        回答期限
+                      </dt>
+                      <dd>
+                        {issue.due_date ? formatDate(issue.due_date) : "未設定"}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">
+                        関連要件
+                      </dt>
+                      <dd>
+                        {issue.related_requirement_id ? (
+                          <Link
+                            className="underline underline-offset-4"
+                            href={`/projects/joined/${projectId}/requirements/${documentId}/items/${issue.related_requirement_id}`}
+                          >
+                            関連要件を開く
+                          </Link>
+                        ) : (
+                          "未設定"
+                        )}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">
+                        承認への影響
+                      </dt>
+                      <dd
+                        className={
+                          issue.blocks_approval !== false &&
+                          issue.status !== "resolved"
+                            ? "text-[var(--status-warning-fg)]"
+                            : undefined
+                        }
+                      >
+                        {issue.blocks_approval !== false
+                          ? "対応必須"
+                          : "対応任意"}
+                      </dd>
+                    </div>
+                    {issue.impact_scope ? (
+                      <div className="min-w-0 sm:col-span-2">
+                        <dt className="text-xs text-muted-foreground">
+                          影響範囲
+                        </dt>
+                        <dd className="[overflow-wrap:anywhere]">
+                          {issue.impact_scope}
+                        </dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                  <div className="space-y-2 border-t pt-3">
+                    <h4 className="text-sm font-semibold">決定内容</h4>
+                    <p
+                      data-open-issue-field="resolution"
                       className="scroll-mt-24 whitespace-pre-wrap text-sm text-muted-foreground"
                     >
-                      {issue.description || "説明はありません。"}
+                      {issue.resolution || "決定内容は未記録です。"}
                     </p>
-                    <span className="text-xs text-muted-foreground">
-                      影響範囲: {issue.impact_scope || "-"} / 担当者ID:{" "}
-                      {issue.assignee_id ?? "-"} / 期限:{" "}
-                      {issue.due_date ? formatDate(issue.due_date) : "-"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      関連要件ID: {issue.related_requirement_id ?? "-"}
-                    </span>
-                    {issue.blocks_approval !== false &&
-                    issue.status !== "resolved" ? (
-                      <span className="text-xs text-[var(--status-warning-fg)]">
-                        正式承認までに対応必須
-                      </span>
-                    ) : null}
-                    {issue.resolution ? (
-                      <p
-                        data-open-issue-field="resolution"
-                        className="scroll-mt-24 whitespace-pre-wrap text-xs text-muted-foreground"
-                      >
-                        解決内容: {issue.resolution}
-                      </p>
-                    ) : null}
+                  </div>
+                  <div className="space-y-2 border-t pt-3">
+                    <h4 className="text-sm font-semibold">アクティビティ</h4>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      <li>
+                        登録 {formatDateTime(issue.created_at)}
+                        {issue.created_by && names.has(issue.created_by)
+                          ? ` ・ ${names.get(issue.created_by)}`
+                          : ""}
+                      </li>
+                      {issue.updated_at !== issue.created_at ? (
+                        <li>
+                          最終更新 {formatDateTime(issue.updated_at)}
+                          {issue.updated_by && names.has(issue.updated_by)
+                            ? ` ・ ${names.get(issue.updated_by)}`
+                            : ""}
+                        </li>
+                      ) : null}
+                    </ul>
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
                     <Button
@@ -265,7 +342,7 @@ export function RequirementOpenIssuesSection({
                       </Button>
                     ) : null}
                   </div>
-                </div>
+                </section>
                 {commentTargets.includes(issue.id) ? (
                   <div id={`open-issue-comments-${issue.id}`} className="mt-4">
                     <RequirementTargetCommentsSection

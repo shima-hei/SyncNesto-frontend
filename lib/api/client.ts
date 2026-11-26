@@ -56,7 +56,15 @@ export async function apiClient<T>(
     /^\/shared\/notifications\/(?:unread-count|read-all|[a-f0-9-]{36}\/read)$/i.test(
       guestApprovalPath,
     ) ||
-    guestApprovalPath === "/shared/publications/approval-requests" ||
+    /^\/shared\/publications\/(?:approval-requests|requirement-reviews|requirement-approvals)$/.test(
+      guestApprovalPath,
+    ) ||
+    /^\/shared\/publications\/[a-f0-9-]{36}\/requirement-reviews\/[a-f0-9-]{36}(?:\/(?:submission|nodes(?:\/[a-f0-9-]{36})?|threads(?:\/[a-f0-9-]{36}\/(?:actions|replies))?))?$/i.test(
+      guestApprovalPath,
+    ) ||
+    /^\/shared\/publications\/[a-f0-9-]{36}\/requirement-approvals\/[a-f0-9-]{36}(?:\/(?:comparison|decision))?$/i.test(
+      guestApprovalPath,
+    ) ||
     /^\/shared\/publications\/[a-f0-9-]{36}\/approval-requests\/[a-f0-9-]{36}(?:\/(?:bases|decision-preview|decisions))?$/i.test(
       guestApprovalPath,
     );

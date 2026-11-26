@@ -19,14 +19,6 @@ import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Input } from "@/components/ui/input";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { RequirementDocumentRead } from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { formatDateTime } from "@/lib/format/date";
@@ -800,59 +792,27 @@ function DocumentPreviewSection({
       ) : null}
       {requirements.length ? (
         <div className="flex flex-col gap-2">
-          <h3 className="text-base font-semibold">要件一覧</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>要件ID</TableHead>
-                <TableHead>タイトル</TableHead>
-                <TableHead>種別</TableHead>
-                <TableHead>優先度</TableHead>
-                <TableHead>ステータス</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requirements.map((requirement) => (
-                <TableRow key={requirement.id}>
-                  <TableCell className="font-medium">
+          <h3 className="text-base font-semibold">関連する要件</h3>
+          <ul className="divide-y border-y">
+            {requirements.map((requirement) => (
+              <li key={requirement.id}>
+                <Link
+                  href={`${documentPath}/items/${requirement.id}`}
+                  className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 rounded-sm py-2.5 text-sm hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  <span className="text-xs tabular-nums text-muted-foreground">
                     {renderHighlightedText(
                       requirement.requirement_code,
                       highlightQuotes,
                     )}
-                  </TableCell>
-                  <TableCell className="whitespace-normal">
-                    <Link
-                      href={`${documentPath}/items/${requirement.id}`}
-                      className="rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                    >
-                      {renderHighlightedText(
-                        requirement.title,
-                        highlightQuotes,
-                      )}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    {renderHighlightedText(
-                      getRequirementTypeLabel(requirement.requirement_type),
-                      highlightQuotes,
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {renderHighlightedText(
-                      getRequirementPriorityLabel(requirement.priority),
-                      highlightQuotes,
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {renderHighlightedText(
-                      getRequirementStatusLabel(requirement.status),
-                      highlightQuotes,
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </span>
+                  <span className="min-w-0 [overflow-wrap:anywhere]">
+                    {renderHighlightedText(requirement.title, highlightQuotes)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : content.trim() ? null : (
         <p className="text-sm text-muted-foreground">

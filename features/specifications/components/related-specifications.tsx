@@ -21,6 +21,27 @@ import {
   statusLabels,
 } from "../lib/specification";
 
+export function useRelatedSpecifications(
+  projectId: number,
+  targetType: SpecificationLinkCreate["target_type"],
+  targetId: string,
+) {
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
+  const canRead = canViewRequirement(currentProjectRole);
+  const query = useQuery({
+    queryKey: ["related-specifications", projectId, targetType, targetId],
+    queryFn: () =>
+      relatedSpecifications(projectId, {
+        target_type: targetType,
+        target_id: targetId,
+      }),
+    enabled: canRead,
+    retry: false,
+    staleTime: 30_000,
+  });
+  return { query, canRead };
+}
+
 export function RelatedSpecifications({
   projectId,
   targetType,
@@ -38,17 +59,11 @@ export function RelatedSpecifications({
 }) {
   const { withOrigin } = useTaskOrigin(projectId, origin);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
-  const canRead = canViewRequirement(currentProjectRole);
-  const query = useQuery({
-    queryKey: ["related-specifications", projectId, targetType, targetId],
-    queryFn: () =>
-      relatedSpecifications(projectId, {
-        target_type: targetType,
-        target_id: targetId,
-      }),
-    enabled: canRead,
-    retry: false,
-  });
+  const { query, canRead } = useRelatedSpecifications(
+    projectId,
+    targetType,
+    targetId,
+  );
   if (!canRead) return null;
   const source = new URLSearchParams({
     source: targetType,

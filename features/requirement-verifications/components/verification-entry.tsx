@@ -178,9 +178,11 @@ export function VerificationEntry({
     >
       <CardHeader className={embedded ? "px-0" : undefined}>
         <CardTitle>確認表</CardTitle>
-        <CardDescription>
-          固定した要件に確認項目を結び付けます。確認表の保存は要件の合格判定にはなりません。
-        </CardDescription>
+        {!embedded ? (
+          <CardDescription>
+            固定した要件の確認項目と証跡を管理します。
+          </CardDescription>
+        ) : null}
       </CardHeader>
       <CardContent
         className={
@@ -246,6 +248,8 @@ export function VerificationEntry({
         {query.data.can_prepare ? (
           <Button
             className="self-start"
+            variant={embedded && planId ? "outline" : "default"}
+            size={embedded ? "sm" : "default"}
             disabled={prepare.isPending}
             onClick={() => prepare.mutate()}
           >

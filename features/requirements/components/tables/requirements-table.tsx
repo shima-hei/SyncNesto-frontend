@@ -445,7 +445,10 @@ function ReviewableRequirementText({
 
   return (
     <div
-      className={cn(className, showTargetAction && "flex items-center gap-1")}
+      className={cn(
+        className,
+        showTargetAction && "group/requirement-field flex items-center gap-1",
+      )}
       data-requirement-review-anchor-key={anchorKey}
       onMouseUp={handleMouseUp}
     >
@@ -469,6 +472,7 @@ function ReviewableRequirementText({
           size="icon-sm"
           aria-label={`${label}にコメント・レビュー`}
           title={`${label}にコメント・レビュー`}
+          className="pointer-fine:opacity-0 pointer-fine:group-hover/requirement-field:opacity-100 pointer-fine:group-focus-within/requirement-field:opacity-100"
           onMouseUp={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
           onClick={async (event) => {

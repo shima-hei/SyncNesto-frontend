@@ -2,7 +2,6 @@
 
 import { useState, type ComponentProps } from "react";
 import Link from "next/link";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronRightIcon, CircleAlertIcon } from "lucide-react";
 
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
@@ -15,14 +14,16 @@ import {
   requirementWorkflowHref,
   reviewRequestStatus,
 } from "@/features/requirements/lib/requirement-workflow-review";
-import { readRequirementReviewManagementProjectsProjectIdRequirementDocumentsDocumentIdReviewManagementGet as readManagement } from "@/lib/api/generated/requirement-workflow/requirement-workflow";
+import {
+  requirementReviewManagementPageSize as pageSize,
+  useRequirementReviewManagement,
+} from "../../../hooks/use-requirement-review-management";
 import type { RequirementWorkflowRead } from "@/lib/api/generated/model";
 import { formatDate } from "@/lib/format/date";
 
 import { RequirementOpenIssuesSection } from "../../sections/requirement-open-issues-section";
 import { RequirementReviewRequests } from "./requirement-review-requests";
 
-const pageSize = 10;
 const states = [
   { value: "open", label: "未解決", resolved: false },
   { value: "resolved", label: "解決済み", resolved: true },
@@ -45,24 +46,10 @@ export function RequirementReviewManagement(
   const { projectId, documentId } = props;
   const [state, setState] = useState<(typeof states)[number]>(states[0]);
   const [page, setPage] = useState(1);
-  const query = useQuery({
-    queryKey: [
-      "requirement-workflow",
-      projectId,
-      "management",
-      documentId,
-      state.value,
-      page,
-    ],
-    queryFn: ({ signal }) =>
-      readManagement(
-        projectId,
-        documentId,
-        { resolved: state.resolved, page, page_size: pageSize },
-        { signal },
-      ),
-    placeholderData: keepPreviousData,
-    retry: false,
+  const query = useRequirementReviewManagement(projectId, documentId, {
+    view: state.value,
+    resolved: state.resolved ?? null,
+    page,
   });
   const data = query.data;
   if (data && !query.isPlaceholderData) {

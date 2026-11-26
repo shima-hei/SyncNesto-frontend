@@ -48,6 +48,7 @@ export function RequirementSectionsSection({
   const sectionSelectId = useId();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const navigationId = useId();
   const { sections, isLoading } = useRequirementSections(projectId, documentId);
   const {
@@ -72,7 +73,8 @@ export function RequirementSectionsSection({
     <div
       className={cn(
         layout === "compact" && "grid gap-3 sm:grid-cols-2 lg:grid-cols-3",
-        layout !== "compact" && "flex flex-col gap-3",
+        layout === "list" && "flex flex-col gap-3",
+        layout === "navigation" && "flex flex-col gap-1",
       )}
     >
       {sortedSections.map((section, index) => {
@@ -83,7 +85,7 @@ export function RequirementSectionsSection({
             key={section.id}
             section={section}
             isSelected={isSelected}
-            canUpdate={canUpdate}
+            canUpdate={canUpdate && (layout !== "navigation" || reordering)}
             canMoveUp={index > 0}
             canMoveDown={index < sortedSections.length - 1}
             isSortPending={isSortPending}
@@ -226,6 +228,18 @@ export function RequirementSectionsSection({
                   {itemCounts.unclassified}
                 </span>
               ) : null}
+            </Button>
+          ) : null}
+          {canUpdate && sortedSections.length > 1 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-pressed={reordering}
+              onClick={() => setReordering(!reordering)}
+              className="justify-start"
+            >
+              {reordering ? "並べ替えを終了" : "章を並べ替える"}
             </Button>
           ) : null}
         </nav>

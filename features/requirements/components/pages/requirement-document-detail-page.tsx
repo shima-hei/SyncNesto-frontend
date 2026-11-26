@@ -38,6 +38,7 @@ import {
   canDeleteRequirement,
   canReviewRequirement,
   canUpdateRequirement,
+  canViewRequirement,
 } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { useUrlTabState } from "@/hooks/use-url-tab-state";
@@ -45,6 +46,7 @@ import type { RequirementDocumentExportRead } from "@/lib/api/generated/model";
 
 import { useDeleteRequirementDocument } from "../../hooks/use-delete-requirement-document";
 import { useExportRequirementDocument } from "../../hooks/use-export-requirement-document";
+import { useRequirementReviewManagement } from "../../hooks/use-requirement-review-management";
 import { useRequirementDocument } from "../../hooks/use-requirement-document";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { RequirementDocumentExportDialog } from "../forms/requirement-document-export-dialog";
@@ -126,6 +128,15 @@ function RequirementDocumentDetailContent({
     projectId,
     documentId,
   );
+  const reviewManagement = useRequirementReviewManagement(
+    projectId,
+    documentId,
+    {
+      enabled: Boolean(
+        internal && document && canViewRequirement(currentProjectRole),
+      ),
+    },
+  );
   const { sections, isLoading: isSectionsLoading } = useRequirementSections(
     projectId,
     documentId,
@@ -137,9 +148,6 @@ function RequirementDocumentDetailContent({
       ? UNCLASSIFIED_SECTION_ID
       : (sections.find((section) => section.id === sectionNumber)?.id ?? null);
   const [, setRequirementPage] = useUrlFilterState("page", 1);
-  const createRequirementPath = selectedSectionId
-    ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${selectedSectionId}`
-    : `/projects/joined/${projectId}/requirements/${documentId}/items/new`;
   const { deleteRequirementDocument, isPending: isDeletePending } =
     useDeleteRequirementDocument(projectId, documentId);
   const { exportRequirementDocument, isPending: isExportPending } =
@@ -173,6 +181,20 @@ function RequirementDocumentDetailContent({
     );
   }
 
+  const management = reviewManagement.data;
+  const workflowStatus =
+    management?.formal_approval?.status === "requested"
+      ? "正式承認待ち"
+      : management?.active_review_count
+        ? "レビュー中"
+        : management?.formal_approval?.status === "returned"
+          ? "差し戻し"
+          : management?.formal_approval?.status === "approved"
+            ? "承認済み版あり"
+            : document.status === "draft"
+              ? "編集中"
+              : document.status &&
+                getRequirementDocumentStatusLabel(document.status);
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <Link
@@ -186,7 +208,7 @@ function RequirementDocumentDetailContent({
         title={document.title}
         description={[
           document.document_code,
-          document.status && getRequirementDocumentStatusLabel(document.status),
+          workflowStatus,
           `更新 ${formatDateTime(document.updated_at)}`,
         ]
           .filter(Boolean)
@@ -224,13 +246,6 @@ function RequirementDocumentDetailContent({
                   onRequested={() => setActiveTab("approvals")}
                 />
               </>
-            ) : null}
-            {visibleTab === "requirements" &&
-            canCreateRequirement(currentProjectRole) &&
-            !isSectionsLoading ? (
-              <Button asChild>
-                <Link href={createRequirementPath}>要件を追加</Link>
-              </Button>
             ) : null}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -13,7 +13,7 @@ export const isGuestInvitationPath = (value: string): boolean =>
   );
 
 export const isSharedApprovalPath = (value: string): boolean =>
-  /^\/shared\/publications\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/approval-requests\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+  /^\/shared\/publications\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/(?:approval-requests|requirement-reviews|requirement-approvals)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
     value,
   );
 

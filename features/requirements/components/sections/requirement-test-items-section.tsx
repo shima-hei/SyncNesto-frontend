@@ -7,6 +7,17 @@ import { RelatedItemsGroup } from "@/components/shared/detail/related-items-grou
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { listRequirementTestItemsProjectsProjectIdRequirementsRequirementIdTestItemsGet as listItems } from "@/lib/api/generated/test-collaboration/test-collaboration";
 
+export function useRequirementTestItems(
+  projectId: number,
+  requirementId: number,
+) {
+  return useQuery({
+    queryKey: ["requirement-test-items", projectId, requirementId],
+    staleTime: 30_000,
+    queryFn: () => listItems(projectId, requirementId),
+  });
+}
+
 export function RequirementTestItemsSection({
   projectId,
   requirementId,
@@ -16,10 +27,7 @@ export function RequirementTestItemsSection({
   requirementId: number;
   needsImpactReview?: boolean;
 }) {
-  const query = useQuery({
-    queryKey: ["requirement-test-items", projectId, requirementId],
-    queryFn: () => listItems(projectId, requirementId),
-  });
+  const query = useRequirementTestItems(projectId, requirementId);
   const active = (query.data ?? []).filter((row) => !row.item_deleted);
   return (
     <RelatedItemsGroup
