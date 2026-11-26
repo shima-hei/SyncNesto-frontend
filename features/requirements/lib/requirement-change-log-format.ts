@@ -66,6 +66,7 @@ const FIELD_LABELS: Record<string, string> = {
   priority: "優先度",
   source: "発生源",
   owner_id: "担当者",
+  section_id: "所属する章",
   issue_code: "未決事項コード",
   assignee_id: "担当者",
   due_date: "期限",
@@ -122,7 +123,7 @@ export const formatRequirementChangeLogActor = (
 ) => {
   return (
     changeLog.changed_by_user?.name ??
-    (changeLog.changed_by ? `ユーザーID: ${changeLog.changed_by}` : "-")
+    (changeLog.changed_by ? "名前を取得できないユーザー" : "システム")
   );
 };
 
@@ -140,15 +141,46 @@ export const getRequirementChangeLogUpdatedFieldLabels = (
 
 export const getRequirementChangeLogDiffRows = (
   changeLog: RequirementChangeLogRead,
+  formatValue: typeof formatRequirementChangeLogValue = formatRequirementChangeLogValue,
 ) => {
   return getChangeLogDiffRows({
     oldValue: changeLog.old_value,
     newValue: changeLog.new_value,
     formatField: formatRequirementChangeLogField,
-    formatValue: formatRequirementChangeLogValue,
+    formatValue,
     ignoredFields: IGNORED_DIFF_FIELDS,
   });
 };
+
+const PERSON_FIELDS = new Set([
+  "owner_id",
+  "author_id",
+  "reviewer_id",
+  "approver_id",
+  "assignee_id",
+]);
+
+export function formatRequirementHistoryValue(
+  value: unknown,
+  fieldName: string | null | undefined,
+  labels: { members: Map<number, string>; chapters: Map<number, string> },
+) {
+  if (
+    fieldName === "section_id" ||
+    (fieldName && PERSON_FIELDS.has(fieldName))
+  ) {
+    if (value === null || value === undefined || value === "") {
+      return fieldName === "section_id" ? "未分類" : "未設定";
+    }
+    if (fieldName === "section_id") {
+      return labels.chapters.get(Number(value)) ?? "参照できない章";
+    }
+    if (hasLabel(value) && !/^ユーザーID:|^\d+$/.test(value.label))
+      return value.label;
+    return labels.members.get(Number(value)) ?? "名前を取得できないユーザー";
+  }
+  return formatRequirementChangeLogValue(value, fieldName);
+}
 
 export const getRequirementChangeLogMissingFieldLabels = (
   changeLog: RequirementChangeLogRead,

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import Link from "next/link";
 import { useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
@@ -257,8 +258,11 @@ export function EvidenceComposer({
                     {e.kind === "execution" ? (
                       <p>
                         元の実行者：
-                        {evidenceText(e.executed_by_name) || "記録なし"} ·
-                        実行日時：
+                        <UserDisplay
+                          name={evidenceText(e.executed_by_name)}
+                          emptyLabel="実行者の記録なし"
+                        />{" "}
+                        · 実行日時：
                         {e.executed_at
                           ? formatDateTime(evidenceText(e.executed_at))
                           : "記録なし"}

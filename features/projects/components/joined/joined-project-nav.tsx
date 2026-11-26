@@ -239,6 +239,12 @@ function ProjectNavigationBar({
             const href = getJoinedProjectHref(projectId, path);
             const active =
               isJoinedProjectNavigationActive(pathname, href, projectId) ||
+              (path === "fixed-approvals" &&
+                isJoinedProjectNavigationActive(
+                  pathname,
+                  getJoinedProjectHref(projectId, "requirement-workflow"),
+                  projectId,
+                )) ||
               (path === "requirements" &&
                 ["requirement-verifications", "requirement-verdicts"].some(
                   (prefix) =>

@@ -18,5 +18,6 @@ export interface RequirementOpenIssueUpdate {
   due_date?: string | null;
   status?: string | null;
   resolution?: string | null;
+  blocks_approval?: boolean | null;
   reason?: string | null;
 }

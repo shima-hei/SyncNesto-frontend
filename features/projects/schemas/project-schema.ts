@@ -3,6 +3,7 @@ import { z } from "zod";
 import { VALIDATION_MESSAGES } from "@/lib/messages/validation-message";
 
 export const projectSchema = z.object({
+  requirementReviewRequired: z.boolean(),
   projectCode: z
     .string()
     .min(1, VALIDATION_MESSAGES.required("プロジェクトコード")),

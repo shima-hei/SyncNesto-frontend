@@ -54,6 +54,10 @@ test("既存URLを案件の水平ナビに分類し、深いURLも同じ現在�
     ["", "overview"],
     ["/requirements/12", "requirements"],
     ["/fixed-approvals/4", "requirements"],
+    [
+      "/requirement-workflow/19f781b1-b76d-4042-a9cd-ffc1d4c1122c",
+      "requirements",
+    ],
     ["/specifications", "design"],
     ["/tasks/51", "tasks"],
     ["/planning", "planning"],

@@ -5,6 +5,7 @@ export type ProjectFormValues = {
   status: string;
   startDate: string;
   endDate: string;
+  requirementReviewRequired: boolean;
 };
 
 export type ProjectFormErrors = Partial<

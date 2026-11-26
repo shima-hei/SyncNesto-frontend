@@ -16,7 +16,7 @@ import {
 import type { TaskEditSection } from "../../lib/task-mappers";
 import { TaskPhaseCell } from "../shared/task-phase-cell";
 import { usePlanningPhases } from "../../hooks/use-planning-phases";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ActivityPanel } from "@/components/shared/detail/activity-panel";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -397,36 +397,21 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
             <TaskTestCasesSection projectId={projectId} taskId={taskId} />
           )}
 
-          <section
-            aria-label="アクティビティ"
-            className="space-y-2 border-t pt-4"
-          >
-            <h2 className="text-sm font-semibold">アクティビティ</h2>
-            <Tabs value={activity} onValueChange={setActivity}>
-              <TabsList variant="line" className="justify-start border-b">
-                <TabsTrigger value="comments">コメント</TabsTrigger>
-                <TabsTrigger value="history">変更履歴</TabsTrigger>
-              </TabsList>
-              <TabsContent
-                value="comments"
-                forceMount
-                hidden={activity !== "comments"}
-                className="pt-2"
-              >
-                <TaskCommentsSection
-                  projectId={projectId}
-                  task={task}
-                  taskId={taskId}
-                  canComment={canCommentTask(currentProjectRole)}
-                  canUpdateStatus={canUpdate}
-                  embedded
-                />
-              </TabsContent>
-              <TabsContent value="history" className="pt-2">
-                <TaskChangeLogsSection taskId={taskId} />
-              </TabsContent>
-            </Tabs>
-          </section>
+          <ActivityPanel
+            value={activity}
+            onValueChange={setActivity}
+            comments={
+              <TaskCommentsSection
+                projectId={projectId}
+                task={task}
+                taskId={taskId}
+                canComment={canCommentTask(currentProjectRole)}
+                canUpdateStatus={canUpdate}
+                embedded
+              />
+            }
+            history={<TaskChangeLogsSection taskId={taskId} />}
+          />
         </div>
       </div>
 

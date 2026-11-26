@@ -115,11 +115,13 @@ export function VerificationEditor({
   queryKey,
   userId,
   tenantId,
+  embedded = false,
 }: {
   row: VerificationDetail;
   projectId: number;
   from: string;
   queryKey: (string | number | undefined)[];
+  embedded?: boolean;
   userId?: number;
   tenantId?: number;
 }) {
@@ -309,14 +311,20 @@ export function VerificationEditor({
   };
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <Button asChild variant="outline" size="sm" className="self-start">
-        <Link href={from}>元の要件・一覧へ戻る</Link>
-      </Button>
+      {!embedded ? (
+        <Button asChild variant="outline" size="sm" className="self-start">
+          <Link href={from}>元の要件・一覧へ戻る</Link>
+        </Button>
+      ) : null}
       <header className="flex flex-col gap-2">
         <p className="text-sm text-muted-foreground">
           要件の確認表 · {row.current_version}版
         </p>
-        <h1 className="text-2xl font-semibold break-words">{row.title}</h1>
+        {embedded ? (
+          <h3 className="font-semibold break-words">{row.title}</h3>
+        ) : (
+          <h1 className="text-2xl font-semibold break-words">{row.title}</h1>
+        )}
         <p className="text-sm text-muted-foreground">
           何を確かめるか、どの方法を使うかを整理します。要件の合意や最終合否とは別の準備記録です。
         </p>

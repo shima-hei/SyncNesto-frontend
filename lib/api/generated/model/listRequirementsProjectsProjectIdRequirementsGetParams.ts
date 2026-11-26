@@ -6,9 +6,7 @@
  */
 
 export type ListRequirementsProjectsProjectIdRequirementsGetParams = {
-  /**
-   * @minimum 1
-   */
+  /** @minimum 1 */
   page?: number;
   /**
    * @minimum 1
@@ -17,6 +15,7 @@ export type ListRequirementsProjectsProjectIdRequirementsGetParams = {
   page_size?: number;
   document_id?: number | null;
   section_id?: number | null;
+  unclassified?: boolean;
   q?: string | null;
   status?: string | null;
   requirement_type?: string | null;

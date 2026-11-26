@@ -15,6 +15,7 @@ export type RequirementCommentAnchor =
       kind: "requirement_field";
       field: string;
       label: string;
+      quote?: string;
     }
   | {
       kind: "requirement_detail";
@@ -42,10 +43,12 @@ export type RequirementCommentAnchor =
 export const createRequirementFieldCommentAnchor = (
   field: string,
   label: string,
+  quote?: string,
 ): RequirementCommentAnchor => ({
   kind: "requirement_field",
   field,
   label,
+  ...(quote ? { quote } : {}),
 });
 
 export const createRequirementDetailCommentAnchor = (
@@ -118,7 +121,7 @@ export const getRequirementCommentAnchorLabel = (
   const detailType = targetAnchor.detail_type;
 
   if (typeof label === "string") {
-    return label;
+    return typeof quote === "string" ? `${label}「${quote}」` : label;
   }
   if (typeof quote === "string") {
     return quote;

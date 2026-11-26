@@ -20,6 +20,7 @@ type RequirementSectionListItemProps = {
   isSortPending: boolean;
   showSelectAction: boolean;
   navigation?: boolean;
+  itemCount?: number;
   onSelect?: (sectionId: number) => void;
   onMove: (section: RequirementSectionRead, direction: "up" | "down") => void;
 };
@@ -33,6 +34,7 @@ export function RequirementSectionListItem({
   isSortPending,
   showSelectAction,
   navigation = false,
+  itemCount,
   onSelect,
   onMove,
 }: RequirementSectionListItemProps) {
@@ -41,21 +43,28 @@ export function RequirementSectionListItem({
       data-state={isSelected ? "selected" : undefined}
       className={cn(
         navigation
-          ? "min-w-0 border-b pb-3 last:border-b-0"
+          ? "min-w-0"
           : "rounded-lg border p-3 data-[state=selected]:border-primary",
       )}
     >
-      <div className="flex flex-col gap-3">
+      <div
+        className={navigation ? "flex flex-col gap-1" : "flex flex-col gap-3"}
+      >
         <div className="flex min-w-0 flex-col gap-1">
           {navigation ? (
             <Button
               type="button"
               variant={isSelected ? "secondary" : "ghost"}
               aria-current={isSelected ? "location" : undefined}
-              className="h-auto min-h-10 w-full justify-start whitespace-normal text-left"
+              className="h-auto min-h-8 w-full justify-between whitespace-normal text-left"
               onClick={() => onSelect?.(section.id)}
             >
               <span className="min-w-0 break-words">{section.title}</span>
+              {itemCount === undefined ? null : (
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {itemCount}
+                </span>
+              )}
             </Button>
           ) : (
             <button

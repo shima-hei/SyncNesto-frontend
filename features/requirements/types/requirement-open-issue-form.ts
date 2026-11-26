@@ -8,6 +8,7 @@ export type RequirementOpenIssueFormValues = {
   dueDate: string;
   status: string;
   resolution: string;
+  blocksApproval: boolean;
   reason: string;
 };
 

@@ -1,0 +1,17 @@
+.dialog:modal {
+  inline-size: min(38rem, calc(100% - 2rem));
+  max-block-size: calc(100dvb - 2rem);
+  margin: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+}
+
+.dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgb(0 0 0 / 45%);
+}

@@ -134,6 +134,12 @@ test("詳細のパンくずは内部IDを表示せず、名称を取得する対
     assert.equal(items.at(-1).dynamicId, id);
     assert.equal(items[1].dynamicId, 7);
   }
+  const review = getBreadcrumbItems(
+    "/projects/joined/7/requirement-workflow/19f781b1-b76d-4042-a9cd-ffc1d4c1122c",
+  );
+  assert.equal(review.length, 3);
+  assert.equal(review.at(-1).label, "レビュー");
+  assert.equal(review.at(-1).href, undefined);
 });
 
 test("system and organization homes remain separate for a dual-role user", () => {

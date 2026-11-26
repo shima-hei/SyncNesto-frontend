@@ -5,11 +5,14 @@ import { useState } from "react";
 
 import { CommentInlineHeader } from "@/components/shared/comments/comment-inline-header";
 import { CommentThreadList } from "@/components/shared/comments/comment-thread-list";
-import { CommentThreadActions } from "@/components/shared/comments/comment-thread-actions";
+import {
+  CommentMessageMenu,
+  CommentThreadActions,
+} from "@/components/shared/comments/comment-thread-actions";
+import { CommentMessage } from "@/components/shared/comments/comment-message";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TaskCommentRead, TaskRead } from "@/lib/api/generated/model";
-import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { useCreateTaskComment } from "../../hooks/use-create-task-comment";
@@ -102,21 +105,6 @@ export function TaskCommentsSection({
           contentClassName,
         )}
       >
-        {canComment ? (
-          <TaskCommentForm
-            projectId={projectId}
-            key={task.status ?? TASK_COMMENT_STATUS_UNCHANGED}
-            initialValues={{
-              body: "",
-              status: TASK_COMMENT_STATUS_UNCHANGED,
-            }}
-            enableStatusChange={canUpdateStatus}
-            isPending={isCreatePending || isStatusPending}
-            error={createError}
-            onSubmit={handleCreateCommentWithStatus}
-          />
-        ) : null}
-
         <CommentThreadList
           comments={comments}
           isLoading={isLoading}
@@ -193,6 +181,20 @@ export function TaskCommentsSection({
             setDeleteTarget(null);
           }}
         />
+        {canComment ? (
+          <TaskCommentForm
+            projectId={projectId}
+            key={task.status ?? TASK_COMMENT_STATUS_UNCHANGED}
+            initialValues={{
+              body: "",
+              status: TASK_COMMENT_STATUS_UNCHANGED,
+            }}
+            enableStatusChange={canUpdateStatus}
+            isPending={isCreatePending || isStatusPending}
+            error={createError}
+            onSubmit={handleCreateCommentWithStatus}
+          />
+        ) : null}
       </Content>
     </Container>
   );
@@ -220,17 +222,22 @@ function TaskCommentBody({
   onReopen: (commentId: number, version: number) => Promise<void>;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs text-muted-foreground">
-          {comment.created_by_user?.name ?? getUserLabel(comment.created_by)} /{" "}
-          {formatDateTime(comment.created_at)}
-        </span>
-        {comment.is_resolved ? (
-          <span className="text-xs text-muted-foreground">解決済み</span>
-        ) : null}
-      </div>
-      <p className="whitespace-pre-wrap text-sm">
+    <CommentMessage
+      author={comment.created_by_user?.name ?? getUserLabel(comment.created_by)}
+      avatarUrl={comment.created_by_user?.avatar_url}
+      createdAt={comment.created_at}
+      reply={Boolean(comment.parent_comment_id)}
+      resolved={comment.is_resolved}
+      menu={
+        canComment ? (
+          <CommentMessageMenu
+            onEdit={() => onEdit(comment)}
+            onDelete={() => onDelete(comment)}
+          />
+        ) : null
+      }
+    >
+      <p className="whitespace-pre-wrap break-words text-sm">
         <CommentContent body={comment.body} mentions={comment.mentions} />
       </p>
       {canComment ? (
@@ -239,12 +246,10 @@ function TaskCommentBody({
           isResolved={comment.is_resolved}
           isStatePending={isStatePending}
           onReply={onReply}
-          onEdit={onEdit}
-          onDelete={onDelete}
           onResolve={() => onResolve(comment.id, comment.version)}
           onReopen={() => onReopen(comment.id, comment.version)}
         />
       ) : null}
-    </div>
+    </CommentMessage>
   );
 }

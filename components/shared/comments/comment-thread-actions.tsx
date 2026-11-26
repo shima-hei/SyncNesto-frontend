@@ -1,26 +1,64 @@
 import {
   CheckIcon,
-  MessageSquareReplyIcon,
+  CornerDownRightIcon,
+  EllipsisIcon,
   PencilIcon,
   RotateCcwIcon,
   Trash2Icon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export function CommentMessageMenu({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-label="コメントの操作"
+        >
+          <EllipsisIcon aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuGroup>
+          <DropdownMenuItem onSelect={onEdit}>
+            <PencilIcon />
+            編集
+          </DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+            <Trash2Icon />
+            削除
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 type CommentThreadActionsProps<TComment> = {
   comment: TComment;
   isResolved: boolean;
   isStatePending: boolean;
-  resolvePlacement?: "first" | "after-edit";
   reopenLabel?: string;
   canReply?: boolean;
-  canEdit?: boolean;
-  canDelete?: boolean;
   canResolve?: boolean;
   onReply: (comment: TComment) => void;
-  onEdit: (comment: TComment) => void;
-  onDelete: (comment: TComment) => void;
   onResolve: () => void;
   onReopen: () => void;
 };
@@ -29,23 +67,18 @@ export function CommentThreadActions<TComment>({
   comment,
   isResolved,
   isStatePending,
-  resolvePlacement = "after-edit",
   reopenLabel = "再オープン",
   canReply = true,
-  canEdit = true,
-  canDelete = true,
   canResolve = true,
   onReply,
-  onEdit,
-  onDelete,
   onResolve,
   onReopen,
 }: CommentThreadActionsProps<TComment>) {
   const resolveButton = (
     <Button
       type="button"
-      variant="outline"
-      size="sm"
+      variant="ghost"
+      size="xs"
       disabled={isStatePending}
       onClick={isResolved ? onReopen : onResolve}
     >
@@ -54,47 +87,24 @@ export function CommentThreadActions<TComment>({
       ) : (
         <CheckIcon data-icon="inline-start" />
       )}
-      {isResolved ? reopenLabel : "解決"}
+      {isResolved ? reopenLabel : "解決する"}
     </Button>
   );
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {canResolve && resolvePlacement === "first" ? resolveButton : null}
+    <div className="flex flex-wrap gap-1">
       {canReply ? (
         <Button
           type="button"
-          variant="outline"
-          size="sm"
+          variant="ghost"
+          size="xs"
           onClick={() => onReply(comment)}
         >
-          <MessageSquareReplyIcon data-icon="inline-start" />
+          <CornerDownRightIcon data-icon="inline-start" />
           返信
         </Button>
       ) : null}
-      {canEdit ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onEdit(comment)}
-        >
-          <PencilIcon data-icon="inline-start" />
-          編集
-        </Button>
-      ) : null}
-      {canResolve && resolvePlacement === "after-edit" ? resolveButton : null}
-      {canDelete ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onDelete(comment)}
-        >
-          <Trash2Icon data-icon="inline-start" />
-          削除
-        </Button>
-      ) : null}
+      {canResolve ? resolveButton : null}
     </div>
   );
 }

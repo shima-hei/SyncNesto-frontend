@@ -21,5 +21,6 @@ export function useRequirementReviews(
     reviews: reviewsQuery.data ?? [],
     isLoading: reviewsQuery.isLoading,
     error: reviewsQuery.error,
+    refetch: reviewsQuery.refetch,
   };
 }

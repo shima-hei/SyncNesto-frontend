@@ -1,5 +1,7 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
+
 import { useState } from "react";
 import { Trash2Icon } from "lucide-react";
 
@@ -171,12 +173,17 @@ function ProjectMemberRow({
     <TableRow>
       <TableCell>
         <div className="flex min-w-56 flex-col">
-          <span className="truncate font-medium">
-            {user?.name ?? `ユーザーID: ${member.user_id}`}
-          </span>
-          <span className="truncate text-xs text-muted-foreground">
-            {user?.email ?? `ID ${member.user_id}`}
-          </span>
+          <UserDisplay
+            name={user?.name}
+            src={user?.avatar_url}
+            emptyLabel="ユーザー情報なし"
+            truncate
+          />
+          {user?.email ? (
+            <span className="truncate ps-[1.875rem] text-xs text-muted-foreground">
+              {user.email}
+            </span>
+          ) : null}
         </div>
       </TableCell>
       <TableCell>

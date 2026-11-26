@@ -1,6 +1,15 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useId, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  MessageSquareIcon,
+  PencilIcon,
+  PlusIcon,
+  PanelRightCloseIcon,
+} from "lucide-react";
 import { DocumentObjectives } from "./document-objectives";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -8,29 +17,25 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { listRequirementsProjectsProjectIdRequirementsGet } from "@/lib/api/generated/requirements/requirements";
 
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { RequirementDocumentRead } from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
-import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import {
-  getRequirementDocumentStatusLabel,
   getRequirementPriorityLabel,
   getRequirementStatusLabel,
   getRequirementTypeLabel,
 } from "../../../constants/requirement-options";
 import { useRequirementSections } from "../../../hooks/use-requirement-sections";
+import { useCreateRequirementSection } from "../../../hooks/use-create-requirement-section";
+import { useUpdateRequirementSectionSortOrder } from "../../../hooks/use-update-requirement-section-sort-order";
+import { useSectionEdits } from "../../../hooks/use-section-edits";
 import { useTargetComments } from "../../../hooks/use-target-comments";
+import { sectionEditBuffer } from "../../../lib/section-edit-buffer";
 import {
   createRequirementReviewAnchor,
   evaluateRequirementReviewAnchor,
@@ -43,12 +48,15 @@ import {
   type RequirementReviewTargetAnchor,
 } from "../../../lib/requirement-review-anchor";
 import { RequirementTargetCommentsSection } from "../../sections/requirement-target-comments-section";
+import { SectionBodyEditor } from "../../sections/section-detail/section-body-editor";
 
 type RequirementDocumentOverviewProps = {
   projectId: number;
   documentId: number;
   document: RequirementDocumentRead;
   canComment: boolean;
+  canCreate: boolean;
+  canUpdate: boolean;
 };
 
 export function RequirementDocumentOverview({
@@ -56,16 +64,43 @@ export function RequirementDocumentOverview({
   documentId,
   document,
   canComment: canCommentRequested,
+  canCreate,
+  canUpdate,
 }: RequirementDocumentOverviewProps) {
+  const commentsId = useId();
+  const commentToggleRef = useRef<HTMLButtonElement>(null);
+  const commentPanelRef = useRef<HTMLElement>(null);
+  const chapterTitleRef = useRef<HTMLInputElement>(null);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const [outlinePreference, setOutlinePreference] = useState<boolean | null>(
+    null,
+  );
+  const outlineOpen = outlinePreference ?? !isMobile;
+  const [addingChapter, setAddingChapter] = useState(false);
+  const [reorderOpen, setReorderOpen] = useState(false);
+  const [chapterTitle, setChapterTitle] = useState("");
+  const { scope, edits } = useSectionEdits(projectId, documentId);
+  const { moveRequirementSection, isPending: reordering } =
+    useUpdateRequirementSectionSortOrder(projectId, documentId);
+  const reorderDisabled =
+    reordering || addingChapter || Object.keys(edits).length > 0;
+  const {
+    createRequirementSection,
+    isPending: creatingChapter,
+    error: createError,
+  } = useCreateRequirementSection(projectId, documentId);
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementReviewTargetAnchor | null>(null);
   const [activePreviewAnchorKey, setActivePreviewAnchorKey] = useState<
     string | null
   >(null);
-  const { sections, isLoading: isSectionsLoading } = useRequirementSections(
-    projectId,
-    documentId,
-  );
+  const {
+    sections,
+    isLoading: isSectionsLoading,
+    error: sectionsError,
+    refetch: refetchSections,
+  } = useRequirementSections(projectId, documentId);
   const requirementsQuery = useInfiniteQuery({
     queryKey: ["requirement-document-preview", projectId, documentId],
     initialPageParam: 1,
@@ -88,6 +123,7 @@ export function RequirementDocumentOverview({
     canCommentRequested &&
     !isRequirementsLoading &&
     !isSectionsLoading &&
+    !sectionsError &&
     !requirementsQuery.hasNextPage &&
     !requirementsQuery.error;
   const { comments: targetComments } = useTargetComments(
@@ -104,6 +140,26 @@ export function RequirementDocumentOverview({
   const targetAnchors = getUnresolvedReviewAnchors(targetComments).filter(
     (targetAnchor) => targetAnchor.scope === "document_preview",
   );
+  const documentPath = `/projects/joined/${projectId}/requirements/${documentId}`;
+  const openComments = () => {
+    setCommentsOpen(true);
+    requestAnimationFrame(() => {
+      const panel = commentPanelRef.current;
+      if (
+        panel &&
+        panel.getBoundingClientRect().left <=
+          (panel.parentElement?.getBoundingClientRect().left ?? 0) + 1
+      ) {
+        scrollToRequirementContent(panel);
+        panel.focus({ preventScroll: true });
+      }
+    });
+  };
+  const selectCommentAnchor = (anchor: RequirementReviewTargetAnchor) => {
+    if (!canComment) return;
+    setSelectedTargetAnchor(anchor);
+    openComments();
+  };
 
   const handleTargetAnchorClick = (targetAnchor: Record<string, unknown>) => {
     if (!isRequirementReviewTargetAnchor(targetAnchor)) {
@@ -116,7 +172,13 @@ export function RequirementDocumentOverview({
       ) ??
       window.document.querySelector(
         `[data-document-field="${CSS.escape(targetAnchor.field)}"]`,
-      );
+      ) ??
+      (targetAnchor.preview_target_type === "section" &&
+      targetAnchor.preview_target_id
+        ? window.document.getElementById(
+            `chapter-${targetAnchor.preview_target_id}`,
+          )
+        : null);
 
     scrollToRequirementContent(element);
     setActivePreviewAnchorKey(anchorKey);
@@ -131,6 +193,7 @@ export function RequirementDocumentOverview({
     if (
       isRequirementsLoading ||
       isSectionsLoading ||
+      sectionsError ||
       requirementsQuery.hasNextPage ||
       requirementsQuery.error
     )
@@ -186,7 +249,7 @@ export function RequirementDocumentOverview({
     <div className="@container/document-overview flex min-w-0 flex-col gap-4">
       {requirementsQuery.error && (
         <DataLoadError
-          resourceName="プレビューの要件"
+          resourceName="本文の関連要件"
           isRetrying={requirementsQuery.isFetching}
           onRetry={() => void requirementsQuery.refetch()}
         />
@@ -212,91 +275,261 @@ export function RequirementDocumentOverview({
           </Button>
         </div>
       )}
-      <Card>
-        <CardHeader>
-          <CardTitle>基本情報</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <DocumentInfo
-            label="ステータス"
-            value={
-              document.status
-                ? getRequirementDocumentStatusLabel(document.status)
-                : "-"
-            }
+      {sectionsError ? (
+        <DataLoadError
+          resourceName="章"
+          onRetry={() => void refetchSections()}
+        />
+      ) : null}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          aria-expanded={outlineOpen}
+          aria-controls={`${commentsId}-outline`}
+          onClick={() => setOutlinePreference(!outlineOpen)}
+        >
+          <ChevronDownIcon
+            data-icon="inline-start"
+            className={outlineOpen ? undefined : "-rotate-90"}
           />
-          <DocumentInfo
-            label="対象システム"
-            value={document.target_system_name ?? "-"}
-          />
-          <DocumentInfo
-            label="クライアント"
-            value={document.client_name ?? "-"}
-          />
-          <DocumentInfo label="ベンダー" value={document.vendor_name ?? "-"} />
-          <DocumentInfo
-            label="更新日時"
-            value={formatDateTime(document.updated_at)}
-          />
-        </CardContent>
-      </Card>
+          目次
+        </Button>
+        <Button
+          ref={commentToggleRef}
+          type="button"
+          size="sm"
+          variant="outline"
+          aria-expanded={commentsOpen}
+          aria-controls={commentsId}
+          onClick={() => {
+            if (commentsOpen) setCommentsOpen(false);
+            else openComments();
+          }}
+        >
+          <MessageSquareIcon data-icon="inline-start" />
+          コメント{targetComments.length ? ` (${targetComments.length})` : ""}
+        </Button>
+      </div>
 
-      <div className="grid gap-4 @min-[64rem]/document-overview:grid-cols-[minmax(0,1fr)_20rem] @min-[64rem]/document-overview:items-start @min-[80rem]/document-overview:grid-cols-[minmax(0,1fr)_24rem]">
-        <Card>
-          <CardHeader>
-            <CardTitle>要件定義書プレビュー</CardTitle>
-          </CardHeader>
-          <CardContent className="@container/document-preview">
-            {isSectionsLoading || isRequirementsLoading ? (
-              <div className="flex flex-col gap-3">
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
-              </div>
-            ) : (
-              <article className="mx-auto flex max-w-4xl flex-col gap-8 rounded-lg border bg-background px-4 py-6 @min-[40rem]/document-preview:px-8">
-                <header className="flex flex-col gap-4 border-b pb-6">
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      {document.document_code}
-                    </p>
-                    <h2
-                      data-document-field="title"
-                      className="scroll-mt-24 text-2xl font-semibold tracking-normal break-words"
-                    >
-                      {document.title}
-                    </h2>
-                  </div>
-                  <dl className="grid gap-x-6 gap-y-2 text-sm md:grid-cols-2">
-                    <DocumentMeta
-                      label="ステータス"
-                      value={
-                        document.status
-                          ? getRequirementDocumentStatusLabel(document.status)
-                          : "-"
+      <div
+        className={cn(
+          "grid min-w-0 gap-5 @min-[48rem]/document-overview:items-start",
+          outlineOpen &&
+            "@min-[48rem]/document-overview:grid-cols-[13rem_minmax(0,1fr)]",
+          commentsOpen &&
+            !outlineOpen &&
+            "@min-[61rem]/document-overview:grid-cols-[minmax(0,1fr)_19rem]",
+          commentsOpen &&
+            outlineOpen &&
+            "@min-[76rem]/document-overview:grid-cols-[13rem_minmax(0,1fr)_19rem]",
+        )}
+      >
+        <nav
+          aria-label="本文の目次"
+          id={`${commentsId}-outline`}
+          hidden={!outlineOpen}
+          className="min-w-0 @min-[48rem]/document-overview:sticky @min-[48rem]/document-overview:top-20 @min-[48rem]/document-overview:max-h-[calc(100dvh-6rem)] @min-[48rem]/document-overview:overflow-y-auto @min-[48rem]/document-overview:border-e @min-[48rem]/document-overview:pe-3"
+        >
+          <ol className="flex max-h-40 flex-col gap-1 overflow-y-auto @min-[48rem]/document-overview:max-h-none">
+            <li>
+              <OutlineLink href="#document-purpose">目的</OutlineLink>
+            </li>
+            {sortedSections.map((section, index) => (
+              <li key={section.id} className="flex min-w-0 items-center gap-1">
+                <OutlineLink href={`#chapter-${section.id}`}>
+                  {section.title}
+                </OutlineLink>
+                {canUpdate && reorderOpen ? (
+                  <div className="ms-auto flex shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`${section.title}を上へ移動`}
+                      disabled={reorderDisabled || index === 0}
+                      onClick={() =>
+                        moveRequirementSection(sortedSections, section.id, "up")
                       }
-                    />
-                    <DocumentMeta
-                      label="対象システム"
-                      field="target_system_name"
-                      value={document.target_system_name ?? "-"}
-                    />
-                    <DocumentMeta
-                      label="クライアント"
-                      field="client_name"
-                      value={document.client_name ?? "-"}
-                    />
-                    <DocumentMeta
-                      label="ベンダー"
-                      field="vendor_name"
-                      value={document.vendor_name ?? "-"}
-                    />
-                    <DocumentMeta
-                      label="更新日時"
-                      value={formatDateTime(document.updated_at)}
-                    />
-                  </dl>
-                </header>
+                    >
+                      <ChevronUpIcon />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`${section.title}を下へ移動`}
+                      disabled={
+                        reorderDisabled || index === sortedSections.length - 1
+                      }
+                      onClick={() =>
+                        moveRequirementSection(
+                          sortedSections,
+                          section.id,
+                          "down",
+                        )
+                      }
+                    >
+                      <ChevronDownIcon />
+                    </Button>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+            {unassignedRequirements.length ? (
+              <li>
+                <OutlineLink href="#unassigned-requirements">
+                  セクション未設定
+                </OutlineLink>
+              </li>
+            ) : null}
+          </ol>
+          {canUpdate && sortedSections.length > 1 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-expanded={reorderOpen}
+              onClick={() => setReorderOpen((open) => !open)}
+              className="mt-2"
+            >
+              {reorderOpen ? "章の並び替えを閉じる" : "章を並び替える"}
+            </Button>
+          ) : null}
+          {reorderOpen && Object.keys(edits).length > 0 ? (
+            <p className="text-xs text-muted-foreground" role="status">
+              本文の編集を終了すると章を移動できます。
+            </p>
+          ) : null}
+          {canCreate && scope && !isSectionsLoading && !sectionsError ? (
+            addingChapter ? (
+              <form
+                className="mt-3 flex flex-col gap-2"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const title = chapterTitle.trim();
+                  if (!title || creatingChapter) return;
+                  try {
+                    const chapter = await createRequirementSection({
+                      title,
+                      sectionType: "overview",
+                      content: "",
+                      sortOrder: String(
+                        Math.max(
+                          0,
+                          ...sections.map((item) => item.sort_order ?? 0),
+                        ) + 10,
+                      ),
+                      status: "draft",
+                    });
+                    if (canUpdate) sectionEditBuffer.begin(scope, chapter);
+                    setAddingChapter(false);
+                    setChapterTitle("");
+                    requestAnimationFrame(() => {
+                      const input = window.document.getElementById(
+                        `section-body-${chapter.id}`,
+                      );
+                      scrollToRequirementContent(
+                        input ??
+                          window.document.getElementById(
+                            `chapter-${chapter.id}`,
+                          ),
+                      );
+                      input?.focus({ preventScroll: true });
+                    });
+                  } catch {
+                    // フォーム上にエラーを表示し、章名を保持する。
+                  }
+                }}
+              >
+                <label
+                  htmlFor={`${commentsId}-chapter-title`}
+                  className="text-sm font-medium"
+                >
+                  章名
+                </label>
+                <Input
+                  ref={chapterTitleRef}
+                  id={`${commentsId}-chapter-title`}
+                  value={chapterTitle}
+                  onChange={(event) => setChapterTitle(event.target.value)}
+                  required
+                  disabled={creatingChapter}
+                />
+                {createError ? <FormApiError error={createError} /> : null}
+                <div className="flex flex-wrap gap-1">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!chapterTitle.trim() || creatingChapter}
+                  >
+                    {creatingChapter ? "追加中…" : "追加"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={creatingChapter}
+                    onClick={() => setAddingChapter(false)}
+                  >
+                    キャンセル
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="mt-2"
+                disabled={reordering}
+                onClick={() => {
+                  setAddingChapter(true);
+                  requestAnimationFrame(() => chapterTitleRef.current?.focus());
+                }}
+              >
+                <PlusIcon data-icon="inline-start" />
+                章を追加
+              </Button>
+            )
+          ) : null}
+        </nav>
+        <div className="min-w-0">
+          {isSectionsLoading || isRequirementsLoading ? (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+            </div>
+          ) : (
+            <article className="mx-auto flex max-w-4xl min-w-0 flex-col gap-8">
+              <details className="rounded-md border px-4 py-3">
+                <summary
+                  data-document-field="title"
+                  className="cursor-pointer rounded-sm text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  定義書の情報
+                </summary>
+                <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm">
+                  <DocumentMeta
+                    label="対象システム"
+                    field="target_system_name"
+                    value={document.target_system_name ?? "-"}
+                  />
+                  <DocumentMeta
+                    label="クライアント"
+                    field="client_name"
+                    value={document.client_name ?? "-"}
+                  />
+                  <DocumentMeta
+                    label="ベンダー"
+                    field="vendor_name"
+                    value={document.vendor_name ?? "-"}
+                  />
+                </dl>
+              </details>
 
+              <div id="document-purpose" className="scroll-mt-24">
                 <ReviewablePreviewBlock
                   anchor={{
                     scope: "document_preview",
@@ -310,7 +543,7 @@ export function RequirementDocumentOverview({
                   }}
                   sourceText={document.purpose ?? ""}
                   activeAnchorKey={activePreviewAnchorKey}
-                  onSelectTargetAnchor={setSelectedTargetAnchor}
+                  onSelectTargetAnchor={selectCommentAnchor}
                   className="flex flex-col gap-3"
                 >
                   <h2 className="border-b pb-2 text-xl font-semibold tracking-normal">
@@ -330,60 +563,136 @@ export function RequirementDocumentOverview({
                     )}
                   </p>
                 </ReviewablePreviewBlock>
+              </div>
 
-                <DocumentObjectives projectId={projectId} document={document} />
+              <DocumentObjectives projectId={projectId} document={document} />
 
-                {sortedSections.map((section) => (
+              {sortedSections.map((section) => (
+                <div
+                  className="flex min-w-0 scroll-mt-24 flex-col gap-2"
+                  key={section.id}
+                  id={`chapter-${section.id}`}
+                >
+                  {edits[section.id] ? (
+                    <>
+                      <h2 className="border-b pb-2 text-xl font-semibold break-words">
+                        {section.title}
+                      </h2>
+                      <SectionBodyEditor
+                        projectId={projectId}
+                        documentId={documentId}
+                        sectionId={section.id}
+                        canUpdate={canUpdate}
+                        currentVersion={section.version}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      {canUpdate && scope ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="self-end"
+                          disabled={reordering}
+                          aria-label={`${section.title}の本文を編集`}
+                          onClick={() => {
+                            sectionEditBuffer.begin(scope, section);
+                            requestAnimationFrame(() =>
+                              window.document
+                                .getElementById(`section-body-${section.id}`)
+                                ?.focus({ preventScroll: true }),
+                            );
+                          }}
+                        >
+                          <PencilIcon data-icon="inline-start" />
+                          編集
+                        </Button>
+                      ) : null}
+                      <DocumentPreviewSection
+                        documentPath={documentPath}
+                        documentId={documentId}
+                        sectionId={section.id}
+                        title={section.title}
+                        content={section.content ?? ""}
+                        sectionVersion={section.version}
+                        requirements={requirements.filter(
+                          (requirement) =>
+                            requirement.section_id === section.id,
+                        )}
+                        targetAnchors={targetAnchors}
+                        activeAnchorKey={activePreviewAnchorKey}
+                        onSelectTargetAnchor={selectCommentAnchor}
+                      />
+                    </>
+                  )}
+                </div>
+              ))}
+              {unassignedRequirements.length ? (
+                <div id="unassigned-requirements" className="scroll-mt-24">
                   <DocumentPreviewSection
-                    key={section.id}
-                    documentId={documentId}
-                    sectionId={section.id}
-                    title={section.title}
-                    content={section.content ?? ""}
-                    sectionVersion={section.version}
-                    requirements={requirements.filter(
-                      (requirement) => requirement.section_id === section.id,
-                    )}
-                    targetAnchors={targetAnchors}
-                    activeAnchorKey={activePreviewAnchorKey}
-                    onSelectTargetAnchor={setSelectedTargetAnchor}
-                  />
-                ))}
-                {unassignedRequirements.length ? (
-                  <DocumentPreviewSection
+                    documentPath={documentPath}
                     documentId={documentId}
                     title="セクション未設定"
                     content=""
                     requirements={unassignedRequirements}
                     targetAnchors={targetAnchors}
                     activeAnchorKey={activePreviewAnchorKey}
-                    onSelectTargetAnchor={setSelectedTargetAnchor}
+                    onSelectTargetAnchor={selectCommentAnchor}
                   />
-                ) : null}
-                {!sortedSections.length && !unassignedRequirements.length ? (
-                  <p className="text-sm text-muted-foreground">
-                    プレビューするセクションまたは要件はありません。
-                  </p>
-                ) : null}
-              </article>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              ) : null}
+              {!sortedSections.length && !unassignedRequirements.length ? (
+                <p className="text-sm text-muted-foreground">
+                  章と要件はまだありません。
+                </p>
+              ) : null}
+            </article>
+          )}
+        </div>
 
-        <aside className="min-w-0 @min-[64rem]/document-overview:sticky @min-[64rem]/document-overview:top-20">
-          <RequirementTargetCommentsSection
-            projectId={projectId}
-            targetType="document"
-            targetId={documentId}
-            title="要件定義書コメント"
-            canComment={canComment}
-            selectedTargetAnchor={selectedTargetAnchor}
-            onTargetAnchorClick={handleTargetAnchorClick}
-            getTargetAnchorStatus={getTargetAnchorStatus}
-            showTargetAnchorInput={false}
-            className="@min-[64rem]/document-overview:max-h-[calc(100dvh-6rem)] @min-[64rem]/document-overview:overflow-hidden"
-            contentClassName="@min-[64rem]/document-overview:min-h-0 @min-[64rem]/document-overview:overflow-y-auto @min-[64rem]/document-overview:overscroll-contain"
-          />
+        <aside
+          ref={commentPanelRef}
+          id={commentsId}
+          aria-label="定義書コメント"
+          tabIndex={-1}
+          hidden={!commentsOpen}
+          className={cn(
+            "min-w-0",
+            outlineOpen
+              ? "@min-[48rem]/document-overview:col-span-full @min-[76rem]/document-overview:sticky @min-[76rem]/document-overview:top-20 @min-[76rem]/document-overview:col-span-1"
+              : "@min-[61rem]/document-overview:sticky @min-[61rem]/document-overview:top-20",
+          )}
+        >
+          {commentsOpen ? (
+            <RequirementTargetCommentsSection
+              projectId={projectId}
+              targetType="document"
+              targetId={documentId}
+              title="要件定義書コメント"
+              canComment={canComment}
+              selectedTargetAnchor={selectedTargetAnchor}
+              onTargetAnchorClick={handleTargetAnchorClick}
+              getTargetAnchorStatus={getTargetAnchorStatus}
+              showTargetAnchorInput={false}
+              headerAction={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="コメントを閉じる"
+                  onClick={() => {
+                    setCommentsOpen(false);
+                    commentToggleRef.current?.focus();
+                  }}
+                >
+                  <PanelRightCloseIcon aria-hidden="true" />
+                </Button>
+              }
+              className="@min-[76rem]/document-overview:max-h-[calc(100dvh-8rem)] @min-[76rem]/document-overview:overflow-hidden"
+              contentClassName="@min-[76rem]/document-overview:min-h-0 @min-[76rem]/document-overview:overflow-y-auto @min-[76rem]/document-overview:overscroll-contain"
+            />
+          ) : null}
         </aside>
       </div>
     </div>
@@ -391,6 +700,7 @@ export function RequirementDocumentOverview({
 }
 
 type DocumentPreviewSectionProps = {
+  documentPath: string;
   documentId: number;
   sectionId?: number;
   title: string;
@@ -410,6 +720,7 @@ type DocumentPreviewSectionProps = {
 };
 
 function DocumentPreviewSection({
+  documentPath,
   documentId,
   sectionId,
   title,
@@ -468,51 +779,27 @@ function DocumentPreviewSection({
       ) : null}
       {requirements.length ? (
         <div className="flex flex-col gap-2">
-          <h3 className="text-base font-semibold">要件一覧</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>要件ID</TableHead>
-                <TableHead>タイトル</TableHead>
-                <TableHead>種別</TableHead>
-                <TableHead>優先度</TableHead>
-                <TableHead>ステータス</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requirements.map((requirement) => (
-                <TableRow key={requirement.id}>
-                  <TableCell className="font-medium">
+          <h3 className="text-base font-semibold">関連する要件</h3>
+          <ul className="divide-y border-y">
+            {requirements.map((requirement) => (
+              <li key={requirement.id}>
+                <Link
+                  href={`${documentPath}/items/${requirement.id}`}
+                  className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 rounded-sm py-2.5 text-sm hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  <span className="text-xs tabular-nums text-muted-foreground">
                     {renderHighlightedText(
                       requirement.requirement_code,
                       highlightQuotes,
                     )}
-                  </TableCell>
-                  <TableCell className="whitespace-normal">
+                  </span>
+                  <span className="min-w-0 [overflow-wrap:anywhere]">
                     {renderHighlightedText(requirement.title, highlightQuotes)}
-                  </TableCell>
-                  <TableCell>
-                    {renderHighlightedText(
-                      getRequirementTypeLabel(requirement.requirement_type),
-                      highlightQuotes,
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {renderHighlightedText(
-                      getRequirementPriorityLabel(requirement.priority),
-                      highlightQuotes,
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {renderHighlightedText(
-                      getRequirementStatusLabel(requirement.status),
-                      highlightQuotes,
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : content.trim() ? null : (
         <p className="text-sm text-muted-foreground">
@@ -607,12 +894,20 @@ function DocumentMeta({
   );
 }
 
-function DocumentInfo({ label, value }: { label: string; value: string }) {
+function OutlineLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm">{value}</span>
-    </div>
+    <a
+      href={href}
+      className="block rounded-md px-2 py-2 text-sm break-words text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+    >
+      {children}
+    </a>
   );
 }
 

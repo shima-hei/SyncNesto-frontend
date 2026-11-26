@@ -16,6 +16,7 @@ export interface VerificationDetail {
   created_at: string;
   updated_at: string;
   subject_digest: string;
+  target_version_label?: string | null;
   fixed_subject: VerificationDetailFixedSubject;
   comparison: VerificationDetailComparison;
   can_prepare: boolean;

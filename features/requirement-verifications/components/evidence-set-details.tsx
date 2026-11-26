@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useState } from "react";
 import {
   useInfiniteQuery,
@@ -150,7 +151,12 @@ export function EvidenceSetDetails({
                   </span>
                 </div>
                 <p>
-                  提出者：{detail.actor_name} · 受付：
+                  提出者：
+                  <UserDisplay
+                    name={detail.actor_name}
+                    emptyLabel="操作者不明"
+                  />{" "}
+                  · 受付：
                   {formatDateTime(detail.created_at)}
                 </p>
                 {detail.completed_at ? (

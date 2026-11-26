@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -494,8 +495,11 @@ export function CaseExecutionHistory({
             {index === 0 ? " · 最新" : " · 過去"}
           </p>
           <p className="text-xs text-muted-foreground">
-            {execution.executed_by_name ?? "実行者不明"} ·{" "}
-            {formatDateTime(execution.executed_at)}
+            <UserDisplay
+              name={execution.executed_by_name}
+              emptyLabel="実行者不明"
+            />{" "}
+            · {formatDateTime(execution.executed_at)}
           </p>
           <p className="whitespace-pre-wrap">
             実際の結果: {execution.actual_result || "－"}

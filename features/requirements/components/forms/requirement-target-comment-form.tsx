@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useWorkbenchState } from "../../hooks/use-workbench-state";
 
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
-import { FormSubmitButton } from "@/components/shared/forms/form-submit-button";
+import {
+  CommentComposer,
+  CommentSubmit,
+} from "@/components/shared/comments/comment-composer";
 import {
   Field,
   FieldError,
@@ -45,7 +48,7 @@ const defaultValues: RequirementTargetCommentFormValues = {
 export function RequirementTargetCommentForm({
   projectId,
   initialValues,
-  submitLabel = "コメント追加",
+  submitLabel = "コメントを投稿",
   resetOnSuccess = true,
   showReason = false,
   showTargetAnchorInput = true,
@@ -60,12 +63,14 @@ export function RequirementTargetCommentForm({
     memoryKey,
     initialValues ?? defaultValues,
   );
+  const bodyId = useId();
   const [errors, setErrors] = useState<RequirementTargetCommentFormErrors>({});
 
   const handleSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>,
   ) => {
     event.preventDefault();
+    if (isPending || !values.body.trim()) return;
 
     const result = requirementTargetCommentSchema.safeParse(values);
 
@@ -93,79 +98,89 @@ export function RequirementTargetCommentForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <FieldGroup>
-        <Field data-invalid={errors.body ? true : undefined}>
-          <FieldLabel>コメント</FieldLabel>
-          <MentionTextarea
-            projectId={projectId}
-            permission="requirement:read"
-            mentions={values.mentions}
-            value={values.body}
-            onChange={(body, mentions) => {
-              setValues((current) => ({
-                ...current,
-                body,
-                mentions,
-              }));
-              setErrors((current) => ({ ...current, body: undefined }));
-            }}
-            aria-invalid={Boolean(errors.body)}
-          />
-          {errors.body ? <FieldError>{errors.body}</FieldError> : null}
-        </Field>
-
-        {!showReason && showTargetAnchorInput ? (
-          <Field data-invalid={errors.targetAnchor ? true : undefined}>
-            <FieldLabel>対象アンカー</FieldLabel>
-            <Textarea
-              value={values.targetAnchor}
+      <CommentComposer>
+        <FieldGroup className="gap-2">
+          <Field data-invalid={errors.body ? true : undefined}>
+            <FieldLabel htmlFor={bodyId} className="sr-only">
+              コメント本文
+            </FieldLabel>
+            <MentionTextarea
+              id={bodyId}
               rows={2}
-              onChange={(event) => {
-                const targetAnchor = event.currentTarget.value;
+              placeholder="コメントを入力…"
+              className="min-h-12"
+              projectId={projectId}
+              permission="requirement:read"
+              mentions={values.mentions}
+              value={values.body}
+              onChange={(body, mentions) => {
                 setValues((current) => ({
                   ...current,
-                  targetAnchor,
+                  body,
+                  mentions,
                 }));
-                setErrors((current) => ({
-                  ...current,
-                  targetAnchor: undefined,
-                }));
+                setErrors((current) => ({ ...current, body: undefined }));
               }}
-              aria-invalid={Boolean(errors.targetAnchor)}
+              aria-invalid={Boolean(errors.body)}
             />
-            {errors.targetAnchor ? (
-              <FieldError>{errors.targetAnchor}</FieldError>
-            ) : null}
+            {errors.body ? <FieldError>{errors.body}</FieldError> : null}
           </Field>
-        ) : null}
-        {!showReason && !showTargetAnchorInput && values.targetAnchor ? (
-          <Field>
-            <FieldLabel>選択箇所</FieldLabel>
-            <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
-              {targetAnchorLabel ?? values.targetAnchor}
-            </div>
-          </Field>
-        ) : null}
 
-        {showReason ? (
-          <Field>
-            <FieldLabel>更新理由</FieldLabel>
-            <Textarea
-              value={values.reason}
-              onChange={(event) => {
-                const reason = event.currentTarget.value;
-                setValues((current) => ({
-                  ...current,
-                  reason,
-                }));
-              }}
-            />
-          </Field>
-        ) : null}
+          {!showReason && showTargetAnchorInput ? (
+            <Field data-invalid={errors.targetAnchor ? true : undefined}>
+              <FieldLabel>対象アンカー</FieldLabel>
+              <Textarea
+                value={values.targetAnchor}
+                rows={2}
+                onChange={(event) => {
+                  const targetAnchor = event.currentTarget.value;
+                  setValues((current) => ({
+                    ...current,
+                    targetAnchor,
+                  }));
+                  setErrors((current) => ({
+                    ...current,
+                    targetAnchor: undefined,
+                  }));
+                }}
+                aria-invalid={Boolean(errors.targetAnchor)}
+              />
+              {errors.targetAnchor ? (
+                <FieldError>{errors.targetAnchor}</FieldError>
+              ) : null}
+            </Field>
+          ) : null}
+          {!showReason && !showTargetAnchorInput && values.targetAnchor ? (
+            <Field>
+              <FieldLabel>選択箇所</FieldLabel>
+              <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                {targetAnchorLabel ?? values.targetAnchor}
+              </div>
+            </Field>
+          ) : null}
 
-        <FormApiError error={error} />
-        <FormSubmitButton isPending={isPending}>{submitLabel}</FormSubmitButton>
-      </FieldGroup>
+          {showReason ? (
+            <Field>
+              <FieldLabel>更新理由</FieldLabel>
+              <Textarea
+                value={values.reason}
+                onChange={(event) => {
+                  const reason = event.currentTarget.value;
+                  setValues((current) => ({
+                    ...current,
+                    reason,
+                  }));
+                }}
+              />
+            </Field>
+          ) : null}
+
+          <FormApiError error={error} />
+          <CommentSubmit pending={isPending} body={values.body}>
+            {submitLabel}
+          </CommentSubmit>
+        </FieldGroup>
+      </CommentComposer>
     </form>
   );
 }

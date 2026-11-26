@@ -46,20 +46,54 @@ const labels: Record<string, string> = {
   detail_json: "種別別の詳細",
 };
 
-function PublicNode({ node }: { node: PublicationNodeRead }) {
+export function PublicNode({
+  node,
+  onSelectText,
+  reader = false,
+}: {
+  node: PublicationNodeRead;
+  onSelectText?: (field: string, quote: string, quoteStart: number) => void;
+  reader?: boolean;
+}) {
   const structured =
     node.node_kind === "specification" &&
     node.payload.content &&
     typeof node.payload.content === "object";
+  const fields = Object.entries(node.payload).filter(
+    ([key]) =>
+      key !== "title" && (!structured || !["summary", "content"].includes(key)),
+  );
+  const mainFields: Record<string, string[]> = {
+    requirement_document: [
+      "purpose",
+      "project_goal",
+      "project_scope",
+      "project_completion_criteria",
+    ],
+    section: ["content"],
+    requirement: ["description", "acceptance_criteria", "rationale"],
+    requirement_detail: ["detail_json"],
+  };
+  const body = reader ? (mainFields[node.node_kind] ?? []) : [];
+  const displayed = reader
+    ? body.flatMap((key) =>
+        fields.filter(([field, value]) => field === key && value),
+      )
+    : fields;
+  const metadata = fields.filter(
+    ([key, value]) => !body.includes(key) && value != null && value !== "",
+  );
   return (
     <article
       id={`public-node-${node.id}`}
       className="flex min-w-0 flex-col gap-3 border-b pb-5 last:border-b-0"
     >
-      <p className="text-xs text-muted-foreground">
-        固定した内容
-        {node.source_version ? `・元の版 ${node.source_version}` : ""}
-      </p>
+      {!reader ? (
+        <p className="text-xs text-muted-foreground">
+          固定した内容
+          {node.source_version ? `・元の版 ${node.source_version}` : ""}
+        </p>
+      ) : null}
       {structured ? (
         <SpecificationFields
           values={{
@@ -71,45 +105,103 @@ function PublicNode({ node }: { node: PublicationNodeRead }) {
           readOnly
         />
       ) : typeof node.payload.title === "string" ? (
-        <h3 className="text-base font-semibold">{node.payload.title}</h3>
+        <h3
+          className={
+            reader
+              ? "text-2xl font-semibold [overflow-wrap:anywhere]"
+              : "text-base font-semibold"
+          }
+        >
+          {node.payload.title}
+        </h3>
       ) : null}
       <dl className="flex min-w-0 flex-col gap-3">
-        {Object.entries(node.payload)
-          .filter(
-            ([key]) =>
-              key !== "title" &&
-              (!structured || !["summary", "content"].includes(key)),
-          )
-          .map(([key, value]) => (
-            <div key={key} className="min-w-0">
-              <dt className="text-xs text-muted-foreground">
-                {labels[key] ?? key}
-              </dt>
-              <dd>
-                {typeof value === "string" ? (
-                  <MarkdownPreview
-                    inert
-                    className="min-h-0"
-                    value={value}
-                    emptyMessage="記載なし"
-                  />
-                ) : (
-                  <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-sm">
-                    {value == null
-                      ? "記載なし"
-                      : JSON.stringify(value, null, 2)}
-                  </pre>
-                )}
-              </dd>
-            </div>
-          ))}
+        {displayed.map(([key, value]) => (
+          <div key={key} className="min-w-0">
+            <dt
+              className={
+                reader
+                  ? "text-sm font-semibold"
+                  : "text-xs text-muted-foreground"
+              }
+            >
+              {labels[key] ?? key}
+            </dt>
+            <dd
+              onMouseUp={
+                onSelectText && typeof value === "string"
+                  ? (event) => {
+                      const selection = window.getSelection();
+                      if (
+                        !selection?.anchorNode ||
+                        !selection.focusNode ||
+                        !event.currentTarget.contains(selection.anchorNode) ||
+                        !event.currentTarget.contains(selection.focusNode)
+                      )
+                        return;
+                      const quote = selection.toString().trim();
+                      const start = value.indexOf(quote);
+                      if (
+                        quote &&
+                        start >= 0 &&
+                        start === value.lastIndexOf(quote)
+                      )
+                        onSelectText(
+                          key,
+                          quote,
+                          Array.from(value.slice(0, start)).length,
+                        );
+                    }
+                  : undefined
+              }
+            >
+              {typeof value === "string" ? (
+                <MarkdownPreview
+                  inert
+                  className={
+                    reader
+                      ? "min-h-0 rounded-none border-0 bg-transparent px-0 py-2"
+                      : "min-h-0"
+                  }
+                  value={value}
+                  emptyMessage="記載なし"
+                />
+              ) : (
+                <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-sm">
+                  {value == null ? "記載なし" : JSON.stringify(value, null, 2)}
+                </pre>
+              )}
+            </dd>
+          </div>
+        ))}
       </dl>
-      <details className="text-sm">
-        <summary>本文全体をテキストで確認</summary>
-        <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap break-words text-xs">
-          {JSON.stringify(node.payload, null, 2)}
-        </pre>
-      </details>
+      {reader ? (
+        metadata.length ? (
+          <details className="text-sm text-muted-foreground">
+            <summary className="cursor-pointer">固定版の属性</summary>
+            <dl className="grid gap-2 pt-2 sm:grid-cols-2">
+              {metadata.map(([key, value]) => (
+                <div
+                  key={key}
+                  className="min-w-0 text-xs [overflow-wrap:anywhere]"
+                >
+                  <dt>{labels[key] ?? key}</dt>
+                  <dd className="text-foreground">
+                    {typeof value === "string" ? value : JSON.stringify(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </details>
+        ) : null
+      ) : (
+        <details className="text-sm">
+          <summary>本文全体をテキストで確認</summary>
+          <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap break-words text-xs">
+            {JSON.stringify(node.payload, null, 2)}
+          </pre>
+        </details>
+      )}
     </article>
   );
 }
@@ -216,10 +308,12 @@ export function PublicationBody({
   nodes,
   publicationId,
   onReady,
+  reader = false,
 }: {
   nodes: PublicationNodeRead[];
   publicationId: string;
   onReady?: (ready: boolean) => void;
+  reader?: boolean;
 }) {
   const [graphs, setGraphs] = useState<Record<string, boolean>>({});
   const graphReady = useCallback((id: string, ready: boolean) => {
@@ -239,9 +333,11 @@ export function PublicationBody({
       className="flex min-w-0 flex-col gap-6"
       aria-label="相手に見せる本文全体"
     >
-      <p className="text-xs text-muted-foreground">
-        本文全体を取得しました。内部状態の表示は、顧客による合意・正式承認を表すものではありません。
-      </p>
+      {!reader ? (
+        <p className="text-xs text-muted-foreground">
+          本文全体を取得しました。内部状態の表示は、顧客による合意・正式承認を表すものではありません。
+        </p>
+      ) : null}
       {nodes
         .filter((n) => n.node_kind !== "test_design_part")
         .map((node) =>
@@ -255,7 +351,7 @@ export function PublicationBody({
               />
             </section>
           ) : (
-            <PublicNode key={node.id} node={node} />
+            <PublicNode key={node.id} node={node} reader={reader} />
           ),
         )}
     </div>

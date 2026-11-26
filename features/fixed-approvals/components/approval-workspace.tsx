@@ -2,9 +2,11 @@
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 
 import Link from "next/link";
+import { ChevronRightIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
+import { RequirementProjectInbox } from "@/features/requirements/components/review/requirement-project-inbox";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
@@ -12,7 +14,6 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -30,7 +31,6 @@ import {
   evidenceIssues,
   statusLabels,
 } from "../lib/display";
-import { ApprovalRequestForm } from "./approval-request-form";
 import { LegacyMigrationPanel } from "./legacy-migration-panel";
 import { ChoiceField } from "./choice-field";
 
@@ -63,6 +63,19 @@ export function ApprovalWorkspace({
   const [status, setStatus] = useUrlFilterState("status", "");
   const [mine, setMine] = useUrlFilterState("mine", "");
   const [selectedLegacy, setSelectedLegacy] = useUrlFilterState("legacy", 0);
+  const showWorkflow =
+    user?.user_type === "internal" &&
+    !user.demo &&
+    !releaseId &&
+    !legacyId &&
+    !originImport &&
+    !audience &&
+    !publicationId &&
+    (!targetKind || targetKind === "requirement_document");
+  const documentHref =
+    targetKind === "requirement_document" && sourceId
+      ? `/projects/joined/${projectId}/requirements/${sourceId}?tab=approvals`
+      : undefined;
   const history = useQuery({
     queryKey: [
       "approval-history",
@@ -95,42 +108,40 @@ export function ApprovalWorkspace({
     <div className="flex min-w-0 flex-col gap-6">
       <OverviewReturn projectId={projectId} />
       <PageHeader
-        title="合意・承認"
-        description="依頼の対象・状態・担当者を確認します。"
+        title="レビュー・承認一覧"
+        description={documentHref ? "この要件定義書の承認依頼" : undefined}
         actions={
           <div className="flex flex-wrap gap-2">
-            {canManage ? (
-              <Button asChild>
-                <Link
-                  href={`/projects/joined/${projectId}/artifact-releases${sourceId && (targetKind === "requirement" || targetKind === "requirement_document") ? `?kind=${targetKind}&sourceId=${sourceId}` : ""}`}
-                >
-                  固定版を確認して依頼する
-                </Link>
-              </Button>
-            ) : null}
             <Button asChild variant="outline">
-              <Link href={`/projects/joined/${projectId}/requirements`}>
-                要件定義へ
+              <Link
+                href={
+                  documentHref ?? `/projects/joined/${projectId}/requirements`
+                }
+              >
+                {documentHref ? "定義書に戻る" : "要件定義書"}
               </Link>
             </Button>
           </div>
         }
       />
-      {releaseId && canManage ? (
-        <ApprovalRequestForm
-          key={`${releaseId}:${legacyId ?? originImport ?? "new"}`}
+      {showWorkflow ? (
+        <RequirementProjectInbox
           projectId={projectId}
-          releaseId={releaseId}
-          legacyId={legacyId}
-          originImport={originImport}
+          documentId={documentHref ? sourceId : undefined}
         />
       ) : null}
-      <Card>
-        <CardHeader>
-          <CardTitle>依頼一覧</CardTitle>
-        </CardHeader>
-        <CardContent className="flex min-w-0 flex-col gap-4">
-          <div className="grid gap-3 sm:grid-cols-2">
+      <details
+        open={!showWorkflow || selectedLegacy > 0}
+        className="min-w-0 rounded-md border px-3 py-2"
+      >
+        <summary className="cursor-pointer rounded-sm py-1 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
+          従来の承認・その他の成果物
+        </summary>
+        <section
+          aria-label="従来の承認依頼"
+          className="mt-3 flex min-w-0 flex-col gap-4"
+        >
+          <div className="grid gap-3 border-y py-3 sm:max-w-xl sm:grid-cols-2">
             <ChoiceField
               label="表示する依頼"
               compact
@@ -141,12 +152,11 @@ export function ApprovalWorkspace({
               }}
               choices={[
                 { value: "all", label: "すべての依頼" },
-                { value: "true", label: "自分への依頼・自分の申請" },
+                { value: "true", label: "自分への依頼・申請" },
               ]}
             />
             <ChoiceField
               label="状態"
-              compact
               value={status || "all"}
               onChange={(value) => {
                 setStatus(value === "all" ? "" : value);
@@ -163,7 +173,7 @@ export function ApprovalWorkspace({
           </div>
           {history.error ? (
             <DataLoadError
-              resourceName="承認履歴"
+              resourceName="承認依頼"
               onRetry={() => void history.refetch()}
             />
           ) : history.isPending ? (
@@ -175,17 +185,35 @@ export function ApprovalWorkspace({
                   <TableRow>
                     <TableHead>対象</TableHead>
                     <TableHead>状態</TableHead>
-                    <TableHead>承認者・申請日時</TableHead>
-                    <TableHead>操作</TableHead>
+                    <TableHead>承認者</TableHead>
+                    <TableHead>申請日時</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {history.data.items.map((item) => (
                     <TableRow key={`${item.scheme}:${item.id}`}>
                       <TableCell>
-                        <p className="max-w-72 whitespace-normal break-words">
-                          {item.title}
-                        </p>
+                        {item.scheme === "fixed" ? (
+                          <Link
+                            href={approvalPath(projectId, item.id)}
+                            className="inline-flex max-w-sm items-baseline gap-1 rounded-sm font-medium whitespace-normal break-words underline decoration-border underline-offset-4 hover:decoration-current focus-visible:outline-2 focus-visible:outline-ring"
+                          >
+                            <span className="min-w-0">{item.title}</span>
+                            <ChevronRightIcon
+                              aria-hidden="true"
+                              className="size-3 shrink-0 text-muted-foreground"
+                            />
+                          </Link>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto max-w-sm justify-start px-0 py-0 text-left whitespace-normal break-words"
+                            onClick={() => setSelectedLegacy(Number(item.id))}
+                          >
+                            {item.title}
+                          </Button>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           {item.scheme === "legacy"
                             ? "従来承認・対象版未固定"
@@ -194,9 +222,26 @@ export function ApprovalWorkspace({
                           ・
                           {item.audience === "guest" ? "外部依頼" : "社内記録"}
                         </p>
+                        {item.migrated_to ? (
+                          <Link
+                            href={approvalPath(projectId, item.migrated_to)}
+                            className="rounded-sm text-xs underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
+                          >
+                            切替先を確認
+                          </Link>
+                        ) : null}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">
+                        <Badge
+                          variant="outline"
+                          className={
+                            item.migrated_to
+                              ? undefined
+                              : item.status === "requested"
+                                ? "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]"
+                                : undefined
+                          }
+                        >
                           {item.migrated_to
                             ? "新方式へ切替済み"
                             : `${item.scheme === "legacy" ? "従来：" : ""}${statusLabels[item.status] ?? item.status}`}
@@ -218,43 +263,9 @@ export function ApprovalWorkspace({
                             user?.id,
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDateTime(item.created_at)}
-                        </p>
                       </TableCell>
-                      <TableCell>
-                        {item.scheme === "fixed" ? (
-                          <Button asChild variant="outline" size="sm">
-                            <Link href={approvalPath(projectId, item.id)}>
-                              {item.status === "requested"
-                                ? "対象を確認"
-                                : "判断履歴を見る"}
-                            </Link>
-                          </Button>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedLegacy(Number(item.id))}
-                            >
-                              従来記録を確認
-                            </Button>
-                            {item.migrated_to ? (
-                              <Button asChild variant="outline" size="sm">
-                                <Link
-                                  href={approvalPath(
-                                    projectId,
-                                    item.migrated_to,
-                                  )}
-                                >
-                                  切替先へ
-                                </Link>
-                              </Button>
-                            ) : null}
-                          </div>
-                        )}
+                      <TableCell className="tabular-nums text-muted-foreground">
+                        {formatDateTime(item.created_at)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -271,11 +282,11 @@ export function ApprovalWorkspace({
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
-              この条件に該当する依頼はありません。要件や定義書の「固定版と添付」から対象を保存して、合意・正式承認を依頼できます。
+              この条件に該当する依頼はありません。
             </p>
           )}
-        </CardContent>
-      </Card>
+        </section>
+      </details>
       <details>
         <summary className="cursor-pointer rounded-sm text-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
           合意・承認の対象と従来記録について

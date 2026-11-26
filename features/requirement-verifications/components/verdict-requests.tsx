@@ -70,7 +70,7 @@ export function VerdictRequests({
       (terminal.length === 1 && terminal[0].status !== "requested"));
   if (page?.state === "disabled") return null;
   return (
-    <Card>
+    <Card data-verification-final-judgment tabIndex={-1}>
       <CardHeader>
         <CardTitle>5. 最終判断</CardTitle>
         <CardDescription>

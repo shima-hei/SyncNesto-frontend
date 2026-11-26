@@ -23,5 +23,6 @@ export function useTargetComments(
     comments: commentsQuery.data ?? [],
     isLoading: commentsQuery.isLoading,
     error: commentsQuery.error,
+    refetch: commentsQuery.refetch,
   };
 }

@@ -3,10 +3,16 @@ import type { ReactNode } from "react";
 type PageHeaderProps = {
   title: string;
   description?: string;
+  metadata?: ReactNode;
   actions?: ReactNode;
 };
 
-export function PageHeader({ title, description, actions }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  metadata,
+  actions,
+}: PageHeaderProps) {
   return (
     <header className="@container/page-header min-w-0">
       <div className="flex min-w-0 flex-col gap-3 @min-[40rem]/page-header:flex-row @min-[40rem]/page-header:items-start @min-[40rem]/page-header:justify-between">
@@ -19,6 +25,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
               {description}
             </p>
           ) : null}
+          {metadata}
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>

@@ -8,6 +8,7 @@ import { useDeleteRequirementSectionProjectsProjectIdRequirementSectionsSectionI
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
   invalidateRequirementChangeLogs,
+  invalidateRequirementList,
   invalidateRequirementSections,
 } from "../lib/requirement-cache";
 
@@ -23,6 +24,7 @@ export function useDeleteRequirementSection(
           onSuccess: async () => {
             await Promise.all([
               invalidateRequirementSections(queryClient, projectId, documentId),
+              invalidateRequirementList(queryClient, projectId),
               invalidateRequirementChangeLogs(queryClient, projectId),
             ]);
             toast.success(REQUIREMENT_MESSAGES.section.deleteSuccess);

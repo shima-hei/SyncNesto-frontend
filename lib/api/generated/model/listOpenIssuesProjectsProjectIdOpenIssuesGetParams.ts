@@ -6,9 +6,7 @@
  */
 
 export type ListOpenIssuesProjectsProjectIdOpenIssuesGetParams = {
-  /**
-   * @minimum 1
-   */
+  /** @minimum 1 */
   page?: number;
   /**
    * @minimum 1
@@ -18,6 +16,7 @@ export type ListOpenIssuesProjectsProjectIdOpenIssuesGetParams = {
   document_id?: number | null;
   q?: string | null;
   status?: string | null;
+  resolved?: boolean | null;
   assignee_id?: number | null;
   due_date_from?: string | null;
   due_date_to?: string | null;

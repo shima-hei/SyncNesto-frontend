@@ -8,7 +8,7 @@ import { useUpdateRequirementDetailProjectsProjectIdRequirementsRequirementIdDet
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
 import {
   invalidateRequirementChangeLogs,
-  invalidateRequirementSummary,
+  invalidateRequirementDetailsWithSummary,
 } from "../lib/requirement-cache";
 import { toRequirementDetailUpdate } from "../lib/requirement-mappers";
 import type { RequirementDetailFormValues } from "../types/requirement-detail-form";
@@ -24,7 +24,7 @@ export function useUpdateRequirementDetail(
         mutation: {
           onSuccess: async () => {
             await Promise.all([
-              invalidateRequirementSummary(
+              invalidateRequirementDetailsWithSummary(
                 queryClient,
                 projectId,
                 requirementId,

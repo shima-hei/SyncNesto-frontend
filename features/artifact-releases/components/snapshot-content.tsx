@@ -39,7 +39,7 @@ const kindLabels: Record<string, string> = {
   specification: "画面・API設計",
 };
 
-function SnapshotNode({ node }: { node: ArtifactNodeRead }) {
+export function SnapshotNode({ node }: { node: ArtifactNodeRead }) {
   const content = node.payload.content;
   const structured =
     node.node_kind === "specification" &&
@@ -102,9 +102,11 @@ function SnapshotNode({ node }: { node: ArtifactNodeRead }) {
 export function SnapshotContent({
   projectId,
   releaseId,
+  onReady,
 }: {
   projectId: number;
   releaseId: string;
+  onReady?: (ready: boolean) => void;
 }) {
   const query = useInfiniteQuery({
     queryKey: ["artifact-nodes", projectId, releaseId],
@@ -126,6 +128,8 @@ export function SnapshotContent({
   useEffect(() => {
     if (hasGraph && hasNextPage && !isFetching && !error) void fetchNextPage();
   }, [hasGraph, hasNextPage, isFetching, error, fetchNextPage]);
+  const ready = query.isSuccess && !query.hasNextPage && nodes.length > 0;
+  useEffect(() => onReady?.(ready), [onReady, ready]);
   if (query.isPending) return <Skeleton className="h-24" />;
   if (query.error)
     return (

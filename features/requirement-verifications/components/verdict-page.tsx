@@ -1,5 +1,6 @@
 "use client";
 
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -137,7 +138,8 @@ function VerdictHistory({
         .map((e) => (
           <section key={e.id} className="flex flex-col gap-1">
             <p className="font-medium">
-              {verdictLabels[e.event]} · {e.actor_name}
+              {verdictLabels[e.event]} ·{" "}
+              <UserDisplay name={e.actor_name} emptyLabel="操作者不明" />
             </p>
             <p className="text-sm text-muted-foreground">
               {formatDateTime(e.created_at)}

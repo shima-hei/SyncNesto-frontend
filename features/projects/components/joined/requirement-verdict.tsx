@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { StatusIndicator } from "@/components/shared/display/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { useRequirementVerdicts } from "@/features/projects/hooks/use-requirement-verdicts";
@@ -16,12 +16,14 @@ export function RequirementVerdict({
   version,
   projectId,
   returnTo,
+  showLinks = true,
 }: {
   query: ReturnType<typeof useRequirementVerdicts>;
   requirementId: number;
   version: number;
   projectId: number;
   returnTo: string;
+  showLinks?: boolean;
 }) {
   if (query.data?.state === "disabled") return null;
   if (query.isPending)
@@ -47,23 +49,29 @@ export function RequirementVerdict({
   const hasFiles = Number(row.comparison?.file_count) > 0;
   return (
     <div className="flex flex-col items-start gap-1">
-      <Badge
-        variant={
-          state === "failed" || state === "requires_reassessment"
-            ? "destructive"
-            : "outline"
+      <StatusIndicator
+        tone={
+          state === "failed"
+            ? "danger"
+            : state === "requires_reassessment"
+              ? "warning"
+              : state === "passed"
+                ? "success"
+                : state === "requested"
+                  ? "info"
+                  : "neutral"
         }
       >
         {state === "passed" && hasFiles
           ? "合格記録・添付未再照合"
           : (verdictLabels[state] ?? state)}
-      </Badge>
-      {row.plan_version ? (
+      </StatusIndicator>
+      {showLinks && row.plan_version ? (
         <span className="text-xs text-muted-foreground">
           確認表 {row.plan_version}版
         </span>
       ) : null}
-      {row.request_id ? (
+      {showLinks && row.request_id ? (
         <Link
           className="text-xs underline"
           href={verdictHref(projectId, row.request_id, returnTo)}

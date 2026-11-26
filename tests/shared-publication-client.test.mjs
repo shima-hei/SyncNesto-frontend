@@ -161,6 +161,16 @@ test("外部判断のMFA不足は画面内で扱い、既存APIの再ログイ�
       detail + "/bases?cursor=opaque&page_size=100",
       detail + "/decision-preview",
       detail + "/decisions",
+      "/shared/publications/requirement-reviews?page=2",
+      "/shared/publications/requirement-approvals",
+      detail.replace("approval-requests", "requirement-reviews"),
+      detail.replace("approval-requests", "requirement-reviews") + "/nodes",
+      detail.replace("approval-requests", "requirement-reviews") +
+        "/submission",
+      detail.replace("approval-requests", "requirement-approvals") +
+        "/comparison",
+      detail.replace("approval-requests", "requirement-approvals") +
+        "/decision",
     ])
       await assert.rejects(apiClient(path, {}));
     assert.deepEqual(redirects, []);

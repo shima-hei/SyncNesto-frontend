@@ -63,6 +63,19 @@ test("通常業務画面のpath・query・fragmentを保持し、認証ループ
     assert.equal(paths.loginReturnPath(invalid), undefined, invalid);
 });
 
+test("顧客のレビューと正式承認は認証の戻り先に依頼URLを保持する", () => {
+  const publication =
+    "/shared/publications/11111111-1111-1111-1111-111111111111";
+  const request = "22222222-2222-2222-2222-222222222222";
+  for (const kind of ["requirement-reviews", "requirement-approvals"]) {
+    const href = `${publication}/${kind}/${request}`;
+    assert.equal(paths.loginReturnPath(href), href);
+    assert.equal(paths.isSharedApprovalPath(href), true);
+    assert.equal(paths.loginReturnPath(href + "/decision"), undefined);
+    assert.equal(paths.loginReturnPath(href + "?next=//evil.test"), undefined);
+  }
+});
+
 test("proxyは受信した戻り先headerを信用せず実リクエストのqueryまで設定する", () => {
   const { proxy } = load("../proxy.ts", {
     "@/lib/auth/return-path": paths,

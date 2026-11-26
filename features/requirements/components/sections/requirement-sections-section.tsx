@@ -1,5 +1,7 @@
 "use client";
 
+import { UNCLASSIFIED_SECTION_ID } from "../../constants/requirement-view-options";
+
 import { useId, useState } from "react";
 import { PlusIcon } from "lucide-react";
 
@@ -13,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { RequirementSectionRead } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
 
 import { useCreateRequirementSection } from "../../hooks/use-create-requirement-section";
@@ -29,6 +30,8 @@ type RequirementSectionsSectionProps = {
   canUpdate: boolean;
   selectedSectionId?: number | null;
   onSelectSection?: (sectionId: number | null) => void;
+  includeUnclassified?: boolean;
+  itemCounts?: import("@/lib/api/generated/model").RequirementItemCounts;
   layout?: "list" | "compact" | "navigation";
 };
 
@@ -38,11 +41,14 @@ export function RequirementSectionsSection({
   canUpdate,
   selectedSectionId,
   onSelectSection,
+  includeUnclassified = false,
+  itemCounts,
   layout = "list",
 }: RequirementSectionsSectionProps) {
   const sectionSelectId = useId();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const navigationId = useId();
   const { sections, isLoading } = useRequirementSections(projectId, documentId);
   const {
@@ -50,39 +56,16 @@ export function RequirementSectionsSection({
     isPending: isCreatePending,
     error: createError,
   } = useCreateRequirementSection(projectId, documentId);
-  const { updateRequirementSectionSortOrder, isPending: isSortPending } =
+  const { moveRequirementSection, isPending: isSortPending } =
     useUpdateRequirementSectionSortOrder(projectId, documentId);
   const sortedSections = sections
     .slice()
     .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0));
+  const countsBySection = new Map(
+    itemCounts?.sections.map((item) => [item.section_id, item.count]),
+  );
   const nextSortOrder =
     Math.max(0, ...sections.map((section) => section.sort_order ?? 0)) + 10;
-
-  const moveSection = async (
-    section: RequirementSectionRead,
-    direction: "up" | "down",
-  ) => {
-    const currentIndex = sortedSections.findIndex(
-      (item) => item.id === section.id,
-    );
-    const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-
-    if (
-      currentIndex < 0 ||
-      nextIndex < 0 ||
-      nextIndex >= sortedSections.length
-    ) {
-      return;
-    }
-
-    const nextSections = sortedSections.slice();
-    const currentSection = nextSections[currentIndex];
-    const targetSection = nextSections[nextIndex];
-
-    nextSections[currentIndex] = targetSection;
-    nextSections[nextIndex] = currentSection;
-    await updateRequirementSectionSortOrder(nextSections);
-  };
 
   const sectionList = isLoading ? (
     <RequirementSectionSkeleton />
@@ -90,7 +73,8 @@ export function RequirementSectionsSection({
     <div
       className={cn(
         layout === "compact" && "grid gap-3 sm:grid-cols-2 lg:grid-cols-3",
-        layout !== "compact" && "flex flex-col gap-3",
+        layout === "list" && "flex flex-col gap-3",
+        layout === "navigation" && "flex flex-col gap-1",
       )}
     >
       {sortedSections.map((section, index) => {
@@ -101,14 +85,19 @@ export function RequirementSectionsSection({
             key={section.id}
             section={section}
             isSelected={isSelected}
-            canUpdate={canUpdate}
+            canUpdate={canUpdate && (layout !== "navigation" || reordering)}
             canMoveUp={index > 0}
             canMoveDown={index < sortedSections.length - 1}
             isSortPending={isSortPending}
             showSelectAction={Boolean(onSelectSection)}
             navigation={layout === "navigation"}
+            itemCount={
+              itemCounts ? (countsBySection.get(section.id) ?? 0) : undefined
+            }
             onSelect={onSelectSection ?? undefined}
-            onMove={moveSection}
+            onMove={(item, direction) =>
+              moveRequirementSection(sortedSections, item.id, direction)
+            }
           />
         );
       })}
@@ -153,7 +142,7 @@ export function RequirementSectionsSection({
             章・セクション
           </label>
           <Select
-            value={selectedSectionId ? String(selectedSectionId) : "all"}
+            value={selectedSectionId?.toString() ?? "all"}
             disabled={isLoading}
             onValueChange={(value) =>
               onSelectSection(value === "all" ? null : Number(value))
@@ -164,12 +153,22 @@ export function RequirementSectionsSection({
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="all">すべての要件</SelectItem>
+                <SelectItem value="all">
+                  すべての要件{itemCounts ? ` (${itemCounts.total})` : ""}
+                </SelectItem>
                 {sortedSections.map((section) => (
                   <SelectItem key={section.id} value={String(section.id)}>
                     {section.title}
+                    {itemCounts
+                      ? ` (${countsBySection.get(section.id) ?? 0})`
+                      : ""}
                   </SelectItem>
                 ))}
+                {includeUnclassified ? (
+                  <SelectItem value={String(UNCLASSIFIED_SECTION_ID)}>
+                    未分類{itemCounts ? ` (${itemCounts.unclassified})` : ""}
+                  </SelectItem>
+                ) : null}
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -196,15 +195,53 @@ export function RequirementSectionsSection({
             type="button"
             variant={selectedSectionId === null ? "secondary" : "ghost"}
             aria-current={selectedSectionId === null ? "location" : undefined}
-            className="justify-start"
+            className="justify-between"
             onClick={() => onSelectSection(null)}
           >
             すべての要件
+            {itemCounts ? (
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {itemCounts.total}
+              </span>
+            ) : null}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            章に属さない要件も含みます。
-          </p>
           {sectionList}
+          {includeUnclassified ? (
+            <Button
+              type="button"
+              variant={
+                selectedSectionId === UNCLASSIFIED_SECTION_ID
+                  ? "secondary"
+                  : "ghost"
+              }
+              aria-current={
+                selectedSectionId === UNCLASSIFIED_SECTION_ID
+                  ? "location"
+                  : undefined
+              }
+              className="justify-between"
+              onClick={() => onSelectSection(UNCLASSIFIED_SECTION_ID)}
+            >
+              未分類
+              {itemCounts ? (
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {itemCounts.unclassified}
+                </span>
+              ) : null}
+            </Button>
+          ) : null}
+          {canUpdate && sortedSections.length > 1 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-pressed={reordering}
+              onClick={() => setReordering(!reordering)}
+              className="justify-start"
+            >
+              {reordering ? "並べ替えを終了" : "章を並べ替える"}
+            </Button>
+          ) : null}
         </nav>
         {createDialog}
       </section>

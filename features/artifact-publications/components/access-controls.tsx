@@ -361,7 +361,7 @@ export function PublicationAccessPanel({
                 <>
                   {!recipients.data.items.length ? (
                     <p className="text-sm text-muted-foreground">
-                      有効な外部参加資格がありません。招待・参加登録の画面は後続工程です。
+                      公開先を選ぶには、案件のメンバー画面で外部の関係者を招待し、本人の参加が完了する必要があります。
                     </p>
                   ) : (
                     <Table>

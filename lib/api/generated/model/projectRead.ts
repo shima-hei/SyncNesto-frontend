@@ -19,6 +19,7 @@ export interface ProjectRead {
   id: number;
   version: number;
   navigation?: ProjectNavigation | null;
+  requirement_review_required?: boolean;
   created_by?: number | null;
   updated_by?: number | null;
   created_at: string;

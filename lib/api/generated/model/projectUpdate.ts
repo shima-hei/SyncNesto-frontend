@@ -12,6 +12,7 @@ import type { ProjectNavigation } from "./projectNavigation";
 export interface ProjectUpdate {
   version: number;
   navigation?: ProjectNavigation | null;
+  requirement_review_required?: boolean | null;
   project_code?: string | null;
   name?: string | null;
   description?: string | null;

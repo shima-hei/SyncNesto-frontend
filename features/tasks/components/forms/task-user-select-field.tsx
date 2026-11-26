@@ -119,7 +119,7 @@ const getFallbackSelectedUser = (value: string): SelectableUser | null => {
 
   return {
     id: userId,
-    name: `ユーザーID: ${userId}`,
+    name: "ユーザー情報なし",
     email: "ユーザー情報未取得",
     user_type: "internal",
     is_active: true,

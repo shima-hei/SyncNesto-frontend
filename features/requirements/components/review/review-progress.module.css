@@ -1,0 +1,23 @@
+.progress {
+  appearance: none;
+  inline-size: 100%;
+  block-size: 0.5rem;
+  overflow: clip;
+  border: 0 solid;
+  border-radius: 9999px;
+  background: var(--border);
+}
+
+.progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+.progress::-webkit-progress-value {
+  border-radius: 9999px;
+  background: var(--status-progress-chart);
+}
+
+.progress::-moz-progress-bar {
+  border-radius: 9999px;
+  background: var(--status-progress-chart);
+}

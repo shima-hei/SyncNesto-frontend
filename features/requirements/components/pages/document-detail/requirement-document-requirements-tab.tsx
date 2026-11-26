@@ -6,10 +6,12 @@ import { FormApiError } from "@/components/shared/forms/form-api-error";
 
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RequirementRead } from "@/lib/api/generated/model";
+import { readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet as readItemCounts } from "@/lib/api/generated/requirements/requirements";
 
 import {
   getRequirementPriorityLabel,
@@ -99,6 +101,11 @@ export function RequirementDocumentRequirementsTab({
     );
   const [activeAnchorKey, setActiveAnchorKey] = useState<string | null>(null);
   const { sections } = useRequirementSections(projectId, documentId);
+  const { data: itemCounts } = useQuery({
+    queryKey: ["requirement-item-counts", projectId, documentId],
+    queryFn: ({ signal }) => readItemCounts(projectId, documentId, { signal }),
+    retry: false,
+  });
   const selectedSection = sections.find(
     (section) => section.id === selectedSectionId,
   );
@@ -236,6 +243,14 @@ export function RequirementDocumentRequirementsTab({
     setSelectedRequirementId(requirement.id);
     openPanel();
   };
+  const rememberListPosition = () => {
+    if (workbenchScope)
+      captureWorkbenchReturnPoint(
+        workbenchRef.current,
+        workbenchScope.identity,
+        workbenchScope.scope,
+      );
+  };
 
   const handleSelectRequirementAnchor = (
     requirement: RequirementRead,
@@ -342,6 +357,8 @@ export function RequirementDocumentRequirementsTab({
             canUpdate={canUpdate}
             selectedSectionId={selectedSectionId}
             onSelectSection={handleSelectSection}
+            itemCounts={itemCounts}
+            includeUnclassified
             layout="navigation"
           />
         </aside>
@@ -373,42 +390,6 @@ export function RequirementDocumentRequirementsTab({
             )}
           >
             <div className="flex min-w-0 flex-col gap-4">
-              <SelectedRequirementSectionContent
-                document={requirementDocument}
-                objectiveReferencesEnabled={objectiveReferencesEnabled}
-                onOpenDocumentInfo={
-                  onOpenDocumentInfo
-                    ? () => {
-                        if (workbenchScope)
-                          captureWorkbenchReturnPoint(
-                            workbenchRef.current,
-                            workbenchScope.identity,
-                            workbenchScope.scope,
-                          );
-                        onOpenDocumentInfo();
-                      }
-                    : undefined
-                }
-                key={`section-${selectedSectionId ?? "all"}`}
-                projectId={projectId}
-                documentId={documentId}
-                sectionId={selectedSectionId}
-                canUpdate={canUpdate}
-                targetAnchors={sectionTargetAnchors}
-                activeAnchorKey={activeAnchorKey}
-                onSelectTargetAnchor={(targetAnchor) => {
-                  setCommentTargetMode("section");
-                  setSelectedTargetAnchor(targetAnchor);
-                  openPanel();
-                }}
-                onActivateSectionComments={handleActivateSectionComments}
-                onDeleted={() => {
-                  onSelectSection(null);
-                  setSelectedRequirementId(null);
-                  setCommentTargetMode("section");
-                  setSelectedTargetAnchor(null);
-                }}
-              />
               <RequirementsListSection
                 key={`requirements-${selectedSectionId ?? "all"}`}
                 projectId={projectId}
@@ -421,7 +402,56 @@ export function RequirementDocumentRequirementsTab({
                 activeAnchorKey={activeAnchorKey}
                 onSelectRequirement={handleSelectRequirement}
                 onSelectReviewAnchor={handleSelectRequirementAnchor}
+                onNavigateRequirement={rememberListPosition}
               />
+              {selectedSectionId ? (
+                <details
+                  key={selectedSectionId}
+                  className="min-w-0 border-t pt-3"
+                >
+                  <summary className="cursor-pointer rounded-sm text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
+                    選択中の章の本文
+                  </summary>
+                  <div className="pt-3">
+                    <SelectedRequirementSectionContent
+                      document={requirementDocument}
+                      objectiveReferencesEnabled={objectiveReferencesEnabled}
+                      onOpenDocumentInfo={
+                        onOpenDocumentInfo
+                          ? () => {
+                              if (workbenchScope)
+                                captureWorkbenchReturnPoint(
+                                  workbenchRef.current,
+                                  workbenchScope.identity,
+                                  workbenchScope.scope,
+                                );
+                              onOpenDocumentInfo();
+                            }
+                          : undefined
+                      }
+                      key={`section-${selectedSectionId ?? "all"}`}
+                      projectId={projectId}
+                      documentId={documentId}
+                      sectionId={selectedSectionId}
+                      canUpdate={canUpdate}
+                      targetAnchors={sectionTargetAnchors}
+                      activeAnchorKey={activeAnchorKey}
+                      onSelectTargetAnchor={(targetAnchor) => {
+                        setCommentTargetMode("section");
+                        setSelectedTargetAnchor(targetAnchor);
+                        openPanel();
+                      }}
+                      onActivateSectionComments={handleActivateSectionComments}
+                      onDeleted={() => {
+                        onSelectSection(null);
+                        setSelectedRequirementId(null);
+                        setCommentTargetMode("section");
+                        setSelectedTargetAnchor(null);
+                      }}
+                    />
+                  </div>
+                </details>
+              ) : null}
             </div>
 
             <aside

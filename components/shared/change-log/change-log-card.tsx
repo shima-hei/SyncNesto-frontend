@@ -1,10 +1,12 @@
 import type { ChangeLogDiffRow } from "@/lib/change-log/diff";
+import { ActivityTimelineItem } from "@/components/shared/detail/activity-timeline-item";
 
 export type ChangeLogValueDisplayMode = "created" | "updated" | "deleted";
 
 type ChangeLogCardProps = {
   actionLabel: string;
   actorLabel: string;
+  actorAvatarUrl?: string | null;
   changedAtLabel: string;
   formatValue: (value: unknown, fieldName?: string | null) => string;
   diffRows: ChangeLogDiffRow[];
@@ -25,6 +27,7 @@ type ChangeLogCardProps = {
 export function ChangeLogCard({
   actionLabel,
   actorLabel,
+  actorAvatarUrl,
   changedAtLabel,
   formatValue,
   diffRows,
@@ -67,44 +70,42 @@ export function ChangeLogCard({
   );
   if (compact) {
     return (
-      <li className="relative border-s py-2 ps-4 before:absolute before:start-[-0.2rem] before:top-4 before:size-1.5 before:rounded-full before:bg-muted-foreground">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
-          <time
-            className="text-xs tabular-nums text-muted-foreground"
-            dateTime={changedAt}
-          >
-            {changedAtLabel}
-          </time>
-          <span className="text-xs text-muted-foreground">{actorLabel}</span>
-          <span className="font-medium">{actionLabel}</span>
-          {fieldLabel && (
-            <span className="text-xs text-muted-foreground">{fieldLabel}</span>
-          )}
-        </div>
-        {updatedFieldLabels.length > 0 && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {updatedFieldLabels.join("、")}
-          </p>
-        )}
-        {(showRawValues ||
-          diffRows.length > 0 ||
-          missingFieldLabels.length > 0 ||
-          reason) && (
-          <details className="mt-1 text-xs">
-            <summary className="w-fit cursor-pointer text-muted-foreground">
-              変更内容を表示
-            </summary>
-            <div className="mt-2 space-y-2">
-              {reason && (
-                <p className="whitespace-pre-wrap text-muted-foreground">
-                  {reason}
-                </p>
-              )}
-              {values}
-            </div>
-          </details>
-        )}
-      </li>
+      <ActivityTimelineItem
+        occurredAt={changedAt}
+        timeLabel={changedAtLabel}
+        actorLabel={actorLabel}
+        actorAvatarUrl={actorAvatarUrl}
+        actionLabel={actionLabel}
+        description={
+          <>
+            {fieldLabel ? (
+              <span className="text-xs text-muted-foreground">
+                {fieldLabel}
+              </span>
+            ) : null}
+            {updatedFieldLabels.length ? (
+              <span className="w-full text-xs text-muted-foreground">
+                {updatedFieldLabels.join("、")}
+              </span>
+            ) : null}
+          </>
+        }
+        detailLabel="変更内容を表示"
+      >
+        {showRawValues ||
+        diffRows.length ||
+        missingFieldLabels.length ||
+        reason ? (
+          <>
+            {reason ? (
+              <p className="whitespace-pre-wrap text-muted-foreground">
+                {reason}
+              </p>
+            ) : null}
+            {values}
+          </>
+        ) : null}
+      </ActivityTimelineItem>
     );
   }
 

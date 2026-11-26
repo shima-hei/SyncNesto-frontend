@@ -18,6 +18,7 @@ export interface RequirementOpenIssueRead {
   due_date?: string | null;
   status?: string;
   resolution?: string | null;
+  blocks_approval?: boolean;
   id: number;
   document_id: number;
   version: number;

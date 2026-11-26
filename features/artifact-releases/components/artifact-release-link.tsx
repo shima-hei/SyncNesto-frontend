@@ -13,11 +13,13 @@ export function ArtifactReleaseLink({
   kind,
   sourceId,
   version,
+  label = "バージョン履歴・添付資料",
 }: {
   projectId: number;
   kind: ArtifactKind;
   sourceId: number;
   version: number;
+  label?: string;
 }) {
   const { user } = useAuth();
   const { currentProjectRole } = useCurrentProjectRole(projectId);
@@ -41,7 +43,7 @@ export function ArtifactReleaseLink({
         )}
       >
         <ArchiveIcon data-icon="inline-start" />
-        固定版と添付
+        {label}
       </Link>
     </Button>
   );

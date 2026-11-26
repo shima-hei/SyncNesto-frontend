@@ -101,7 +101,7 @@ export const formatTaskChangeLogTargetType = (targetType?: string | null) => {
 export const formatTaskChangeLogActor = (changeLog: TaskChangeLogRead) => {
   return (
     changeLog.created_by_user?.name ??
-    (changeLog.created_by ? `ユーザーID: ${changeLog.created_by}` : "-")
+    (changeLog.created_by ? "操作者不明" : "システム")
   );
 };
 
