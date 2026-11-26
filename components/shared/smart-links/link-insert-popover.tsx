@@ -389,10 +389,10 @@ export function LinkInsertPopover({
                   type="button"
                   size="xs"
                   variant="ghost"
-                  onClick={() => apply(selection.label || selection.href || "")}
+                  onClick={() => apply(selection.label)}
                 >
                   <UnlinkIcon aria-hidden="true" />
-                  リンクを解除
+                  {selection.label ? "リンクを解除" : "リンクを削除"}
                 </Button>
               ) : null}
             </div>

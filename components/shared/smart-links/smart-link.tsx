@@ -97,6 +97,7 @@ export function SmartLink({
   const wrapper = useRef<HTMLSpanElement>(null);
   const card = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLAnchorElement>(null);
+  const focusSummary = useRef(false);
   const cardId = useId();
   const resolved = useSmartLink(parsed, !showUrl || open);
   const details = useSmartLink(parsed, open, true);
@@ -124,6 +125,15 @@ export function SmartLink({
   const retainFocus = (related: EventTarget | null) =>
     related instanceof Node &&
     (wrapper.current?.contains(related) || card.current?.contains(related));
+  const openSummary = () => {
+    clear();
+    if (open) {
+      card.current?.querySelector("button")?.focus();
+    } else {
+      focusSummary.current = true;
+      setOpen(true);
+    }
+  };
   useEffect(
     () => () => {
       if (timer.current !== null) clearTimeout(timer.current);
@@ -142,6 +152,15 @@ export function SmartLink({
       aria-details={parsed && open ? cardId : undefined}
       className={linkStyle}
       onFocus={parsed ? () => schedule(true) : undefined}
+      onKeyDown={
+        parsed
+          ? (event) => {
+              if (event.key !== "ArrowDown") return;
+              event.preventDefault();
+              openSummary();
+            }
+          : undefined
+      }
       onClick={() => setOpen(false)}
     >
       {kind && !showUrl ? (
@@ -181,9 +200,13 @@ export function SmartLink({
             aria-label="リンクの概要"
             aria-controls={cardId}
             aria-expanded={open}
-            onClick={() => {
-              clear();
-              setOpen((value) => !value);
+            onClick={(event) => {
+              if (event.detail === 0) {
+                openSummary();
+              } else {
+                clear();
+                setOpen((value) => !value);
+              }
             }}
             className="ms-0.5 inline-flex size-5 items-center justify-center rounded-sm align-middle text-muted-foreground opacity-0 hover:bg-muted focus-visible:opacity-100 focus-visible:outline-ring group-hover/smart:opacity-100 [@media(hover:none)]:size-7 [@media(hover:none)]:opacity-100"
           >
@@ -205,7 +228,12 @@ export function SmartLink({
         onBlur={(event) => {
           if (!retainFocus(event.relatedTarget)) schedule(false);
         }}
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          if (focusSummary.current)
+            card.current?.querySelector("button")?.focus();
+          focusSummary.current = false;
+        }}
         onCloseAutoFocus={(event) => event.preventDefault()}
         onEscapeKeyDown={() => {
           clear();
