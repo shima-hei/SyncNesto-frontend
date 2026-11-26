@@ -1,11 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { AtSignIcon, Link2Icon, PaperclipIcon, XIcon } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { AtSignIcon, PaperclipIcon, XIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { ClipboardEvent, DragEvent, ReactNode } from "react";
 
-import { Input } from "@/components/ui/input";
+import {
+  LinkInsertPopover,
+  type LinkEditorChange,
+} from "@/components/shared/smart-links/link-insert-popover";
+import { DraftLinkPreview } from "@/components/shared/smart-links/draft-link-preview";
 import type { CommentImageRead } from "@/lib/api/generated/model";
 import {
   completeCommentImageProjectsProjectIdCommentImagesKindUploadCompletePost as complete,
@@ -14,7 +18,6 @@ import {
   uploadCommentImageProjectsProjectIdCommentImagesKindUploadPost as upload,
 } from "@/lib/api/generated/comment-images/comment-images";
 import { fileUploadMetadata, uploadWithPlan } from "@/lib/api/file-upload";
-import { safeCommentLink } from "@/lib/comments/links";
 import { CommentIconButton } from "./comment-thread-actions";
 
 type ImageKind = "task" | "requirement" | "specification" | "test_design";
@@ -161,35 +164,23 @@ export function useCommentComposeMedia(projectId: number, kind?: ImageKind) {
 
 export function CommentComposeTools({
   media,
-  onInsertLink,
+  body,
+  editor,
+  onLinkChange,
   onMention,
   children,
 }: {
   media: ReturnType<typeof useCommentComposeMedia>;
-  onInsertLink: (url: string) => boolean | void;
+  body: string;
+  editor: () => HTMLTextAreaElement | null;
+  onLinkChange: (change: LinkEditorChange) => boolean | void;
   onMention?: () => void;
   children: ReactNode;
 }) {
   const files = useRef<HTMLInputElement>(null);
-  const linkId = useId();
-  const [linkOpen, setLinkOpen] = useState(false);
-  const [url, setUrl] = useState("");
-  const [linkError, setLinkError] = useState<string | null>(null);
-  const insert = () => {
-    const href = safeCommentLink(url.trim());
-    if (!href) {
-      setLinkError("http:// または https:// で始まるURLを入力してください。");
-    } else if (onInsertLink(href) === false) {
-      setLinkError("本文の文字数制限を超えています。");
-    } else {
-      setLinkOpen(false);
-      setUrl("");
-      setLinkError(null);
-    }
-  };
-
   return (
     <div className="space-y-2">
+      <DraftLinkPreview value={body} />
       {media.images.length ? (
         <ul
           role="list"
@@ -218,45 +209,6 @@ export function CommentComposeTools({
             </li>
           ))}
         </ul>
-      ) : null}
-      {linkOpen ? (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <label htmlFor={linkId} className="sr-only">
-              リンクURL
-            </label>
-            <Input
-              id={linkId}
-              type="text"
-              inputMode="url"
-              placeholder="https://…"
-              value={url}
-              onChange={(event) => {
-                setUrl(event.target.value);
-                setLinkError(null);
-              }}
-              aria-invalid={Boolean(linkError)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-                  event.preventDefault();
-                  insert();
-                }
-              }}
-            />
-            <CommentIconButton
-              label="リンクを本文に追加"
-              onClick={insert}
-              disabled={media.sending}
-            >
-              <Link2Icon aria-hidden="true" />
-            </CommentIconButton>
-          </div>
-          {linkError ? (
-            <p role="alert" className="text-xs text-destructive">
-              {linkError}
-            </p>
-          ) : null}
-        </div>
       ) : null}
       {media.error ? (
         <p role="alert" className="text-xs text-destructive">
@@ -297,15 +249,12 @@ export function CommentComposeTools({
               </CommentIconButton>
             </>
           ) : null}
-          <CommentIconButton
-            label="リンクを挿入"
-            aria-expanded={linkOpen}
-            aria-controls={linkOpen ? linkId : undefined}
-            onClick={() => setLinkOpen(!linkOpen)}
+          <LinkInsertPopover
+            iconOnly
+            editor={editor}
+            onChange={onLinkChange}
             disabled={media.sending}
-          >
-            <Link2Icon aria-hidden="true" />
-          </CommentIconButton>
+          />
         </div>
         {children}
       </div>

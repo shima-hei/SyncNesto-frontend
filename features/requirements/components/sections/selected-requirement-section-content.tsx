@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+import { selectedTextForLinkSource } from "@/lib/smart-links/quote";
 
 import { useDeleteRequirementSection } from "../../hooks/use-delete-requirement-section";
 import {
@@ -319,7 +320,9 @@ function ReviewableSectionContent({
       return;
     }
     const selection = window.getSelection();
-    const quote = selection?.toString().trim();
+    const quote =
+      selectedTextForLinkSource(event.currentTarget, content, selection) ??
+      selection?.toString().trim();
 
     if (
       !quote ||

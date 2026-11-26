@@ -44,7 +44,7 @@ function ExecutionSource({ value }: { value: unknown }) {
         return value ? (
           <div key={key}>
             <p className="text-sm text-muted-foreground">{label}</p>
-            <MarkdownPreview value={value} />
+            <MarkdownPreview liveLinks={false} value={value} />
           </div>
         ) : null;
       })}

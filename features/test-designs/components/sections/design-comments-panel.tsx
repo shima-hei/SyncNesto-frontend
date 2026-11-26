@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -10,7 +10,7 @@ import {
 } from "@/components/shared/comments/comment-compose-media";
 import { CommentContent } from "@/components/shared/comments/comment-content";
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
-import type { Mention } from "@/lib/comments/mentions";
+import { reconcileMentions, type Mention } from "@/lib/comments/mentions";
 import {
   CommentMessageMenu,
   CommentThreadActions,
@@ -96,6 +96,7 @@ function CommentComposer({
   ) => Promise<boolean>;
   onClose?: () => void;
 }) {
+  const bodyId = useId();
   const [body, setBody] = useState(initial);
   const [mentions, setMentions] = useState(initialMentions);
   const media = useCommentComposeMedia(
@@ -119,6 +120,7 @@ function CommentComposer({
       <CommentComposerLayout>
         <div className="flex flex-col gap-2">
           <MentionTextarea
+            id={bodyId}
             projectId={projectId}
             permission="test_plan:read"
             aria-label={label}
@@ -136,10 +138,15 @@ function CommentComposer({
           />
           <CommentComposeTools
             media={media}
-            onInsertLink={(url) => {
-              const text = body + (body.trim() ? "\n" : "") + url;
-              if (text.length > 20000) return false;
-              setBody(text);
+            body={body}
+            editor={() =>
+              document.getElementById(bodyId) as HTMLTextAreaElement | null
+            }
+            onLinkChange={({ value, start, end }) => {
+              setMentions((current) =>
+                reconcileMentions(body, value, current, { start, end }),
+              );
+              setBody(value);
             }}
           >
             <CommentSubmit

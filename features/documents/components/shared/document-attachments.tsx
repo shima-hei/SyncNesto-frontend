@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
@@ -46,6 +46,18 @@ export function DocumentAttachments({
     queryKey: key,
     queryFn: () => listAttachments(projectId, documentId),
   });
+  const loaded = Boolean(query.data);
+  useEffect(() => {
+    if (!loaded) return;
+    const reveal = () => {
+      const id = window.location.hash.slice(1);
+      if (id.startsWith("attachment-"))
+        document.getElementById(id)?.scrollIntoView({ block: "nearest" });
+    };
+    reveal();
+    window.addEventListener("hashchange", reveal);
+    return () => window.removeEventListener("hashchange", reveal);
+  }, [loaded]);
   const upload = useMutation({
     mutationFn: async (original: File) => {
       const kind =
@@ -138,7 +150,8 @@ export function DocumentAttachments({
           {query.data.map((attachment) => (
             <li
               key={attachment.id}
-              className="flex min-w-0 flex-wrap items-center justify-between gap-3 py-3"
+              id={`attachment-${attachment.id}`}
+              className="flex min-w-0 flex-wrap items-center justify-between gap-3 py-3 scroll-mt-24 target:bg-muted/45"
             >
               <div className="min-w-0 flex-1">
                 <p className="font-medium break-all">{attachment.filename}</p>

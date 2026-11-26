@@ -143,6 +143,7 @@ export function ReviewContent({
             <h3 className="font-semibold">{label}</h3>
             <div data-review-field={field}>
               <MarkdownPreview
+                liveLinks={false}
                 className="min-h-0 border-0 bg-transparent px-0 py-2 [overflow-wrap:anywhere]"
                 value={source}
                 highlightQuotes={highlights.get(field)}

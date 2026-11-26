@@ -1,4 +1,6 @@
 "use client";
+import { LinkedText } from "@/components/shared/smart-links/linked-text";
+import { LinkTextarea } from "@/components/shared/smart-links/link-textarea";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { VerificationReturn } from "@/features/requirement-verifications/components/verification-return";
 import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
@@ -407,16 +409,25 @@ function Editor({ initial }: { initial: Design }) {
           </Field>
           <Field>
             <FieldLabel htmlFor="design-description">説明</FieldLabel>
-            <Input
-              id="design-description"
-              value={design.description ?? ""}
-              disabled={readOnly}
-              onChange={(e) =>
-                change((d) => {
-                  d.description = e.target.value;
-                })
-              }
-            />
+            {readOnly ? (
+              <p
+                id="design-description"
+                className="whitespace-pre-wrap text-sm [overflow-wrap:anywhere]"
+              >
+                <LinkedText text={design.description || "未入力"} />
+              </p>
+            ) : (
+              <LinkTextarea
+                id="design-description"
+                value={design.description ?? ""}
+                rows={2}
+                onValueChange={(value) =>
+                  change((d) => {
+                    d.description = value;
+                  })
+                }
+              />
+            )}
           </Field>
         </FieldGroup>
       </details>

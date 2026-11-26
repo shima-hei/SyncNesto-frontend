@@ -1,4 +1,5 @@
 import type { SearchItem } from "@/lib/api/generated/model/searchItem";
+import { smartLinkPath } from "@/lib/smart-links/reference";
 
 export const searchCategories = [
   { value: "requirement", label: "要件" },
@@ -58,26 +59,7 @@ export function searchHref(state: SearchState): string {
 }
 
 export function searchResultHref(item: SearchItem): string {
-  const base = `/projects/joined/${item.project_id}`;
-  const id = encodeURIComponent(item.id);
-  switch (item.kind) {
-    case "requirement_document":
-      return `${base}/requirements/${id}`;
-    case "requirement":
-      return `${base}/requirements/${item.container_id}/items/${id}`;
-    case "task":
-      return `${base}/tasks/${id}`;
-    case "document":
-      return `${base}/documents/${id}`;
-    case "specification":
-      return `${base}/specifications/${id}`;
-    case "test_design":
-      return `${base}/test-designs/${id}`;
-    case "test_item":
-      return `${base}/test-designs/${item.container_id}?item=${id}`;
-    case "test_case":
-      return `${base}/test-cases?design=${item.container_id}&case=${id}`;
-  }
+  return smartLinkPath(item);
 }
 
 export function matchingParts(text: string, q: string) {

@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ts from "typescript";
+import { smartLinkPath } from "../lib/smart-links/reference.ts";
 
 const source = ts.transpileModule(
   fs.readFileSync(
@@ -16,7 +17,14 @@ const source = ts.transpileModule(
   },
 ).outputText;
 const loaded = { exports: {} };
-new Function("module", "exports", source)(loaded, loaded.exports);
+new Function("module", "exports", "require", source)(
+  loaded,
+  loaded.exports,
+  (path) => {
+    assert.equal(path, "@/lib/smart-links/reference");
+    return { smartLinkPath };
+  },
+);
 const { readSearchState, searchHref, searchResultHref, matchingParts } =
   loaded.exports;
 

@@ -354,6 +354,7 @@ export function VerificationEditor({
             <section>
               <h2 className="mb-2 text-sm font-medium">期待する振る舞い</h2>
               <MarkdownPreview
+                liveLinks={false}
                 value={fixedDescription}
                 emptyMessage="本文は未登録です"
                 className="min-h-0 break-words"
@@ -362,6 +363,7 @@ export function VerificationEditor({
             <section>
               <h2 className="mb-2 text-sm font-medium">受け入れ条件</h2>
               <MarkdownPreview
+                liveLinks={false}
                 value={fixedAcceptance}
                 emptyMessage="受け入れ条件は未登録です"
                 className="min-h-0 break-words"
@@ -381,6 +383,7 @@ export function VerificationEditor({
                     <section key={key}>
                       <h3 className="text-sm font-medium">{label}</h3>
                       <MarkdownPreview
+                        liveLinks={false}
                         value={text(payload[key])}
                         className="min-h-0 break-words"
                       />

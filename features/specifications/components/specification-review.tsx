@@ -157,11 +157,13 @@ export function SpecificationReview({
               <FormApiError error={post.error} />
               <CommentComposeTools
                 media={media}
-                onInsertLink={(url) => {
-                  const text = body + (body.trim() ? "\n" : "") + url;
-                  if (text.length > 5000) return false;
-                  setBody(text);
-                }}
+                body={body}
+                editor={() =>
+                  document.getElementById(
+                    "specification-comment-body",
+                  ) as HTMLTextAreaElement | null
+                }
+                onLinkChange={({ value }) => setBody(value)}
               >
                 <CommentSubmit
                   body={body}
