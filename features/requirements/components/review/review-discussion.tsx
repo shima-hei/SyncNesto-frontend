@@ -24,6 +24,7 @@ import {
   listWorkflowReviewThreadsProjectsProjectIdRequirementWorkflowRequestIdReviewThreadsGet as listThreads,
   readWorkflowReviewThreadProjectsProjectIdRequirementWorkflowRequestIdReviewThreadsThreadIdGet as readThread,
 } from "@/lib/api/generated/requirement-workflow/requirement-workflow";
+import { CommentContent } from "@/components/shared/comments/comment-content";
 import { CommentMessage } from "@/components/shared/comments/comment-message";
 import { UserDisplay } from "@/components/shared/display/user-avatar";
 
@@ -307,7 +308,7 @@ export function ReviewDiscussion({
                   </button>
                 ) : null}
                 <p className="whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">
-                  {thread.body}
+                  <CommentContent body={thread.body} />
                 </p>
                 {thread.assignee_id ? (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -472,7 +473,7 @@ function ReviewThreadDetails({
                     </p>
                     {event.body ? (
                       <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
-                        {event.body}
+                        <CommentContent body={event.body} />
                       </p>
                     ) : null}
                   </CommentMessage>

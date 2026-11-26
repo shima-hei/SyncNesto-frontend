@@ -1,6 +1,12 @@
 "use client";
 
-import { type ReactNode, useId, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import {
   ChevronDownIcon,
@@ -24,6 +30,12 @@ import type { RequirementDocumentRead } from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import { CommentIconButton } from "@/components/shared/comments/comment-thread-actions";
+import {
+  CommentPaneResizeHandle,
+  useCommentPaneWidth,
+} from "@/components/shared/comments/comment-pane-resize";
 
 import {
   getRequirementPriorityLabel,
@@ -72,6 +84,8 @@ export function RequirementDocumentOverview({
   const commentPanelRef = useRef<HTMLElement>(null);
   const chapterTitleRef = useRef<HTMLInputElement>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const { user } = useAuth();
+  const paneWidth = useCommentPaneWidth(user?.id);
   const isMobile = useIsMobile();
   const [outlinePreference, setOutlinePreference] = useState<boolean | null>(
     null,
@@ -314,16 +328,19 @@ export function RequirementDocumentOverview({
       </div>
 
       <div
+        style={
+          { "--comment-pane-width": `${paneWidth.width}px` } as CSSProperties
+        }
         className={cn(
           "grid min-w-0 gap-5 @min-[48rem]/document-overview:items-start",
           outlineOpen &&
             "@min-[48rem]/document-overview:grid-cols-[13rem_minmax(0,1fr)]",
           commentsOpen &&
             !outlineOpen &&
-            "@min-[61rem]/document-overview:grid-cols-[minmax(0,1fr)_19rem]",
+            "@min-[61rem]/document-overview:grid-cols-[minmax(0,1fr)_var(--comment-pane-width)]",
           commentsOpen &&
             outlineOpen &&
-            "@min-[76rem]/document-overview:grid-cols-[13rem_minmax(0,1fr)_19rem]",
+            "@min-[76rem]/document-overview:grid-cols-[13rem_minmax(0,1fr)_var(--comment-pane-width)]",
         )}
       >
         <nav
@@ -658,40 +675,57 @@ export function RequirementDocumentOverview({
           tabIndex={-1}
           hidden={!commentsOpen}
           className={cn(
-            "min-w-0",
+            "relative min-w-0 border-t border-border/60 pt-2",
             outlineOpen
-              ? "@min-[48rem]/document-overview:col-span-full @min-[76rem]/document-overview:sticky @min-[76rem]/document-overview:top-20 @min-[76rem]/document-overview:col-span-1"
-              : "@min-[61rem]/document-overview:sticky @min-[61rem]/document-overview:top-20",
+              ? "@min-[48rem]/document-overview:col-span-full @min-[76rem]/document-overview:sticky @min-[76rem]/document-overview:top-20 @min-[76rem]/document-overview:col-span-1 @min-[76rem]/document-overview:border-s @min-[76rem]/document-overview:border-t-0 @min-[76rem]/document-overview:pt-0"
+              : "@min-[61rem]/document-overview:sticky @min-[61rem]/document-overview:top-20 @min-[61rem]/document-overview:border-s @min-[61rem]/document-overview:border-t-0 @min-[61rem]/document-overview:pt-0",
           )}
         >
           {commentsOpen ? (
-            <RequirementTargetCommentsSection
-              projectId={projectId}
-              targetType="document"
-              targetId={documentId}
-              title="要件定義書コメント"
-              canComment={canComment}
-              selectedTargetAnchor={selectedTargetAnchor}
-              onTargetAnchorClick={handleTargetAnchorClick}
-              getTargetAnchorStatus={getTargetAnchorStatus}
-              showTargetAnchorInput={false}
-              headerAction={
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label="コメントを閉じる"
-                  onClick={() => {
-                    setCommentsOpen(false);
-                    commentToggleRef.current?.focus();
-                  }}
-                >
-                  <PanelRightCloseIcon aria-hidden="true" />
-                </Button>
-              }
-              className="@min-[76rem]/document-overview:max-h-[calc(100dvh-8rem)] @min-[76rem]/document-overview:overflow-hidden"
-              contentClassName="@min-[76rem]/document-overview:min-h-0 @min-[76rem]/document-overview:overflow-y-auto @min-[76rem]/document-overview:overscroll-contain"
-            />
+            <>
+              <CommentPaneResizeHandle
+                pane={commentsId}
+                {...paneWidth}
+                className={
+                  outlineOpen
+                    ? "hidden @min-[76rem]/document-overview:block"
+                    : "hidden @min-[61rem]/document-overview:block"
+                }
+              />
+              <RequirementTargetCommentsSection
+                projectId={projectId}
+                targetType="document"
+                targetId={documentId}
+                title="コメント"
+                canComment={canComment}
+                selectedTargetAnchor={selectedTargetAnchor}
+                onTargetAnchorClick={handleTargetAnchorClick}
+                getTargetAnchorStatus={getTargetAnchorStatus}
+                showTargetAnchorInput={false}
+                headerAction={
+                  <CommentIconButton
+                    label="コメントを閉じる"
+                    onClick={() => {
+                      setCommentsOpen(false);
+                      commentToggleRef.current?.focus();
+                    }}
+                  >
+                    <PanelRightCloseIcon aria-hidden="true" />
+                  </CommentIconButton>
+                }
+                className={
+                  outlineOpen
+                    ? "@min-[76rem]/document-overview:h-[calc(100dvh-8rem)]"
+                    : "@min-[61rem]/document-overview:h-[calc(100dvh-8rem)]"
+                }
+                contentClassName={cn(
+                  "max-h-[55dvh] overflow-y-auto overscroll-contain",
+                  outlineOpen
+                    ? "@min-[76rem]/document-overview:max-h-none"
+                    : "@min-[61rem]/document-overview:max-h-none",
+                )}
+              />
+            </>
           ) : null}
         </aside>
       </div>

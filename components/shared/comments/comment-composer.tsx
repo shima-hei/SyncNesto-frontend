@@ -1,10 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { SendIcon } from "lucide-react";
 import { UserAvatar } from "@/components/shared/display/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { CommentIconButton } from "./comment-thread-actions";
 
 export function CommentComposer({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -34,10 +36,22 @@ export function CommentSubmit({
           キャンセル
         </Button>
       ) : null}
-      <Button type="submit" size="sm" disabled={pending || !body.trim()}>
-        {pending ? <Spinner data-icon="inline-start" /> : null}
-        {children}
-      </Button>
+      {typeof children === "string" ? (
+        <CommentIconButton
+          label={children}
+          type="submit"
+          variant="secondary"
+          size="icon"
+          disabled={pending || !body.trim()}
+        >
+          {pending ? <Spinner /> : <SendIcon aria-hidden="true" />}
+        </CommentIconButton>
+      ) : (
+        <Button type="submit" size="sm" disabled={pending || !body.trim()}>
+          {pending ? <Spinner data-icon="inline-start" /> : null}
+          {children}
+        </Button>
+      )}
     </div>
   );
 }

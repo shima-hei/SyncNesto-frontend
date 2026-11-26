@@ -5,12 +5,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ChangeLogUserRead } from "./changeLogUserRead";
+import type { CommentImageRead } from "./commentImageRead";
 import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 
 /**
- * タスクコメント読み取り時に返すschema。
+ * Web表示用の添付メタデータを含む。
  */
 export interface TaskCommentRead {
+  images?: CommentImageRead[];
   /** @maxItems 100 */
   mentions?: CommentMentionOccurrence[];
   id: number;

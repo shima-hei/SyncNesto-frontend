@@ -7,9 +7,11 @@
 import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 
 /**
- * タスクコメント作成リクエストで受け取るschema。
+ * Webからコメントと画像を作成する。
  */
 export interface TaskCommentCreate {
+  /** @maxItems 4 */
+  image_ids?: string[];
   /** @maxItems 100 */
   mentions?: CommentMentionOccurrence[];
   parent_comment_id?: number | null;

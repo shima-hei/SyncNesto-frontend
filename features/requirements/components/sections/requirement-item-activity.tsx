@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { CommentContent } from "@/components/shared/comments/comment-content";
+import { CommentImageGallery } from "@/components/shared/comments/comment-image-gallery";
 import { ActivityTimelineItem } from "@/components/shared/detail/activity-timeline-item";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
@@ -227,6 +228,7 @@ export function RequirementItemActivity({
                         mentions={comment.mentions}
                       />
                     </p>
+                    <CommentImageGallery images={comment.images} />
                   </ActivityTimelineItem>
                 );
               }

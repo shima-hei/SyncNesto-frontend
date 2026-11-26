@@ -234,7 +234,11 @@ export function MentionTextarea({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap rounded-lg border-solid border-transparent text-foreground"
             >
-              <CommentContent body={value} mentions={mentions} />
+              <CommentContent
+                body={value}
+                mentions={mentions}
+                linkify={false}
+              />
               {"\n"}
             </div>
           )}

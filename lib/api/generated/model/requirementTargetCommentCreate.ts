@@ -11,6 +11,8 @@ import type { RequirementTargetCommentCreateTargetAnchor } from "./requirementTa
  * 要件定義対象コメント作成リクエストで受け取るschema。
  */
 export interface RequirementTargetCommentCreate {
+  /** @maxItems 4 */
+  image_ids?: string[];
   /** @maxItems 100 */
   mentions?: CommentMentionOccurrence[];
   target_type: string;

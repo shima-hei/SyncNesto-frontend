@@ -10,6 +10,7 @@ import {
   LockIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Button } from "@/components/ui/button";
@@ -347,7 +348,9 @@ export function RequirementFormalApprovalDialog({
                   </p>
                   <ul className="grid gap-1">
                     {result.recipients.map((person) => (
-                      <li key={person.id}>{person.name}</li>
+                      <li key={person.id}>
+                        <UserDisplay name={person.name} emptyLabel="承認者" />
+                      </li>
                     ))}
                   </ul>
                 </section>
@@ -483,7 +486,7 @@ export function RequirementFormalApprovalDialog({
                               );
                             }}
                           />
-                          {person.name}
+                          <UserDisplay name={person.name} emptyLabel="承認者" />
                         </label>
                       ))
                     ) : (
@@ -527,7 +530,7 @@ export function RequirementFormalApprovalDialog({
                               );
                             }}
                           />
-                          {person.name}
+                          <UserDisplay name={person.name} emptyLabel="承認者" />
                         </label>
                       ))
                     ) : (

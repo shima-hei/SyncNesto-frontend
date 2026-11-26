@@ -13,6 +13,8 @@ import {
   Undo2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { StatusIndicator } from "@/components/shared/display/status-badge";
+import { UserDisplay } from "@/components/shared/display/user-avatar";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Badge } from "@/components/ui/badge";
@@ -269,18 +271,28 @@ export function RequirementFormalApprovalWorkspace({
               key={person.user_id}
               className="flex min-w-0 flex-wrap justify-between gap-x-3 gap-y-1 py-2"
             >
-              <span className="[overflow-wrap:anywhere]">
-                {person.name ?? "承認者"}
-              </span>
-              <span className="text-muted-foreground">
-                {person.status === "approved"
-                  ? "承認済み"
-                  : person.status === "returned"
-                    ? "差し戻し"
-                    : "承認待ち"}
-                {person.responded_at
-                  ? ` ・ ${formatDateTime(person.responded_at)}`
-                  : ""}
+              <UserDisplay name={person.name} emptyLabel="承認者" />
+              <span className="flex flex-wrap items-center gap-x-2 text-muted-foreground">
+                <StatusIndicator
+                  tone={
+                    person.status === "approved"
+                      ? "success"
+                      : person.status === "returned"
+                        ? "danger"
+                        : "info"
+                  }
+                >
+                  {person.status === "approved"
+                    ? "承認済み"
+                    : person.status === "returned"
+                      ? "差し戻し"
+                      : "承認待ち"}
+                </StatusIndicator>
+                {person.responded_at ? (
+                  <time dateTime={person.responded_at}>
+                    {formatDateTime(person.responded_at)}
+                  </time>
+                ) : null}
               </span>
               {person.response_note ? (
                 <p className="w-full whitespace-pre-wrap text-muted-foreground [overflow-wrap:anywhere]">

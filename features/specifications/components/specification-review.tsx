@@ -1,6 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { CheckIcon, RotateCcwIcon } from "lucide-react";
+import { CommentContent } from "@/components/shared/comments/comment-content";
+import {
+  CommentComposeTools,
+  useCommentComposeMedia,
+} from "@/components/shared/comments/comment-compose-media";
+import { CommentIconButton } from "@/components/shared/comments/comment-thread-actions";
 import Link from "next/link";
 import {
   useMutation,
@@ -47,6 +54,7 @@ export function SpecificationReview({
 }) {
   const cache = useQueryClient();
   const [body, setBody] = useState("");
+  const media = useCommentComposeMedia(projectId, "specification");
   const [showResolved, setShowResolved] = useState(false);
   const key = [...specificationKeys.detail(projectId, row.id), "comments"];
   const query = useInfiniteQuery({
@@ -59,11 +67,12 @@ export function SpecificationReview({
     retry: false,
   });
   const post = useMutation({
-    mutationFn: () =>
+    mutationFn: (imageIds: string[]) =>
       createComment(projectId, row.id, {
         field_path: target!,
         body,
         specification_version: row.version,
+        image_ids: imageIds.length ? imageIds : undefined,
       }),
     onSuccess: async () => {
       setBody("");
@@ -112,9 +121,15 @@ export function SpecificationReview({
       {canEdit && target && (
         <form
           className="flex flex-col gap-3 border-b pb-4"
+          {...media.formEvents}
           onSubmit={(event) => {
             event.preventDefault();
-            post.mutate();
+            if (!body.trim() || post.isPending) return;
+            void media
+              .send(async (ids) => {
+                await post.mutateAsync(ids);
+              })
+              .catch(() => undefined);
           }}
         >
           <p className="text-sm font-medium">
@@ -132,20 +147,30 @@ export function SpecificationReview({
                   value={body}
                   onChange={(event) => setBody(event.target.value)}
                   required
+                  className="max-h-32 resize-none overflow-y-auto"
                   maxLength={5000}
                   rows={2}
                   placeholder="例: 入力エラー時に、どの項目を直せばよいか分かる表示を追加してください…"
-                  disabled={post.isPending}
+                  disabled={post.isPending || media.sending}
                 />
               </Field>
               <FormApiError error={post.error} />
-              <CommentSubmit
-                body={body}
-                pending={post.isPending}
-                onCancel={() => onTarget(null)}
+              <CommentComposeTools
+                media={media}
+                onInsertLink={(url) => {
+                  const text = body + (body.trim() ? "\n" : "") + url;
+                  if (text.length > 5000) return false;
+                  setBody(text);
+                }}
               >
-                指摘を投稿
-              </CommentSubmit>
+                <CommentSubmit
+                  body={body}
+                  pending={post.isPending || media.sending}
+                  onCancel={() => onTarget(null)}
+                >
+                  指摘を投稿
+                </CommentSubmit>
+              </CommentComposeTools>
             </div>
           </CommentComposer>
         </form>
@@ -181,6 +206,8 @@ export function SpecificationReview({
           <div key={comment.id} className="min-w-0 border-b py-3">
             <CommentMessage
               author={comment.author_name}
+              avatarUrl={comment.author_avatar_url}
+              images={comment.images}
               createdAt={comment.created_at}
               resolved={comment.is_resolved}
             >
@@ -193,7 +220,7 @@ export function SpecificationReview({
                 {reviewPathLabel(values, comment.field_path)}
               </Button>
               <p className="whitespace-pre-wrap break-words text-sm">
-                {comment.body}
+                <CommentContent body={comment.body} />
               </p>
               {comment.anchor_changed && (
                 <Alert>
@@ -222,10 +249,10 @@ export function SpecificationReview({
                       この箇所を修正
                     </Link>
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
+                  <CommentIconButton
+                    label={
+                      comment.is_resolved ? "再オープン" : "対応を確認して解決"
+                    }
                     disabled={resolve.isPending}
                     onClick={() =>
                       resolve.mutate({
@@ -235,8 +262,12 @@ export function SpecificationReview({
                       })
                     }
                   >
-                    {comment.is_resolved ? "再オープン" : "対応を確認して解決"}
-                  </Button>
+                    {comment.is_resolved ? (
+                      <RotateCcwIcon aria-hidden="true" />
+                    ) : (
+                      <CheckIcon aria-hidden="true" />
+                    )}
+                  </CommentIconButton>
                 </div>
               )}
             </CommentMessage>

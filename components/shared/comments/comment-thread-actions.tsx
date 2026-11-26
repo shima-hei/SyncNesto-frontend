@@ -15,6 +15,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { ComponentProps } from "react";
+
+export function CommentIconButton({
+  label,
+  children,
+  ...props
+}: ComponentProps<typeof Button> & { label: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={label}
+          {...props}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 export function CommentMessageMenu({
   onEdit,
@@ -29,7 +58,8 @@ export function CommentMessageMenu({
         <Button
           type="button"
           variant="ghost"
-          size="icon-xs"
+          size="icon-sm"
+          title="コメントの操作"
           aria-label="コメントの操作"
         >
           <EllipsisIcon aria-hidden="true" />
@@ -75,34 +105,25 @@ export function CommentThreadActions<TComment>({
   onReopen,
 }: CommentThreadActionsProps<TComment>) {
   const resolveButton = (
-    <Button
-      type="button"
-      variant="ghost"
-      size="xs"
+    <CommentIconButton
+      label={isResolved ? reopenLabel : "解決する"}
       disabled={isStatePending}
       onClick={isResolved ? onReopen : onResolve}
     >
       {isResolved ? (
-        <RotateCcwIcon data-icon="inline-start" />
+        <RotateCcwIcon aria-hidden="true" />
       ) : (
-        <CheckIcon data-icon="inline-start" />
+        <CheckIcon aria-hidden="true" />
       )}
-      {isResolved ? reopenLabel : "解決する"}
-    </Button>
+    </CommentIconButton>
   );
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-0.5 text-muted-foreground">
       {canReply ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          onClick={() => onReply(comment)}
-        >
-          <CornerDownRightIcon data-icon="inline-start" />
-          返信
-        </Button>
+        <CommentIconButton label="返信" onClick={() => onReply(comment)}>
+          <CornerDownRightIcon aria-hidden="true" />
+        </CommentIconButton>
       ) : null}
       {canResolve ? resolveButton : null}
     </div>

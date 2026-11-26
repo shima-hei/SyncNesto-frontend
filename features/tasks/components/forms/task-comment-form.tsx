@@ -2,6 +2,10 @@
 
 import { useId, useState } from "react";
 
+import {
+  CommentComposeTools,
+  useCommentComposeMedia,
+} from "@/components/shared/comments/comment-compose-media";
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import {
@@ -64,6 +68,10 @@ export function TaskCommentForm({
   const statusId = useId();
   const [values, setValues] = useState(initialValues ?? defaultValues);
   const bodyId = useId();
+  const media = useCommentComposeMedia(
+    projectId,
+    resetOnSuccess ? "task" : undefined,
+  );
   const [errors, setErrors] = useState<TaskCommentFormErrors>({});
 
   const handleSubmit = async (
@@ -84,8 +92,12 @@ export function TaskCommentForm({
     }
 
     setErrors({});
-    await onSubmit(result.data)
-      .then(() => {
+    await media
+      .send(async (imageIds) => {
+        await onSubmit({ ...result.data, imageIds });
+      })
+      .then((saved) => {
+        if (!saved) return;
         if (resetOnSuccess) {
           setValues(defaultValues);
         }
@@ -95,7 +107,7 @@ export function TaskCommentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} {...media.formEvents}>
       <CommentComposer>
         <FieldGroup className="gap-2">
           <Field data-invalid={errors.body ? true : undefined}>
@@ -105,8 +117,9 @@ export function TaskCommentForm({
             <MentionTextarea
               id={bodyId}
               rows={2}
+              disabled={isPending || media.sending}
               placeholder="コメントを入力…"
-              className="min-h-12"
+              className="min-h-12 max-h-32 resize-none overflow-y-auto"
               projectId={projectId}
               permission="task:read"
               mentions={values.mentions}
@@ -153,9 +166,41 @@ export function TaskCommentForm({
           ) : null}
 
           <FormApiError error={error} />
-          <CommentSubmit pending={isPending} body={values.body}>
-            {submitLabel}
-          </CommentSubmit>
+          <CommentComposeTools
+            media={media}
+            onInsertLink={(url) =>
+              setValues((current) => ({
+                ...current,
+                body: current.body + (current.body.trim() ? "\n" : "") + url,
+              }))
+            }
+            onMention={() => {
+              setValues((current) => ({
+                ...current,
+                body: current.body + (current.body ? " @" : "@"),
+              }));
+              requestAnimationFrame(() => {
+                const input = document.getElementById(
+                  bodyId,
+                ) as HTMLTextAreaElement | null;
+                input?.focus();
+                if (input) {
+                  input.setSelectionRange(
+                    input.value.length,
+                    input.value.length,
+                  );
+                  input.click();
+                }
+              });
+            }}
+          >
+            <CommentSubmit
+              pending={isPending || media.sending}
+              body={values.body}
+            >
+              {submitLabel}
+            </CommentSubmit>
+          </CommentComposeTools>
         </FieldGroup>
       </CommentComposer>
     </form>

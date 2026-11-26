@@ -30,6 +30,7 @@ type ApiClientOptions = Omit<RequestInit, "body" | "method"> & {
   method?: HttpMethod;
   params?: Record<string, unknown>;
   body?: BodyInit | null;
+  responseType?: "blob";
 };
 
 export type ErrorType<Error> = ApiError & { data: Error };
@@ -93,7 +94,10 @@ export async function apiClient<T>(
         : undefined,
   });
 
-  const data = await parseResponse(response);
+  const data =
+    response.ok && options.responseType === "blob"
+      ? await response.blob()
+      : await parseResponse(response);
 
   if (!response.ok) {
     const code = getErrorCode(data);

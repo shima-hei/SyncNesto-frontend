@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ChangeLogUserRead } from "./changeLogUserRead";
+import type { CommentImageRead } from "./commentImageRead";
 import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 import type { RequirementTargetCommentReadTargetAnchor } from "./requirementTargetCommentReadTargetAnchor";
 
@@ -12,6 +13,7 @@ import type { RequirementTargetCommentReadTargetAnchor } from "./requirementTarg
  * 要件定義対象コメント読み取り時に返すschema。
  */
 export interface RequirementTargetCommentRead {
+  images?: CommentImageRead[];
   /** @maxItems 100 */
   mentions?: CommentMentionOccurrence[];
   id: number;

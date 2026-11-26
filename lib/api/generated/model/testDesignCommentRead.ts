@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentImageRead } from "./commentImageRead";
 import type { CommentMentionOccurrence } from "./commentMentionOccurrence";
 import type { TestDesignCommentReadTargetSnapshot } from "./testDesignCommentReadTargetSnapshot";
 import type { TestDesignCommentReadTargetStatus } from "./testDesignCommentReadTargetStatus";
@@ -12,6 +13,7 @@ import type { TestDesignCommentReadTargetStatus } from "./testDesignCommentReadT
  * 対象状態を含むコメント表示情報。
  */
 export interface TestDesignCommentRead {
+  images?: CommentImageRead[];
   /** @maxItems 100 */
   mentions?: CommentMentionOccurrence[];
   id: number;
@@ -25,6 +27,7 @@ export interface TestDesignCommentRead {
   body: string;
   author_id: number;
   author_name: string | null;
+  author_avatar_url?: string | null;
   is_resolved: boolean;
   version: number;
   created_at: string;

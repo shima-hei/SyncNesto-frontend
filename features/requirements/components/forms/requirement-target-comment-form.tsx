@@ -3,6 +3,10 @@
 import { useId, useState } from "react";
 import { useWorkbenchState } from "../../hooks/use-workbench-state";
 
+import {
+  CommentComposeTools,
+  useCommentComposeMedia,
+} from "@/components/shared/comments/comment-compose-media";
 import { MentionTextarea } from "@/components/shared/comments/mention-textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import {
@@ -64,6 +68,10 @@ export function RequirementTargetCommentForm({
     initialValues ?? defaultValues,
   );
   const bodyId = useId();
+  const media = useCommentComposeMedia(
+    projectId,
+    !showReason ? "requirement" : undefined,
+  );
   const [errors, setErrors] = useState<RequirementTargetCommentFormErrors>({});
 
   const handleSubmit = async (
@@ -86,8 +94,12 @@ export function RequirementTargetCommentForm({
     }
 
     setErrors({});
-    await onSubmit(result.data)
-      .then(() => {
+    await media
+      .send(async (imageIds) => {
+        await onSubmit({ ...result.data, imageIds });
+      })
+      .then((saved) => {
+        if (!saved) return;
         if (resetOnSuccess) {
           setValues(defaultValues);
         }
@@ -97,7 +109,7 @@ export function RequirementTargetCommentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} {...media.formEvents}>
       <CommentComposer>
         <FieldGroup className="gap-2">
           <Field data-invalid={errors.body ? true : undefined}>
@@ -107,8 +119,9 @@ export function RequirementTargetCommentForm({
             <MentionTextarea
               id={bodyId}
               rows={2}
+              disabled={isPending || media.sending}
               placeholder="コメントを入力…"
-              className="min-h-12"
+              className="min-h-12 max-h-32 resize-none overflow-y-auto"
               projectId={projectId}
               permission="requirement:read"
               mentions={values.mentions}
@@ -176,9 +189,41 @@ export function RequirementTargetCommentForm({
           ) : null}
 
           <FormApiError error={error} />
-          <CommentSubmit pending={isPending} body={values.body}>
-            {submitLabel}
-          </CommentSubmit>
+          <CommentComposeTools
+            media={media}
+            onInsertLink={(url) =>
+              setValues((current) => ({
+                ...current,
+                body: current.body + (current.body.trim() ? "\n" : "") + url,
+              }))
+            }
+            onMention={() => {
+              setValues((current) => ({
+                ...current,
+                body: current.body + (current.body ? " @" : "@"),
+              }));
+              requestAnimationFrame(() => {
+                const input = document.getElementById(
+                  bodyId,
+                ) as HTMLTextAreaElement | null;
+                input?.focus();
+                if (input) {
+                  input.setSelectionRange(
+                    input.value.length,
+                    input.value.length,
+                  );
+                  input.click();
+                }
+              });
+            }}
+          >
+            <CommentSubmit
+              pending={isPending || media.sending}
+              body={values.body}
+            >
+              {submitLabel}
+            </CommentSubmit>
+          </CommentComposeTools>
         </FieldGroup>
       </CommentComposer>
     </form>

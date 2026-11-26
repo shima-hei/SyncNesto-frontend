@@ -41,7 +41,7 @@ export function SectionEditNotice({
         <AlertTitle>未保存の章本文が{unsaved.length}件あります</AlertTitle>
         <AlertDescription>
           <p>
-            「文書として読む」・固定版・出力は保存済みの内容です。入力はこのタブ内で保持しています。
+            レビュー・承認の依頼やファイル出力には保存済みの内容が使われます。入力はこのタブ内で保持しています。
           </p>
           <Button
             type="button"
