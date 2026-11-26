@@ -416,18 +416,6 @@ function ReleaseWorkspace({
               公開内容と共有先を確認
             </Link>
           </Button>
-          {source?.kind === "requirement" ||
-          source?.kind === "requirement_document" ||
-          row?.source_kind === "requirement" ||
-          row?.source_kind === "requirement_document" ? (
-            <Button asChild>
-              <Link
-                href={`/projects/joined/${projectId}/fixed-approvals?release=${selected}`}
-              >
-                この固定内容への合意・正式承認を依頼
-              </Link>
-            </Button>
-          ) : null}
         </section>
       ) : null}
     </>

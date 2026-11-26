@@ -20,6 +20,7 @@ type RequirementSectionListItemProps = {
   isSortPending: boolean;
   showSelectAction: boolean;
   navigation?: boolean;
+  itemCount?: number;
   onSelect?: (sectionId: number) => void;
   onMove: (section: RequirementSectionRead, direction: "up" | "down") => void;
 };
@@ -33,6 +34,7 @@ export function RequirementSectionListItem({
   isSortPending,
   showSelectAction,
   navigation = false,
+  itemCount,
   onSelect,
   onMove,
 }: RequirementSectionListItemProps) {
@@ -52,10 +54,15 @@ export function RequirementSectionListItem({
               type="button"
               variant={isSelected ? "secondary" : "ghost"}
               aria-current={isSelected ? "location" : undefined}
-              className="h-auto min-h-10 w-full justify-start whitespace-normal text-left"
+              className="h-auto min-h-10 w-full justify-between whitespace-normal text-left"
               onClick={() => onSelect?.(section.id)}
             >
               <span className="min-w-0 break-words">{section.title}</span>
+              {itemCount === undefined ? null : (
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {itemCount}
+                </span>
+              )}
             </Button>
           ) : (
             <button

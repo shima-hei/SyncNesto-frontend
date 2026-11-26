@@ -13,11 +13,17 @@ import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 
 import Link from "next/link";
-import { PlusIcon } from "lucide-react";
+import { Columns3Icon, PlusIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { RequirementRead } from "@/lib/api/generated/model";
 import { requirementTestCoverageProjectsProjectIdRequirementTestCoverageGet as readCoverage } from "@/lib/api/generated/test-collaboration/test-collaboration";
 
@@ -26,6 +32,7 @@ import {
   ALL_REQUIREMENT_STATUSES,
   ALL_REQUIREMENT_TYPES,
   REQUIREMENT_SORT_OPTIONS,
+  UNCLASSIFIED_SECTION_ID,
 } from "../../constants/requirement-view-options";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { useRequirements } from "../../hooks/use-requirements";
@@ -45,6 +52,7 @@ type RequirementsListSectionProps = {
   targetAnchors?: RequirementReviewTargetAnchor[];
   activeAnchorKey?: string | null;
   onSelectRequirement?: (requirement: RequirementRead) => void;
+  onNavigateRequirement?: () => void;
   onSelectReviewAnchor?: (
     requirement: RequirementRead,
     targetAnchor: RequirementReviewTargetAnchor,
@@ -61,9 +69,15 @@ export function RequirementsListSection({
   targetAnchors = [],
   activeAnchorKey = null,
   onSelectRequirement,
+  onNavigateRequirement,
   onSelectReviewAnchor,
 }: RequirementsListSectionProps) {
   const { sections } = useRequirementSections(projectId, documentId);
+  const [showType, setShowType] = useWorkbenchState("list-column-type", false);
+  const [showUpdatedAt, setShowUpdatedAt] = useWorkbenchState(
+    "list-column-updated",
+    false,
+  );
   const [page, setPage] = useUrlFilterState("page", 1);
   const [q, setQ] = useUrlFilterState("q", "");
   const [searchInput, setSearchInput] = useWorkbenchState(
@@ -95,7 +109,8 @@ export function RequirementsListSection({
       page,
       page_size: PAGE_SIZE,
       document_id: documentId,
-      section_id: sectionId ?? undefined,
+      section_id: sectionId || undefined,
+      unclassified: sectionId === UNCLASSIFIED_SECTION_ID || undefined,
       q: q || undefined,
       status: status === ALL_REQUIREMENT_STATUSES ? undefined : status,
       requirement_type:
@@ -155,23 +170,51 @@ export function RequirementsListSection({
       className="flex flex-col gap-4"
       data-workbench-list-ready={!isLoading && !isFetching}
     >
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h3 className="text-base font-semibold">要件一覧</h3>
-          <p className="text-sm text-muted-foreground">
-            {selectedSection
-              ? `追加先: ${selectedSection.title}`
-              : "全セクションの要件を表示しています。追加した要件はセクション未設定になります。"}
-          </p>
+          <h3 className="flex items-baseline gap-2 text-base font-semibold">
+            {sectionId === UNCLASSIFIED_SECTION_ID
+              ? "未分類"
+              : (selectedSection?.title ?? "要件一覧")}
+            {isLoading ? null : (
+              <span className="text-sm font-normal tabular-nums text-muted-foreground">
+                {total}件
+              </span>
+            )}
+          </h3>
         </div>
-        {canCreate ? (
-          <Button asChild>
-            <Link href={createHref}>
-              <PlusIcon data-icon="inline-start" />
-              要件を追加
-            </Link>
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" size="sm" variant="ghost">
+                <Columns3Icon data-icon="inline-start" />
+                表示項目
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuCheckboxItem
+                checked={showType}
+                onCheckedChange={setShowType}
+              >
+                種別
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showUpdatedAt}
+                onCheckedChange={setShowUpdatedAt}
+              >
+                更新日時
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {canCreate ? (
+            <Button asChild size="sm">
+              <Link href={createHref} onClick={onNavigateRequirement}>
+                <PlusIcon data-icon="inline-start" />
+                要件を追加
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
       <RequirementsListFilters
         projectId={projectId}
@@ -193,6 +236,7 @@ export function RequirementsListSection({
         <FormApiError error={error} />
       ) : !isLoading &&
         total === 0 &&
+        sectionId == null &&
         !q &&
         status === ALL_REQUIREMENT_STATUSES &&
         requirementType === ALL_REQUIREMENT_TYPES &&
@@ -235,10 +279,13 @@ export function RequirementsListSection({
           }
           isLoading={isLoading}
           canUpdate={canUpdate}
+          showType={showType}
+          showUpdatedAt={showUpdatedAt}
           selectedRequirementId={selectedRequirementId}
           targetAnchors={targetAnchors}
           activeAnchorKey={activeAnchorKey}
           onSelectRequirement={onSelectRequirement}
+          onNavigateRequirement={onNavigateRequirement}
           onSelectReviewAnchor={onSelectReviewAnchor}
         />
       )}

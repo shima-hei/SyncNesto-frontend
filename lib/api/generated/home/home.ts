@@ -20,8 +20,10 @@ import type {
 import type {
   HTTPValidationError,
   HomeProjectsRead,
+  HomeRequirementWorkRead,
   HomeTasksRead,
   ReadHomeProjectsHomeProjectsGetParams,
+  ReadHomeRequirementWorkHomeRequirementWorkGetParams,
   ReadHomeTasksHomeTasksGetParams,
 } from "../model";
 
@@ -47,6 +49,241 @@ const withQueryKey = <T extends object, K>(
   }
   return result;
 };
+
+export const getReadHomeRequirementWorkHomeRequirementWorkGetUrl = (
+  params?: ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/home/requirement-work?${stringifiedParams}`
+    : `/home/requirement-work`;
+};
+
+/**
+ * 参加案件から本人のレビュー・正式承認・修正指摘を取得する。
+ * @summary Read Home Requirement Work
+ */
+export const readHomeRequirementWorkHomeRequirementWorkGet = async (
+  params?: ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+  options?: Parameters<typeof apiClient>[1],
+): Promise<HomeRequirementWorkRead> => {
+  return apiClient<HomeRequirementWorkRead>(
+    getReadHomeRequirementWorkHomeRequirementWorkGetUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getReadHomeRequirementWorkHomeRequirementWorkGetQueryKey = (
+  params?: ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+) => {
+  return [`/home/requirement-work`, ...(params ? [params] : [])] as const;
+};
+
+export const getReadHomeRequirementWorkHomeRequirementWorkGetQueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params?: ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getReadHomeRequirementWorkHomeRequirementWorkGetQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>>
+  > = ({ signal }) =>
+    readHomeRequirementWorkHomeRequirementWorkGet(params, {
+      signal,
+      ...requestOptions,
+    });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ReadHomeRequirementWorkHomeRequirementWorkGetQueryResult =
+  NonNullable<
+    Awaited<ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>>
+  >;
+export type ReadHomeRequirementWorkHomeRequirementWorkGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 参加案件から本人のレビュー・正式承認・修正指摘を取得する。
+ * @summary Read Home Requirement Work
+ */
+export function useReadHomeRequirementWorkHomeRequirementWorkGet<
+  TData = Awaited<
+    ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: undefined | ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 参加案件から本人のレビュー・正式承認・修正指摘を取得する。
+ * @summary Read Home Requirement Work
+ */
+export function useReadHomeRequirementWorkHomeRequirementWorkGet<
+  TData = Awaited<
+    ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params?: ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 参加案件から本人のレビュー・正式承認・修正指摘を取得する。
+ * @summary Read Home Requirement Work
+ */
+export function useReadHomeRequirementWorkHomeRequirementWorkGet<
+  TData = Awaited<
+    ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params?: ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 参加案件から本人のレビュー・正式承認・修正指摘を取得する。
+ * @summary Read Home Requirement Work
+ */
+export function useReadHomeRequirementWorkHomeRequirementWorkGet<
+  TData = Awaited<
+    ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params?: ReadHomeRequirementWorkHomeRequirementWorkGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof readHomeRequirementWorkHomeRequirementWorkGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getReadHomeRequirementWorkHomeRequirementWorkGetQueryOptions(
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export const getReadHomeTasksHomeTasksGetUrl = (
   params?: ReadHomeTasksHomeTasksGetParams,
@@ -125,6 +362,10 @@ export type ReadHomeTasksHomeTasksGetQueryResult = NonNullable<
 export type ReadHomeTasksHomeTasksGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 参加案件内の本人の未完了タスクと件数を返す。
+ * @summary Read Home Tasks
+ */
 export function useReadHomeTasksHomeTasksGet<
   TData = Awaited<ReturnType<typeof readHomeTasksHomeTasksGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -152,6 +393,10 @@ export function useReadHomeTasksHomeTasksGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 参加案件内の本人の未完了タスクと件数を返す。
+ * @summary Read Home Tasks
+ */
 export function useReadHomeTasksHomeTasksGet<
   TData = Awaited<ReturnType<typeof readHomeTasksHomeTasksGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -179,6 +424,10 @@ export function useReadHomeTasksHomeTasksGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 参加案件内の本人の未完了タスクと件数を返す。
+ * @summary Read Home Tasks
+ */
 export function useReadHomeTasksHomeTasksGet<
   TData = Awaited<ReturnType<typeof readHomeTasksHomeTasksGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -199,9 +448,9 @@ export function useReadHomeTasksHomeTasksGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 参加案件内の本人の未完了タスクと件数を返す。
  * @summary Read Home Tasks
  */
-
 export function useReadHomeTasksHomeTasksGet<
   TData = Awaited<ReturnType<typeof readHomeTasksHomeTasksGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -315,6 +564,10 @@ export type ReadHomeProjectsHomeProjectsGetQueryResult = NonNullable<
 export type ReadHomeProjectsHomeProjectsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 参加案件の総数と権限のあるタスク集計を返す。
+ * @summary Read Home Projects
+ */
 export function useReadHomeProjectsHomeProjectsGet<
   TData = Awaited<ReturnType<typeof readHomeProjectsHomeProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -342,6 +595,10 @@ export function useReadHomeProjectsHomeProjectsGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 参加案件の総数と権限のあるタスク集計を返す。
+ * @summary Read Home Projects
+ */
 export function useReadHomeProjectsHomeProjectsGet<
   TData = Awaited<ReturnType<typeof readHomeProjectsHomeProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -369,6 +626,10 @@ export function useReadHomeProjectsHomeProjectsGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 参加案件の総数と権限のあるタスク集計を返す。
+ * @summary Read Home Projects
+ */
 export function useReadHomeProjectsHomeProjectsGet<
   TData = Awaited<ReturnType<typeof readHomeProjectsHomeProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -389,9 +650,9 @@ export function useReadHomeProjectsHomeProjectsGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 参加案件の総数と権限のあるタスク集計を返す。
  * @summary Read Home Projects
  */
-
 export function useReadHomeProjectsHomeProjectsGet<
   TData = Awaited<ReturnType<typeof readHomeProjectsHomeProjectsGet>>,
   TError = ErrorType<HTTPValidationError>,

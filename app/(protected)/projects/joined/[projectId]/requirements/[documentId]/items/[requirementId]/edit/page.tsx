@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
-
-import { RequirementEditPage } from "@/features/requirements/components/pages/requirement-edit-page";
+import { notFound, redirect } from "next/navigation";
 
 type PageProps = {
   params: Promise<{
@@ -8,9 +6,10 @@ type PageProps = {
     documentId: string;
     requirementId: string;
   }>;
+  searchParams: Promise<{ returnTo?: string | string[] }>;
 };
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { projectId, documentId, requirementId } = await params;
   const parsedProjectId = Number(projectId);
   const parsedDocumentId = Number(documentId);
@@ -24,11 +23,10 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <RequirementEditPage
-      projectId={parsedProjectId}
-      documentId={parsedDocumentId}
-      requirementId={parsedRequirementId}
-    />
+  const { returnTo } = await searchParams;
+  const query = new URLSearchParams({ edit: "1" });
+  if (typeof returnTo === "string") query.set("returnTo", returnTo);
+  redirect(
+    `/projects/joined/${parsedProjectId}/requirements/${parsedDocumentId}/items/${parsedRequirementId}?${query}`,
   );
 }

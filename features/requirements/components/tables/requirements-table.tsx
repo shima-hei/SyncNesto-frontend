@@ -3,12 +3,23 @@
 import { type ReactNode } from "react";
 import Link from "next/link";
 import { useListNavigation } from "@/hooks/use-list-navigation";
-import { EditIcon, MessageSquarePlusIcon } from "lucide-react";
+import {
+  EditIcon,
+  EllipsisIcon,
+  MessageSquareIcon,
+  MessageSquarePlusIcon,
+} from "lucide-react";
 
 import { ClickableTableRow } from "@/components/shared/tables/clickable-table-row";
 import { TableEmptyRow } from "@/components/shared/tables/table-empty-row";
 import { TableListSkeleton } from "@/components/shared/tables/table-list-skeleton";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -31,15 +42,14 @@ import { cn } from "@/lib/utils";
 
 import {
   REQUIREMENT_PRIORITY_OPTIONS,
-  REQUIREMENT_STATUS_OPTIONS,
   getRequirementTypeLabel,
   getRequirementPriorityLabel,
-  getRequirementStatusLabel,
 } from "../../constants/requirement-options";
 import { useUpdateRequirementListItem } from "../../hooks/use-update-requirement-list-item";
+import { useRequirementItemWorkflow } from "../../hooks/use-requirement-item-workflow";
+import { RequirementItemReviewBadge } from "../review/requirement-item-workflow";
 import {
   RequirementPriorityBadge,
-  RequirementStatusBadge,
   RequirementTypeBadge,
 } from "../shared/requirement-badges";
 import {
@@ -59,10 +69,13 @@ type RequirementsTableProps = {
   coverageState?: "loading" | "error" | "ready";
   isLoading: boolean;
   canUpdate: boolean;
+  showType?: boolean;
+  showUpdatedAt?: boolean;
   selectedRequirementId?: number | null;
   targetAnchors?: RequirementReviewTargetAnchor[];
   activeAnchorKey?: string | null;
   onSelectRequirement?: (requirement: RequirementRead) => void;
+  onNavigateRequirement?: () => void;
   onSelectReviewAnchor?: (
     requirement: RequirementRead,
     targetAnchor: RequirementReviewTargetAnchor,
@@ -77,10 +90,13 @@ export function RequirementsTable({
   coverageState = "ready",
   isLoading,
   canUpdate,
+  showType = false,
+  showUpdatedAt = false,
   selectedRequirementId,
   targetAnchors = [],
   activeAnchorKey = null,
   onSelectRequirement,
+  onNavigateRequirement,
   onSelectReviewAnchor,
 }: RequirementsTableProps) {
   const { withReturn } = useListNavigation(
@@ -88,95 +104,103 @@ export function RequirementsTable({
   );
   const { updateRequirementListItem, isPending } =
     useUpdateRequirementListItem(projectId);
+  const workflow = useRequirementItemWorkflow(projectId, requirements);
+  const states = new Map(
+    workflow.data?.map((item) => [item.requirement_id, item]),
+  );
 
   if (isLoading) {
-    return <TableListSkeleton widths={["w-48", "w-24", "w-20", "w-28"]} />;
+    return <TableListSkeleton widths={["w-20", "w-48", "w-20", "w-24"]} />;
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>要件</TableHead>
-          <TableHead>種別</TableHead>
+          <TableHead className="w-px">ID</TableHead>
+          <TableHead>要件名</TableHead>
+          {showType ? <TableHead>種別</TableHead> : null}
           <TableHead>優先度</TableHead>
-          <TableHead>ステータス</TableHead>
-          <TableHead>関連テスト</TableHead>
+          <TableHead scope="col">確認状況</TableHead>
           <TableHead>担当者</TableHead>
-          <TableHead>更新日時</TableHead>
+          <TableHead>関連テスト</TableHead>
+          {showUpdatedAt ? <TableHead>更新日時</TableHead> : null}
+          <TableHead className="w-px">
+            <span className="sr-only">操作</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {requirements.length ? (
           requirements.map((requirement) => {
+            const state = states.get(requirement.id);
+            const href = withReturn(
+              `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
+            );
             const cells = (
               <>
-                <TableCell>
-                  <div className="flex min-w-64 items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <ReviewableRequirementText
-                        documentId={documentId}
-                        requirement={requirement}
-                        field="title"
-                        label={`${requirement.requirement_code} タイトル`}
-                        value={requirement.title}
-                        className="truncate font-medium"
-                        targetAnchors={targetAnchors}
-                        activeAnchorKey={activeAnchorKey}
-                        onSelectRequirement={onSelectRequirement}
-                        onSelectReviewAnchor={onSelectReviewAnchor}
-                      />
-                      <ReviewableRequirementText
-                        documentId={documentId}
-                        requirement={requirement}
-                        field="requirement_code"
-                        label={`${requirement.requirement_code} 要件コード`}
-                        value={requirement.requirement_code}
-                        className="truncate text-xs text-muted-foreground"
-                        targetAnchors={targetAnchors}
-                        activeAnchorKey={activeAnchorKey}
-                        onSelectRequirement={onSelectRequirement}
-                        onSelectReviewAnchor={onSelectReviewAnchor}
-                      />
-                    </div>
-                    {canUpdate ? (
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                      >
-                        <Link
-                          href={withReturn(
-                            `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}/edit`,
-                          )}
-                          aria-label={`${requirement.requirement_code} ${requirement.title}を編集`}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <EditIcon data-icon="inline-start" />
-                          編集
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </div>
-                </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                   <ReviewableRequirementText
                     documentId={documentId}
                     requirement={requirement}
-                    field="requirement_type"
-                    label={`${requirement.requirement_code} 種別`}
-                    value={getRequirementTypeLabel(
-                      requirement.requirement_type,
-                    )}
+                    field="requirement_code"
+                    label={`${requirement.requirement_code} 要件コード`}
+                    value={requirement.requirement_code}
+                    className="truncate text-xs text-muted-foreground"
+                    targetAnchors={targetAnchors}
+                    activeAnchorKey={activeAnchorKey}
+                    onSelectRequirement={onSelectRequirement}
+                    onSelectReviewAnchor={onSelectReviewAnchor}
+                  />
+                </TableCell>
+                <TableCell className="min-w-48 max-w-sm whitespace-normal">
+                  <ReviewableRequirementText
+                    documentId={documentId}
+                    requirement={requirement}
+                    field="title"
+                    label={`${requirement.requirement_code} タイトル`}
+                    value={requirement.title}
                     targetAnchors={targetAnchors}
                     activeAnchorKey={activeAnchorKey}
                     onSelectRequirement={onSelectRequirement}
                     onSelectReviewAnchor={onSelectReviewAnchor}
                   >
-                    <RequirementTypeBadge type={requirement.requirement_type} />
+                    <Link
+                      href={href}
+                      className="block rounded-sm font-medium [overflow-wrap:anywhere] hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                      onClick={(event) => {
+                        if (window.getSelection()?.toString().trim()) {
+                          event.preventDefault();
+                          return;
+                        }
+                        onNavigateRequirement?.();
+                      }}
+                    >
+                      {requirement.title}
+                    </Link>
                   </ReviewableRequirementText>
                 </TableCell>
+                {showType ? (
+                  <TableCell>
+                    <ReviewableRequirementText
+                      documentId={documentId}
+                      requirement={requirement}
+                      field="requirement_type"
+                      label={`${requirement.requirement_code} 種別`}
+                      value={getRequirementTypeLabel(
+                        requirement.requirement_type,
+                      )}
+                      targetAnchors={targetAnchors}
+                      activeAnchorKey={activeAnchorKey}
+                      onSelectRequirement={onSelectRequirement}
+                      onSelectReviewAnchor={onSelectReviewAnchor}
+                    >
+                      <RequirementTypeBadge
+                        type={requirement.requirement_type}
+                      />
+                    </ReviewableRequirementText>
+                  </TableCell>
+                ) : null}
                 <TableCell>
                   {canUpdate ? (
                     <ReviewableRequirementText
@@ -222,55 +246,18 @@ export function RequirementsTable({
                     </ReviewableRequirementText>
                   )}
                 </TableCell>
-                <TableCell>
-                  {canUpdate ? (
-                    <ReviewableRequirementText
-                      documentId={documentId}
-                      requirement={requirement}
-                      field="status"
-                      label={`${requirement.requirement_code} ステータス`}
-                      value={getRequirementStatusLabel(requirement.status)}
-                      showTargetAction
-                      targetAnchors={targetAnchors}
-                      activeAnchorKey={activeAnchorKey}
-                      onSelectRequirement={onSelectRequirement}
-                      onSelectReviewAnchor={onSelectReviewAnchor}
-                    >
-                      <RequirementInlineSelect
-                        value={requirement.status ?? "draft"}
-                        label={getRequirementStatusLabel(requirement.status)}
-                        ariaLabel={`${requirement.requirement_code} ステータス`}
-                        disabled={isPending}
-                        options={REQUIREMENT_STATUS_OPTIONS}
-                        onValueChange={(status) =>
-                          updateRequirementListItem(requirement, { status })
-                        }
-                      />
-                    </ReviewableRequirementText>
+                <TableCell className="whitespace-nowrap">
+                  {state ? (
+                    <RequirementItemReviewBadge review={state.review} />
                   ) : (
-                    <ReviewableRequirementText
-                      documentId={documentId}
-                      requirement={requirement}
-                      field="status"
-                      label={`${requirement.requirement_code} ステータス`}
-                      value={getRequirementStatusLabel(requirement.status)}
-                      targetAnchors={targetAnchors}
-                      activeAnchorKey={activeAnchorKey}
-                      onSelectRequirement={onSelectRequirement}
-                      onSelectReviewAnchor={onSelectReviewAnchor}
-                    >
-                      <RequirementStatusBadge status={requirement.status} />
-                    </ReviewableRequirementText>
+                    <span className="text-xs text-muted-foreground">
+                      {workflow.isError
+                        ? "取得できません"
+                        : workflow.isFetching
+                          ? "確認中…"
+                          : "―"}
+                    </span>
                   )}
-                </TableCell>
-                <TableCell>
-                  {coverageState === "loading"
-                    ? "確認中…"
-                    : coverageState === "error"
-                      ? "取得できません"
-                      : (coverageByRequirement[requirement.id] ?? 0) > 0
-                        ? `テストあり（${coverageByRequirement[requirement.id]}件）`
-                        : "テストなし"}
                 </TableCell>
                 <TableCell>
                   <span
@@ -281,41 +268,88 @@ export function RequirementsTable({
                       (requirement.owner_id ? "担当者情報なし" : "未設定")}
                   </span>
                 </TableCell>
-                <TableCell>{formatDateTime(requirement.updated_at)}</TableCell>
+                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                  {coverageState === "loading"
+                    ? "確認中…"
+                    : coverageState === "error"
+                      ? "取得できません"
+                      : `${coverageByRequirement[requirement.id] ?? 0}件`}
+                </TableCell>
+                {showUpdatedAt ? (
+                  <TableCell>
+                    {formatDateTime(requirement.updated_at)}
+                  </TableCell>
+                ) : null}
+                <TableCell>
+                  {canUpdate || onSelectRequirement ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`${requirement.requirement_code} の操作`}
+                        >
+                          <EllipsisIcon aria-hidden />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {onSelectRequirement ? (
+                          <DropdownMenuItem
+                            onSelect={() => onSelectRequirement(requirement)}
+                          >
+                            <MessageSquareIcon aria-hidden /> 関連情報を表示
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canUpdate ? (
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={withReturn(
+                                `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}/edit`,
+                              )}
+                              onClick={onNavigateRequirement}
+                            >
+                              <EditIcon aria-hidden /> 編集
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
+                </TableCell>
               </>
             );
-
-            if (onSelectRequirement) {
-              const isSelected = selectedRequirementId === requirement.id;
-
-              return (
-                <TableRow
-                  key={requirement.id}
-                  tabIndex={0}
-                  data-workbench-requirement-id={requirement.id}
-                  data-state={isSelected ? "selected" : undefined}
-                  className="cursor-pointer data-[state=selected]:bg-muted"
-                  onClick={() => onSelectRequirement(requirement)}
-                  onKeyDown={(event) => {
-                    if (event.target !== event.currentTarget) return;
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onSelectRequirement(requirement);
-                    }
-                  }}
-                >
-                  {cells}
-                </TableRow>
-              );
-            }
 
             return (
               <ClickableTableRow
                 key={requirement.id}
                 data-workbench-requirement-id={requirement.id}
-                href={withReturn(
-                  `/projects/joined/${projectId}/requirements/${documentId}/items/${requirement.id}`,
-                )}
+                data-state={
+                  selectedRequirementId === requirement.id
+                    ? "selected"
+                    : undefined
+                }
+                href={href}
+                onClick={(event) => {
+                  if (
+                    event.target instanceof Element &&
+                    event.target.closest(
+                      "a,button,input,textarea,[role=menuitem]",
+                    )
+                  )
+                    return;
+                  if (window.getSelection()?.toString().trim()) {
+                    event.preventDefault();
+                    return;
+                  }
+                  onNavigateRequirement?.();
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.target === event.currentTarget &&
+                    (event.key === "Enter" || event.key === " ")
+                  )
+                    onNavigateRequirement?.();
+                }}
               >
                 {cells}
               </ClickableTableRow>
@@ -323,7 +357,7 @@ export function RequirementsTable({
           })
         ) : (
           <TableEmptyRow
-            colSpan={7}
+            colSpan={7 + Number(showType) + Number(showUpdatedAt)}
             message="条件に一致する要件がありません。"
           />
         )}

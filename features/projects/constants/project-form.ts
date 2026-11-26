@@ -20,6 +20,7 @@ export const projectInitialValues: ProjectFormValues = {
   status: "active",
   startDate: "",
   endDate: "",
+  requirementReviewRequired: true,
 };
 
 export const getProjectFormValues = (
@@ -32,6 +33,7 @@ export const getProjectFormValues = (
     status: project.status ?? "active",
     startDate: project.start_date ?? "",
     endDate: project.end_date ?? "",
+    requirementReviewRequired: project.requirement_review_required ?? true,
   };
 };
 

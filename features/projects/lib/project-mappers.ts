@@ -26,6 +26,7 @@ export const toProjectUpdate = (
   return {
     version,
     ...toProjectCreate(values),
+    requirement_review_required: values.requirementReviewRequired,
   };
 };
 

@@ -287,7 +287,7 @@ function ScreenSection({
 
   return (
     <section
-      className="@container/detail-screen min-w-0 scroll-mt-24 rounded-md border border-l-2 border-l-primary/40 bg-muted/20 p-3"
+      className="group @container/detail-screen min-w-0 scroll-mt-24 rounded-md border border-l-2 border-l-primary/40 bg-muted/20 p-3"
       data-requirement-comment-anchor={getRequirementCommentAnchorKey(
         createRequirementDetailCommentAnchor(screen.detail),
       )}

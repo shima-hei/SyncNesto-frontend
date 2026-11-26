@@ -5,7 +5,6 @@ import { PlusIcon } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -71,9 +70,9 @@ export function RequirementDetailsSection({
     useDeleteRequirementDetail(projectId, requirementId);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <CardTitle className="text-base">実現内容</CardTitle>
+    <section aria-label="実現内容" className="border-t pt-4">
+      <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">実現内容</h2>
         {canUpdate ? (
           <Button
             type="button"
@@ -92,8 +91,8 @@ export function RequirementDetailsSection({
             実現内容を追加
           </Button>
         ) : null}
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      </header>
+      <div className="flex flex-col gap-3">
         <RequirementDetailTreeView
           details={details}
           canUpdate={canUpdate}
@@ -171,7 +170,7 @@ export function RequirementDetailsSection({
             setDeleteTarget(null);
           }}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

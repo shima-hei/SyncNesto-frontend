@@ -35,14 +35,30 @@ export function useUpdateRequirementSectionSortOrder(
       },
     );
 
-  const updateRequirementSectionSortOrder = async (
+  const moveRequirementSection = (
     sections: RequirementSectionRead[],
+    sectionId: number,
+    direction: "up" | "down",
   ) => {
-    await updateSortOrderMutation.mutateAsync({
+    const index = sections.findIndex((section) => section.id === sectionId);
+    const destination = index + (direction === "up" ? -1 : 1);
+    if (
+      index < 0 ||
+      destination < 0 ||
+      destination >= sections.length ||
+      updateSortOrderMutation.isPending
+    )
+      return;
+    const ordered = sections.slice();
+    [ordered[index], ordered[destination]] = [
+      ordered[destination],
+      ordered[index],
+    ];
+    updateSortOrderMutation.mutate({
       projectId,
       documentId,
       data: {
-        items: sections.map((section, index) => ({
+        items: ordered.map((section, index) => ({
           section_id: section.id,
           sort_order: (index + 1) * 10,
           version: section.version,
@@ -52,7 +68,7 @@ export function useUpdateRequirementSectionSortOrder(
   };
 
   return {
-    updateRequirementSectionSortOrder,
+    moveRequirementSection,
     isPending: updateSortOrderMutation.isPending,
   };
 }

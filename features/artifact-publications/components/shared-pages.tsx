@@ -34,6 +34,7 @@ import { PublicationBody } from "./publication-content";
 import { loadSharedContent } from "../lib/load-shared-content";
 import { useFreshShared } from "../hooks/use-fresh-shared";
 import { SharedApprovalList } from "@/features/guest-fixed-approvals/components/shared-approval-list";
+import { SharedRequirementReviewList } from "@/features/guest-requirement-reviews/components/shared-review-list";
 import { SharedNotificationsLink } from "@/features/notifications/components/shared-notifications";
 
 export function SharedShell({ children }: { children: React.ReactNode }) {
@@ -164,6 +165,8 @@ export function SharedPublicationsList() {
           あなたに許可された固定内容から、目的・要件・設計・テストを確認できます。
         </p>
       </div>
+      <SharedRequirementReviewList />
+      <SharedRequirementReviewList formal />
       <SharedApprovalList />
       <form
         className="flex flex-wrap items-end gap-3"
@@ -346,6 +349,8 @@ export function SharedPublicationDetail({ identity }: { identity: string }) {
                 目的・受け入れ条件と設計・テストの内容を確認してください。元の編集内容が更新されても、この固定内容は変わりません。あなたへの判断依頼がある場合は、依頼を開いて判断します。
               </AlertDescription>
             </Alert>
+            <SharedRequirementReviewList publicationId={identity} />
+            <SharedRequirementReviewList publicationId={identity} formal />
             <SharedApprovalList publicationId={identity} />
             <PublicationBody
               key={data.value.metadata.authorization_revision}

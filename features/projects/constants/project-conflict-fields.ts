@@ -1,6 +1,7 @@
 import type { ProjectFormValues } from "../types/project-form";
 
 export const PROJECT_CONFLICT_FIELD_LABELS = {
+  requirementReviewRequired: "正式承認前のレビュー",
   projectCode: "プロジェクトコード",
   name: "プロジェクト名",
   description: "説明",

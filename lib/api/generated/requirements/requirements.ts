@@ -45,6 +45,7 @@ import type {
   RequirementDocumentListResponse,
   RequirementDocumentRead,
   RequirementDocumentUpdate,
+  RequirementItemCounts,
   RequirementLinkCreate,
   RequirementLinkRead,
   RequirementLinkUpdate,
@@ -3996,6 +3997,294 @@ export function useListRequirementsProjectsProjectIdRequirementsGet<
     getListRequirementsProjectsProjectIdRequirementsGetQueryOptions(
       projectId,
       params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetUrl =
+  (projectId: number, documentId: number) => {
+    return `/projects/${projectId}/requirement-documents/${documentId}/item-counts`;
+  };
+
+/**
+ * 定義書の章別・未分類の要件件数を取得する。
+ * @summary Read Requirement Item Counts
+ */
+export const readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet =
+  async (
+    projectId: number,
+    documentId: number,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<RequirementItemCounts> => {
+    return apiClient<RequirementItemCounts>(
+      getReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetUrl(
+        projectId,
+        documentId,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetQueryKey =
+  (projectId: number, documentId: number) => {
+    return [
+      `/projects/${projectId}/requirement-documents/${documentId}/item-counts`,
+    ] as const;
+  };
+
+export const getReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    documentId: number,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetQueryKey(
+        projectId,
+        documentId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+        >
+      >
+    > = ({ signal }) =>
+      readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet(
+        projectId,
+        documentId,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        documentId !== null &&
+        documentId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type ReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+      >
+    >
+  >;
+export type ReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 定義書の章別・未分類の要件件数を取得する。
+ * @summary Read Requirement Item Counts
+ */
+export function useReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  documentId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 定義書の章別・未分類の要件件数を取得する。
+ * @summary Read Requirement Item Counts
+ */
+export function useReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  documentId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 定義書の章別・未分類の要件件数を取得する。
+ * @summary Read Requirement Item Counts
+ */
+export function useReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  documentId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 定義書の章別・未分類の要件件数を取得する。
+ * @summary Read Requirement Item Counts
+ */
+export function useReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  documentId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getReadRequirementItemCountsProjectsProjectIdRequirementDocumentsDocumentIdItemCountsGetQueryOptions(
+      projectId,
+      documentId,
       options,
     );
 

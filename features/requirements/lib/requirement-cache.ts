@@ -30,6 +30,12 @@ export const invalidateRequirementList = (
       queryKey: getRequirementListKey(projectId),
     }),
     queryClient.invalidateQueries({
+      queryKey: ["requirement-item-counts", projectId],
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ["requirement-workflow", projectId, "baseline-comparison"],
+    }),
+    queryClient.invalidateQueries({
       queryKey: ["requirement-document-preview", projectId],
     }),
   ]);
@@ -49,18 +55,31 @@ export const invalidateRequirementSections = (
   projectId: number,
   documentId: number,
 ) => {
-  return queryClient.invalidateQueries({
-    queryKey: getRequirementSectionListKey(projectId, documentId),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: getRequirementSectionListKey(projectId, documentId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [
+        "requirement-workflow",
+        projectId,
+        "baseline-comparison",
+        documentId,
+      ],
+    }),
+  ]);
 };
 
 export const invalidateRequirementOpenIssues = (
   queryClient: QueryClient,
   projectId: number,
 ) => {
-  return queryClient.invalidateQueries({
-    queryKey: getOpenIssueListKey(projectId),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: getOpenIssueListKey(projectId) }),
+    queryClient.invalidateQueries({
+      queryKey: ["requirement-workflow", projectId, "management"],
+    }),
+  ]);
 };
 
 export const invalidateRequirementApprovals = (
@@ -90,6 +109,18 @@ export const invalidateRequirementSummary = (
     queryKey: getRequirementSummaryKey(projectId, requirementId),
   });
 };
+
+export const invalidateRequirementDetailsWithSummary = (
+  queryClient: QueryClient,
+  projectId: number,
+  requirementId: number,
+) =>
+  Promise.all([
+    invalidateRequirementSummary(queryClient, projectId, requirementId),
+    queryClient.invalidateQueries({
+      queryKey: ["requirement-workflow", projectId, "item-states"],
+    }),
+  ]);
 
 export const invalidateRequirementCommentsWithSummary = (
   queryClient: QueryClient,

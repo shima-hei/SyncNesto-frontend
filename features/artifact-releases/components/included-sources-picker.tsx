@@ -22,11 +22,13 @@ export function IncludedSourcesPicker({
   value,
   onChange,
   disabled,
+  limit = 100,
 }: {
   projectId: number;
   value: ArtifactSource[];
   onChange: (value: ArtifactSource[]) => void;
   disabled: boolean;
+  limit?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -138,7 +140,7 @@ export function IncludedSourcesPicker({
                 }
                 disabled={
                   disabled ||
-                  (value.length >= 100 &&
+                  (value.length >= limit &&
                     !value.some(
                       (entry) =>
                         entry.kind === item.kind && entry.id === item.id,

@@ -16,12 +16,14 @@ export function RequirementVerdict({
   version,
   projectId,
   returnTo,
+  showLinks = true,
 }: {
   query: ReturnType<typeof useRequirementVerdicts>;
   requirementId: number;
   version: number;
   projectId: number;
   returnTo: string;
+  showLinks?: boolean;
 }) {
   if (query.data?.state === "disabled") return null;
   if (query.isPending)
@@ -58,12 +60,12 @@ export function RequirementVerdict({
           ? "合格記録・添付未再照合"
           : (verdictLabels[state] ?? state)}
       </Badge>
-      {row.plan_version ? (
+      {showLinks && row.plan_version ? (
         <span className="text-xs text-muted-foreground">
           確認表 {row.plan_version}版
         </span>
       ) : null}
-      {row.request_id ? (
+      {showLinks && row.request_id ? (
         <Link
           className="text-xs underline"
           href={verdictHref(projectId, row.request_id, returnTo)}

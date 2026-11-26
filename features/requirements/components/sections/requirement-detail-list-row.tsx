@@ -45,7 +45,7 @@ export function RequirementDetailListRow({
   return (
     <div
       className={cn(
-        "@container/detail-row grid min-w-0 scroll-mt-24 gap-2 border-t px-2 py-2 first:border-t-0 @min-[40rem]/detail-group:grid-cols-[minmax(0,1fr)_auto] @min-[40rem]/detail-group:items-center",
+        "group @container/detail-row grid min-w-0 scroll-mt-24 gap-2 border-t px-2 py-2 first:border-t-0 @min-[40rem]/detail-group:grid-cols-[minmax(0,1fr)_auto] @min-[40rem]/detail-group:items-center",
         ROW_TONE_CLASSES[resolvedTone],
       )}
       data-requirement-comment-anchor={getRequirementCommentAnchorKey(
@@ -163,7 +163,7 @@ export function CommentTargetButton({
       type="button"
       variant="ghost"
       size="sm"
-      className="h-7 px-2"
+      className="h-7 px-2 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100"
       onClick={() =>
         onSelectCommentAnchor(createRequirementDetailCommentAnchor(detail))
       }

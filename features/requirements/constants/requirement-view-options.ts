@@ -1,6 +1,7 @@
 export const ALL_REQUIREMENT_STATUSES = "all";
 export const ALL_REQUIREMENT_TYPES = "all";
 export const ALL_REQUIREMENT_PRIORITIES = "all";
+export const UNCLASSIFIED_SECTION_ID = 0;
 
 export const REQUIREMENT_SORT_OPTIONS = [
   { value: "updated_desc", label: "更新日時 新しい順" },

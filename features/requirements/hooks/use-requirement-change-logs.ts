@@ -5,6 +5,7 @@ import { useListRequirementChangeLogsProjectsProjectIdChangeLogsGet } from "@/li
 type UseRequirementChangeLogsOptions = {
   targetType?: string;
   targetId?: number;
+  page?: number;
 };
 
 export function useRequirementChangeLogs(
@@ -19,7 +20,7 @@ export function useRequirementChangeLogs(
         document_id: documentId,
         target_type: options.targetType,
         target_id: options.targetId,
-        page: 1,
+        page: options.page ?? 1,
         page_size: 20,
       },
       {
@@ -31,7 +32,10 @@ export function useRequirementChangeLogs(
 
   return {
     changeLogs: changeLogsQuery.data?.items ?? [],
+    total: changeLogsQuery.data?.total ?? 0,
     isLoading: changeLogsQuery.isLoading,
+    isFetching: changeLogsQuery.isFetching,
     error: changeLogsQuery.error,
+    refetch: changeLogsQuery.refetch,
   };
 }

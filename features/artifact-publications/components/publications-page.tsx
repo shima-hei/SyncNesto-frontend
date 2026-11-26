@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon, EyeIcon } from "lucide-react";
 import { PageHeader } from "@/components/shared/layout/page-header";
@@ -49,6 +50,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { canApproveRequirement } from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import {
   listReleases,
@@ -72,18 +74,32 @@ import {
   readRelease,
 } from "../lib/api";
 import { PublicationContent } from "./publication-content";
+import { RequirementPublicationPrepare } from "./requirement-publication-prepare";
 import {
   PublicationAccessPanel,
   publicationStateLabel,
 } from "./access-controls";
 
 import { GuestApprovalRequestPanel } from "@/features/guest-fixed-approvals/components/request-panel";
+import { GuestRequirementReviewRequest } from "@/features/guest-requirement-reviews/components/request-panel";
+import { RequirementFormalApprovalDialog } from "@/features/requirements/components/forms/requirement-formal-approval-dialog";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function PublicationsPage({ projectId }: { projectId: number }) {
   const { user } = useAuth();
   const role = useCurrentProjectRole(projectId);
+  const router = useRouter();
+  const params = useSearchParams();
+  const [documentId] = useUrlFilterState("document", 0);
+  const [documentVersion] = useUrlFilterState("version", 0);
+  const [itemId] = useUrlFilterState("item", 0);
+  const [itemCode] = useUrlFilterState("itemCode", "");
+  const [publicationId] = useUrlFilterState("publication", "");
+  const fromDocument = documentId > 0 && documentVersion > 0;
+  const returnHref = fromDocument
+    ? `/projects/joined/${projectId}/requirements/${documentId}${itemId ? `/items/${itemId}` : ""}`
+    : `/projects/joined/${projectId}/artifact-releases`;
   const allowed =
     user?.user_type === "internal" &&
     !user.demo &&
@@ -93,13 +109,16 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <PageHeader
-        title="公開内容を確認"
-        description="相手へ渡す本文と添付の構成を、固定版から準備します。"
+        title={fromDocument ? "要件定義書の外部共有" : "公開内容を確認"}
         actions={
           <Button asChild variant="outline">
-            <Link href={`/projects/joined/${projectId}/artifact-releases`}>
+            <Link href={returnHref}>
               <ArrowLeftIcon data-icon="inline-start" />
-              固定版一覧へ戻る
+              {fromDocument
+                ? itemId
+                  ? "要件に戻る"
+                  : "要件定義書に戻る"
+                : "版一覧へ戻る"}
             </Link>
           </Button>
         }
@@ -118,6 +137,29 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
             現在のプロジェクト権限を確認してください。
           </AlertDescription>
         </Alert>
+      ) : fromDocument ? (
+        uuid.test(publicationId) ? (
+          <Detail
+            key={publicationId}
+            projectId={projectId}
+            identity={publicationId}
+            initialRequirementCode={itemCode}
+          />
+        ) : (
+          <RequirementPublicationPrepare
+            key={`${documentId}:${documentVersion}`}
+            projectId={projectId}
+            documentId={documentId}
+            version={documentVersion}
+            onPrepared={(id) => {
+              const query = new URLSearchParams(params.toString());
+              query.set("publication", id);
+              router.replace(
+                `/projects/joined/${projectId}/artifact-publications?${query}`,
+              );
+            }}
+          />
+        )
       ) : (
         <Workspace projectId={projectId} />
       )}
@@ -490,10 +532,13 @@ function Workspace({ projectId }: { projectId: number }) {
 function Detail({
   projectId,
   identity,
+  initialRequirementCode,
 }: {
   projectId: number;
   identity: string;
+  initialRequirementCode?: string;
 }) {
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
   const [fullContentReady, setFullContentReady] = useState(false);
   const [publicNodes, setPublicNodes] = useState<PublicationNodeRead[]>([]);
   const query = useQuery({
@@ -501,6 +546,13 @@ function Detail({
     queryFn: () => readPublication(projectId, identity),
     retry: false,
     gcTime: 0,
+  });
+  const originId = query.data?.internal_origin.release_id ?? "";
+  const originRelease = useQuery({
+    queryKey: ["publication-source", projectId, originId],
+    queryFn: () => readRelease(projectId, originId),
+    enabled: query.data?.state === "published" && Boolean(originId),
+    retry: false,
   });
   if (query.isPending) return <Skeleton className="h-40" />;
   if (query.error)
@@ -584,19 +636,57 @@ function Detail({
           目的と受け入れ条件、設計・テストとの対応、機密情報の有無を確認してください。修正が必要なら元の内容から新しい固定版を作ります。確認後に相手と期限を指定します。
         </AlertDescription>
       </Alert>
-      <GuestApprovalRequestPanel
-        projectId={projectId}
-        publicationId={identity}
-        nodes={publicNodes}
-        enabled={query.data.state === "published"}
-        ready={fullContentReady}
-      />
       <PublicationAccessPanel
         key={`${identity}:access`}
         projectId={projectId}
         publication={query.data}
         fullContentReady={fullContentReady}
       />
+      {query.data.state === "published" &&
+      originRelease.data?.source_kind === "requirement_document" &&
+      originRelease.data.sources.length <= 21 &&
+      originRelease.data.sources
+        .slice(1)
+        .every((source) =>
+          ["specification", "test_design"].includes(source.kind),
+        ) ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <GuestRequirementReviewRequest
+            projectId={projectId}
+            publicationId={identity}
+            nodes={publicNodes}
+            ready={fullContentReady}
+            initialRequirementCode={initialRequirementCode}
+          />
+          {originRelease.data.projection_version === "internal-preview-v2" ? (
+            <RequirementFormalApprovalDialog
+              projectId={projectId}
+              documentId={originRelease.data.source_id}
+              documentVersion={originRelease.data.source_version}
+              disabled={!fullContentReady}
+              canRecordException={canApproveRequirement(currentProjectRole)}
+              publication={{
+                id: identity,
+                publicDigest: content.public_digest,
+                nodes: publicNodes,
+              }}
+            />
+          ) : null}
+        </div>
+      ) : null}
+      {publicNodes.some((node) =>
+        ["specification", "test_design"].includes(node.node_kind),
+      ) ? (
+        <GuestApprovalRequestPanel
+          projectId={projectId}
+          publicationId={identity}
+          nodes={publicNodes.filter((node) =>
+            ["specification", "test_design"].includes(node.node_kind),
+          )}
+          enabled={query.data.state === "published"}
+          ready={fullContentReady}
+        />
+      ) : null}
       <Button asChild variant="outline">
         <Link
           href={`/projects/joined/${projectId}/artifact-releases?release=${origin.release_id}`}

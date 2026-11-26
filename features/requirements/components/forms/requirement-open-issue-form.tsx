@@ -53,6 +53,7 @@ const defaultOpenIssueValues: RequirementOpenIssueFormValues = {
   dueDate: "",
   status: "open",
   resolution: "",
+  blocksApproval: true,
   reason: "",
 };
 
@@ -143,6 +144,21 @@ export function RequirementOpenIssueForm({
             {errors.status ? <FieldError>{errors.status}</FieldError> : null}
           </Field>
         </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={values.blocksApproval}
+            disabled={isPending}
+            onChange={(event) =>
+              setValues({
+                ...values,
+                blocksApproval: event.currentTarget.checked,
+              })
+            }
+          />
+          正式承認までに解決が必要
+        </label>
 
         <Field data-invalid={errors.title ? true : undefined}>
           <FieldLabel>論点</FieldLabel>

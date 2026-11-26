@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,17 +35,22 @@ import {
 } from "@/features/artifact-releases/lib/api";
 import { listPlans, createPlan } from "../lib/api";
 import { verificationHref } from "../lib/navigation";
+const VerificationPage = dynamic(() =>
+  import("./verification-page").then((module) => module.VerificationPage),
+);
 
 export function VerificationEntry({
   projectId,
   requirementId,
   version,
   from,
+  embedded = false,
 }: {
   projectId: number;
   requirementId: number;
   version: number;
   from?: string;
+  embedded?: boolean;
 }) {
   const { user } = useAuth();
   const { tenant } = useTenant();
@@ -53,6 +59,8 @@ export function VerificationEntry({
   const params = useSearchParams();
   const origin = from ?? `${pathname}${params.size ? `?${params}` : ""}`;
   const [cursor, setCursor] = useState<string | undefined>();
+  const [selectedPlan, setSelectedPlan] = useState<string>();
+  const cache = useQueryClient();
   const [preview, setPreview] = useState<ArtifactPreview | null>(null);
   const request = useRef<{ artifact: string; plan: string } | null>(null);
   const enabled = Boolean(
@@ -115,8 +123,24 @@ export function VerificationEntry({
         request_id: request.current.plan,
       });
     },
-    onSuccess: (plan) =>
-      router.push(verificationHref(projectId, plan.id, origin)),
+    onSuccess: (plan) => {
+      if (embedded) {
+        setPreview(null);
+        request.current = null;
+        setSelectedPlan(plan.id);
+        void cache.invalidateQueries({
+          queryKey: [
+            "verification-plans",
+            tenant?.id,
+            user?.id,
+            projectId,
+            requirementId,
+          ],
+        });
+      } else {
+        router.push(verificationHref(projectId, plan.id, origin));
+      }
+    },
   });
   if (!enabled) return null;
   if (query.isPending)
@@ -128,7 +152,12 @@ export function VerificationEntry({
         onRetry={() => void query.refetch()}
       />
     );
-  if (!query.data.enabled) return null;
+  if (!query.data.enabled)
+    return embedded ? (
+      <p className="text-sm text-muted-foreground">
+        この案件では要件の検証を利用できません。
+      </p>
+    ) : null;
   if (query.data.state === "restricted")
     return (
       <Alert>
@@ -138,27 +167,56 @@ export function VerificationEntry({
         </AlertDescription>
       </Alert>
     );
+  const planId = selectedPlan ?? query.data.items?.[0]?.id;
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>要件を確かめる準備</CardTitle>
+    <Card
+      className={
+        embedded
+          ? "gap-3 overflow-visible rounded-none border-t bg-transparent py-3 ring-0"
+          : undefined
+      }
+    >
+      <CardHeader className={embedded ? "px-0" : undefined}>
+        <CardTitle>確認表</CardTitle>
         <CardDescription>
           固定した要件に確認項目を結び付けます。確認表の保存は要件の合格判定にはなりません。
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {(query.data.items ?? []).map((plan) => (
-          <Button
-            key={plan.id}
-            variant="outline"
-            asChild
-            className="h-auto justify-start whitespace-normal"
-          >
-            <Link href={verificationHref(projectId, plan.id, origin)}>
-              {plan.title} · 確認表 {plan.current_version}版
-            </Link>
-          </Button>
-        ))}
+      <CardContent
+        className={
+          embedded ? "flex flex-col gap-3 px-0" : "flex flex-col gap-3"
+        }
+      >
+        {embedded && (query.data.items?.length ?? 0) > 1 ? (
+          <label className="grid gap-2 text-sm">
+            確認表を選択
+            <select
+              value={planId}
+              onChange={(event) => setSelectedPlan(event.currentTarget.value)}
+              className="min-w-0 rounded-md border bg-background px-2 py-1.5"
+            >
+              {query.data.items?.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.title} ・ {plan.current_version}版
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {!embedded
+          ? (query.data.items ?? []).map((plan) => (
+              <Button
+                key={plan.id}
+                variant="outline"
+                asChild
+                className="h-auto justify-start whitespace-normal"
+              >
+                <Link href={verificationHref(projectId, plan.id, origin)}>
+                  {plan.title} · 確認表 {plan.current_version}版
+                </Link>
+              </Button>
+            ))
+          : null}
         {!query.data.items?.length ? (
           <p className="text-sm text-muted-foreground">
             確認表はまだありません。必要な項目から追加できます。
@@ -167,12 +225,21 @@ export function VerificationEntry({
         {query.data.next_cursor ? (
           <Button
             variant="ghost"
-            onClick={() => setCursor(query.data.next_cursor ?? undefined)}
+            onClick={() => {
+              setSelectedPlan(undefined);
+              setCursor(query.data.next_cursor ?? undefined);
+            }}
           >
             次の確認表
           </Button>
         ) : cursor ? (
-          <Button variant="ghost" onClick={() => setCursor(undefined)}>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSelectedPlan(undefined);
+              setCursor(undefined);
+            }}
+          >
             最初の確認表へ
           </Button>
         ) : null}
@@ -187,6 +254,17 @@ export function VerificationEntry({
         ) : null}
         <FormApiError error={prepare.error} />
       </CardContent>
+      {embedded && planId ? (
+        <CardContent className="px-0">
+          <VerificationPage
+            key={planId}
+            projectId={projectId}
+            planId={planId}
+            from={origin}
+            embedded
+          />
+        </CardContent>
+      ) : null}
       <Dialog
         open={Boolean(preview)}
         onOpenChange={(open) => {

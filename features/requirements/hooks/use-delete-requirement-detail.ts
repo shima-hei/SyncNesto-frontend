@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useDeleteRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsDetailIdDelete } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
-import { invalidateRequirementSummary } from "../lib/requirement-cache";
+import { invalidateRequirementDetailsWithSummary } from "../lib/requirement-cache";
 
 export function useDeleteRequirementDetail(
   projectId: number,
@@ -18,7 +18,7 @@ export function useDeleteRequirementDetail(
       {
         mutation: {
           onSuccess: async () => {
-            await invalidateRequirementSummary(
+            await invalidateRequirementDetailsWithSummary(
               queryClient,
               projectId,
               requirementId,

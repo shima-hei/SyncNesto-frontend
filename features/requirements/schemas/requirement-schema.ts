@@ -116,6 +116,7 @@ export const requirementOpenIssueSchema = z.object({
   dueDate: z.string(),
   status: z.string().min(1, VALIDATION_MESSAGES.selectRequired("ステータス")),
   resolution: z.string(),
+  blocksApproval: z.boolean(),
   reason: z.string(),
 });
 

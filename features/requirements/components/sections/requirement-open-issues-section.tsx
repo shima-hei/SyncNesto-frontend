@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowUpRightIcon, EditIcon, Trash2Icon, XIcon } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  ArrowUpRightIcon,
+  ChevronDownIcon,
+  EditIcon,
+  PlusIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
+import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { RequirementOpenIssueRead } from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { formatDate } from "@/lib/format/date";
@@ -32,6 +47,8 @@ type RequirementOpenIssuesSectionProps = {
   canUpdate: boolean;
   canDelete: boolean;
   canComment: boolean;
+  resolved?: boolean;
+  onCreated?: () => void;
 };
 
 export function RequirementOpenIssuesSection({
@@ -41,13 +58,28 @@ export function RequirementOpenIssuesSection({
   canUpdate,
   canDelete,
   canComment,
+  resolved,
+  onCreated,
 }: RequirementOpenIssuesSectionProps) {
   const [commentTargets, setCommentTargets] = useState<number[]>([]);
   const [deleteTarget, setDeleteTarget] =
     useState<RequirementOpenIssueRead | null>(null);
   const [editingTarget, setEditingTarget] =
     useState<RequirementOpenIssueRead | null>(null);
-  const { openIssues, isLoading } = useOpenIssues(projectId, documentId);
+  const [createOpen, setCreateOpen] = useState(false);
+  const createButton = useRef<HTMLButtonElement>(null);
+  const [requestedPages, setRequestedPages] = useState<Record<string, number>>(
+    {},
+  );
+  const pageKey = String(resolved);
+  const page = requestedPages[pageKey] ?? 1;
+  const pageSize = 10;
+  const { openIssues, isLoading, isFetching, error, total, refetch } =
+    useOpenIssues(projectId, documentId, { page, pageSize, resolved });
+  const lastPage = Math.max(1, Math.ceil((total ?? 0) / pageSize));
+  if (total !== undefined && page > lastPage) {
+    setRequestedPages({ ...requestedPages, [pageKey]: lastPage });
+  }
   const {
     createOpenIssue,
     isPending: isCreatePending,
@@ -64,45 +96,94 @@ export function RequirementOpenIssuesSection({
   } = useUpdateOpenIssue(projectId);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>未決事項</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <section aria-label="未決事項" className="grid min-w-0 gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">未決事項</h3>
         {canCreate ? (
-          <RequirementOpenIssueForm
-            projectId={projectId}
-            documentId={documentId}
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={createOpenIssue}
-          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            ref={createButton}
+            onClick={() => setCreateOpen(true)}
+          >
+            <PlusIcon data-icon="inline-start" />
+            未決事項を追加
+          </Button>
+        ) : null}
+      </div>
+      <div className="flex min-w-0 flex-col gap-3">
+        {canCreate ? (
+          <Dialog
+            open={createOpen}
+            onOpenChange={(open) => {
+              if (!isCreatePending) setCreateOpen(open);
+            }}
+          >
+            <DialogContent
+              className="max-h-[85dvh] overflow-y-auto sm:max-w-xl"
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                createButton.current?.focus();
+              }}
+            >
+              <DialogHeader>
+                <DialogTitle>未決事項を追加</DialogTitle>
+                <DialogDescription>
+                  決める必要があることを記録します。
+                </DialogDescription>
+              </DialogHeader>
+              <RequirementOpenIssueForm
+                projectId={projectId}
+                documentId={documentId}
+                isPending={isCreatePending}
+                error={createError}
+                onSubmit={async (values) => {
+                  await createOpenIssue(values);
+                  setCreateOpen(false);
+                  onCreated?.();
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         ) : null}
 
         {isLoading ? (
           <RequirementSectionSkeleton />
+        ) : error ? (
+          <DataLoadError
+            resourceName="未決事項"
+            onRetry={() => void refetch()}
+            isRetrying={isFetching}
+          />
         ) : openIssues.length ? (
-          <div className="flex flex-col gap-3">
+          <div className="divide-y border-y">
             {openIssues.map((issue) => (
-              <div
+              <details
                 key={issue.id}
                 data-open-issue-id={issue.id}
-                className="rounded-lg border p-3"
+                className="group min-w-0"
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 rounded-sm py-3 text-sm marker:content-none hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                  <span className="text-xs text-muted-foreground">
+                    {issue.issue_code}
+                  </span>
+                  <span
+                    data-open-issue-field="title"
+                    className="min-w-0 flex-1 scroll-mt-24 font-medium [overflow-wrap:anywhere]"
+                  >
+                    {issue.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {getRequirementOpenIssueStatusLabel(issue.status)}
+                  </span>
+                  <ChevronDownIcon
+                    className="size-4 text-muted-foreground group-open:rotate-180"
+                    aria-hidden
+                  />
+                </summary>
+                <div className="flex flex-col gap-3 pb-3 md:flex-row md:items-start md:justify-between">
                   <div className="flex min-w-0 flex-col gap-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{issue.issue_code}</span>
-                      <span
-                        data-open-issue-field="title"
-                        className="scroll-mt-24 text-sm"
-                      >
-                        {issue.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {getRequirementOpenIssueStatusLabel(issue.status)}
-                      </span>
-                    </div>
                     <p
                       data-open-issue-field="description"
                       className="scroll-mt-24 whitespace-pre-wrap text-sm text-muted-foreground"
@@ -117,6 +198,12 @@ export function RequirementOpenIssuesSection({
                     <span className="text-xs text-muted-foreground">
                       関連要件ID: {issue.related_requirement_id ?? "-"}
                     </span>
+                    {issue.blocks_approval !== false &&
+                    issue.status !== "resolved" ? (
+                      <span className="text-xs text-[var(--status-warning-fg)]">
+                        正式承認までに対応必須
+                      </span>
+                    ) : null}
                     {issue.resolution ? (
                       <p
                         data-open-issue-field="resolution"
@@ -239,7 +326,7 @@ export function RequirementOpenIssuesSection({
                     />
                   </div>
                 ) : null}
-              </div>
+              </details>
             ))}
           </div>
         ) : (
@@ -247,6 +334,18 @@ export function RequirementOpenIssuesSection({
             未決事項はありません。
           </p>
         )}
+        {total !== undefined && total > pageSize ? (
+          <DataPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            currentCount={openIssues.length}
+            isFetching={isFetching}
+            onPageChange={(value) =>
+              setRequestedPages({ ...requestedPages, [pageKey]: value })
+            }
+          />
+        ) : null}
 
         <ResourceDeleteDialog
           open={Boolean(deleteTarget)}
@@ -263,8 +362,8 @@ export function RequirementOpenIssuesSection({
             setDeleteTarget(null);
           }}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
@@ -283,6 +382,7 @@ function toOpenIssueFormValues(
     dueDate: issue.due_date ?? "",
     status: issue.status ?? "open",
     resolution: issue.resolution ?? "",
+    blocksApproval: issue.blocks_approval ?? true,
     reason: "",
   };
 }

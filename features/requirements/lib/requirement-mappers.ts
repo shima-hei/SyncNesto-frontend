@@ -290,6 +290,7 @@ export const toRequirementOpenIssueCreate = (
     due_date: values.dueDate || null,
     status: values.status,
     resolution: values.resolution || null,
+    blocks_approval: values.blocksApproval,
   };
 };
 
@@ -307,6 +308,7 @@ export const toRequirementOpenIssueUpdate = (
     due_date: values.dueDate || null,
     status: values.status,
     resolution: values.resolution || null,
+    blocks_approval: values.blocksApproval,
     reason: values.reason || null,
   };
 };

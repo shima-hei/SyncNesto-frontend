@@ -182,6 +182,22 @@ export function ProjectForm({
             </Field>
           </div>
 
+          {mode === "update" ? (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={values.requirementReviewRequired}
+                disabled={isPending}
+                onChange={(event) =>
+                  updateValue(
+                    "requirementReviewRequired",
+                    event.currentTarget.checked,
+                  )
+                }
+              />
+              要件定義書の正式承認前にレビューを必須にする
+            </label>
+          ) : null}
           <FormApiError error={error} />
 
           <FormSubmitButton isPending={isPending}>

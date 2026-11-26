@@ -7,14 +7,32 @@ import { useProjectObjectives } from "@/features/projects/hooks/use-project-obje
 
 import { useState } from "react";
 import Link from "next/link";
-import { DownloadIcon, EditIcon, Trash2Icon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArrowLeftIcon,
+  DownloadIcon,
+  EditIcon,
+  EllipsisIcon,
+  FileTextIcon,
+  Trash2Icon,
+} from "lucide-react";
 
 import { PageHeader } from "@/components/shared/layout/page-header";
-import { ArtifactReleaseLink } from "@/features/artifact-releases/components/artifact-release-link";
+import { requirementPublicationHref } from "@/features/artifact-publications/lib/requirement-publication-navigation";
+import { artifactReleasesHref } from "@/features/artifact-releases/lib/navigation";
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  canApproveRequirement,
   canCreateRequirement,
   canCommentRequirement,
   canDeleteRequirement,
@@ -30,18 +48,24 @@ import { useExportRequirementDocument } from "../../hooks/use-export-requirement
 import { useRequirementDocument } from "../../hooks/use-requirement-document";
 import { useRequirementSections } from "../../hooks/use-requirement-sections";
 import { RequirementDocumentExportDialog } from "../forms/requirement-document-export-dialog";
+import { RequirementReviewRequestDialog } from "../forms/requirement-review-request-dialog";
+import { RequirementFormalApprovalDialog } from "../forms/requirement-formal-approval-dialog";
 import { RequirementApprovalsSection } from "../sections/requirement-approvals-section";
-import { RequirementChangeLogsSection } from "../sections/requirement-change-logs-section";
 import { RequirementOpenIssuesSection } from "../sections/requirement-open-issues-section";
 import { RequirementDocumentDetailSkeleton } from "./document-detail/requirement-document-detail-skeleton";
 import { RequirementDocumentOverview } from "./document-detail/requirement-document-overview";
 import { RequirementDocumentRequirementsTab } from "./document-detail/requirement-document-requirements-tab";
+import { RequirementReviewManagement } from "./document-detail/requirement-review-management";
+import { RequirementDocumentHistory } from "./document-detail/requirement-document-history";
 import { useSectionEdits } from "../../hooks/use-section-edits";
 import { SectionEditNotice } from "./document-detail/section-edit-notice";
 import { RequirementDocumentFullPreview } from "./document-detail/requirement-document-full-preview";
 import { useFullPreviewNavigation } from "../../hooks/use-full-preview-navigation";
 import { RequirementWorkbenchProvider } from "../../hooks/use-workbench-state";
 import { useWorkbenchReturnNavigation } from "../../hooks/use-workbench-return-navigation";
+import { getRequirementDocumentStatusLabel } from "../../constants/requirement-options";
+import { UNCLASSIFIED_SECTION_ID } from "../../constants/requirement-view-options";
+import { formatDateTime } from "@/lib/format/date";
 
 type RequirementDocumentDetailPageProps = {
   projectId: number;
@@ -96,6 +120,8 @@ function RequirementDocumentDetailContent({
   const [exportPreview, setExportPreview] =
     useState<RequirementDocumentExportRead | null>(null);
   const { currentProjectRole } = useCurrentProjectRole(projectId);
+  const { user } = useAuth();
+  const internal = user?.user_type === "internal" && !user.demo;
   const { document, isLoading, error } = useRequirementDocument(
     projectId,
     documentId,
@@ -104,14 +130,13 @@ function RequirementDocumentDetailContent({
     projectId,
     documentId,
   );
-  const [selectedSectionQuery, setSelectedSectionId] = useUrlFilterState<
-    number | null
-  >("sectionId", null);
-  const selectedSectionId = sections.some(
-    (section) => section.id === selectedSectionQuery,
-  )
-    ? selectedSectionQuery
-    : null;
+  const [sectionFilter, setSectionFilter] = useUrlFilterState("sectionId", "");
+  const sectionNumber = Number(sectionFilter);
+  const selectedSectionId =
+    sectionFilter === "unclassified"
+      ? UNCLASSIFIED_SECTION_ID
+      : (sections.find((section) => section.id === sectionNumber)?.id ?? null);
+  const [, setRequirementPage] = useUrlFilterState("page", 1);
   const createRequirementPath = selectedSectionId
     ? `/projects/joined/${projectId}/requirements/${documentId}/items/new?sectionId=${selectedSectionId}`
     : `/projects/joined/${projectId}/requirements/${documentId}/items/new`;
@@ -119,6 +144,22 @@ function RequirementDocumentDetailContent({
     useDeleteRequirementDocument(projectId, documentId);
   const { exportRequirementDocument, isPending: isExportPending } =
     useExportRequirementDocument(projectId, documentId);
+  const visibleTab =
+    activeTab === "preview"
+      ? "overview"
+      : activeTab === "issues"
+        ? "approvals"
+        : activeTab;
+  const openFullPreview = () => {
+    capturePreviewReturn();
+    setActiveTab("preview");
+  };
+  const issuePermissions = {
+    canComment: canCommentRequirement(currentProjectRole),
+    canCreate: canCreateRequirement(currentProjectRole),
+    canUpdate: canUpdateRequirement(currentProjectRole),
+    canDelete: canDeleteRequirement(currentProjectRole),
+  };
 
   if (isLoading) {
     return <RequirementDocumentDetailSkeleton />;
@@ -133,64 +174,128 @@ function RequirementDocumentDetailContent({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-4">
+      <Link
+        href={listHref}
+        className="inline-flex min-h-8 w-fit items-center gap-2 rounded-sm text-sm text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+      >
+        <ArrowLeftIcon className="size-4" aria-hidden="true" />
+        要件定義書
+      </Link>
       <PageHeader
         title={document.title}
-        description={document.document_code}
+        description={[
+          document.document_code,
+          document.status && getRequirementDocumentStatusLabel(document.status),
+          `更新 ${formatDateTime(document.updated_at)}`,
+        ]
+          .filter(Boolean)
+          .join(" ・ ")}
         actions={
           <>
-            <Button variant="outline" asChild>
-              <Link href={listHref}>一覧へ戻る</Link>
-            </Button>
-            <ArtifactReleaseLink
-              projectId={projectId}
-              kind="requirement_document"
-              sourceId={documentId}
-              version={document.version}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isExportPending || unsaved.length > 0}
-              title={
-                unsaved.length
-                  ? "章本文を保存してから出力してください"
-                  : undefined
-              }
-              onClick={() => setExportDialogOpen(true)}
-            >
-              <DownloadIcon data-icon="inline-start" />
-              出力
-            </Button>
-            {canCreateRequirement(currentProjectRole) && !isSectionsLoading ? (
-              <Button
-                asChild
-                variant={activeTab === "requirements" ? "outline" : "default"}
-              >
+            {internal &&
+            canReviewRequirement(currentProjectRole) &&
+            canUpdateRequirement(currentProjectRole) ? (
+              <>
+                <RequirementReviewRequestDialog
+                  projectId={projectId}
+                  documentId={documentId}
+                  documentVersion={document.version}
+                  sections={sections}
+                  externalHref={requirementPublicationHref(
+                    projectId,
+                    documentId,
+                    document.version,
+                  )}
+                  disabled={isSectionsLoading || unsaved.length > 0}
+                  onRequested={() => setActiveTab("approvals")}
+                />
+                <RequirementFormalApprovalDialog
+                  projectId={projectId}
+                  documentId={documentId}
+                  documentVersion={document.version}
+                  externalHref={requirementPublicationHref(
+                    projectId,
+                    documentId,
+                    document.version,
+                  )}
+                  disabled={isSectionsLoading || unsaved.length > 0}
+                  canRecordException={canApproveRequirement(currentProjectRole)}
+                  onRequested={() => setActiveTab("approvals")}
+                />
+              </>
+            ) : null}
+            {visibleTab === "requirements" &&
+            canCreateRequirement(currentProjectRole) &&
+            !isSectionsLoading ? (
+              <Button asChild>
                 <Link href={createRequirementPath}>要件を追加</Link>
               </Button>
             ) : null}
-            {canUpdateRequirement(currentProjectRole) ? (
-              <Button asChild variant="outline">
-                <Link
-                  href={`/projects/joined/${projectId}/requirements/${documentId}/edit`}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="定義書のその他の操作"
                 >
-                  <EditIcon data-icon="inline-start" />
-                  定義書の情報を編集
-                </Link>
-              </Button>
-            ) : null}
-            {canDeleteRequirement(currentProjectRole) ? (
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={unsaved.length > 0}
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2Icon data-icon="inline-start" />
-                削除
-              </Button>
-            ) : null}
+                  <EllipsisIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuItem onSelect={openFullPreview}>
+                  <FileTextIcon />
+                  全文プレビュー
+                </DropdownMenuItem>
+                {internal && canReviewRequirement(currentProjectRole) ? (
+                  <DropdownMenuItem asChild disabled={unsaved.length > 0}>
+                    <Link
+                      href={artifactReleasesHref(
+                        projectId,
+                        "requirement_document",
+                        documentId,
+                        document.version,
+                        `/projects/joined/${projectId}/requirements/${documentId}?tab=history`,
+                      )}
+                    >
+                      <ArchiveIcon />
+                      版を保存
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuItem
+                  disabled={isExportPending || unsaved.length > 0}
+                  onSelect={() => setExportDialogOpen(true)}
+                >
+                  <DownloadIcon />
+                  出力
+                </DropdownMenuItem>
+                {canUpdateRequirement(currentProjectRole) ? (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href={`/projects/joined/${projectId}/requirements/${documentId}/edit`}
+                    >
+                      <EditIcon />
+                      定義書の情報を編集
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+                {canDeleteRequirement(currentProjectRole) ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={unsaved.length > 0}
+                      onSelect={() => setDeleteDialogOpen(true)}
+                    >
+                      <Trash2Icon />
+                      削除
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />
@@ -202,48 +307,62 @@ function RequirementDocumentDetailContent({
         </p>
       ) : null}
       <Tabs
-        value={activeTab}
-        onValueChange={(value) => {
-          if (value === "preview") capturePreviewReturn();
-          setActiveTab(value);
-        }}
-        className="gap-4"
+        value={visibleTab}
+        activationMode="manual"
+        onValueChange={setActiveTab}
+        className="min-w-0 gap-4"
       >
         <TabsList
           variant="line"
+          aria-label="要件定義書の表示"
           className="w-full min-h-12 justify-start overflow-x-auto border-b group-data-horizontal/tabs:h-auto"
         >
-          <TabsTrigger className="flex-none px-4 py-2" value="overview">
-            文書として読む
-          </TabsTrigger>
-          <TabsTrigger className="flex-none px-4 py-2" value="requirements">
-            要件を書く・整理する
-          </TabsTrigger>
           <TabsTrigger
-            className="flex-none px-4 py-2"
-            value="preview"
+            className="flex-none px-3 py-2"
+            value="overview"
             data-full-preview-trigger
           >
-            全文プレビュー
+            本文
           </TabsTrigger>
-          <TabsTrigger className="flex-none px-4 py-2" value="issues">
-            未決事項
+          <TabsTrigger className="flex-none px-3 py-2" value="requirements">
+            要件一覧
           </TabsTrigger>
-          <TabsTrigger className="flex-none px-4 py-2" value="approvals">
-            承認
+          <TabsTrigger className="flex-none px-3 py-2" value="approvals">
+            レビュー・合意
           </TabsTrigger>
-          <TabsTrigger className="flex-none px-4 py-2" value="history">
+          <TabsTrigger className="flex-none px-3 py-2" value="history">
             履歴
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <RequirementDocumentOverview
-            projectId={projectId}
-            documentId={documentId}
-            document={document}
-            canComment={canCommentRequirement(currentProjectRole)}
-          />
+          {activeTab === "preview" ? (
+            <div className="flex flex-col gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="self-start"
+                onClick={() => setActiveTab("overview")}
+              >
+                <ArrowLeftIcon data-icon="inline-start" />
+                本文に戻る
+              </Button>
+              <RequirementDocumentFullPreview
+                projectId={projectId}
+                document={document}
+                onReturn={resumeFromPreview}
+              />
+            </div>
+          ) : (
+            <RequirementDocumentOverview
+              projectId={projectId}
+              documentId={documentId}
+              document={document}
+              canComment={canCommentRequirement(currentProjectRole)}
+              canCreate={canCreateRequirement(currentProjectRole)}
+              canUpdate={canUpdateRequirement(currentProjectRole)}
+            />
+          )}
         </TabsContent>
 
         <TabsContent
@@ -266,7 +385,14 @@ function RequirementDocumentDetailContent({
               projectId={projectId}
               documentId={documentId}
               selectedSectionId={selectedSectionId}
-              onSelectSection={(sectionId) => setSelectedSectionId(sectionId)}
+              onSelectSection={(sectionId) => {
+                setRequirementPage(1);
+                setSectionFilter(
+                  sectionId === UNCLASSIFIED_SECTION_ID
+                    ? "unclassified"
+                    : (sectionId?.toString() ?? ""),
+                );
+              }}
               canCreate={canCreateRequirement(currentProjectRole)}
               canUpdate={canUpdateRequirement(currentProjectRole)}
               canComment={canCommentRequirement(currentProjectRole)}
@@ -275,42 +401,41 @@ function RequirementDocumentDetailContent({
           </div>
         </TabsContent>
 
-        <TabsContent value="preview">
-          <RequirementDocumentFullPreview
+        <TabsContent value="approvals" className="flex flex-col gap-4">
+          {internal ? (
+            <RequirementReviewManagement
+              projectId={projectId}
+              documentId={documentId}
+              {...issuePermissions}
+            />
+          ) : (
+            <RequirementOpenIssuesSection
+              projectId={projectId}
+              documentId={documentId}
+              {...issuePermissions}
+            />
+          )}
+          <details className="rounded-md border px-4 py-3">
+            <summary className="cursor-pointer rounded-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
+              従来の承認
+            </summary>
+            <div className="pt-3">
+              <RequirementApprovalsSection
+                projectId={projectId}
+                targetType="document"
+                targetId={documentId}
+                title="要件定義書の従来承認"
+                canReview={canReviewRequirement(currentProjectRole)}
+              />
+            </div>
+          </details>
+        </TabsContent>
+
+        <TabsContent value="history" className="flex flex-col gap-4">
+          <RequirementDocumentHistory
             projectId={projectId}
             document={document}
-            onReturn={resumeFromPreview}
-          />
-        </TabsContent>
-
-        <TabsContent value="issues">
-          <RequirementOpenIssuesSection
-            canComment={canCommentRequirement(currentProjectRole)}
-            projectId={projectId}
-            documentId={documentId}
-            canCreate={canCreateRequirement(currentProjectRole)}
-            canUpdate={canUpdateRequirement(currentProjectRole)}
-            canDelete={canDeleteRequirement(currentProjectRole)}
-          />
-        </TabsContent>
-
-        <TabsContent value="approvals">
-          <RequirementApprovalsSection
-            projectId={projectId}
-            targetType="document"
-            targetId={documentId}
-            title="要件定義書の承認"
-            canReview={canReviewRequirement(currentProjectRole)}
-          />
-        </TabsContent>
-
-        <TabsContent value="history">
-          <RequirementChangeLogsSection
-            projectId={projectId}
-            documentId={documentId}
-            title="要件定義書の変更履歴"
-            targetType="requirement_document"
-            targetId={documentId}
+            internal={Boolean(internal)}
           />
         </TabsContent>
       </Tabs>

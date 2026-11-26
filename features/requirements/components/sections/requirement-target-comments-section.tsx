@@ -39,6 +39,7 @@ type RequirementTargetCommentsSectionProps = {
   showTargetAnchorInput?: boolean;
   className?: string;
   contentClassName?: string;
+  embedded?: boolean;
 };
 
 export function RequirementTargetCommentsSection({
@@ -54,6 +55,7 @@ export function RequirementTargetCommentsSection({
   showTargetAnchorInput = true,
   className,
   contentClassName,
+  embedded = false,
 }: RequirementTargetCommentsSectionProps) {
   const { user } = useAuth();
   const { currentProjectRole } = useCurrentProjectRole(projectId);
@@ -85,124 +87,133 @@ export function RequirementTargetCommentsSection({
     isPending: isStatePending,
   } = useToggleTargetCommentState(projectId, targetType, targetId);
 
-  return (
+  const content = (
+    <>
+      {targetLabel ? (
+        <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+          現在の対象: {targetLabel}
+        </div>
+      ) : null}
+
+      {canComment ? (
+        <RequirementTargetCommentForm
+          projectId={projectId}
+          memoryKey={`comment:create:${JSON.stringify(selectedTargetAnchor)}`}
+          key={JSON.stringify(selectedTargetAnchor)}
+          initialValues={{
+            body: "",
+            targetAnchor: selectedTargetAnchor
+              ? JSON.stringify(selectedTargetAnchor)
+              : "",
+            reason: "",
+          }}
+          showTargetAnchorInput={showTargetAnchorInput}
+          targetAnchorLabel={getRequirementCommentAnchorLabel(
+            selectedTargetAnchor,
+          )}
+          isPending={isCreatePending}
+          error={createError}
+          onSubmit={(values) => createTargetComment(values)}
+        />
+      ) : null}
+
+      <CommentThreadList
+        comments={comments}
+        isLoading={isLoading}
+        canComment={canComment}
+        emptyMessage="スレッドコメントはありません。"
+        getCommentId={(comment) => comment.id}
+        getParentCommentId={(comment) => comment.parent_comment_id}
+        canEditComment={canMutateComment}
+        canReplyComment={() => canComment}
+        loadingFallback={<RequirementSectionSkeleton />}
+        renderCommentBody={({ comment, onEdit, onReply }) => (
+          <CommentBody
+            comment={comment}
+            canComment={canComment}
+            canMutate={canMutateComment(comment)}
+            isStatePending={isStatePending}
+            onEdit={onEdit}
+            onReply={onReply}
+            onDelete={setDeleteTarget}
+            onResolve={resolveTargetComment}
+            onReopen={reopenTargetComment}
+            onTargetAnchorClick={onTargetAnchorClick}
+            getTargetAnchorStatus={getTargetAnchorStatus}
+          />
+        )}
+        renderEditForm={({ comment, onClose }) => (
+          <>
+            <CommentInlineHeader label="コメント編集" onClose={onClose} />
+            <RequirementTargetCommentForm
+              projectId={projectId}
+              memoryKey={`comment:edit:${comment.id}:${comment.version}`}
+              initialValues={{
+                body: comment.body,
+                mentions: comment.mentions,
+                targetAnchor: getRequirementCommentAnchorLabel(
+                  comment.target_anchor,
+                ),
+                reason: "",
+              }}
+              submitLabel="コメント更新"
+              resetOnSuccess={false}
+              showReason
+              isPending={isUpdatePending}
+              error={updateError}
+              onSubmit={(values) =>
+                updateTargetComment(comment.id, comment.version, values)
+              }
+              onSuccess={onClose}
+            />
+          </>
+        )}
+        renderReplyForm={({ comment, onClose }) => (
+          <>
+            <CommentInlineHeader label="返信" onClose={onClose} />
+            <RequirementTargetCommentForm
+              projectId={projectId}
+              memoryKey={`comment:reply:${comment.id}`}
+              initialValues={{ body: "", targetAnchor: "", reason: "" }}
+              submitLabel="返信追加"
+              showTargetAnchorInput={false}
+              isPending={isCreatePending}
+              error={createError}
+              onSubmit={(values) => createTargetComment(values, comment.id)}
+              onSuccess={onClose}
+            />
+          </>
+        )}
+      />
+
+      <ResourceDeleteDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        resourceName="コメント"
+        description="コメントを削除します。返信がある場合は表示に影響する可能性があります。"
+        isPending={isDeletePending}
+        onConfirm={async () => {
+          if (!deleteTarget) {
+            return;
+          }
+
+          await deleteTargetComment(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
+    </>
+  );
+  return embedded ? (
+    <div className={cn("flex flex-col gap-4", className, contentClassName)}>
+      {content}
+    </div>
+  ) : (
     <Card className={className}>
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className={cn("flex flex-col gap-4", contentClassName)}>
-        {targetLabel ? (
-          <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            現在の対象: {targetLabel}
-          </div>
-        ) : null}
-
-        {canComment ? (
-          <RequirementTargetCommentForm
-            projectId={projectId}
-            memoryKey={`comment:create:${JSON.stringify(selectedTargetAnchor)}`}
-            key={JSON.stringify(selectedTargetAnchor)}
-            initialValues={{
-              body: "",
-              targetAnchor: selectedTargetAnchor
-                ? JSON.stringify(selectedTargetAnchor)
-                : "",
-              reason: "",
-            }}
-            showTargetAnchorInput={showTargetAnchorInput}
-            targetAnchorLabel={getRequirementCommentAnchorLabel(
-              selectedTargetAnchor,
-            )}
-            isPending={isCreatePending}
-            error={createError}
-            onSubmit={(values) => createTargetComment(values)}
-          />
-        ) : null}
-
-        <CommentThreadList
-          comments={comments}
-          isLoading={isLoading}
-          canComment={canComment}
-          emptyMessage="スレッドコメントはありません。"
-          getCommentId={(comment) => comment.id}
-          getParentCommentId={(comment) => comment.parent_comment_id}
-          canEditComment={canMutateComment}
-          canReplyComment={() => canComment}
-          loadingFallback={<RequirementSectionSkeleton />}
-          renderCommentBody={({ comment, onEdit, onReply }) => (
-            <CommentBody
-              comment={comment}
-              canComment={canComment}
-              canMutate={canMutateComment(comment)}
-              isStatePending={isStatePending}
-              onEdit={onEdit}
-              onReply={onReply}
-              onDelete={setDeleteTarget}
-              onResolve={resolveTargetComment}
-              onReopen={reopenTargetComment}
-              onTargetAnchorClick={onTargetAnchorClick}
-              getTargetAnchorStatus={getTargetAnchorStatus}
-            />
-          )}
-          renderEditForm={({ comment, onClose }) => (
-            <>
-              <CommentInlineHeader label="コメント編集" onClose={onClose} />
-              <RequirementTargetCommentForm
-                projectId={projectId}
-                memoryKey={`comment:edit:${comment.id}:${comment.version}`}
-                initialValues={{
-                  body: comment.body,
-                  mentions: comment.mentions,
-                  targetAnchor: getRequirementCommentAnchorLabel(
-                    comment.target_anchor,
-                  ),
-                  reason: "",
-                }}
-                submitLabel="コメント更新"
-                resetOnSuccess={false}
-                showReason
-                isPending={isUpdatePending}
-                error={updateError}
-                onSubmit={(values) =>
-                  updateTargetComment(comment.id, comment.version, values)
-                }
-                onSuccess={onClose}
-              />
-            </>
-          )}
-          renderReplyForm={({ comment, onClose }) => (
-            <>
-              <CommentInlineHeader label="返信" onClose={onClose} />
-              <RequirementTargetCommentForm
-                projectId={projectId}
-                memoryKey={`comment:reply:${comment.id}`}
-                initialValues={{ body: "", targetAnchor: "", reason: "" }}
-                submitLabel="返信追加"
-                showTargetAnchorInput={false}
-                isPending={isCreatePending}
-                error={createError}
-                onSubmit={(values) => createTargetComment(values, comment.id)}
-                onSuccess={onClose}
-              />
-            </>
-          )}
-        />
-
-        <ResourceDeleteDialog
-          open={Boolean(deleteTarget)}
-          onOpenChange={(open) => !open && setDeleteTarget(null)}
-          resourceName="コメント"
-          description="コメントを削除します。返信がある場合は表示に影響する可能性があります。"
-          isPending={isDeletePending}
-          onConfirm={async () => {
-            if (!deleteTarget) {
-              return;
-            }
-
-            await deleteTargetComment(deleteTarget.id);
-            setDeleteTarget(null);
-          }}
-        />
+        {content}
       </CardContent>
     </Card>
   );

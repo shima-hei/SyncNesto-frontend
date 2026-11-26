@@ -23,6 +23,7 @@ export const projectNavigationSections = [
     paths: [
       "requirements",
       "fixed-approvals",
+      "requirement-workflow",
       "requirement-verifications",
       "requirement-verdicts",
     ],
@@ -63,7 +64,7 @@ export const defaultProjectNavigation: ProjectNavigation = {
 export const projectSubviewLinks = {
   requirements: [
     { path: "requirements", label: "要件定義書" },
-    { path: "fixed-approvals", label: "合意・承認" },
+    { path: "fixed-approvals", label: "レビュー・承認一覧" },
   ],
   tests: [
     { path: "test-designs", label: "テスト設計書" },

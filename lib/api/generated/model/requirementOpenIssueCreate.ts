@@ -18,5 +18,6 @@ export interface RequirementOpenIssueCreate {
   due_date?: string | null;
   status?: string;
   resolution?: string | null;
+  blocks_approval?: boolean;
   document_id: number;
 }

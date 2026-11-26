@@ -40,7 +40,7 @@ export function RequirementDetailItemCard({
   return (
     <div
       className={cn(
-        "@container/detail-card min-w-0 scroll-mt-24 rounded-md border bg-background p-2.5",
+        "group @container/detail-card min-w-0 scroll-mt-24 rounded-md border bg-background p-2.5",
         variant === "unit" &&
           "w-full border-l-4 border-l-primary/50 bg-muted/10 p-3",
         variant === "screen" &&

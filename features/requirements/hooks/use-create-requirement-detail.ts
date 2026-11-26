@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useCreateRequirementDetailProjectsProjectIdRequirementsRequirementIdDetailsPost } from "@/lib/api/generated/requirements/requirements";
 
 import { REQUIREMENT_MESSAGES } from "../constants/requirement-messages";
-import { invalidateRequirementSummary } from "../lib/requirement-cache";
+import { invalidateRequirementDetailsWithSummary } from "../lib/requirement-cache";
 import { toRequirementDetailCreate } from "../lib/requirement-mappers";
 import type { RequirementDetailFormValues } from "../types/requirement-detail-form";
 
@@ -20,7 +20,7 @@ export function useCreateRequirementDetail(
       {
         mutation: {
           onSuccess: async () => {
-            await invalidateRequirementSummary(
+            await invalidateRequirementDetailsWithSummary(
               queryClient,
               projectId,
               requirementId,

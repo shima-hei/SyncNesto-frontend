@@ -5,6 +5,7 @@ import { useWorkbenchState } from "../../hooks/use-workbench-state";
 import Link from "next/link";
 import { CheckIcon, XIcon } from "lucide-react";
 
+import { useProjectMemberUsers } from "@/features/projects/hooks/use-project-member-users";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,9 +23,7 @@ import { formatDateTime } from "@/lib/format/date";
 
 import { getRequirementApprovalStatusLabel } from "../../constants/requirement-options";
 import { useDecideRequirementApproval } from "../../hooks/use-decide-requirement-approval";
-import { useRequestRequirementApproval } from "../../hooks/use-request-requirement-approval";
 import { useRequirementApprovals } from "../../hooks/use-requirement-approvals";
-import { RequirementApprovalRequestForm } from "../forms/requirement-approval-request-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 
 type RequirementApprovalsSectionProps = {
@@ -52,16 +51,13 @@ export function RequirementApprovalsSection({
     "",
   );
   const [decisionError, setDecisionError] = useState<string | null>(null);
+  const { users } = useProjectMemberUsers(projectId, { limit: 100 });
+  const namesById = new Map(users.map((member) => [member.id, member.name]));
   const { approvals, isLoading } = useRequirementApprovals(
     projectId,
     targetType,
     targetId,
   );
-  const {
-    requestRequirementApproval,
-    isPending: isRequestPending,
-    error: requestError,
-  } = useRequestRequirementApproval(projectId, targetType, targetId);
   const {
     approveRequirementApproval,
     rejectRequirementApproval,
@@ -125,20 +121,11 @@ export function RequirementApprovalsSection({
           <Link
             href={`/projects/joined/${projectId}/fixed-approvals?targetKind=${targetType === "document" ? "requirement_document" : targetType === "requirement_item" ? "requirement" : targetType}&sourceId=${targetId}`}
           >
-            版を固定した合意・承認と履歴を確認
+            版ごとの承認履歴を確認
           </Link>
         </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {canReview ? (
-          <RequirementApprovalRequestForm
-            projectId={projectId}
-            isPending={isRequestPending}
-            error={requestError}
-            onSubmit={requestRequirementApproval}
-          />
-        ) : null}
-
         {isLoading ? (
           <RequirementSectionSkeleton />
         ) : approvals.length ? (
@@ -152,10 +139,14 @@ export function RequirementApprovalsSection({
                         {getRequirementApprovalStatusLabel(approval.status)}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        承認者ID: {approval.approver_id}
+                        承認者{" "}
+                        {namesById.get(approval.approver_id) ??
+                          "氏名を取得できない担当者"}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        申請者ID: {approval.requested_by}
+                        申請者{" "}
+                        {namesById.get(approval.requested_by) ??
+                          "氏名を取得できない担当者"}
                       </span>
                     </div>
                     <p className="whitespace-pre-wrap text-sm text-muted-foreground">

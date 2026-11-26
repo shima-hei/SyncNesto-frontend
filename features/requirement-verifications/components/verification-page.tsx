@@ -13,9 +13,13 @@ import { VerificationEditor } from "./verification-editor";
 export function VerificationPage({
   projectId,
   planId,
+  embedded = false,
+  from,
 }: {
   projectId: number;
   planId: string;
+  embedded?: boolean;
+  from?: string;
 }) {
   const { user } = useAuth();
   const { tenant } = useTenant();
@@ -42,7 +46,8 @@ export function VerificationPage({
       key={`${tenant?.id}:${user?.id}:${planId}:${query.data.current_version}`}
       row={query.data}
       projectId={projectId}
-      from={safeVerificationOrigin(params.get("from"), projectId)}
+      from={from ?? safeVerificationOrigin(params.get("from"), projectId)}
+      embedded={embedded}
       queryKey={key}
       userId={user?.id}
       tenantId={tenant?.id}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import {
   readHomeProjectsHomeProjectsGet,
+  readHomeRequirementWorkHomeRequirementWorkGet,
   readHomeTasksHomeTasksGet,
 } from "@/lib/api/generated/home/home";
 
@@ -33,6 +34,21 @@ export function useHomeProjects(timezone: string) {
     queryKey: ["home", user?.id, "projects", timezone],
     queryFn: ({ signal }) =>
       readHomeProjectsHomeProjectsGet({ timezone, limit: 8 }, { signal }),
+    enabled: Boolean(user),
+  });
+}
+
+export function useHomeRequirementWork(page: number, pageSize: number) {
+  const { user } = useAuth();
+  return useQuery({
+    ...queryOptions,
+    queryKey: ["home", "requirement-work", user?.id, page, pageSize],
+    queryFn: ({ signal }) =>
+      readHomeRequirementWorkHomeRequirementWorkGet(
+        { page, page_size: pageSize },
+        { signal },
+      ),
+    placeholderData: keepPreviousData,
     enabled: Boolean(user),
   });
 }
