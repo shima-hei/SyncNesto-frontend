@@ -292,6 +292,7 @@ function MarkdownToolbarMenu({
 type MarkdownPreviewProps = {
   value: string;
   onChange?: (value: string) => void;
+  taskListBusy?: boolean;
   emptyMessage?: string;
   className?: string;
   highlightQuotes?: string[];
@@ -302,6 +303,7 @@ type MarkdownPreviewProps = {
 const MarkdownContext = createContext<{
   value: string;
   onChange?: (value: string) => void;
+  taskListBusy?: boolean;
   highlightQuotes: string[];
   inert: boolean;
 }>({ value: "", highlightQuotes: [], inert: false });
@@ -311,7 +313,7 @@ function MarkdownTaskCheckbox({
   checked,
   node,
 }: ComponentProps<"input"> & ExtraProps) {
-  const { value, onChange, inert } = useContext(MarkdownContext);
+  const { value, onChange, taskListBusy, inert } = useContext(MarkdownContext);
   const offset = node?.properties["data-task-offset"];
   const label = String(node?.properties["data-task-label"] ?? "チェック項目");
   const editable = !inert && Boolean(onChange) && typeof offset === "number";
@@ -321,11 +323,18 @@ function MarkdownTaskCheckbox({
       checked={Boolean(checked)}
       data-task-offset={offset}
       disabled={!editable}
+      aria-disabled={editable && taskListBusy ? true : undefined}
       aria-label={editable ? label : `${label}（閲覧専用）`}
       title={editable ? undefined : "閲覧用の本文は変更できません。"}
-      className="mr-1 align-middle"
+      className={cn(
+        "mr-1 align-middle",
+        editable && (taskListBusy ? "cursor-wait" : "cursor-pointer"),
+      )}
+      onClick={(event) => {
+        if (taskListBusy) event.preventDefault();
+      }}
       onChange={(event) => {
-        if (editable && typeof offset === "number")
+        if (editable && !taskListBusy && typeof offset === "number")
           onChange?.(
             setMarkdownTaskChecked(value, offset, event.target.checked),
           );
@@ -371,6 +380,7 @@ function MarkdownBlockquote({ children }: { children?: ReactNode }) {
 export function MarkdownPreview({
   value,
   onChange,
+  taskListBusy,
   emptyMessage = "プレビューする本文がありません。",
   className,
   highlightQuotes = [],
@@ -398,7 +408,7 @@ export function MarkdownPreview({
       )}
     >
       <MarkdownContext.Provider
-        value={{ value, onChange, highlightQuotes, inert }}
+        value={{ value, onChange, taskListBusy, highlightQuotes, inert }}
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}

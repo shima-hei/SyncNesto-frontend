@@ -27,6 +27,7 @@ export function TaskEditableSection({
   canUpdate,
   children,
   heading,
+  headingEditDisabled,
   presentation = "inline",
 }: {
   task: TaskRead;
@@ -35,6 +36,7 @@ export function TaskEditableSection({
   canUpdate: boolean;
   children?: ReactNode;
   heading?: string;
+  headingEditDisabled?: boolean;
   presentation?: "inline" | "popover";
 }) {
   const [baseline, setBaseline] = useState<TaskRead | null>(null);
@@ -146,6 +148,7 @@ export function TaskEditableSection({
               className="shrink-0 text-muted-foreground"
               aria-label={label}
               title={label}
+              disabled={headingEditDisabled}
               onClick={() => setBaseline(task)}
             >
               <PencilIcon aria-hidden />
