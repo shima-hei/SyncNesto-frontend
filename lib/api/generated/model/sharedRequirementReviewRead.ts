@@ -21,6 +21,8 @@ export interface SharedRequirementReviewRead {
   created_at: string;
   expires_at: string;
   responded: boolean;
+  public_project_name?: string | null;
+  captured_at?: string | null;
   note: string | null;
   target_node_id: string;
   version: number;

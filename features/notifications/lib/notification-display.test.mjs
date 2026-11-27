@@ -49,6 +49,28 @@ test("fixed approval notices lead to the canonical decision and distinguish exce
   assert.equal(notificationHref({ ...fixed, context: {} }), null);
 });
 
+test("shared comment notices open the fixed discussion and require both scoped identifiers", () => {
+  const notice = {
+    ...item,
+    type: "shared_comment_replied",
+    target_type: "shared_publication_comment",
+    context: { publication_id: "version", thread_id: "thread" },
+  };
+  assert.match(notificationMessage(notice), /共有コメントに返信/);
+  assert.equal(
+    notificationHref(notice),
+    "/projects/joined/7/artifact-publications?publication=version&view=discussion&thread=thread#shared-comments",
+  );
+  assert.equal(
+    notificationHref({ ...notice, context: { thread_id: "thread" } }),
+    null,
+  );
+  assert.equal(
+    notificationHref({ ...notice, target_status: "forbidden" }),
+    null,
+  );
+});
+
 test("target information maps to existing task, requirement, issue and comment routes", () => {
   assert.equal(notificationHref(item), "/projects/joined/7/tasks/8");
   assert.equal(

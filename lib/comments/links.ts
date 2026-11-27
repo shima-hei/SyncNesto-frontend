@@ -1,6 +1,9 @@
 const urlPattern =
   /(?<![\p{L}\p{N}_:/@])https?:\/\/[^\s<>"'、。！？「」『』【】]+/giu;
 
+const relativeSharedPath =
+  /(?<![^\s(（「])\/shared\/publications\/[\da-f-]{36}\/?(?:[?#][^\s<>"'、。！？「」『』【】]+)?(?=$|[\s),.、。！？「」'"<>])/giu;
+
 export function safeCommentLink(text: string): string | null {
   if (!/^https?:\/\//i.test(text) || /[\s\\\p{Cc}]/u.test(text)) return null;
   try {
@@ -28,12 +31,21 @@ function trimLinkPunctuation(text: string) {
   return end;
 }
 
-export function getCommentLinkSegments(text: string) {
+export function getCommentLinkSegments(
+  text: string,
+  includeSharedPaths = false,
+) {
   const segments: { text: string; href?: string }[] = [];
   let offset = 0;
-  for (const match of text.matchAll(urlPattern)) {
+  const links = [...text.matchAll(urlPattern)];
+  if (includeSharedPaths) {
+    links.push(...text.matchAll(relativeSharedPath));
+    links.sort((a, b) => a.index - b.index);
+  }
+  for (const match of links) {
+    if (match.index < offset) continue;
     const label = trimLinkPunctuation(match[0]);
-    const href = safeCommentLink(label);
+    const href = label.startsWith("/") ? label : safeCommentLink(label);
     if (!href) continue;
     if (match.index > offset)
       segments.push({ text: text.slice(offset, match.index) });

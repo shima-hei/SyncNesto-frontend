@@ -1,18 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import dynamic from "next/dynamic";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { MessageSquarePlusIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { quoteMarkdownSource } from "@/lib/comments/markdown-source-range";
+import { bodyImagePrefix } from "@/lib/markdown-body-images";
 import { PublicationImageScope } from "@/components/shared/forms/markdown-image";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import type { PublicationNodeRead } from "@/lib/api/generated/model";
 import type { Content } from "@/features/specifications/lib/specification";
 import { readPublicationNodes } from "../lib/api";
 import { decodePublicationGraph } from "../lib/graph";
+import {
+  publicationQuoteFields,
+  publicationQuoteId,
+  quoteFromSelection,
+  type PublicationQuote,
+} from "../lib/publication-quote";
 
 const SpecificationFields = dynamic(() =>
   import("@/features/specifications/components/specification-fields").then(
@@ -48,16 +64,47 @@ const labels: Record<string, string> = {
   detail_json: "種別別の詳細",
 };
 
+function quoteLocation(node: PublicationNodeRead, field: string) {
+  if (!publicationQuoteFields[node.node_kind]?.includes(field)) return {};
+  return {
+    id: publicationQuoteId(node.id, field),
+    "data-quote-node": node.id,
+    "data-quote-field": field,
+  };
+}
+
+type QuoteAction = { field: string; onClick: () => void };
+
+function AddQuote({ action, field }: { action?: QuoteAction; field: string }) {
+  if (action?.field !== field) return null;
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="mt-2 self-start"
+      onClick={action.onClick}
+    >
+      <MessageSquarePlusIcon data-icon="inline-start" />
+      選択した箇所にコメント
+    </Button>
+  );
+}
+
 export function PublicNode({
   node,
   onSelectText,
+  quoteAction,
   reader = false,
   sharedPublicationId,
+  trackQuoteSource = false,
 }: {
   node: PublicationNodeRead;
   onSelectText?: (field: string, quote: string, quoteStart: number) => void;
+  quoteAction?: QuoteAction;
   reader?: boolean;
   sharedPublicationId?: string;
+  trackQuoteSource?: boolean;
 }) {
   const structured =
     node.node_kind === "specification" &&
@@ -115,17 +162,42 @@ export function PublicNode({
             onChange={() => undefined}
             readOnly
             liveLinks={false}
+            renderReadOnlyText={(field, value) => {
+              if (field !== "title" && field !== "summary") return undefined;
+              return (
+                <>
+                  <div {...quoteLocation(node, field)} className="scroll-mt-20">
+                    {field === "summary" && value.includes(bodyImagePrefix) ? (
+                      <MarkdownPreview
+                        value={value}
+                        liveLinks={false}
+                        inert
+                        quoteSourcePositions={trackQuoteSource}
+                        className="min-h-0 rounded-none border-0 bg-transparent p-0"
+                      />
+                    ) : (
+                      value
+                    )}
+                  </div>
+                  <AddQuote action={quoteAction} field={field} />
+                </>
+              );
+            }}
           />
         ) : typeof node.payload.title === "string" ? (
-          <h3
-            className={
-              reader
-                ? "text-2xl font-semibold [overflow-wrap:anywhere]"
-                : "text-base font-semibold"
-            }
-          >
-            {node.payload.title}
-          </h3>
+          <>
+            <h3
+              {...quoteLocation(node, "title")}
+              className={
+                reader
+                  ? "scroll-mt-20 text-2xl font-semibold [overflow-wrap:anywhere]"
+                  : "scroll-mt-20 text-base font-semibold"
+              }
+            >
+              {node.payload.title}
+            </h3>
+            <AddQuote action={quoteAction} field="title" />
+          </>
         ) : null}
         <dl className="flex min-w-0 flex-col gap-3">
           {displayed.map(([key, value]) => (
@@ -140,25 +212,29 @@ export function PublicNode({
                 {labels[key] ?? key}
               </dt>
               <dd
+                {...quoteLocation(node, key)}
+                className="scroll-mt-20"
                 onMouseUp={
                   onSelectText && typeof value === "string"
                     ? (event) => {
-                        const quote = quoteMarkdownSource(
+                        const anchor = quoteMarkdownSource(
                           event.currentTarget,
                           value,
                           window.getSelection(),
                         );
-                        if (quote)
-                          onSelectText(key, quote.quote, quote.quote_start);
+                        if (anchor)
+                          onSelectText(key, anchor.quote, anchor.quote_start);
                       }
                     : undefined
                 }
               >
                 {typeof value === "string" ? (
                   <MarkdownPreview
-                    quoteSourcePositions={Boolean(onSelectText)}
                     liveLinks={false}
                     inert
+                    quoteSourcePositions={
+                      trackQuoteSource || Boolean(onSelectText)
+                    }
                     className={
                       reader
                         ? "min-h-0 rounded-none border-0 bg-transparent px-0 py-2"
@@ -175,6 +251,11 @@ export function PublicNode({
                   </pre>
                 )}
               </dd>
+              {quoteAction?.field === key && (
+                <dd>
+                  <AddQuote action={quoteAction} field={key} />
+                </dd>
+              )}
             </div>
           ))}
         </dl>
@@ -217,11 +298,13 @@ function PublicGraph({
   nodes,
   publicationId,
   onReady,
+  title,
 }: {
   root: PublicationNodeRead;
   nodes: PublicationNodeRead[];
   publicationId: string;
   onReady: (id: string, ready: boolean) => void;
+  title?: ReactNode;
 }) {
   const graph = useQuery({
     queryKey: [
@@ -246,7 +329,7 @@ function PublicGraph({
         onRetry={() => void graph.refetch()}
       />
     );
-  return <PublicTestDesign design={graph.data} />;
+  return <PublicTestDesign design={graph.data} title={title} />;
 }
 
 export function PublicationContent({
@@ -254,11 +337,13 @@ export function PublicationContent({
   publicationId,
   onReady,
   onNodes,
+  onQuote,
 }: {
   projectId: number;
   publicationId: string;
   onReady?: (ready: boolean) => void;
   onNodes?: (nodes: PublicationNodeRead[]) => void;
+  onQuote?: (quote: PublicationQuote) => void;
 }) {
   const query = useInfiniteQuery({
     queryKey: ["publication-nodes", projectId, publicationId],
@@ -306,6 +391,7 @@ export function PublicationContent({
       nodes={nodes}
       publicationId={publicationId}
       onReady={onReady}
+      onQuote={onQuote}
     />
   );
 }
@@ -316,13 +402,17 @@ export function PublicationBody({
   onReady,
   reader = false,
   sharedPublicationId,
+  onQuote,
 }: {
   nodes: PublicationNodeRead[];
   publicationId: string;
   onReady?: (ready: boolean) => void;
   reader?: boolean;
   sharedPublicationId?: string;
+  onQuote?: (quote: PublicationQuote) => void;
 }) {
+  const body = useRef<HTMLDivElement>(null);
+  const [selectedQuote, setSelectedQuote] = useState<PublicationQuote>();
   const [graphs, setGraphs] = useState<Record<string, boolean>>({});
   const graphReady = useCallback((id: string, ready: boolean) => {
     setGraphs((previous) =>
@@ -336,8 +426,45 @@ export function PublicationBody({
     onReady?.(allReady);
     return () => onReady?.(false);
   }, [allReady, onReady]);
+  useEffect(() => {
+    if (!onQuote) return;
+    function selectQuote() {
+      const selection = window.getSelection();
+      const start = selection?.anchorNode;
+      if (
+        !selection ||
+        selection.isCollapsed ||
+        !start ||
+        !body.current?.contains(start)
+      )
+        return;
+      const container = start instanceof Element ? start : start.parentElement;
+      const element = container?.closest<HTMLElement>(
+        "[data-quote-node][data-quote-field]",
+      );
+      const nodeId = element?.dataset.quoteNode;
+      const field = element?.dataset.quoteField;
+      const source =
+        nodeId && field
+          ? nodes.find((node) => node.id === nodeId)?.payload[field]
+          : undefined;
+      if (!element || !nodeId || !field || typeof source !== "string") {
+        setSelectedQuote(undefined);
+        return;
+      }
+      const quote = element.querySelector("[data-quote-source]")
+        ? quoteMarkdownSource(element, source, selection)
+        : quoteFromSelection(selection, element, field, source);
+      setSelectedQuote(
+        quote ? { nodeId, anchor: { ...quote, field } } : undefined,
+      );
+    }
+    document.addEventListener("selectionchange", selectQuote);
+    return () => document.removeEventListener("selectionchange", selectQuote);
+  }, [nodes, onQuote]);
   return (
     <div
+      ref={body}
       className="flex min-w-0 flex-col gap-6"
       aria-label="相手に見せる本文全体"
     >
@@ -348,8 +475,18 @@ export function PublicationBody({
       ) : null}
       {nodes
         .filter((n) => n.node_kind !== "test_design_part")
-        .map((node) =>
-          node.node_kind === "test_design" ? (
+        .map((node) => {
+          const action =
+            onQuote && selectedQuote?.nodeId === node.id
+              ? {
+                  field: selectedQuote.anchor.field,
+                  onClick: () => {
+                    onQuote(selectedQuote);
+                    setSelectedQuote(undefined);
+                  },
+                }
+              : undefined;
+          return node.node_kind === "test_design" ? (
             <section key={node.id} id={`public-node-${node.id}`}>
               <PublicationImageScope.Provider
                 value={
@@ -363,8 +500,17 @@ export function PublicationBody({
                   nodes={nodes}
                   publicationId={publicationId}
                   onReady={graphReady}
+                  title={
+                    <span
+                      {...quoteLocation(node, "title")}
+                      className="scroll-mt-20"
+                    >
+                      {String(node.payload.title ?? "")}
+                    </span>
+                  }
                 />
               </PublicationImageScope.Provider>
+              <AddQuote action={action} field="title" />
             </section>
           ) : (
             <PublicNode
@@ -372,9 +518,11 @@ export function PublicationBody({
               node={node}
               reader={reader}
               sharedPublicationId={sharedPublicationId}
+              quoteAction={action}
+              trackQuoteSource={Boolean(onQuote)}
             />
-          ),
-        )}
+          );
+        })}
     </div>
   );
 }

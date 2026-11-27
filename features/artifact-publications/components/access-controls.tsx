@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -33,6 +34,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -56,12 +58,15 @@ import {
   listEvents,
   listGrants,
   listParticipations,
+  listParticipationGrants,
+  updateParticipationExpiry,
   listRecipients,
   publishPublication,
   revokeGrant,
   revokeParticipation,
   withdrawPublication,
 } from "../lib/access-api";
+import { ParticipationDecisions } from "./participation-decisions";
 
 export const publicationStateLabel = (state: string) =>
   ({ prepared: "未公開", published: "公開中", withdrawn: "公開停止" })[state] ??
@@ -218,6 +223,8 @@ export function PublicationAccessPanel({
     {},
   );
   const [ack, setAck] = useState(false);
+  const [downloadAllowed, setDownloadAllowed] = useState(false);
+  const [commentAllowed, setCommentAllowed] = useState(false);
   const [confirmation, setConfirmation] = useState<PublicationPublish | null>(
     null,
   );
@@ -274,6 +281,8 @@ export function PublicationAccessPanel({
       setConfirmation(null);
       setSelected({});
       setAck(false);
+      setDownloadAllowed(false);
+      setCommentAllowed(false);
     },
   });
   const values = Object.values(selected);
@@ -303,6 +312,8 @@ export function PublicationAccessPanel({
         participation_id: participant.id,
         version: participant.version,
         expires_at: new Date(expires).toISOString(),
+        download_allowed: downloadAllowed,
+        comment_allowed: commentAllowed,
       })),
     });
   };
@@ -460,6 +471,32 @@ export function PublicationAccessPanel({
               </FieldGroup>
               <Field orientation="horizontal">
                 <Checkbox
+                  id="publication-comment-allowed"
+                  checked={commentAllowed}
+                  onCheckedChange={(value) => {
+                    setCommentAllowed(value === true);
+                    setAck(false);
+                  }}
+                />
+                <FieldLabel htmlFor="publication-comment-allowed">
+                  選択したゲストに共有コメントの投稿・返信を許可
+                </FieldLabel>
+              </Field>
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="publication-download-allowed"
+                  checked={downloadAllowed}
+                  onCheckedChange={(value) => {
+                    setDownloadAllowed(value === true);
+                    setAck(false);
+                  }}
+                />
+                <FieldLabel htmlFor="publication-download-allowed">
+                  選択したゲストに添付ファイルのダウンロードを許可
+                </FieldLabel>
+              </Field>
+              <Field orientation="horizontal">
+                <Checkbox
                   id="publication-full-ack"
                   checked={ack}
                   onCheckedChange={(value) => setAck(value === true)}
@@ -538,7 +575,7 @@ export function PublicationAccessPanel({
           <DialogHeader>
             <DialogTitle>公開内容の最終確認</DialogTitle>
             <DialogDescription>
-              固定内容と指定した本人・期限への許可を確定します。メール送信・正式承認・添付の新DLは行いません。
+              指定したゲストが固定本文と採用済み添付を閲覧できるようになります。
             </DialogDescription>
           </DialogHeader>
           <p className="font-semibold">{publication.content.title}</p>
@@ -559,6 +596,15 @@ export function PublicationAccessPanel({
                     .display_label
                 }
                 ：{displayDate(recipient.expires_at)}まで
+                <p className="text-xs text-muted-foreground">
+                  {recipient.comment_allowed
+                    ? "コメント投稿可"
+                    : "コメント閲覧のみ"}
+                  ・
+                  {recipient.download_allowed
+                    ? "ダウンロード可"
+                    : "ダウンロード不可"}
+                </p>
               </li>
             ))}
           </ul>
@@ -622,6 +668,17 @@ export function PublicationAccessPanel({
                       {participationLabel(grant.effective_status)}
                       <p className="text-xs text-muted-foreground">
                         {displayDate(grant.expires_at)}まで
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {grant.decision_only
+                          ? "判断依頼に付随する共有"
+                          : "資料の共有"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {grant.comment_allowed ? "投稿可" : "閲覧のみ"}・
+                        {grant.download_allowed === false
+                          ? "ダウンロード不可"
+                          : "ダウンロード可"}
                       </p>
                     </TableCell>
                     <TableCell>
@@ -721,6 +778,8 @@ export function GuestParticipationsPanel({
   canManage: boolean;
 }) {
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<GuestParticipationRead>();
+  const cache = useQueryClient();
   const query = useQuery({
     queryKey: ["guest-participations", projectId, page],
     queryFn: () => listParticipations(projectId, { page, page_size: 20 }),
@@ -767,19 +826,48 @@ export function GuestParticipationsPanel({
                     </p>
                   </TableCell>
                   <TableCell>
-                    {part.status === "active" ? (
-                      <RevokeAccessDialog
-                        label={`${part.display_label}の参加を失効`}
-                        description="この参加世代と、その世代へのすべての閲覧許可を失効します。再参加時に以前の許可は復活しません。"
-                        version={part.version}
-                        onConfirm={(data) =>
-                          revokeParticipation(projectId, part.id, data)
-                        }
-                        onRefresh={() => query.refetch()}
-                      />
-                    ) : (
-                      reasonLabel(part.revocation_reason)
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelected(part)}
+                      >
+                        共有資料・判断履歴
+                      </Button>
+                      {part.effective_status === "active" && (
+                        <ParticipationExpiryDialog
+                          key={part.version}
+                          projectId={projectId}
+                          participant={part}
+                          onRefresh={() => query.refetch()}
+                        />
+                      )}
+                      {part.status === "active" ? (
+                        <RevokeAccessDialog
+                          label={`${part.display_label}の参加を失効`}
+                          description="この参加世代への閲覧許可もすべて失効します。"
+                          version={part.version}
+                          onConfirm={(data) =>
+                            revokeParticipation(projectId, part.id, data)
+                          }
+                          onRefresh={async () => {
+                            await Promise.all([
+                              query.refetch(),
+                              cache.invalidateQueries({
+                                queryKey: [
+                                  "guest-participation-grants",
+                                  projectId,
+                                  part.id,
+                                ],
+                              }),
+                            ]);
+                          }}
+                        />
+                      ) : (
+                        reasonLabel(part.revocation_reason)
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -799,6 +887,220 @@ export function GuestParticipationsPanel({
           />
         </>
       )}
+      <Dialog
+        open={Boolean(selected)}
+        onOpenChange={(open) => {
+          if (!open) setSelected(undefined);
+        }}
+      >
+        {selected && (
+          <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {selected.display_label}の共有資料・判断履歴
+              </DialogTitle>
+              <DialogDescription>
+                参加{selected.generation}回目
+              </DialogDescription>
+            </DialogHeader>
+            <Tabs defaultValue="grants" key={selected.id}>
+              <TabsList aria-label="ゲストの共有と判断">
+                <TabsTrigger value="grants">共有資料</TabsTrigger>
+                <TabsTrigger value="decisions">判断依頼</TabsTrigger>
+              </TabsList>
+              <TabsContent value="grants">
+                <ParticipationGrants
+                  projectId={projectId}
+                  participationId={selected.id}
+                />
+              </TabsContent>
+              <TabsContent value="decisions">
+                <ParticipationDecisions
+                  projectId={projectId}
+                  participationId={selected.id}
+                />
+              </TabsContent>
+            </Tabs>
+          </DialogContent>
+        )}
+      </Dialog>
     </section>
+  );
+}
+
+function ParticipationGrants({
+  projectId,
+  participationId,
+}: {
+  projectId: number;
+  participationId: string;
+}) {
+  const [page, setPage] = useState(1);
+  const query = useQuery({
+    queryKey: ["guest-participation-grants", projectId, participationId, page],
+    queryFn: ({ signal }) =>
+      listParticipationGrants(
+        projectId,
+        participationId,
+        { page, page_size: 20 },
+        { signal },
+      ),
+    retry: false,
+  });
+  if (query.isError)
+    return (
+      <DataLoadError
+        resourceName="共有資料"
+        onRetry={() => void query.refetch()}
+      />
+    );
+  if (!query.data) return <Skeleton className="h-16" />;
+  if (!query.data.items.length)
+    return (
+      <p className="text-sm text-muted-foreground">
+        共有された資料はありません。
+      </p>
+    );
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>固定版</TableHead>
+            <TableHead>許可の状態</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {query.data.items.map((grant) => (
+            <TableRow key={grant.id}>
+              <TableCell className="whitespace-normal">
+                <Link
+                  href={`/projects/joined/${projectId}/artifact-publications?publication=${grant.publication_id}`}
+                  className="underline underline-offset-4"
+                >
+                  {grant.publication_title}
+                </Link>
+                <p className="text-xs text-muted-foreground">
+                  {displayDate(grant.captured_at)}の版
+                </p>
+              </TableCell>
+              <TableCell>
+                {participationLabel(grant.effective_status)}
+                <p className="text-xs text-muted-foreground">
+                  {grant.decision_only
+                    ? "判断依頼に付随する共有"
+                    : "資料の共有"}
+                </p>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {query.data.total > 20 && (
+        <DataPagination
+          page={page}
+          total={query.data.total}
+          currentCount={query.data.items.length}
+          pageSize={20}
+          onPageChange={setPage}
+        />
+      )}
+    </>
+  );
+}
+
+function ParticipationExpiryDialog({
+  projectId,
+  participant,
+  onRefresh,
+}: {
+  projectId: number;
+  participant: GuestParticipationRead;
+  onRefresh: () => Promise<unknown>;
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const attempt = useRef<
+    { expires_at: string; reason: string; request_id: string } | undefined
+  >(undefined);
+  const mutation = useMutation({
+    mutationFn: (data: {
+      expires_at: string;
+      reason: string;
+      request_id: string;
+    }) =>
+      updateParticipationExpiry(projectId, participant.id, {
+        ...data,
+        version: participant.version,
+      }),
+    onSuccess: async () => {
+      await onRefresh();
+      setOpen(false);
+      toast.success("参加期限を変更しました");
+    },
+  });
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!mutation.isPending) setOpen(next);
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          期限を変更
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{participant.display_label}の参加期限を変更</DialogTitle>
+          <DialogDescription>
+            現在の期限は {displayDate(participant.expires_at)} です。
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="grid gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (mutation.isPending) return;
+            const input = new FormData(event.currentTarget);
+            const date = new Date(String(input.get("expires_at")));
+            const reason = String(input.get("reason")).trim();
+            if (!Number.isFinite(date.getTime()) || !reason) return;
+            const expires_at = date.toISOString();
+            if (
+              attempt.current?.expires_at !== expires_at ||
+              attempt.current?.reason !== reason
+            )
+              attempt.current = {
+                expires_at,
+                reason,
+                request_id: crypto.randomUUID(),
+              };
+            mutation.mutate(attempt.current);
+          }}
+        >
+          <Field>
+            <FieldLabel htmlFor={id}>新しい参加期限</FieldLabel>
+            <Input name="expires_at" type="datetime-local" id={id} required />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={id + "-reason"}>変更理由</FieldLabel>
+            <Textarea
+              name="reason"
+              id={id + "-reason"}
+              maxLength={1000}
+              required
+            />
+          </Field>
+          <FormApiError error={mutation.error} />
+          <DialogFooter>
+            <Button type="submit" disabled={mutation.isPending}>
+              期限を保存
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

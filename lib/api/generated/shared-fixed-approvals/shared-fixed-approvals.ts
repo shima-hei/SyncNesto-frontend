@@ -36,6 +36,36 @@ import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
+
 const withQueryKey = <T extends object, K>(
   query: T,
   queryKey: K,
@@ -168,6 +198,10 @@ export type SharedApprovalRequestsSharedPublicationsApprovalRequestsGetQueryResu
 export type SharedApprovalRequestsSharedPublicationsApprovalRequestsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 現在見られる、自分への判断依頼だけを一覧する。
+ * @summary Shared Approval Requests
+ */
 export function useSharedApprovalRequestsSharedPublicationsApprovalRequestsGet<
   TData = Awaited<
     ReturnType<
@@ -213,6 +247,10 @@ export function useSharedApprovalRequestsSharedPublicationsApprovalRequestsGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在見られる、自分への判断依頼だけを一覧する。
+ * @summary Shared Approval Requests
+ */
 export function useSharedApprovalRequestsSharedPublicationsApprovalRequestsGet<
   TData = Awaited<
     ReturnType<
@@ -256,6 +294,10 @@ export function useSharedApprovalRequestsSharedPublicationsApprovalRequestsGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在見られる、自分への判断依頼だけを一覧する。
+ * @summary Shared Approval Requests
+ */
 export function useSharedApprovalRequestsSharedPublicationsApprovalRequestsGet<
   TData = Awaited<
     ReturnType<
@@ -284,9 +326,9 @@ export function useSharedApprovalRequestsSharedPublicationsApprovalRequestsGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 現在見られる、自分への判断依頼だけを一覧する。
  * @summary Shared Approval Requests
  */
-
 export function useSharedApprovalRequestsSharedPublicationsApprovalRequestsGet<
   TData = Awaited<
     ReturnType<
@@ -441,6 +483,10 @@ export type ReadSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApp
 export type ReadSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 現在の本人資格で公開された今回の履歴だけを取得する。
+ * @summary Read Shared Approval
+ */
 export function useReadSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdGet<
   TData = Awaited<
     ReturnType<
@@ -485,6 +531,10 @@ export function useReadSharedApprovalSharedPublicationsPublicationIdApprovalRequ
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の本人資格で公開された今回の履歴だけを取得する。
+ * @summary Read Shared Approval
+ */
 export function useReadSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdGet<
   TData = Awaited<
     ReturnType<
@@ -529,6 +579,10 @@ export function useReadSharedApprovalSharedPublicationsPublicationIdApprovalRequ
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の本人資格で公開された今回の履歴だけを取得する。
+ * @summary Read Shared Approval
+ */
 export function useReadSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdGet<
   TData = Awaited<
     ReturnType<
@@ -558,9 +612,9 @@ export function useReadSharedApprovalSharedPublicationsPublicationIdApprovalRequ
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 現在の本人資格で公開された今回の履歴だけを取得する。
  * @summary Read Shared Approval
  */
-
 export function useReadSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdGet<
   TData = Awaited<
     ReturnType<
@@ -743,6 +797,10 @@ export type SharedApprovalBasesSharedPublicationsPublicationIdApprovalRequestsAp
 export type SharedApprovalBasesSharedPublicationsPublicationIdApprovalRequestsApprovalIdBasesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 他の人の履歴を含まない固定した合意根拠・例外を取得する。
+ * @summary Shared Approval Bases
+ */
 export function useSharedApprovalBasesSharedPublicationsPublicationIdApprovalRequestsApprovalIdBasesGet<
   TData = Awaited<
     ReturnType<
@@ -790,6 +848,10 @@ export function useSharedApprovalBasesSharedPublicationsPublicationIdApprovalReq
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 他の人の履歴を含まない固定した合意根拠・例外を取得する。
+ * @summary Shared Approval Bases
+ */
 export function useSharedApprovalBasesSharedPublicationsPublicationIdApprovalRequestsApprovalIdBasesGet<
   TData = Awaited<
     ReturnType<
@@ -835,6 +897,10 @@ export function useSharedApprovalBasesSharedPublicationsPublicationIdApprovalReq
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 他の人の履歴を含まない固定した合意根拠・例外を取得する。
+ * @summary Shared Approval Bases
+ */
 export function useSharedApprovalBasesSharedPublicationsPublicationIdApprovalRequestsApprovalIdBasesGet<
   TData = Awaited<
     ReturnType<
@@ -865,9 +931,9 @@ export function useSharedApprovalBasesSharedPublicationsPublicationIdApprovalReq
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 他の人の履歴を含まない固定した合意根拠・例外を取得する。
  * @summary Shared Approval Bases
  */
-
 export function useSharedApprovalBasesSharedPublicationsPublicationIdApprovalRequestsApprovalIdBasesGet<
   TData = Awaited<
     ReturnType<
@@ -1014,6 +1080,7 @@ export type PreviewSharedApprovalSharedPublicationsPublicationIdApprovalRequests
   { publicationId: string; approvalId: string };
 
 /**
+ * 現在の指定本人・固定内容・変更比較を確認する。
  * @summary Preview Shared Approval
  */
 export const usePreviewSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdDecisionPreviewPost =
@@ -1065,27 +1132,6 @@ export const decideSharedApprovalSharedPublicationsPublicationIdApprovalRequests
     sharedApprovalDecision: SharedApprovalDecision,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<SharedApprovalRead> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<SharedApprovalRead>(
       getDecideSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdDecisionsPostUrl(
         publicationId,
@@ -1094,10 +1140,10 @@ export const decideSharedApprovalSharedPublicationsPublicationIdApprovalRequests
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(sharedApprovalDecision),
       },
     );
@@ -1183,6 +1229,7 @@ export type DecideSharedApprovalSharedPublicationsPublicationIdApprovalRequestsA
   };
 
 /**
+ * 自己・代理を認めず、本人の判断を一度だけ確定する。
  * @summary Decide Shared Approval
  */
 export const useDecideSharedApprovalSharedPublicationsPublicationIdApprovalRequestsApprovalIdDecisionsPost =

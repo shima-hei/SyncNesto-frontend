@@ -10,6 +10,7 @@
  */
 export interface GuestRequirementReviewer {
   grant_id: string;
+  participation_id: string;
   name: string;
   expires_at: string;
 }

@@ -37,6 +37,36 @@ import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
+
 const withQueryKey = <T extends object, K>(
   query: T,
   queryKey: K,
@@ -183,6 +213,10 @@ export type GuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsApproverC
 export type GuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsApproverCandidatesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 現在の共有先で、自己承認でない候補だけを検索する。
+ * @summary Guest Approval Candidates
+ */
 export function useGuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsApproverCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -227,6 +261,10 @@ export function useGuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsAp
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の共有先で、自己承認でない候補だけを検索する。
+ * @summary Guest Approval Candidates
+ */
 export function useGuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsApproverCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -271,6 +309,10 @@ export function useGuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsAp
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の共有先で、自己承認でない候補だけを検索する。
+ * @summary Guest Approval Candidates
+ */
 export function useGuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsApproverCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -300,9 +342,9 @@ export function useGuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsAp
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 現在の共有先で、自己承認でない候補だけを検索する。
  * @summary Guest Approval Candidates
  */
-
 export function useGuestApprovalCandidatesProjectsProjectIdGuestFixedApprovalsApproverCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -361,27 +403,6 @@ export const guestApprovalBasisProjectsProjectIdGuestFixedApprovalsBasisPreviewP
     guestApprovalBasisInput: GuestApprovalBasisInput,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<GuestApprovalBases> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<GuestApprovalBases>(
       getGuestApprovalBasisProjectsProjectIdGuestFixedApprovalsBasisPreviewPostUrl(
         projectId,
@@ -389,10 +410,10 @@ export const guestApprovalBasisProjectsProjectIdGuestFixedApprovalsBasisPreviewP
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(guestApprovalBasisInput),
       },
     );
@@ -473,6 +494,7 @@ export type GuestApprovalBasisProjectsProjectIdGuestFixedApprovalsBasisPreviewPo
   { projectId: number; data: BodyType<GuestApprovalBasisInput> };
 
 /**
+ * 外部文書の通常根拠と、例外理由が必要な全要件を確認する。
  * @summary Guest Approval Basis
  */
 export const useGuestApprovalBasisProjectsProjectIdGuestFixedApprovalsBasisPreviewPost =
@@ -523,27 +545,6 @@ export const previewGuestApprovalProjectsProjectIdGuestFixedApprovalsPreviewPost
     guestApprovalInput: GuestApprovalInput,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<GuestApprovalPreview> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<GuestApprovalPreview>(
       getPreviewGuestApprovalProjectsProjectIdGuestFixedApprovalsPreviewPostUrl(
         projectId,
@@ -551,10 +552,10 @@ export const previewGuestApprovalProjectsProjectIdGuestFixedApprovalsPreviewPost
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(guestApprovalInput),
       },
     );
@@ -635,6 +636,7 @@ export type PreviewGuestApprovalProjectsProjectIdGuestFixedApprovalsPreviewPostM
   { projectId: number; data: BodyType<GuestApprovalInput> };
 
 /**
+ * 相手に見せる固定対象・依頼文・例外を確認する。
  * @summary Preview Guest Approval
  */
 export const usePreviewGuestApprovalProjectsProjectIdGuestFixedApprovalsPreviewPost =
@@ -685,27 +687,6 @@ export const createGuestApprovalProjectsProjectIdGuestFixedApprovalsPost =
     guestApprovalCreate: GuestApprovalCreate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<FixedApprovalRead> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<FixedApprovalRead>(
       getCreateGuestApprovalProjectsProjectIdGuestFixedApprovalsPostUrl(
         projectId,
@@ -713,10 +694,10 @@ export const createGuestApprovalProjectsProjectIdGuestFixedApprovalsPost =
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(guestApprovalCreate),
       },
     );
@@ -795,6 +776,7 @@ export type CreateGuestApprovalProjectsProjectIdGuestFixedApprovalsPostMutationV
   { projectId: number; data: BodyType<GuestApprovalCreate> };
 
 /**
+ * 既存正本と不変な外部対応を同時に保存する。
  * @summary Create Guest Approval
  */
 export const useCreateGuestApprovalProjectsProjectIdGuestFixedApprovalsPost = <

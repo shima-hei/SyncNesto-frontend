@@ -11,6 +11,9 @@ const ALLOWED_PREFIXES = [
   "/shared/notifications",
   "/shared/publications",
   "/body-images",
+  "/shared/projects",
+  "/shared/comments",
+  "/shared/activity",
   "/guest-invitations",
   "/demo",
   "/auth",
@@ -75,6 +78,7 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
       upstreamPath,
     ) ||
     upstreamPath === "/notification-preferences" ||
+    /^\/notifications(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/requirement-agreements(?:\/|$)/.test(upstreamPath) ||
     /^\/projects\/[^/]+\/(?:requirement-workflow(?:\/|$)|requirement-documents\/[^/]+\/(?:review-requests|formal-approval-requests|formal-approval-baseline)(?:\/|$))/.test(
       upstreamPath,
@@ -87,11 +91,10 @@ const proxyRequest = async (request: NextRequest, context: RouteContext) => {
     ) ||
     upstreamPath === "/shared/notifications" ||
     upstreamPath.startsWith("/shared/notifications/") ||
-    /^\/projects\/[^/]+\/(?:artifact-publications|guest-participations|guest-invitations|guest-fixed-approvals|guest-requirement-reviews|guest-requirement-approvals)(?:\/|$)/.test(
+    /^\/projects\/[^/]+\/(?:artifact-publications|guest-participations|guest-invitations|guest-profile|guest-fixed-approvals|guest-requirement-reviews|guest-requirement-approvals)(?:\/|$)/.test(
       upstreamPath,
     ) ||
-    upstreamPath === "/shared/publications" ||
-    upstreamPath.startsWith("/shared/publications/") ||
+    upstreamPath.startsWith("/shared/") ||
     upstreamPath.startsWith("/guest-invitations/");
   if (!privatePublication) return proxyUpstream(request, upstreamPath);
   let response: NextResponse;
@@ -138,9 +141,7 @@ const proxyUpstream = async (request: NextRequest, upstreamPath: string) => {
     upstreamHeaders = getUpstreamRequestHeaders(request);
     if (
       upstreamPath === "/notification-preferences" ||
-      upstreamPath === "/shared/notifications" ||
-      upstreamPath.startsWith("/shared/notifications/") ||
-      upstreamPath.startsWith("/shared/publications") ||
+      upstreamPath.startsWith("/shared/") ||
       upstreamPath.startsWith("/guest-invitations/")
     ) {
       upstreamHeaders.delete("X-Tenant-ID");

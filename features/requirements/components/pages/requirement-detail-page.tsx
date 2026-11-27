@@ -1,6 +1,7 @@
 "use client";
 
 import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
+import { SourceCommentTabs } from "@/features/artifact-publications/components/source-comment-tabs";
 import { selectedTextForLinkSource } from "@/lib/smart-links/quote";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { VerificationEntry } from "@/features/requirement-verifications/components/verification-entry";
@@ -149,6 +150,7 @@ export function RequirementDetailPage({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementCommentAnchor | null>(null);
+  const [internalCommentRequest, setInternalCommentRequest] = useState(0);
 
   const [relatedCommentTarget, setRelatedCommentTarget] = useState<
     string | null
@@ -242,6 +244,7 @@ export function RequirementDetailPage({
   const itemPath = `/projects/joined/${projectId}/requirements/${documentId}/items/${requirementId}`;
   const chooseCommentAnchor = (target: RequirementCommentAnchor) => {
     setSelectedTargetAnchor(target);
+    setInternalCommentRequest((request) => request + 1);
     setActivity("comments");
     setActiveTab("overview");
     requestAnimationFrame(() =>
@@ -349,6 +352,7 @@ export function RequirementDetailPage({
                     id: requirementId,
                     title: requirement.title,
                     code: requirement.requirement_code,
+                    version: requirement.version,
                   }}
                 />
               ) : null}
@@ -556,17 +560,24 @@ export function RequirementDetailPage({
                     onValueChange={setActivity}
                     historyLabel="タイムライン"
                     comments={
-                      <RequirementTargetCommentsSection
+                      <SourceCommentTabs
                         projectId={projectId}
-                        targetType="requirement_item"
-                        targetId={requirementId}
-                        canComment={canCommentRequirement(currentProjectRole)}
-                        selectedTargetAnchor={selectedTargetAnchor}
-                        onTargetAnchorClick={handleTargetAnchorClick}
-                        getTargetAnchorStatus={getTargetAnchorStatus}
-                        showTargetAnchorInput={false}
-                        embedded
-                      />
+                        sourceKind="requirement"
+                        sourceId={requirementId}
+                        internalRequest={internalCommentRequest}
+                      >
+                        <RequirementTargetCommentsSection
+                          projectId={projectId}
+                          targetType="requirement_item"
+                          targetId={requirementId}
+                          canComment={canCommentRequirement(currentProjectRole)}
+                          selectedTargetAnchor={selectedTargetAnchor}
+                          onTargetAnchorClick={handleTargetAnchorClick}
+                          getTargetAnchorStatus={getTargetAnchorStatus}
+                          showTargetAnchorInput={false}
+                          embedded
+                        />
+                      </SourceCommentTabs>
                     }
                     history={
                       <>
@@ -771,7 +782,7 @@ function RequestItemReview({
 }: {
   projectId: number;
   documentId: number;
-  item: { id: number; title: string; code: string };
+  item: { id: number; title: string; code: string; version: number };
 }) {
   const { document, isLoading } = useRequirementDocument(projectId, documentId);
   const router = useRouter();

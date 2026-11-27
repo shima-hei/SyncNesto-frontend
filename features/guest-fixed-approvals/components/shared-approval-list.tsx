@@ -20,12 +20,17 @@ import { ApiError } from "@/lib/api/error";
 import { statusLabels } from "@/features/fixed-approvals/lib/display";
 import { listSharedApprovals } from "../lib/api";
 import { approvalKindLabels, sharedApprovalPath } from "../lib/display";
-import { ApprovalMfa } from "./approval-mfa";
 
 export function SharedApprovalList({
   publicationId,
+  participationId,
+  compact = false,
+  onMfaRequired,
 }: {
   publicationId?: string;
+  participationId?: string;
+  compact?: boolean;
+  onMfaRequired: (required: boolean) => void;
 }) {
   const [view, setView] = useState("requested");
   const [cursor, setCursor] = useState<string | undefined>();
@@ -34,24 +39,30 @@ export function SharedApprovalList({
       listSharedApprovals(
         {
           publication_id: publicationId,
+          participation_id: participationId,
           status: view === "requested" ? "requested" : undefined,
           cursor,
-          page_size: 20,
+          page_size: compact ? 5 : 20,
         },
         { signal },
       ),
-    [publicationId, view, cursor],
+    [publicationId, participationId, view, cursor, compact],
   );
   const root = useRef<HTMLDivElement>(null);
   const mask = useCallback((hidden: boolean) => {
     if (root.current) root.current.hidden = hidden;
   }, []);
   const data = useFreshShared(
-    JSON.stringify([publicationId, view, cursor]),
+    JSON.stringify([publicationId, participationId, view, cursor]),
     load,
     mask,
   );
   const { value, refresh } = data;
+  const needsMfa =
+    data.error instanceof ApiError && data.error.code === "MFA_REQUIRED";
+  useEffect(() => {
+    if (value || data.error) onMfaRequired(needsMfa);
+  }, [data.error, needsMfa, onMfaRequired, value]);
   useEffect(() => {
     if (!value?.items.length) return;
     const expires = Math.min(
@@ -63,6 +74,7 @@ export function SharedApprovalList({
     );
     return () => window.clearTimeout(timer);
   }, [value, refresh]);
+  if (needsMfa) return null;
   return (
     <section
       aria-label="あなたへの判断依頼"
@@ -70,35 +82,30 @@ export function SharedApprovalList({
     >
       <div>
         <h2 className="text-base font-semibold">あなたへの判断依頼</h2>
-        <p className="text-sm text-muted-foreground">
-          依頼された内容を確認して、合意・承認または差し戻しを行います。
-        </p>
+        {!compact && (
+          <p className="text-sm text-muted-foreground">
+            依頼された内容を確認して、合意・承認または差し戻しを行います。
+          </p>
+        )}
       </div>
-      <ToggleGroup
-        type="single"
-        value={view}
-        onValueChange={(next) => {
-          if (next) {
-            setView(next);
-            setCursor(undefined);
-          }
-        }}
-        aria-label="判断依頼の表示"
-      >
-        <ToggleGroupItem value="requested">要対応</ToggleGroupItem>
-        <ToggleGroupItem value="all">履歴を含む</ToggleGroupItem>
-      </ToggleGroup>
-      <div ref={root}>
-        {data.error instanceof ApiError &&
-        data.error.code === "MFA_REQUIRED" ? (
-          <ApprovalMfa
-            returnTo={
-              publicationId
-                ? `/shared/publications/${publicationId}`
-                : "/shared/publications"
+      {!compact && (
+        <ToggleGroup
+          type="single"
+          value={view}
+          onValueChange={(next) => {
+            if (next) {
+              setView(next);
+              setCursor(undefined);
             }
-          />
-        ) : data.error ? (
+          }}
+          aria-label="判断依頼の表示"
+        >
+          <ToggleGroupItem value="requested">要対応</ToggleGroupItem>
+          <ToggleGroupItem value="all">履歴を含む</ToggleGroupItem>
+        </ToggleGroup>
+      )}
+      <div ref={root}>
+        {data.error ? (
           <Alert>
             <AlertTitle>現在の判断依頼を確認できません</AlertTitle>
             <AlertDescription>
@@ -115,14 +122,20 @@ export function SharedApprovalList({
         ) : !value ? (
           <Skeleton className="h-24" />
         ) : !value.items.length ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyTitle>現在確認できる判断依頼はありません</EmptyTitle>
-              <EmptyDescription>
-                招待への参加や資料の閲覧だけで、承認を依頼されたことにはなりません。履歴を含めて確認することもできます。
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          compact ? (
+            <p className="text-sm text-muted-foreground">
+              未回答の判断依頼はありません。
+            </p>
+          ) : (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>現在確認できる判断依頼はありません</EmptyTitle>
+                <EmptyDescription>
+                  招待への参加や資料の閲覧だけで、承認を依頼されたことにはなりません。履歴を含めて確認することもできます。
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )
         ) : (
           <>
             <p className="text-sm">現在確認できる依頼 {value.total}件</p>
@@ -151,6 +164,11 @@ export function SharedApprovalList({
                       </Button>
                     </div>
                     <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      {!publicationId && !participationId && (
+                        <span className="min-w-0 break-words">
+                          {row.public_project_name || "公開名未設定"}
+                        </span>
+                      )}
                       <span className="min-w-0 max-w-full break-words">
                         依頼元：{row.requester_name}
                       </span>
@@ -192,21 +210,26 @@ export function SharedApprovalList({
                 </Card>
               ))}
             </div>
-            <div className="flex gap-2">
-              {cursor ? (
-                <Button variant="outline" onClick={() => setCursor(undefined)}>
-                  先頭へ
-                </Button>
-              ) : null}
-              {value.next_cursor ? (
-                <Button
-                  variant="outline"
-                  onClick={() => setCursor(value.next_cursor!)}
-                >
-                  次へ
-                </Button>
-              ) : null}
-            </div>
+            {!compact && (
+              <div className="flex gap-2">
+                {cursor ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setCursor(undefined)}
+                  >
+                    先頭へ
+                  </Button>
+                ) : null}
+                {value.next_cursor ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setCursor(value.next_cursor!)}
+                  >
+                    次へ
+                  </Button>
+                ) : null}
+              </div>
+            )}
           </>
         )}
       </div>

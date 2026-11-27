@@ -18,6 +18,7 @@ export interface GuestApprovalPreview {
   approver_name: string;
   requester_name: string;
   request_note: string | null;
+  decision_expires_at?: string | null;
   exception_count: number;
   basis_counts: GuestApprovalPreviewBasisCounts;
   public_scope_digest: string;

@@ -23,6 +23,8 @@ import {
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { useUrlTabState } from "@/hooks/use-url-tab-state";
 import { formatDateTime } from "@/lib/format/date";
+import { ArtifactPublicationLink } from "@/features/artifact-publications/components/artifact-publication-link";
+import { SourceCommentTabs } from "@/features/artifact-publications/components/source-comment-tabs";
 import type {
   SpecificationRead,
   SpecificationReadStatus,
@@ -70,6 +72,7 @@ export function SpecificationPage({
     defaultValue: "content",
   });
   const [target, setTarget] = useState<string | null>(null);
+  const [internalCommentRequest, setInternalCommentRequest] = useState(0);
   const [focusedTarget, setFocusedTarget] = useState<{ path: string } | null>(
     null,
   );
@@ -154,7 +157,7 @@ export function SpecificationPage({
   }, [tab, focusedTarget]);
   useEffect(() => {
     if (target) document.getElementById("specification-comment-body")?.focus();
-  }, [target]);
+  }, [target, internalCommentRequest]);
   if (roleLoading || (id && query.isPending))
     return <p role="status">設計書を読み込み中…</p>;
   if (query.error)
@@ -195,14 +198,21 @@ export function SpecificationPage({
     );
   if (!row) return null;
   const review = (
-    <SpecificationReview
+    <SourceCommentTabs
       projectId={projectId}
-      row={row}
-      canEdit={canEdit}
-      target={target}
-      onTarget={setTarget}
-      onNavigate={jump}
-    />
+      sourceKind="specification"
+      sourceId={row.id}
+      internalRequest={internalCommentRequest}
+    >
+      <SpecificationReview
+        projectId={projectId}
+        row={row}
+        canEdit={canEdit}
+        target={target}
+        onTarget={setTarget}
+        onNavigate={jump}
+      />
+    </SourceCommentTabs>
   );
   return (
     <div className="flex min-w-0 flex-col gap-5">
@@ -216,6 +226,12 @@ export function SpecificationPage({
               projectId={projectId}
               kind="specification"
               sourceId={row.id}
+              version={row.version}
+            />
+            <ArtifactPublicationLink
+              projectId={projectId}
+              kind="specification"
+              id={row.id}
               version={row.version}
             />
             <Button asChild variant="outline">
@@ -305,7 +321,14 @@ export function SpecificationPage({
               values={initialValues(row.kind, row)}
               onChange={() => undefined}
               readOnly
-              onReview={canEdit ? (path) => setTarget(path) : undefined}
+              onReview={
+                canEdit
+                  ? (path) => {
+                      setTarget(path);
+                      setInternalCommentRequest((request) => request + 1);
+                    }
+                  : undefined
+              }
             />
             <aside className="min-w-0 border-t pt-5 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-7rem)] xl:overflow-y-auto xl:overscroll-contain xl:border-t-0 xl:pt-0">
               {review}

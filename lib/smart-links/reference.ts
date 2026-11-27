@@ -1,6 +1,8 @@
 import type { SmartLinkReference } from "@/lib/api/generated/model/smartLinkReference";
 
 const projectPath = /^\/projects\/joined\/([1-9]\d*)(?:\/(.*?))?\/?$/;
+const sharedPath =
+  /^\/shared\/publications\/([\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12})\/?$/i;
 const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const untrusted = /[\\\s\p{Cc}]/u;
 const pathKinds = {
@@ -35,6 +37,24 @@ export type ParsedSmartLink = {
   tenantId?: number;
   localHref: string;
 };
+
+export function sharedPublicationLinkId(
+  href: string,
+  origin: string,
+): string | undefined {
+  if (!href || untrusted.test(href) || href.startsWith("//")) return undefined;
+  if (!href.startsWith("/") && !/^https?:\/\//i.test(href)) return undefined;
+  if (/%|(?:^|\/)\.{1,2}(?:\/|$)/.test(href.split(/[?#]/, 1)[0]))
+    return undefined;
+  try {
+    const url = new URL(href, origin);
+    if (url.origin === origin && !url.username && !url.password) {
+      return sharedPath.exec(url.pathname)?.[1].toLowerCase();
+    }
+  } catch {
+    return undefined;
+  }
+}
 
 export function parseSmartLink(
   href: string,

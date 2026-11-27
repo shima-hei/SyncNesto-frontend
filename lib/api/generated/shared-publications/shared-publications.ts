@@ -21,10 +21,25 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  BodyUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost,
+  FileUploadComplete,
+  FileUploadPlan,
+  FileUploadRequest,
   HTTPValidationError,
+  SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  SharedCommentFileRead,
+  SharedCommentMentionCandidate,
+  SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
   SharedFileDownload,
   SharedFileDownloadRequest,
+  SharedPublicationCommentCreate,
+  SharedPublicationCommentList,
+  SharedPublicationCommentRead,
+  SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+  SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
   SharedPublicationFiles,
+  SharedPublicationLinkTitle,
+  SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
   SharedPublicationList,
   SharedPublicationNodePage,
   SharedPublicationNodesSharedPublicationsPublicationIdNodesGetParams,
@@ -36,6 +51,36 @@ import { apiClient } from "../../client";
 import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
 
 const withQueryKey = <T extends object, K>(
   query: T,
@@ -139,6 +184,10 @@ export type SharedPublicationsSharedPublicationsGetQueryResult = NonNullable<
 export type SharedPublicationsSharedPublicationsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 認証済み本人へ現在許可された集合だけを返す。
+ * @summary Shared Publications
+ */
 export function useSharedPublicationsSharedPublicationsGet<
   TData = Awaited<ReturnType<typeof sharedPublicationsSharedPublicationsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -166,6 +215,10 @@ export function useSharedPublicationsSharedPublicationsGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 認証済み本人へ現在許可された集合だけを返す。
+ * @summary Shared Publications
+ */
 export function useSharedPublicationsSharedPublicationsGet<
   TData = Awaited<ReturnType<typeof sharedPublicationsSharedPublicationsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -193,6 +246,10 @@ export function useSharedPublicationsSharedPublicationsGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 認証済み本人へ現在許可された集合だけを返す。
+ * @summary Shared Publications
+ */
 export function useSharedPublicationsSharedPublicationsGet<
   TData = Awaited<ReturnType<typeof sharedPublicationsSharedPublicationsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -213,9 +270,9 @@ export function useSharedPublicationsSharedPublicationsGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 認証済み本人へ現在許可された集合だけを返す。
  * @summary Shared Publications
  */
-
 export function useSharedPublicationsSharedPublicationsGet<
   TData = Awaited<ReturnType<typeof sharedPublicationsSharedPublicationsGet>>,
   TError = ErrorType<HTTPValidationError>,
@@ -239,6 +296,282 @@ export function useSharedPublicationsSharedPublicationsGet<
     params,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetUrl =
+  (
+    params: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      const explodeParameters = ["ids"];
+
+      if (Array.isArray(value) && explodeParameters.includes(key)) {
+        value.forEach((v) => {
+          normalizedParams.append(key, v === null ? "null" : String(v));
+        });
+        return;
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/shared/publications/link-titles?${stringifiedParams}`
+      : `/shared/publications/link-titles`;
+  };
+
+/**
+ * @summary Shared Publication Link Titles
+ */
+export const sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet =
+  async (
+    params: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedPublicationLinkTitle[]> => {
+    return apiClient<SharedPublicationLinkTitle[]>(
+      getSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetUrl(params),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetQueryKey =
+  (
+    params?: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+  ) => {
+    return [
+      `/shared/publications/link-titles`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    params: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetQueryKey(
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+        >
+      >
+    > = ({ signal }) =>
+      sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet(params, {
+        signal,
+        ...requestOptions,
+      });
+
+    return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+      >
+    >
+  >;
+export type SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Shared Publication Link Titles */
+export function useSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Publication Link Titles */
+export function useSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Publication Link Titles */
+export function useSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Publication Link Titles */
+export function useSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  params: SharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationLinkTitlesSharedPublicationsLinkTitlesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getSharedPublicationLinkTitlesSharedPublicationsLinkTitlesGetQueryOptions(
+      params,
+      options,
+    );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -341,6 +674,10 @@ export type SharedPublicationSharedPublicationsPublicationIdGetQueryResult =
 export type SharedPublicationSharedPublicationsPublicationIdGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 内部originや他人の許可を含まない固定内容を返す。
+ * @summary Shared Publication
+ */
 export function useSharedPublicationSharedPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<typeof sharedPublicationSharedPublicationsPublicationIdGet>
@@ -380,6 +717,10 @@ export function useSharedPublicationSharedPublicationsPublicationIdGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 内部originや他人の許可を含まない固定内容を返す。
+ * @summary Shared Publication
+ */
 export function useSharedPublicationSharedPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<typeof sharedPublicationSharedPublicationsPublicationIdGet>
@@ -419,6 +760,10 @@ export function useSharedPublicationSharedPublicationsPublicationIdGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 内部originや他人の許可を含まない固定内容を返す。
+ * @summary Shared Publication
+ */
 export function useSharedPublicationSharedPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<typeof sharedPublicationSharedPublicationsPublicationIdGet>
@@ -443,9 +788,9 @@ export function useSharedPublicationSharedPublicationsPublicationIdGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 内部originや他人の許可を含まない固定内容を返す。
  * @summary Shared Publication
  */
-
 export function useSharedPublicationSharedPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<typeof sharedPublicationSharedPublicationsPublicationIdGet>
@@ -611,6 +956,10 @@ export type SharedPublicationNodesSharedPublicationsPublicationIdNodesGetQueryRe
 export type SharedPublicationNodesSharedPublicationsPublicationIdNodesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 現在の本人・sessionに結び付いた本文ページを返す。
+ * @summary Shared Publication Nodes
+ */
 export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<
@@ -657,6 +1006,10 @@ export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の本人・sessionに結び付いた本文ページを返す。
+ * @summary Shared Publication Nodes
+ */
 export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<
@@ -701,6 +1054,10 @@ export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の本人・sessionに結び付いた本文ページを返す。
+ * @summary Shared Publication Nodes
+ */
 export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<
@@ -730,9 +1087,9 @@ export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 現在の本人・sessionに結び付いた本文ページを返す。
  * @summary Shared Publication Nodes
  */
-
 export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<
@@ -878,6 +1235,10 @@ export type SharedPublicationFilesSharedPublicationsPublicationIdFilesGetQueryRe
 export type SharedPublicationFilesSharedPublicationsPublicationIdFilesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 公開添付の一覧だけを返す。新しいDL経路は含めない。
+ * @summary Shared Publication Files
+ */
 export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet<
   TData = Awaited<
     ReturnType<
@@ -921,6 +1282,10 @@ export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 公開添付の一覧だけを返す。新しいDL経路は含めない。
+ * @summary Shared Publication Files
+ */
 export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet<
   TData = Awaited<
     ReturnType<
@@ -964,6 +1329,10 @@ export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 公開添付の一覧だけを返す。新しいDL経路は含めない。
+ * @summary Shared Publication Files
+ */
 export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet<
   TData = Awaited<
     ReturnType<
@@ -992,9 +1361,9 @@ export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 公開添付の一覧だけを返す。新しいDL経路は含めない。
  * @summary Shared Publication Files
  */
-
 export function useSharedPublicationFilesSharedPublicationsPublicationIdFilesGet<
   TData = Awaited<
     ReturnType<
@@ -1052,27 +1421,6 @@ export const downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFi
     sharedFileDownloadRequest: SharedFileDownloadRequest,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<SharedFileDownload> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<SharedFileDownload>(
       getDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPostUrl(
         publicationId,
@@ -1081,10 +1429,10 @@ export const downloadSharedPublicationFileSharedPublicationsPublicationIdFilesFi
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(sharedFileDownloadRequest),
       },
     );
@@ -1170,6 +1518,7 @@ export type DownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFil
   };
 
 /**
+ * 現在許可された保全添付に限り、配信専用の短期URLを発行する。
  * @summary Download Shared Publication File
  */
 export const useDownloadSharedPublicationFileSharedPublicationsPublicationIdFilesFileIdDownloadPost =
@@ -1205,3 +1554,1938 @@ export const useDownloadSharedPublicationFileSharedPublicationsPublicationIdFile
       queryClient,
     );
   };
+export const getSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetUrl =
+  (
+    publicationId: string,
+    fileId: string,
+    params: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/shared/publications/${publicationId}/files/${fileId}/content?${stringifiedParams}`
+      : `/shared/publications/${publicationId}/files/${fileId}/content`;
+  };
+
+/**
+ * 毎回認可し、採用済み固定ファイルの内容だけを返す。
+ * @summary Shared Publication File Content
+ */
+export const sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet =
+  async (
+    publicationId: string,
+    fileId: string,
+    params: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<Blob> => {
+    return apiClient<Blob>(
+      getSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetUrl(
+        publicationId,
+        fileId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetQueryKey =
+  (
+    publicationId: string,
+    fileId: string,
+    params?: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+  ) => {
+    return [
+      `/shared/publications/${publicationId}/files/${fileId}/content`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    publicationId: string,
+    fileId: string,
+    params: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetQueryKey(
+        publicationId,
+        fileId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+        >
+      >
+    > = ({ signal }) =>
+      sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet(
+        publicationId,
+        fileId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        publicationId !== null &&
+        publicationId !== undefined &&
+        fileId !== null &&
+        fileId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+      >
+    >
+  >;
+export type SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 毎回認可し、採用済み固定ファイルの内容だけを返す。
+ * @summary Shared Publication File Content
+ */
+export function useSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  fileId: string,
+  params: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 毎回認可し、採用済み固定ファイルの内容だけを返す。
+ * @summary Shared Publication File Content
+ */
+export function useSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  fileId: string,
+  params: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 毎回認可し、採用済み固定ファイルの内容だけを返す。
+ * @summary Shared Publication File Content
+ */
+export function useSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  fileId: string,
+  params: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 毎回認可し、採用済み固定ファイルの内容だけを返す。
+ * @summary Shared Publication File Content
+ */
+export function useSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  fileId: string,
+  params: SharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getSharedPublicationFileContentSharedPublicationsPublicationIdFilesFileIdContentGetQueryOptions(
+      publicationId,
+      fileId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetUrl =
+  (
+    publicationId: string,
+    params?: SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/shared/publications/${publicationId}/comments?${stringifiedParams}`
+      : `/shared/publications/${publicationId}/comments`;
+  };
+
+/**
+ * 有効な閲覧許可で固定版の共有コメントを読む。
+ * @summary Shared Publication Comments
+ */
+export const sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet =
+  async (
+    publicationId: string,
+    params?: SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedPublicationCommentList> => {
+    return apiClient<SharedPublicationCommentList>(
+      getSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetUrl(
+        publicationId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetQueryKey =
+  (
+    publicationId: string,
+    params?: SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+  ) => {
+    return [
+      `/shared/publications/${publicationId}/comments`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    publicationId: string,
+    params?: SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetQueryKey(
+        publicationId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+        >
+      >
+    > = ({ signal }) =>
+      sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet(
+        publicationId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: publicationId !== null && publicationId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+      >
+    >
+  >;
+export type SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 有効な閲覧許可で固定版の共有コメントを読む。
+ * @summary Shared Publication Comments
+ */
+export function useSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params:
+    | undefined
+    | SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 有効な閲覧許可で固定版の共有コメントを読む。
+ * @summary Shared Publication Comments
+ */
+export function useSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params?: SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 有効な閲覧許可で固定版の共有コメントを読む。
+ * @summary Shared Publication Comments
+ */
+export function useSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params?: SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 有効な閲覧許可で固定版の共有コメントを読む。
+ * @summary Shared Publication Comments
+ */
+export function useSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params?: SharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedPublicationCommentsSharedPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getSharedPublicationCommentsSharedPublicationsPublicationIdCommentsGetQueryOptions(
+      publicationId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostUrl =
+  (publicationId: string) => {
+    return `/shared/publications/${publicationId}/comments`;
+  };
+
+/**
+ * 現在の投稿許可がある本人の投稿または返信を保存する。
+ * @summary Add Shared Publication Comment
+ */
+export const addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost =
+  async (
+    publicationId: string,
+    sharedPublicationCommentCreate: SharedPublicationCommentCreate,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedPublicationCommentRead> => {
+    return apiClient<SharedPublicationCommentRead>(
+      getAddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostUrl(
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(sharedPublicationCommentCreate),
+      },
+    );
+  };
+
+export const getAddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationKey =
+  () =>
+    [
+      "addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost",
+    ] as const;
+
+export const getAddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost
+        >
+      >,
+      TError,
+      AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost
+      >
+    >,
+    TError,
+    AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getAddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost
+        >
+      >,
+      AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationVariables
+    > = (props) => {
+      const { publicationId, data } = props ?? {};
+
+      return addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost(
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost
+      >
+    >
+  >;
+export type AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationBody =
+  BodyType<SharedPublicationCommentCreate>;
+export type AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationVariables =
+  { publicationId: string; data: BodyType<SharedPublicationCommentCreate> };
+
+/**
+ * 現在の投稿許可がある本人の投稿または返信を保存する。
+ * @summary Add Shared Publication Comment
+ */
+export const useAddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost
+          >
+        >,
+        TError,
+        AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof addSharedPublicationCommentSharedPublicationsPublicationIdCommentsPost
+      >
+    >,
+    TError,
+    AddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getAddSharedPublicationCommentSharedPublicationsPublicationIdCommentsPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetUrl =
+  (
+    publicationId: string,
+    params?: SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/shared/publications/${publicationId}/comments/mention-candidates?${stringifiedParams}`
+      : `/shared/publications/${publicationId}/comments/mention-candidates`;
+  };
+
+/**
+ * @summary Shared Comment Mention Candidates
+ */
+export const sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet =
+  async (
+    publicationId: string,
+    params?: SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedCommentMentionCandidate[]> => {
+    return apiClient<SharedCommentMentionCandidate[]>(
+      getSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetUrl(
+        publicationId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetQueryKey =
+  (
+    publicationId: string,
+    params?: SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  ) => {
+    return [
+      `/shared/publications/${publicationId}/comments/mention-candidates`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    publicationId: string,
+    params?: SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetQueryKey(
+        publicationId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+        >
+      >
+    > = ({ signal }) =>
+      sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet(
+        publicationId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: publicationId !== null && publicationId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+      >
+    >
+  >;
+export type SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Shared Comment Mention Candidates */
+export function useSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params:
+    | undefined
+    | SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Comment Mention Candidates */
+export function useSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params?: SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Comment Mention Candidates */
+export function useSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params?: SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Comment Mention Candidates */
+export function useSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  params?: SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getSharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetQueryOptions(
+      publicationId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getPlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostUrl =
+  (publicationId: string) => {
+    return `/shared/publications/${publicationId}/comments/files/plan`;
+  };
+
+/**
+ * @summary Plan Shared Comment File
+ */
+export const planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost =
+  async (
+    publicationId: string,
+    fileUploadRequest: FileUploadRequest,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<FileUploadPlan> => {
+    return apiClient<FileUploadPlan>(
+      getPlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostUrl(
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(fileUploadRequest),
+      },
+    );
+  };
+
+export const getPlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationKey =
+  () =>
+    [
+      "planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost",
+    ] as const;
+
+export const getPlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost
+        >
+      >,
+      TError,
+      PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost
+      >
+    >,
+    TError,
+    PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getPlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost
+        >
+      >,
+      PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationVariables
+    > = (props) => {
+      const { publicationId, data } = props ?? {};
+
+      return planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost(
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost
+      >
+    >
+  >;
+export type PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationBody =
+  BodyType<FileUploadRequest>;
+export type PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationVariables =
+  { publicationId: string; data: BodyType<FileUploadRequest> };
+
+/** @summary Plan Shared Comment File */
+export const usePlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost
+          >
+        >,
+        TError,
+        PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof planSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPost
+      >
+    >,
+    TError,
+    PlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getPlanSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPlanPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getCompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostUrl =
+  (publicationId: string) => {
+    return `/shared/publications/${publicationId}/comments/files/complete`;
+  };
+
+/**
+ * @summary Complete Shared Comment File
+ */
+export const completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost =
+  async (
+    publicationId: string,
+    fileUploadComplete: FileUploadComplete,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedCommentFileRead> => {
+    return apiClient<SharedCommentFileRead>(
+      getCompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostUrl(
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(fileUploadComplete),
+      },
+    );
+  };
+
+export const getCompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationKey =
+  () =>
+    [
+      "completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost",
+    ] as const;
+
+export const getCompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost
+        >
+      >,
+      TError,
+      CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost
+      >
+    >,
+    TError,
+    CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getCompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost
+        >
+      >,
+      CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationVariables
+    > = (props) => {
+      const { publicationId, data } = props ?? {};
+
+      return completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost(
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost
+      >
+    >
+  >;
+export type CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationBody =
+  BodyType<FileUploadComplete>;
+export type CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationVariables =
+  { publicationId: string; data: BodyType<FileUploadComplete> };
+
+/** @summary Complete Shared Comment File */
+export const useCompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost
+          >
+        >,
+        TError,
+        CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof completeSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePost
+      >
+    >,
+    TError,
+    CompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getCompleteSharedCommentFileSharedPublicationsPublicationIdCommentsFilesCompletePostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostUrl =
+  (publicationId: string) => {
+    return `/shared/publications/${publicationId}/comments/files`;
+  };
+
+/**
+ * @summary Upload Shared Comment File
+ */
+export const uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost =
+  async (
+    publicationId: string,
+    bodyUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost: BodyUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedCommentFileRead> => {
+    const formData = new FormData();
+    formData.append(
+      `file`,
+      bodyUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost.file,
+    );
+    formData.append(
+      `request_id`,
+      bodyUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost.request_id,
+    );
+
+    return apiClient<SharedCommentFileRead>(
+      getUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostUrl(
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        body: formData,
+      },
+    );
+  };
+
+export const getUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationKey =
+  () =>
+    [
+      "uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost",
+    ] as const;
+
+export const getUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost
+        >
+      >,
+      TError,
+      UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost
+      >
+    >,
+    TError,
+    UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost
+        >
+      >,
+      UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationVariables
+    > = (props) => {
+      const { publicationId, data } = props ?? {};
+
+      return uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost(
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost
+      >
+    >
+  >;
+export type UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationBody =
+  BodyType<BodyUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost>;
+export type UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationVariables =
+  {
+    publicationId: string;
+    data: BodyType<BodyUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost>;
+  };
+
+/** @summary Upload Shared Comment File */
+export const useUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost
+          >
+        >,
+        TError,
+        UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof uploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPost
+      >
+    >,
+    TError,
+    UploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getUploadSharedCommentFileSharedPublicationsPublicationIdCommentsFilesPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getDiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteUrl =
+  (publicationId: string, fileId: string) => {
+    return `/shared/publications/${publicationId}/comments/files/${fileId}`;
+  };
+
+/**
+ * @summary Discard Shared Comment File
+ */
+export const discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete =
+  async (
+    publicationId: string,
+    fileId: string,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<void> => {
+    return apiClient<void>(
+      getDiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteUrl(
+        publicationId,
+        fileId,
+      ),
+      {
+        ...options,
+        method: "DELETE",
+      },
+    );
+  };
+
+export const getDiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationKey =
+  () =>
+    [
+      "discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete",
+    ] as const;
+
+export const getDiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete
+        >
+      >,
+      TError,
+      DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete
+      >
+    >,
+    TError,
+    DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getDiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete
+        >
+      >,
+      DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables
+    > = (props) => {
+      const { publicationId, fileId } = props ?? {};
+
+      return discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete(
+        publicationId,
+        fileId,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete
+      >
+    >
+  >;
+
+export type DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationError =
+  ErrorType<HTTPValidationError>;
+export type DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables =
+  { publicationId: string; fileId: string };
+
+/** @summary Discard Shared Comment File */
+export const useDiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete
+          >
+        >,
+        TError,
+        DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof discardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDelete
+      >
+    >,
+    TError,
+    DiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getDiscardSharedCommentFileSharedPublicationsPublicationIdCommentsFilesFileIdDeleteMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetUrl =
+  (
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/shared/publications/${publicationId}/comments/${commentId}/files/${fileId}/content?${stringifiedParams}`
+      : `/shared/publications/${publicationId}/comments/${commentId}/files/${fileId}/content`;
+  };
+
+/**
+ * @summary Shared Comment File Content
+ */
+export const sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet =
+  async (
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<void> => {
+    return apiClient<void>(
+      getSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetUrl(
+        publicationId,
+        commentId,
+        fileId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryKey =
+  (
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  ) => {
+    return [
+      `/shared/publications/${publicationId}/comments/${commentId}/files/${fileId}/content`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryKey(
+        publicationId,
+        commentId,
+        fileId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+        >
+      >
+    > = ({ signal }) =>
+      sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet(
+        publicationId,
+        commentId,
+        fileId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        publicationId !== null &&
+        publicationId !== undefined &&
+        commentId !== null &&
+        commentId !== undefined &&
+        fileId !== null &&
+        fileId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+      >
+    >
+  >;
+export type SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Shared Comment File Content */
+export function useSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params:
+    | undefined
+    | SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Comment File Content */
+export function useSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params?: SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Comment File Content */
+export function useSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params?: SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Shared Comment File Content */
+export function useSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params?: SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getSharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryOptions(
+      publicationId,
+      commentId,
+      fileId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

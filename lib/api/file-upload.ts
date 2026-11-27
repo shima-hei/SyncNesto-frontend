@@ -14,6 +14,7 @@ export async function uploadWithPlan<T>(
   plan: FileUploadPlan,
   uploadThroughServer: () => Promise<T>,
   completeUpload: (token: string) => Promise<T>,
+  signal?: AbortSignal,
 ): Promise<T> {
   if (plan.mode === "server") {
     return uploadThroughServer();
@@ -26,6 +27,7 @@ export async function uploadWithPlan<T>(
     headers: plan.headers,
     body: file,
     credentials: "omit",
+    signal,
   });
   if (!response.ok) {
     throw new Error(API_ERROR_FALLBACK_MESSAGES.fileUpload);

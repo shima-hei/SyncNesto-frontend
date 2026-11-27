@@ -62,6 +62,7 @@ import {
 } from "@/features/artifact-releases/lib/display";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import type {
+  ArtifactSource,
   PublicationNodeRead,
   PublicationPreview,
   PublicationPreviewRequest,
@@ -74,6 +75,7 @@ import {
   readRelease,
 } from "../lib/api";
 import { PublicationContent } from "./publication-content";
+import { PublicationComments } from "./publication-comments";
 import { RequirementPublicationPrepare } from "./requirement-publication-prepare";
 import {
   PublicationAccessPanel,
@@ -81,6 +83,7 @@ import {
 } from "./access-controls";
 
 import { GuestApprovalRequestPanel } from "@/features/guest-fixed-approvals/components/request-panel";
+import type { PublicationQuote } from "../lib/publication-quote";
 import { GuestRequirementReviewRequest } from "@/features/guest-requirement-reviews/components/request-panel";
 import { RequirementFormalApprovalDialog } from "@/features/requirements/components/forms/requirement-formal-approval-dialog";
 
@@ -94,12 +97,32 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
   const [documentId] = useUrlFilterState("document", 0);
   const [documentVersion] = useUrlFilterState("version", 0);
   const [itemId] = useUrlFilterState("item", 0);
+  const [itemVersion] = useUrlFilterState("itemVersion", 0);
   const [itemCode] = useUrlFilterState("itemCode", "");
+  const [kind] = useUrlFilterState("sourceKind", "");
+  const [sourceId] = useUrlFilterState("sourceId", 0);
+  const [sourceVersion] = useUrlFilterState("sourceVersion", 0);
   const [publicationId] = useUrlFilterState("publication", "");
+  const discussion =
+    params.get("view") === "discussion" && uuid.test(publicationId);
+  const thread = params.get("thread") ?? "";
   const fromDocument = documentId > 0 && documentVersion > 0;
+  const source: ArtifactSource | null = fromDocument
+    ? itemId
+      ? { kind: "requirement", id: itemId, version: itemVersion }
+      : {
+          kind: "requirement_document",
+          id: documentId,
+          version: documentVersion,
+        }
+    : (kind === "specification" || kind === "test_design") &&
+        sourceId > 0 &&
+        sourceVersion > 0
+      ? { kind, id: sourceId, version: sourceVersion }
+      : null;
   const returnHref = fromDocument
     ? `/projects/joined/${projectId}/requirements/${documentId}${itemId ? `/items/${itemId}` : ""}`
-    : `/projects/joined/${projectId}/artifact-releases`;
+    : `/projects/joined/${projectId}/${source ? `${kind === "specification" ? "specifications" : "test-designs"}/${sourceId}` : "artifact-releases"}`;
   const allowed =
     user?.user_type === "internal" &&
     !user.demo &&
@@ -109,7 +132,13 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <PageHeader
-        title={fromDocument ? "要件定義書の外部共有" : "公開内容を確認"}
+        title={
+          discussion
+            ? "共有コメント"
+            : source
+              ? "固定版の外部共有"
+              : "公開内容を確認"
+        }
         actions={
           <Button asChild variant="outline">
             <Link href={returnHref}>
@@ -118,7 +147,9 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
                 ? itemId
                   ? "要件に戻る"
                   : "要件定義書に戻る"
-                : "版一覧へ戻る"}
+                : source
+                  ? "資料に戻る"
+                  : "版一覧へ戻る"}
             </Link>
           </Button>
         }
@@ -130,6 +161,14 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
           resourceName="権限"
           onRetry={() => window.location.reload()}
         />
+      ) : discussion && user?.user_type === "internal" && !user.demo ? (
+        <Detail
+          key={publicationId}
+          projectId={projectId}
+          identity={publicationId}
+          discussion
+          threadId={uuid.test(thread) ? thread : undefined}
+        />
       ) : !allowed ? (
         <Alert>
           <AlertTitle>内部メンバーの管理者・マネージャー向けです</AlertTitle>
@@ -137,7 +176,7 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
             現在のプロジェクト権限を確認してください。
           </AlertDescription>
         </Alert>
-      ) : fromDocument ? (
+      ) : source ? (
         uuid.test(publicationId) ? (
           <Detail
             key={publicationId}
@@ -147,10 +186,9 @@ export function PublicationsPage({ projectId }: { projectId: number }) {
           />
         ) : (
           <RequirementPublicationPrepare
-            key={`${documentId}:${documentVersion}`}
+            key={`${source.kind}:${source.id}:${source.version}`}
             projectId={projectId}
-            documentId={documentId}
-            version={documentVersion}
+            source={source}
             onPrepared={(id) => {
               const query = new URLSearchParams(params.toString());
               query.set("publication", id);
@@ -533,14 +571,20 @@ function Detail({
   projectId,
   identity,
   initialRequirementCode,
+  discussion = false,
+  threadId,
 }: {
   projectId: number;
   identity: string;
   initialRequirementCode?: string;
+  discussion?: boolean;
+  threadId?: string;
 }) {
   const { currentProjectRole } = useCurrentProjectRole(projectId);
   const [fullContentReady, setFullContentReady] = useState(false);
   const [publicNodes, setPublicNodes] = useState<PublicationNodeRead[]>([]);
+  const [canQuote, setCanQuote] = useState(false);
+  const [quote, setQuote] = useState<PublicationQuote>();
   const query = useQuery({
     queryKey: ["publication", projectId, identity],
     queryFn: () => readPublication(projectId, identity),
@@ -551,7 +595,8 @@ function Detail({
   const originRelease = useQuery({
     queryKey: ["publication-source", projectId, originId],
     queryFn: () => readRelease(projectId, originId),
-    enabled: query.data?.state === "published" && Boolean(originId),
+    enabled:
+      !discussion && Boolean(originId) && query.data?.state !== "withdrawn",
     retry: false,
   });
   if (query.isPending) return <Skeleton className="h-40" />;
@@ -563,6 +608,9 @@ function Detail({
       />
     );
   const { content, internal_origin: origin } = query.data;
+  const sourceKind = originRelease.data?.source_kind;
+  const standaloneApproval =
+    sourceKind === "specification" || sourceKind === "test_design";
   return (
     <section
       className="flex min-w-0 flex-col gap-5"
@@ -571,7 +619,7 @@ function Detail({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="break-words text-base font-semibold">
-            2. {content.title}の全文を確認
+            {discussion ? content.title : `2. ${content.title}の全文を確認`}
           </h2>
           <p className="text-xs text-muted-foreground">
             {displayDate(content.captured_at)}時点の固定内容・
@@ -590,6 +638,7 @@ function Detail({
         publicationId={identity}
         onReady={setFullContentReady}
         onNodes={setPublicNodes}
+        onQuote={canQuote && !threadId ? setQuote : undefined}
       />
       <section
         className="flex min-w-0 flex-col gap-3"
@@ -630,20 +679,42 @@ function Detail({
           ここから新しいダウンロードURLは発行しません。ファイルの本文・メタデータは元の内部固定版で確認します。
         </p>
       </section>
-      <Alert>
-        <AlertTitle>次に確認すること</AlertTitle>
-        <AlertDescription>
-          目的と受け入れ条件、設計・テストとの対応、機密情報の有無を確認してください。修正が必要なら元の内容から新しい固定版を作ります。確認後に相手と期限を指定します。
-        </AlertDescription>
-      </Alert>
-      <PublicationAccessPanel
-        key={`${identity}:access`}
-        projectId={projectId}
-        publication={query.data}
-        fullContentReady={fullContentReady}
-      />
-      {query.data.state === "published" &&
-      originRelease.data?.source_kind === "requirement_document" &&
+      {!discussion && (
+        <>
+          <Alert>
+            <AlertTitle>次に確認すること</AlertTitle>
+            <AlertDescription>
+              目的と受け入れ条件、設計・テストとの対応、機密情報の有無を確認してください。修正が必要なら元の内容から新しい固定版を作ります。確認後に相手と期限を指定します。
+            </AlertDescription>
+          </Alert>
+          <PublicationAccessPanel
+            key={`${identity}:access`}
+            projectId={projectId}
+            publication={query.data}
+            fullContentReady={fullContentReady}
+          />
+        </>
+      )}
+      {query.data.state !== "prepared" && (
+        <PublicationComments
+          projectId={projectId}
+          publicationId={identity}
+          threadId={threadId}
+          nodes={publicNodes}
+          quote={quote}
+          onQuoteChange={setQuote}
+          onCanPostChange={setCanQuote}
+        />
+      )}
+      {!discussion &&
+      (query.data.state === "published" ||
+        (query.data.state === "prepared" &&
+          (sourceKind === "requirement" ||
+            sourceKind === "requirement_document"))) &&
+      originRelease.data &&
+      ["requirement_document", "requirement"].includes(
+        originRelease.data.source_kind,
+      ) &&
       originRelease.data.sources.length <= 21 &&
       originRelease.data.sources
         .slice(1)
@@ -651,14 +722,19 @@ function Detail({
           ["specification", "test_design"].includes(source.kind),
         ) ? (
         <div className="flex flex-wrap items-center gap-2">
-          <GuestRequirementReviewRequest
-            projectId={projectId}
-            publicationId={identity}
-            nodes={publicNodes}
-            ready={fullContentReady}
-            initialRequirementCode={initialRequirementCode}
-          />
-          {originRelease.data.projection_version === "internal-preview-v2" ? (
+          {(query.data.state === "published" ||
+            sourceKind === "requirement") && (
+            <GuestRequirementReviewRequest
+              projectId={projectId}
+              publication={query.data}
+              nodes={publicNodes}
+              ready={fullContentReady}
+              allowNewSharing={originRelease.data.source_kind === "requirement"}
+              initialRequirementCode={initialRequirementCode}
+            />
+          )}
+          {originRelease.data.source_kind === "requirement_document" &&
+          originRelease.data.projection_version === "internal-preview-v2" ? (
             <RequirementFormalApprovalDialog
               projectId={projectId}
               documentId={originRelease.data.source_id}
@@ -666,24 +742,32 @@ function Detail({
               disabled={!fullContentReady}
               canRecordException={canApproveRequirement(currentProjectRole)}
               publication={{
-                id: identity,
-                publicDigest: content.public_digest,
+                record: query.data,
                 nodes: publicNodes,
               }}
             />
           ) : null}
         </div>
       ) : null}
-      {publicNodes.some((node) =>
+      {!discussion &&
+      publicNodes.some((node) =>
         ["specification", "test_design"].includes(node.node_kind),
       ) ? (
         <GuestApprovalRequestPanel
           projectId={projectId}
-          publicationId={identity}
+          publication={query.data}
           nodes={publicNodes.filter((node) =>
-            ["specification", "test_design"].includes(node.node_kind),
+            query.data.state === "prepared"
+              ? standaloneApproval &&
+                node.node_kind === sourceKind &&
+                node.ordinal === 0
+              : ["specification", "test_design"].includes(node.node_kind),
           )}
-          enabled={query.data.state === "published"}
+          enabled={
+            query.data.state === "published" ||
+            (query.data.state === "prepared" && standaloneApproval)
+          }
+          shareableKind={standaloneApproval ? sourceKind : undefined}
           ready={fullContentReady}
         />
       ) : null}

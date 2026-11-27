@@ -14,7 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 import type {
   GuestRequirementReviewCreate,
   PublicationNodeRead,
+  PublicationRead,
 } from "@/lib/api/generated/model";
+import {
+  DecisionShareFields,
+  readDecisionShare,
+} from "@/features/artifact-publications/components/decision-share-fields";
 import { reviewTargetKind } from "@/features/requirements/lib/requirement-workflow-review";
 
 import { createGuestReview, readReviewOptions } from "../lib/api";
@@ -22,15 +27,17 @@ import { PublishedReviewAttachments } from "./published-review-attachments";
 
 export function GuestRequirementReviewRequest({
   projectId,
-  publicationId,
+  publication,
   nodes,
   ready,
+  allowNewSharing,
   initialRequirementCode,
 }: {
   projectId: number;
-  publicationId: string;
+  publication: PublicationRead;
   nodes: PublicationNodeRead[];
   ready: boolean;
+  allowNewSharing: boolean;
   initialRequirementCode?: string;
 }) {
   const client = useQueryClient();
@@ -38,6 +45,9 @@ export function GuestRequirementReviewRequest({
   const titleId = useId();
   const descriptionId = useId();
   const [open, setOpen] = useState(false);
+  const [shareWithGuest, setShareWithGuest] = useState(false);
+  const [inputError, setInputError] = useState("");
+  const publicationId = publication.content.id;
   const request = useRef<{ value: string; key: string } | null>(null);
   const targets = nodes.filter((node) =>
     ["requirement_document", "section", "requirement"].includes(node.node_kind),
@@ -72,6 +82,13 @@ export function GuestRequirementReviewRequest({
       void client.invalidateQueries({
         queryKey: ["requirement-workflow", projectId],
       });
+      void client.invalidateQueries({
+        queryKey: ["publication-access", projectId, publicationId],
+      });
+      void client.invalidateQueries({
+        queryKey: ["publication", projectId, publicationId],
+      });
+      void client.invalidateQueries({ queryKey: ["publications", projectId] });
     },
   });
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -79,21 +96,28 @@ export function GuestRequirementReviewRequest({
     if (create.isPending || !options.data) return;
     const form = new FormData(event.currentTarget);
     const grantIds = form.getAll("reviewers").map(String);
-    if (!grantIds.length) {
-      const firstReviewer = event.currentTarget.querySelector<HTMLInputElement>(
-        'input[name="reviewers"]',
-      );
-      firstReviewer?.setCustomValidity("レビュー担当者を選んでください。");
-      firstReviewer?.reportValidity();
+    if (!grantIds.length && !shareWithGuest) {
+      setInputError("レビュー担当者を選んでください。");
       return;
     }
-    const values = {
+    const sharing = shareWithGuest
+      ? readDecisionShare(form, publication)
+      : undefined;
+    if (shareWithGuest && !sharing) {
+      setInputError(
+        "共有期限は現在より後で、選択した相手の参加期限以内に設定してください。",
+      );
+      return;
+    }
+    setInputError("");
+    const values: Omit<GuestRequirementReviewCreate, "request_key"> = {
       publication_id: publicationId,
       target_node_id: String(form.get("target")),
       grant_ids: grantIds,
       expected_public_digest: options.data.public_digest,
       due_on: String(form.get("due") ?? "") || undefined,
       note: String(form.get("note") ?? "").trim() || undefined,
+      sharing,
     };
     const value = JSON.stringify(values);
     if (request.current?.value !== value)
@@ -121,6 +145,8 @@ export function GuestRequirementReviewRequest({
         className="m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-2xl overflow-auto overscroll-contain rounded-lg border bg-background text-foreground backdrop:overflow-hidden backdrop:overscroll-contain backdrop:bg-black/50"
         onClose={() => {
           setOpen(false);
+          setShareWithGuest(false);
+          setInputError("");
           create.reset();
         }}
       >
@@ -130,7 +156,7 @@ export function GuestRequirementReviewRequest({
               外部レビューを依頼
             </h1>
             <p id={descriptionId} className="text-sm text-muted-foreground">
-              公開済みの固定版から、共有先に確認してもらう範囲を選びます。
+              固定版から、担当者に確認してもらう範囲を選びます。
             </p>
           </div>
           {options.error ? (
@@ -165,11 +191,7 @@ export function GuestRequirementReviewRequest({
               </label>
               <fieldset
                 className="grid gap-2 text-sm"
-                onChange={(event) =>
-                  event.currentTarget
-                    .querySelector<HTMLInputElement>("input")
-                    ?.setCustomValidity("")
-                }
+                onChange={() => setInputError("")}
               >
                 <legend className="mb-1 font-medium">レビュー担当者</legend>
                 {options.data.reviewers.length ? (
@@ -192,6 +214,32 @@ export function GuestRequirementReviewRequest({
                   </p>
                 )}
               </fieldset>
+              {allowNewSharing && (
+                <fieldset
+                  className="grid gap-3 rounded-md border p-3 text-sm"
+                  onChange={() => setInputError("")}
+                >
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={shareWithGuest}
+                      onChange={(event) =>
+                        setShareWithGuest(event.target.checked)
+                      }
+                    />
+                    参加中のゲストにこの固定版も共有する
+                  </label>
+                  {open && shareWithGuest && (
+                    <DecisionShareFields
+                      projectId={projectId}
+                      publication={publication}
+                      existingParticipants={options.data.reviewers.map(
+                        (person) => person.participation_id,
+                      )}
+                    />
+                  )}
+                </fieldset>
+              )}
               <label className="grid gap-1 text-sm">
                 回答期限（任意）
                 <Input name="due" type="date" />
@@ -204,6 +252,11 @@ export function GuestRequirementReviewRequest({
             </fieldset>
           )}
           <FormApiError error={create.error} />
+          {inputError && (
+            <p className="text-sm text-destructive" role="alert">
+              {inputError}
+            </p>
+          )}
           <div className="flex justify-end gap-2 border-t pt-4">
             <Button
               type="button"
@@ -214,9 +267,13 @@ export function GuestRequirementReviewRequest({
             </Button>
             <Button
               type="submit"
-              disabled={create.isPending || !options.data?.reviewers.length}
+              disabled={
+                create.isPending ||
+                !options.data ||
+                (!options.data.reviewers.length && !shareWithGuest)
+              }
             >
-              レビューを依頼
+              {shareWithGuest ? "共有してレビューを依頼" : "レビューを依頼"}
             </Button>
           </div>
         </form>

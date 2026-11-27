@@ -23,6 +23,8 @@ import { statusLabels } from "@/features/fixed-approvals/lib/display";
 import { ApiError } from "@/lib/api/error";
 import { useUrlFilterState } from "@/hooks/use-url-filter-state";
 import { formatDateTime, formatRelativeDate } from "@/lib/format/date";
+import { GUEST_ACTIVITY_CHANGED } from "@/features/guest-workspace/components/guest-activity";
+import { listGuestActivitySharedActivityGet as listActivity } from "@/lib/api/generated/shared-activity/shared-activity";
 import type { SharedNotificationRead } from "@/lib/api/generated/model";
 import {
   listSharedNotificationsSharedNotificationsGet as list,
@@ -38,7 +40,17 @@ export function SharedNotificationsLink() {
   const mask = useCallback((hidden: boolean) => {
     if (root.current) root.current.style.visibility = hidden ? "hidden" : "";
   }, []);
-  const load = useCallback((signal: AbortSignal) => unread({ signal }), []);
+  const load = useCallback(async (signal: AbortSignal) => {
+    const [approvals, activity] = await Promise.allSettled([
+      unread({ signal }),
+      listActivity({ page_size: 1 }, { signal }),
+    ]);
+    return {
+      count:
+        (approvals.status === "fulfilled" ? approvals.value.count : 0) +
+        (activity.status === "fulfilled" ? activity.value.unread : 0),
+    };
+  }, []);
   const data = useFreshShared("shared-notification-count", load, mask);
   const { refresh } = data;
   useEffect(() => {
@@ -47,9 +59,11 @@ export function SharedNotificationsLink() {
     };
     const timer = window.setInterval(update, 45_000);
     window.addEventListener(CHANGED, update);
+    window.addEventListener(GUEST_ACTIVITY_CHANGED, update);
     return () => {
       window.clearInterval(timer);
       window.removeEventListener(CHANGED, update);
+      window.removeEventListener(GUEST_ACTIVITY_CHANGED, update);
     };
   }, [refresh]);
   return (

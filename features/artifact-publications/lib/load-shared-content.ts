@@ -34,5 +34,5 @@ export async function loadSharedContent(identity: string, signal: AbortSignal) {
     JSON.stringify(files.items) !== JSON.stringify(metadata.content.files)
   )
     throw new Error("公開許可が変わりました");
-  return { metadata, nodes };
+  return { metadata, nodes, downloadAllowed: files.download_allowed };
 }

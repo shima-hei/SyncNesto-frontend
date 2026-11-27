@@ -4,16 +4,18 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListPublicationsProjectsProjectIdArtifactPublicationsGetSourceKind } from "./listPublicationsProjectsProjectIdArtifactPublicationsGetSourceKind";
 
 export type ListPublicationsProjectsProjectIdArtifactPublicationsGetParams = {
   release_id?: string | null;
-  /**
-   * @minimum 1
-   */
+  /** @minimum 1 */
   page?: number;
   /**
    * @minimum 1
    * @maximum 100
    */
   page_size?: number;
+  source_kind?: ListPublicationsProjectsProjectIdArtifactPublicationsGetSourceKind;
+  source_id?: number | null;
+  state?: ("prepared" | "published" | "withdrawn")[] | null;
 };
