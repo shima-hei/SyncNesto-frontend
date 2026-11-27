@@ -22,6 +22,7 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import type { PublicationNodeRead } from "@/lib/api/generated/model";
 import type { Content } from "@/features/specifications/lib/specification";
 import { PublicDesignDiagrams } from "./public-design-diagrams";
+import { PublicDesignPresentation } from "./public-design-presentation";
 import { readPublicationNodes } from "../lib/api";
 import { decodePublicationGraph } from "../lib/graph";
 import {
@@ -98,6 +99,7 @@ export function PublicNode({
   quoteAction,
   reader = false,
   sharedPublicationId,
+  authorizationRevision,
   trackQuoteSource = false,
 }: {
   node: PublicationNodeRead;
@@ -105,11 +107,12 @@ export function PublicNode({
   quoteAction?: QuoteAction;
   reader?: boolean;
   sharedPublicationId?: string;
+  authorizationRevision?: string;
   trackQuoteSource?: boolean;
 }) {
   const structured =
     node.node_kind === "specification" &&
-    node.payload.content &&
+    node.payload.content !== null &&
     typeof node.payload.content === "object";
   const fields = Object.entries(node.payload).filter(
     ([key]) =>
@@ -201,6 +204,20 @@ export function PublicNode({
             <AddQuote action={quoteAction} field="title" />
           </>
         ) : null}
+        {structured && (
+          <PublicDesignPresentation
+            content={node.payload.content as Content}
+            scope={
+              sharedPublicationId && authorizationRevision
+                ? {
+                    publicationId: sharedPublicationId,
+                    nodeId: node.id,
+                    revision: authorizationRevision,
+                  }
+                : undefined
+            }
+          />
+        )}
         <dl className="flex min-w-0 flex-col gap-3">
           {displayed.map(([key, value]) => (
             <div key={key} className="min-w-0">
@@ -404,6 +421,7 @@ export function PublicationBody({
   onReady,
   reader = false,
   sharedPublicationId,
+  authorizationRevision,
   onQuote,
 }: {
   nodes: PublicationNodeRead[];
@@ -411,6 +429,7 @@ export function PublicationBody({
   onReady?: (ready: boolean) => void;
   reader?: boolean;
   sharedPublicationId?: string;
+  authorizationRevision?: string;
   onQuote?: (quote: PublicationQuote) => void;
 }) {
   const body = useRef<HTMLDivElement>(null);
@@ -521,6 +540,7 @@ export function PublicationBody({
               node={node}
               reader={reader}
               sharedPublicationId={sharedPublicationId}
+              authorizationRevision={authorizationRevision}
               quoteAction={action}
               trackQuoteSource={Boolean(onQuote)}
             />

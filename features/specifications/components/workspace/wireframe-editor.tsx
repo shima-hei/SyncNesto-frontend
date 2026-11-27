@@ -192,8 +192,9 @@ export function WireframeEditor({
   onCreateReference,
   readOnly,
   onReview,
+  initialPreview = false,
 }: {
-  projectId: number;
+  projectId?: number;
   canRegisterParts: boolean;
   items: WireframeArtboard[];
   fields: SpecificationField[];
@@ -207,13 +208,14 @@ export function WireframeEditor({
   ) => void;
   readOnly: boolean;
   onReview?: (path: string) => void;
+  initialPreview?: boolean;
 }) {
   const [boardId, setBoardId] = useState(items[0]?.id);
   const [selection, setSelection] = useState(new Set<string>());
   const [template, setTemplate] = useState("blank");
   const [zoom, setZoom] = useState(1);
   const [large, setLarge] = useState(false);
-  const [preview, setPreview] = useState(false);
+  const [preview, setPreview] = useState(initialPreview);
   const [offset, setOffset] = useState<{
     x: number;
     y: number;
@@ -679,7 +681,7 @@ export function WireframeEditor({
             >
               左揃え
             </Button>
-            {board && !preview && (
+            {projectId !== undefined && board && !preview && (
               <WireframePartDialog
                 key={board.id}
                 projectId={projectId}

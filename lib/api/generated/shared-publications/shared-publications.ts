@@ -26,10 +26,12 @@ import type {
   FileUploadPlan,
   FileUploadRequest,
   HTTPValidationError,
+  MockupPreviewRead,
   SharedCommentFileContentSharedPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
   SharedCommentFileRead,
   SharedCommentMentionCandidate,
   SharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
   SharedFileDownload,
   SharedFileDownloadRequest,
   SharedPublicationCommentCreate,
@@ -1121,6 +1123,339 @@ export function useSharedPublicationNodesSharedPublicationsPublicationIdNodesGet
   const queryOptions =
     getSharedPublicationNodesSharedPublicationsPublicationIdNodesGetQueryOptions(
       publicationId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetUrl =
+  (
+    publicationId: string,
+    nodeId: string,
+    mockupId: string,
+    params: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/shared/publications/${publicationId}/nodes/${nodeId}/mockups/${mockupId}/preview?${stringifiedParams}`
+      : `/shared/publications/${publicationId}/nodes/${nodeId}/mockups/${mockupId}/preview`;
+  };
+
+/**
+ * 現在の共有許可に束縛した固定モックのプレビューを取得する。
+ * @summary Shared Design Mockup Preview
+ */
+export const sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet =
+  async (
+    publicationId: string,
+    nodeId: string,
+    mockupId: string,
+    params: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<MockupPreviewRead> => {
+    return apiClient<MockupPreviewRead>(
+      getSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetUrl(
+        publicationId,
+        nodeId,
+        mockupId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetQueryKey =
+  (
+    publicationId: string,
+    nodeId: string,
+    mockupId: string,
+    params?: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+  ) => {
+    return [
+      `/shared/publications/${publicationId}/nodes/${nodeId}/mockups/${mockupId}/preview`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    publicationId: string,
+    nodeId: string,
+    mockupId: string,
+    params: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetQueryKey(
+        publicationId,
+        nodeId,
+        mockupId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+        >
+      >
+    > = ({ signal }) =>
+      sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet(
+        publicationId,
+        nodeId,
+        mockupId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        publicationId !== null &&
+        publicationId !== undefined &&
+        nodeId !== null &&
+        nodeId !== undefined &&
+        mockupId !== null &&
+        mockupId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+      >
+    >
+  >;
+export type SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 現在の共有許可に束縛した固定モックのプレビューを取得する。
+ * @summary Shared Design Mockup Preview
+ */
+export function useSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  nodeId: string,
+  mockupId: string,
+  params: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 現在の共有許可に束縛した固定モックのプレビューを取得する。
+ * @summary Shared Design Mockup Preview
+ */
+export function useSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  nodeId: string,
+  mockupId: string,
+  params: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 現在の共有許可に束縛した固定モックのプレビューを取得する。
+ * @summary Shared Design Mockup Preview
+ */
+export function useSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  nodeId: string,
+  mockupId: string,
+  params: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 現在の共有許可に束縛した固定モックのプレビューを取得する。
+ * @summary Shared Design Mockup Preview
+ */
+export function useSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet<
+  TData = Awaited<
+    ReturnType<
+      typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  publicationId: string,
+  nodeId: string,
+  mockupId: string,
+  params: SharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getSharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetQueryOptions(
+      publicationId,
+      nodeId,
+      mockupId,
       params,
       options,
     );

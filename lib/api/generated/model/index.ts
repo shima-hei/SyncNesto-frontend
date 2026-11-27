@@ -739,6 +739,7 @@ export * from "./sharedCommentFileRead";
 export * from "./sharedCommentMentionCandidate";
 export * from "./sharedCommentMentionCandidatesSharedPublicationsPublicationIdCommentsMentionCandidatesGetParams";
 export * from "./sharedCommentMentionOccurrence";
+export * from "./sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGetParams";
 export * from "./sharedFileDownload";
 export * from "./sharedFileDownloadRequest";
 export * from "./sharedNotificationPage";

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import type { HtmlMockup } from "@/lib/api/generated/model";
 import { downloadDesign, previewMockup } from "../../lib/workspace";
+import { MockupPreviewFrame } from "./mockup-preview-frame";
 
 const maxImageBytes = 65_000;
 
@@ -281,14 +282,10 @@ export function HtmlMockupEditor({
             {mode !== "code" && (
               <div className="min-w-0 overflow-auto rounded-md border bg-muted/30 p-2">
                 {activePreview ? (
-                  <iframe
-                    title="HTMLモックアップの隔離プレビュー"
-                    sandbox=""
-                    referrerPolicy="no-referrer"
-                    srcDoc={activePreview.document}
-                    className="block bg-white"
-                    width={item.width ?? 1024}
-                    height={item.height ?? 650}
+                  <MockupPreviewFrame
+                    document={activePreview.document}
+                    width={item.width}
+                    height={item.height}
                   />
                 ) : (
                   <p className="p-4 text-sm text-muted-foreground">

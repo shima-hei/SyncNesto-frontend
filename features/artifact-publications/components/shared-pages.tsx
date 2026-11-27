@@ -544,6 +544,9 @@ export function SharedPublicationDetail({
               <div className="grid min-w-0 gap-5">
                 <PublicationBody
                   sharedPublicationId={identity}
+                  authorizationRevision={
+                    data.value.metadata.authorization_revision
+                  }
                   key={data.value.metadata.authorization_revision}
                   nodes={data.value.nodes}
                   publicationId={`${identity}:${data.value.metadata.authorization_revision}`}
