@@ -59,7 +59,7 @@ export function initialValues(kind: Kind, row?: SpecificationRead): Values {
       kind === "api"
         ? {
             type: "api",
-            method: "GET",
+            method: null,
             path: "",
             request_fields: [],
             response_fields: [],

@@ -234,15 +234,17 @@ export function DesignDetails({
               HTTPメソッド
               <select
                 className={select}
-                value={content.method ?? "GET"}
+                value={content.method ?? ""}
                 disabled={readOnly}
                 onChange={(event) =>
                   set({
                     ...content,
-                    method: event.target.value as ApiSpecification["method"],
+                    method: (event.target.value ||
+                      null) as ApiSpecification["method"],
                   })
                 }
               >
+                <option value="">未確定</option>
                 {[
                   "GET",
                   "POST",

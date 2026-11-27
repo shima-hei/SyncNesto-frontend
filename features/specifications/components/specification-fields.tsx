@@ -661,17 +661,20 @@ export function SpecificationFields({
                   onReview={onReview}
                 />
                 {readOnly ? (
-                  <p className="text-sm">{content.method}</p>
+                  <p className="text-sm">{content.method ?? "未確定"}</p>
                 ) : (
                   <Select
-                    value={content.method ?? "GET"}
-                    onValueChange={(value) => set("method", value)}
+                    value={content.method ?? "unset"}
+                    onValueChange={(value) =>
+                      set("method", value === "unset" ? null : value)
+                    }
                   >
                     <SelectTrigger id="specification-method">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
+                        <SelectItem value="unset">未確定</SelectItem>
                         {[
                           "GET",
                           "POST",
