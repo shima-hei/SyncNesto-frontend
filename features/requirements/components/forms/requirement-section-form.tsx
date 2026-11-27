@@ -34,6 +34,7 @@ import { MarkdownTextarea } from "@/components/shared/forms/markdown-textarea";
 import { RequirementSectionGuide } from "../sections/section-detail/requirement-section-guide";
 
 type RequirementSectionFormProps = {
+  projectId: number;
   initialValues?: RequirementSectionFormValues;
   nextSortOrder?: number;
   submitLabel?: string;
@@ -45,6 +46,7 @@ type RequirementSectionFormProps = {
 };
 
 export function RequirementSectionForm({
+  projectId,
   initialValues,
   nextSortOrder = 10,
   submitLabel = "セクション追加",
@@ -235,6 +237,7 @@ export function RequirementSectionForm({
           <FieldLabel>本文</FieldLabel>
           <RequirementSectionGuide sectionType={values.sectionType} />
           <MarkdownTextarea
+            images={{ projectId, kind: "requirement" }}
             value={values.content}
             placeholder="Markdown形式で本文を入力"
             onChange={(content) =>

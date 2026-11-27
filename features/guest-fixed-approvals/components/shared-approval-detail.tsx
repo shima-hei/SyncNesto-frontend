@@ -336,6 +336,7 @@ export function SharedApprovalDetail({
               </CardContent>
             </Card>
             <PublicationBody
+              sharedPublicationId={publicationId}
               key={row.authorization_revision}
               nodes={value.content.nodes}
               publicationId={`${publicationId}:${row.authorization_revision}`}

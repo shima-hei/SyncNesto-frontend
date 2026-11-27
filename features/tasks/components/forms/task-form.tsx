@@ -433,6 +433,7 @@ export function TaskForm({
               <Field className="[&_textarea]:min-h-28">
                 <FieldLabel htmlFor={descriptionId}>説明（任意）</FieldLabel>
                 <MarkdownTextarea
+                  images={{ projectId, kind: "task" }}
                   id={descriptionId}
                   value={values.description}
                   placeholder="作業内容や完了の条件を入力"

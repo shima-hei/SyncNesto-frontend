@@ -10,6 +10,7 @@ const ALLOWED_PREFIXES = [
   "/notification-preferences",
   "/shared/notifications",
   "/shared/publications",
+  "/body-images",
   "/guest-invitations",
   "/demo",
   "/auth",

@@ -148,6 +148,7 @@ export function DocumentForm({
           <Field data-invalid={Boolean(errors.body)}>
             <FieldLabel htmlFor={bodyId}>本文</FieldLabel>
             <MarkdownTextarea
+              images={{ projectId, kind: "document" }}
               id={bodyId}
               disabled={save.isPending}
               value={values.body}

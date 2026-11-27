@@ -1,6 +1,6 @@
 "use client";
-import { LinkedText } from "@/components/shared/smart-links/linked-text";
 import { LinkTextarea } from "@/components/shared/smart-links/link-textarea";
+import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { VerificationReturn } from "@/features/requirement-verifications/components/verification-return";
 import { RelatedSpecifications } from "@/features/specifications/components/related-specifications";
@@ -410,15 +410,16 @@ function Editor({ initial }: { initial: Design }) {
           <Field>
             <FieldLabel htmlFor="design-description">説明</FieldLabel>
             {readOnly ? (
-              <p
+              <div
                 id="design-description"
                 className="whitespace-pre-wrap text-sm [overflow-wrap:anywhere]"
               >
-                <LinkedText text={design.description || "未入力"} />
-              </p>
+                <MarkdownBodyText value={design.description || "未入力"} />
+              </div>
             ) : (
               <LinkTextarea
                 id="design-description"
+                images={{ projectId: design.project_id, kind: "test_design" }}
                 value={design.description ?? ""}
                 rows={2}
                 onValueChange={(value) =>

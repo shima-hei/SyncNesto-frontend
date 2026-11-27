@@ -1,5 +1,6 @@
 "use client";
 
+import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
 import { useMemo, useState } from "react";
 import { DesignGrid } from "@/features/test-designs/components/tables/design-grid";
 import { gridData } from "@/features/test-designs/lib/sheets";
@@ -59,9 +60,9 @@ export function PublicTestDesign({
       <h3 className="text-base font-semibold">
         {design.name}・元の版 {design.version}
       </h3>
-      <p className="whitespace-pre-wrap break-words text-sm">
-        {design.description}
-      </p>
+      <div className="whitespace-pre-wrap break-words text-sm">
+        <MarkdownBodyText value={design.description ?? ""} liveLinks={false} />
+      </div>
       <p className="text-xs text-muted-foreground">
         項目 {design.items.filter((i) => !i.is_spacer).length}件 / 因子{" "}
         {design.factors.length}件 / 水準 {design.levels.length}件 / 組み合わせ{" "}

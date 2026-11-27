@@ -1,5 +1,6 @@
 "use client";
 
+import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -98,7 +99,9 @@ function FrozenDesign({ design }: { design: TestDesignRead }) {
           固定版・v{design.version}・読み取り専用
         </Badge>
       </div>
-      <p className="text-sm text-muted-foreground">{design.description}</p>
+      <div className="text-sm text-muted-foreground">
+        <MarkdownBodyText value={design.description ?? ""} liveLinks={false} />
+      </div>
       <p className="text-xs text-muted-foreground">
         項目 {design.items.filter((item) => !item.is_spacer).length}件 / 因子{" "}
         {design.factors.length}件 / 水準 {design.levels.length}件 / 組み合わせ{" "}

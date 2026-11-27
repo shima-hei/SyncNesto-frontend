@@ -353,6 +353,7 @@ export function SharedPublicationDetail({ identity }: { identity: string }) {
             <SharedRequirementReviewList publicationId={identity} formal />
             <SharedApprovalList publicationId={identity} />
             <PublicationBody
+              sharedPublicationId={identity}
               key={data.value.metadata.authorization_revision}
               nodes={data.value.nodes}
               publicationId={`${identity}:${data.value.metadata.authorization_revision}`}

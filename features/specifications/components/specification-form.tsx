@@ -184,7 +184,11 @@ export function SpecificationForm({
         )}
         <fieldset disabled={save.isPending} className="min-w-0">
           <legend className="sr-only">{kindLabels[kind]}の内容</legend>
-          <SpecificationFields values={values} onChange={setValues} />
+          <SpecificationFields
+            values={values}
+            onChange={setValues}
+            imageProjectId={projectId}
+          />
         </fieldset>
         <FormApiError error={save.error} />
         <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t bg-background py-3">

@@ -118,6 +118,7 @@ export function RequirementSectionsSection({
   ) : null;
   const createDialog = (
     <RequirementSectionCreateDialog
+      projectId={projectId}
       open={createDialogOpen}
       nextSortOrder={nextSortOrder}
       isPending={isCreatePending}

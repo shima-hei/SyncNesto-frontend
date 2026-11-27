@@ -52,6 +52,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import type { BodyImageScope } from "@/lib/markdown-body-images";
+import { useMarkdownImageInsert } from "./markdown-image-insert";
+import { MarkdownImage } from "./markdown-image";
+import { rehypeQuoteSourcePositions } from "@/lib/comments/markdown-source-range";
 import {
   rehypeMarkdownTaskPositions,
   setMarkdownTaskChecked,
@@ -63,6 +67,7 @@ type MarkdownTextareaProps = {
   value: string;
   placeholder?: string;
   onChange: (value: string) => void;
+  images?: BodyImageScope;
 };
 
 export function MarkdownTextarea({
@@ -71,16 +76,24 @@ export function MarkdownTextarea({
   value,
   placeholder,
   onChange,
+  images,
 }: MarkdownTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const imageInsert = useMarkdownImageInsert({
+    value,
+    onChange,
+    scope: images,
+    textarea: textareaRef,
+    disabled,
+  });
 
   const insertTemplate = (template: string, cursorOffset = template.length) => {
     if (disabled) return;
     const textarea = textareaRef.current;
 
     if (!textarea) {
-      onChange(`${value}${template}`);
+      imageInsert.change(`${value}${template}`);
       return;
     }
 
@@ -88,7 +101,7 @@ export function MarkdownTextarea({
     const end = textarea.selectionEnd;
     const nextValue = `${value.slice(0, start)}${template}${value.slice(end)}`;
 
-    onChange(nextValue);
+    imageInsert.change(nextValue);
 
     requestAnimationFrame(() => {
       textarea.focus();
@@ -194,10 +207,11 @@ export function MarkdownTextarea({
           {mode === "edit" ? (
             <LinkInsertPopover
               editor={() => textareaRef.current}
-              onChange={({ value }) => onChange(value)}
+              onChange={({ value }) => imageInsert.change(value)}
               disabled={disabled}
             />
           ) : null}
+          {mode === "edit" ? imageInsert.control : null}
         </div>
         <div className="flex gap-2">
           <Button
@@ -223,22 +237,24 @@ export function MarkdownTextarea({
       {mode === "edit" ? (
         <>
           <Textarea
+            {...imageInsert.editorProps}
             ref={textareaRef}
             id={id}
             disabled={disabled}
             value={value}
             placeholder={placeholder}
             className="min-h-48 font-mono"
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => imageInsert.change(event.target.value)}
           />
           <DraftLinkPreview value={value} />
         </>
       ) : (
         <MarkdownPreview
           value={value}
-          onChange={disabled ? undefined : onChange}
+          onChange={disabled ? undefined : imageInsert.change}
         />
       )}
+      {imageInsert.status}
     </fieldset>
   );
 }
@@ -297,6 +313,7 @@ type MarkdownPreviewProps = {
   highlightQuotes?: string[];
   inert?: boolean;
   liveLinks?: boolean;
+  quoteSourcePositions?: boolean;
 };
 
 const MarkdownContext = createContext<{
@@ -376,6 +393,7 @@ export function MarkdownPreview({
   highlightQuotes = [],
   inert = false,
   liveLinks = true,
+  quoteSourcePositions = false,
 }: MarkdownPreviewProps) {
   if (!value.trim()) {
     return (
@@ -402,7 +420,14 @@ export function MarkdownPreview({
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[[rehypeMarkdownTaskPositions, { value }]]}
+          rehypePlugins={
+            quoteSourcePositions
+              ? [
+                  [rehypeMarkdownTaskPositions, { value }],
+                  [rehypeQuoteSourcePositions, value],
+                ]
+              : [[rehypeMarkdownTaskPositions, { value }]]
+          }
           components={{
             input: MarkdownTaskCheckbox,
             a: ({ href, children, title, node }) => {
@@ -486,13 +511,13 @@ export function MarkdownPreview({
               </h6>
             ),
             p: MarkdownParagraph,
-            img: inert
-              ? ({ alt, src }) => (
-                  <span>
-                    画像: {alt}（{typeof src === "string" ? src : ""}）
-                  </span>
-                )
-              : undefined,
+            img: ({ alt, src }) => (
+              <MarkdownImage
+                src={typeof src === "string" ? src : undefined}
+                alt={alt}
+                inert={inert}
+              />
+            ),
             strong: ({ children }) => (
               <strong>
                 {renderHighlightedMarkdownChildren(children, highlightQuotes)}

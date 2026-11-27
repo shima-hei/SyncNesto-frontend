@@ -105,6 +105,7 @@ export function RequirementReviewWorkspace({
   const [highlight, setHighlight] = useState<{
     field: string;
     quote: string;
+    start: number | null;
   } | null>(null);
   const [decision, setDecision] = useState<"remaining" | "submit" | null>(null);
   const mainContent = useRef<HTMLDivElement>(null);
@@ -502,9 +503,7 @@ export function RequirementReviewWorkspace({
               projectId={projectId}
               complete={!content.hasNextPage}
               canDiscuss={canDiscuss}
-              highlights={
-                new Map(highlight ? [[highlight.field, [highlight.quote]]] : [])
-              }
+              highlight={highlight}
               onQuote={(anchor) => openDiscussion({ kind: "comment", anchor })}
             />
             {selected.node_kind === "test_design" && content.hasNextPage ? (
@@ -614,8 +613,8 @@ export function RequirementReviewWorkspace({
                 canCorrect={canCorrect}
                 draft={draft}
                 onDraft={setDraft}
-                onHighlight={(field, quote) => {
-                  setHighlight({ field, quote });
+                onHighlight={(field, quote, start) => {
+                  setHighlight({ field, quote, start });
                   document
                     .getElementById(`review-field-${field}`)
                     ?.scrollIntoView({ block: "nearest" });

@@ -346,6 +346,7 @@ export function SharedRequirementReviewWorkspace({
                       {reviewTargetKind[target.node_kind]}
                     </p>
                     <PublicNode
+                      sharedPublicationId={publicationId}
                       node={target}
                       reader
                       onSelectText={

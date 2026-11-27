@@ -79,6 +79,7 @@ export function SectionBodyEditor({
             章本文
           </FieldLabel>
           <MarkdownTextarea
+            images={{ projectId, kind: "requirement" }}
             id={`section-body-${sectionId}`}
             value={edit.content}
             disabled={saving || !canUpdate}

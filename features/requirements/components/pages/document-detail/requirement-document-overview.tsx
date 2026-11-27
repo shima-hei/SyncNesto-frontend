@@ -3,6 +3,8 @@
 import {
   type CSSProperties,
   type ReactNode,
+  useCallback,
+  useEffect,
   useId,
   useRef,
   useState,
@@ -23,13 +25,30 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { listRequirementsProjectsProjectIdRequirementsGet } from "@/lib/api/generated/requirements/requirements";
 
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
+import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
 import { Input } from "@/components/ui/input";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { RequirementDocumentRead } from "@/lib/api/generated/model";
+import type {
+  RequirementDocumentRead,
+  RequirementTargetCommentRead,
+} from "@/lib/api/generated/model";
 import { scrollToRequirementContent } from "@/features/requirements/lib/scroll-to-requirement-content";
 import { cn } from "@/lib/utils";
-import { selectedTextForLinkSource } from "@/lib/smart-links/quote";
+import {
+  quoteRenderedRange,
+  renderedQuoteRange,
+  renderedText,
+  resolveRenderedQuote,
+  showQuoteRange,
+  type RenderedQuote,
+} from "@/lib/comments/rendered-range";
+import { apiClient } from "@/lib/api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateRequirementChangeLogs,
+  invalidateRequirementTargetComments,
+} from "../../../lib/requirement-cache";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { CommentIconButton } from "@/components/shared/comments/comment-thread-actions";
@@ -38,11 +57,6 @@ import {
   useCommentPaneWidth,
 } from "@/components/shared/comments/comment-pane-resize";
 
-import {
-  getRequirementPriorityLabel,
-  getRequirementStatusLabel,
-  getRequirementTypeLabel,
-} from "../../../constants/requirement-options";
 import { useRequirementSections } from "../../../hooks/use-requirement-sections";
 import { useCreateRequirementSection } from "../../../hooks/use-create-requirement-section";
 import { useUpdateRequirementSectionSortOrder } from "../../../hooks/use-update-requirement-section-sort-order";
@@ -50,13 +64,8 @@ import { useSectionEdits } from "../../../hooks/use-section-edits";
 import { useTargetComments } from "../../../hooks/use-target-comments";
 import { sectionEditBuffer } from "../../../lib/section-edit-buffer";
 import {
-  createRequirementReviewAnchor,
-  evaluateRequirementReviewAnchor,
   getRequirementReviewAnchorKey,
-  getReviewHighlightQuotes,
-  getUnresolvedReviewAnchors,
   isRequirementReviewTargetAnchor,
-  isSelectionInsideElement,
   normalizeReviewText,
   type RequirementReviewTargetAnchor,
 } from "../../../lib/requirement-review-anchor";
@@ -71,6 +80,11 @@ type RequirementDocumentOverviewProps = {
   canCreate: boolean;
   canUpdate: boolean;
 };
+
+type PreviewQuote = RequirementReviewTargetAnchor &
+  RenderedQuote & {
+    document_version: number;
+  };
 
 export function RequirementDocumentOverview({
   projectId,
@@ -106,10 +120,21 @@ export function RequirementDocumentOverview({
     error: createError,
   } = useCreateRequirementSection(projectId, documentId);
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
-    useState<RequirementReviewTargetAnchor | null>(null);
-  const [activePreviewAnchorKey, setActivePreviewAnchorKey] = useState<
-    string | null
-  >(null);
+    useState<PreviewQuote | null>(null);
+  const [previewTexts, setPreviewTexts] = useState<Record<string, string>>({});
+  const [reanchor, setReanchor] = useState<{
+    comment: RequirementTargetCommentRead;
+    selection?: PreviewQuote;
+  } | null>(null);
+  const [reanchorError, setReanchorError] = useState<Error>();
+  const [savingAnchor, setSavingAnchor] = useState(false);
+  const queryClient = useQueryClient();
+  const articleRef = useRef<HTMLElement>(null);
+  const updatePreviewText = useCallback((key: string, value: string) => {
+    setPreviewTexts((current) =>
+      current[key] === value ? current : { ...current, [key]: value },
+    );
+  }, []);
   const {
     sections,
     isLoading: isSectionsLoading,
@@ -152,9 +177,6 @@ export function RequirementDocumentOverview({
   const unassignedRequirements = requirements.filter(
     (requirement) => !requirement.section_id,
   );
-  const targetAnchors = getUnresolvedReviewAnchors(targetComments).filter(
-    (targetAnchor) => targetAnchor.scope === "document_preview",
-  );
   const documentPath = `/projects/joined/${projectId}/requirements/${documentId}`;
   const openComments = () => {
     setCommentsOpen(true);
@@ -170,38 +192,28 @@ export function RequirementDocumentOverview({
       }
     });
   };
-  const selectCommentAnchor = (anchor: RequirementReviewTargetAnchor) => {
+  const selectCommentAnchor = (anchor: PreviewQuote) => {
     if (!canComment) return;
+    if (reanchor) {
+      setReanchor({ comment: reanchor.comment, selection: anchor });
+      setReanchorError(undefined);
+      openComments();
+      return;
+    }
     setSelectedTargetAnchor(anchor);
     openComments();
   };
 
   const handleTargetAnchorClick = (targetAnchor: Record<string, unknown>) => {
-    if (!isRequirementReviewTargetAnchor(targetAnchor)) {
-      return;
-    }
+    if (!isRequirementReviewTargetAnchor(targetAnchor)) return;
     const anchorKey = getRequirementReviewAnchorKey(targetAnchor);
-    const element =
-      window.document.querySelector(
-        `[data-document-preview-anchor-key="${CSS.escape(anchorKey)}"]`,
-      ) ??
-      window.document.querySelector(
-        `[data-document-field="${CSS.escape(targetAnchor.field)}"]`,
-      ) ??
-      (targetAnchor.preview_target_type === "section" &&
-      targetAnchor.preview_target_id
-        ? window.document.getElementById(
-            `chapter-${targetAnchor.preview_target_id}`,
-          )
-        : null);
-
-    scrollToRequirementContent(element);
-    setActivePreviewAnchorKey(anchorKey);
-    window.setTimeout(() => {
-      setActivePreviewAnchorKey((current) =>
-        current === anchorKey ? null : current,
-      );
-    }, 1600);
+    const element = articleRef.current?.querySelector<HTMLElement>(
+      `[data-document-preview-anchor-key="${CSS.escape(anchorKey)}"]`,
+    );
+    if (!element || !targetAnchor.quote) return;
+    const anchor = compatiblePreviewQuote(targetAnchor, renderedText(element));
+    const range = anchor && renderedQuoteRange(element, anchor);
+    if (range) showQuoteRange(range);
   };
 
   const getTargetAnchorStatus = (targetAnchor: Record<string, unknown>) => {
@@ -213,51 +225,62 @@ export function RequirementDocumentOverview({
       requirementsQuery.error
     )
       return null;
-    if (!isRequirementReviewTargetAnchor(targetAnchor)) {
+    if (
+      !isRequirementReviewTargetAnchor(targetAnchor) ||
+      targetAnchor.scope !== "document_preview"
+    )
       return null;
-    }
-
-    if (targetAnchor.preview_target_type === "document") {
-      const value =
-        document[targetAnchor.field as keyof RequirementDocumentRead];
-      return evaluateRequirementReviewAnchor(
-        targetAnchor,
-        typeof value === "string" ? value : "",
-        document.version,
-      );
-    }
-
+    if (
+      targetAnchor.document_id != null &&
+      targetAnchor.document_id !== documentId
+    )
+      return "missing";
     if (targetAnchor.preview_target_type === "section") {
-      const section = sections.find(
-        (item) => item.id === targetAnchor.preview_target_id,
-      );
-      const sectionRequirements = requirements.filter(
-        (requirement) =>
-          requirement.section_id === targetAnchor.preview_target_id,
-      );
-
-      return evaluateRequirementReviewAnchor(
-        targetAnchor,
-        getDocumentPreviewSectionSourceText(
-          section?.title ?? "",
-          section?.content ?? "",
-          sectionRequirements,
-        ),
-        section?.version,
-      );
+      const id = targetAnchor.preview_target_id;
+      if (!sections.some((section) => section.id === id)) return "missing";
+      if (id != null && edits[id]) return null;
     }
+    const current = previewTexts[getRequirementReviewAnchorKey(targetAnchor)];
+    if (current === undefined) return "missing";
+    const anchor = compatiblePreviewQuote(targetAnchor, current);
+    const result = anchor && resolveRenderedQuote(anchor, current);
+    return result ? (result.moved ? "moved" : "current") : "missing";
+  };
 
-    if (targetAnchor.preview_target_type === "unassigned_requirements") {
-      return evaluateRequirementReviewAnchor(
-        targetAnchor,
-        getDocumentPreviewSectionSourceText(
-          "セクション未設定",
-          "",
-          unassignedRequirements,
-        ),
+  const confirmReanchor = async () => {
+    if (!reanchor?.selection || savingAnchor) return;
+    setSavingAnchor(true);
+    setReanchorError(undefined);
+    try {
+      await apiClient(
+        `/projects/${projectId}/comments/${reanchor.comment.id}/anchor`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            version: reanchor.comment.version,
+            anchor: reanchor.selection,
+          }),
+        },
       );
+      setReanchor(null);
+      await Promise.all([
+        invalidateRequirementTargetComments(
+          queryClient,
+          projectId,
+          "document",
+          documentId,
+        ),
+        invalidateRequirementChangeLogs(queryClient, projectId),
+      ]);
+    } catch (error) {
+      setReanchorError(
+        error instanceof Error
+          ? error
+          : new Error("引用箇所を更新できませんでした。"),
+      );
+    } finally {
+      setSavingAnchor(false);
     }
-    return null;
   };
 
   return (
@@ -520,7 +543,10 @@ export function RequirementDocumentOverview({
               <Skeleton className="h-28 w-full" />
             </div>
           ) : (
-            <article className="mx-auto flex max-w-4xl min-w-0 flex-col gap-8">
+            <article
+              ref={articleRef}
+              className="mx-auto flex max-w-4xl min-w-0 flex-col gap-8"
+            >
               <details className="rounded-md border px-4 py-3">
                 <summary
                   data-document-field="title"
@@ -555,31 +581,23 @@ export function RequirementDocumentOverview({
                     preview_target_type: "document",
                     preview_target_id: documentId,
                     document_id: documentId,
+                    document_version: document.version,
                     field: "purpose",
                     quote: "",
                     label: "目的",
                   }}
-                  sourceText={document.purpose ?? ""}
-                  activeAnchorKey={activePreviewAnchorKey}
+                  onText={updatePreviewText}
                   onSelectTargetAnchor={selectCommentAnchor}
                   className="flex flex-col gap-3"
                 >
                   <h2 className="border-b pb-2 text-xl font-semibold tracking-normal">
                     目的
                   </h2>
-                  <p className="whitespace-pre-wrap text-sm leading-7">
-                    {renderHighlightedText(
-                      document.purpose || "目的は未設定です。",
-                      getReviewHighlightQuotes({
-                        targetAnchors,
-                        scope: "document_preview",
-                        previewTargetType: "document",
-                        previewTargetId: documentId,
-                        documentId,
-                        field: "purpose",
-                      }),
-                    )}
-                  </p>
+                  <div className="whitespace-pre-wrap text-sm leading-7">
+                    <MarkdownBodyText
+                      value={document.purpose || "目的は未設定です。"}
+                    />
+                  </div>
                 </ReviewablePreviewBlock>
               </div>
 
@@ -630,6 +648,7 @@ export function RequirementDocumentOverview({
                       <DocumentPreviewSection
                         documentPath={documentPath}
                         documentId={documentId}
+                        documentVersion={document.version}
                         sectionId={section.id}
                         title={section.title}
                         content={section.content ?? ""}
@@ -638,8 +657,7 @@ export function RequirementDocumentOverview({
                           (requirement) =>
                             requirement.section_id === section.id,
                         )}
-                        targetAnchors={targetAnchors}
-                        activeAnchorKey={activePreviewAnchorKey}
+                        onText={updatePreviewText}
                         onSelectTargetAnchor={selectCommentAnchor}
                       />
                     </>
@@ -651,11 +669,11 @@ export function RequirementDocumentOverview({
                   <DocumentPreviewSection
                     documentPath={documentPath}
                     documentId={documentId}
+                    documentVersion={document.version}
                     title="セクション未設定"
                     content=""
                     requirements={unassignedRequirements}
-                    targetAnchors={targetAnchors}
-                    activeAnchorKey={activePreviewAnchorKey}
+                    onText={updatePreviewText}
                     onSelectTargetAnchor={selectCommentAnchor}
                   />
                 </div>
@@ -702,6 +720,47 @@ export function RequirementDocumentOverview({
                 selectedTargetAnchor={selectedTargetAnchor}
                 onTargetAnchorClick={handleTargetAnchorClick}
                 getTargetAnchorStatus={getTargetAnchorStatus}
+                onReanchor={(comment) => {
+                  setReanchor({ comment });
+                  setReanchorError(undefined);
+                  scrollToRequirementContent(articleRef.current);
+                }}
+                anchorEditor={
+                  reanchor ? (
+                    <div className="flex flex-col gap-2 border-t p-3 text-sm">
+                      <p role="status">
+                        {reanchor.selection
+                          ? "新しい引用箇所を確認してください。"
+                          : "本文から新しい引用箇所を選択してください。"}
+                      </p>
+                      {reanchor.selection ? (
+                        <blockquote className="border-s-2 ps-2 break-words">
+                          {reanchor.selection.quote}
+                        </blockquote>
+                      ) : null}
+                      <FormApiError error={reanchorError} />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!reanchor.selection || savingAnchor}
+                          onClick={() => void confirmReanchor()}
+                        >
+                          引用箇所を更新
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={savingAnchor}
+                          onClick={() => setReanchor(null)}
+                        >
+                          キャンセル
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null
+                }
                 showTargetAnchorInput={false}
                 headerAction={
                   <CommentIconButton
@@ -737,6 +796,7 @@ export function RequirementDocumentOverview({
 type DocumentPreviewSectionProps = {
   documentPath: string;
   documentId: number;
+  documentVersion: number;
   sectionId?: number;
   title: string;
   content: string;
@@ -749,38 +809,24 @@ type DocumentPreviewSectionProps = {
     priority?: string | null;
     status?: string | null;
   }[];
-  targetAnchors: RequirementReviewTargetAnchor[];
-  activeAnchorKey: string | null;
-  onSelectTargetAnchor: (targetAnchor: RequirementReviewTargetAnchor) => void;
+  onText: (key: string, value: string) => void;
+  onSelectTargetAnchor: (targetAnchor: PreviewQuote) => void;
 };
 
 function DocumentPreviewSection({
   documentPath,
   documentId,
+  documentVersion,
   sectionId,
   title,
   content,
   sectionVersion,
   requirements,
-  targetAnchors,
-  activeAnchorKey,
+  onText,
   onSelectTargetAnchor,
 }: DocumentPreviewSectionProps) {
   const previewTargetType = sectionId ? "section" : "unassigned_requirements";
   const previewTargetId = sectionId ?? null;
-  const sourceText = getDocumentPreviewSectionSourceText(
-    title,
-    content,
-    requirements,
-  );
-  const highlightQuotes = getReviewHighlightQuotes({
-    targetAnchors,
-    scope: "document_preview",
-    previewTargetType,
-    previewTargetId,
-    sectionId: previewTargetId,
-    field: "section",
-  });
 
   return (
     <ReviewablePreviewBlock
@@ -790,14 +836,14 @@ function DocumentPreviewSection({
         preview_target_type: previewTargetType,
         preview_target_id: previewTargetId,
         document_id: documentId,
+        document_version: documentVersion,
         section_id: previewTargetId,
         section_version: sectionVersion,
         field: "section",
         quote: "",
         label: title,
       }}
-      sourceText={sourceText}
-      activeAnchorKey={activeAnchorKey}
+      onText={onText}
       onSelectTargetAnchor={onSelectTargetAnchor}
       className="flex flex-col gap-4"
     >
@@ -809,7 +855,6 @@ function DocumentPreviewSection({
           value={content}
           emptyMessage="本文はありません。"
           className="min-h-0 border-0 bg-transparent p-0"
-          highlightQuotes={highlightQuotes}
         />
       ) : null}
       {requirements.length ? (
@@ -823,13 +868,10 @@ function DocumentPreviewSection({
                   className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 rounded-sm py-2.5 text-sm hover:underline focus-visible:outline-2 focus-visible:outline-ring"
                 >
                   <span className="text-xs tabular-nums text-muted-foreground">
-                    {renderHighlightedText(
-                      requirement.requirement_code,
-                      highlightQuotes,
-                    )}
+                    {requirement.requirement_code}
                   </span>
                   <span className="min-w-0 [overflow-wrap:anywhere]">
-                    {renderHighlightedText(requirement.title, highlightQuotes)}
+                    {requirement.title}
                   </span>
                 </Link>
               </li>
@@ -846,65 +888,53 @@ function DocumentPreviewSection({
 }
 
 type ReviewablePreviewBlockProps = {
-  anchor: RequirementReviewTargetAnchor;
-  sourceText: string;
-  activeAnchorKey: string | null;
+  anchor: RequirementReviewTargetAnchor & { document_version: number };
+  onText: (key: string, value: string) => void;
   className?: string;
   children: ReactNode;
-  onSelectTargetAnchor: (targetAnchor: RequirementReviewTargetAnchor) => void;
+  onSelectTargetAnchor: (targetAnchor: PreviewQuote) => void;
 };
 
 function ReviewablePreviewBlock({
   anchor,
-  sourceText,
-  activeAnchorKey,
+  onText,
   className,
   children,
   onSelectTargetAnchor,
 }: ReviewablePreviewBlockProps) {
   const anchorKey = getRequirementReviewAnchorKey(anchor);
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const update = () => onText(anchorKey, renderedText(element));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(element, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    return () => observer.disconnect();
+  }, [anchorKey, onText]);
 
-  const handleMouseUp = async (event: React.MouseEvent<HTMLElement>) => {
+  const recordSelection = (element: HTMLElement) => {
     const selection = window.getSelection();
-    const currentTarget = event.currentTarget;
-    const rawQuote =
-      selectedTextForLinkSource(currentTarget, sourceText, selection) ??
-      selection?.toString();
-    const quote = rawQuote?.trim();
-
-    if (
-      !quote ||
-      !selection ||
-      !isSelectionInsideElement(selection, currentTarget)
-    ) {
-      return;
-    }
-    const selectableText = normalizeReviewText(
-      currentTarget.textContent ?? sourceText,
-    );
-    const normalizedQuote = normalizeReviewText(quote);
-
-    onSelectTargetAnchor(
-      await createRequirementReviewAnchor({
-        base: anchor,
-        quote: normalizedQuote,
-        sourceValue: sourceText || selectableText,
-      }),
-    );
-    selection.removeAllRanges();
+    const quote = quoteRenderedRange(element, selection);
+    if (!quote) return;
+    onSelectTargetAnchor({ ...anchor, ...quote });
+    selection?.removeAllRanges();
   };
 
   return (
     <section
-      className={cn(
-        "scroll-mt-24 rounded-md transition-colors",
-        activeAnchorKey === anchorKey
-          ? "bg-[var(--status-warning-bg)] ring-2 ring-[var(--status-warning-border)]"
-          : "",
-        className,
-      )}
+      ref={ref}
+      className={cn("scroll-mt-24 rounded-md", className)}
       data-document-preview-anchor-key={anchorKey}
-      onMouseUp={handleMouseUp}
+      onMouseUp={(event) => recordSelection(event.currentTarget)}
+      onKeyUp={(event) => {
+        if (event.key === "Shift") recordSelection(event.currentTarget);
+      }}
     >
       {children}
     </section>
@@ -948,47 +978,49 @@ function OutlineLink({
   );
 }
 
-const renderHighlightedText = (value: string, highlightQuotes: string[]) => {
-  const quote = highlightQuotes.find((item) => value.includes(item));
-
-  if (!quote) {
-    return value;
+function compatiblePreviewQuote(
+  anchor: RequirementReviewTargetAnchor,
+  current: string,
+): RenderedQuote | null {
+  if (!anchor.quote || typeof anchor.source_value !== "string") return null;
+  if (anchor.anchor_format === "rendered-text-v1") {
+    if (
+      typeof anchor.start_offset !== "number" ||
+      typeof anchor.end_offset !== "number" ||
+      typeof anchor.prefix !== "string" ||
+      typeof anchor.suffix !== "string"
+    )
+      return null;
+    return {
+      anchor_format: anchor.anchor_format,
+      offset_unit: "unicode_code_point",
+      quote: anchor.quote,
+      source_value: anchor.source_value,
+      start_offset: anchor.start_offset,
+      end_offset: anchor.end_offset,
+      prefix: anchor.prefix,
+      suffix: anchor.suffix,
+    };
   }
-  const [before, after] = value.split(quote, 2);
-
-  return (
-    <>
-      {before}
-      <mark className="rounded-sm bg-[var(--status-warning-bg)] px-0.5 text-[var(--status-warning-fg)]">
-        {quote}
-      </mark>
-      {after}
-    </>
-  );
-};
-
-const getDocumentPreviewSectionSourceText = (
-  title: string,
-  content: string,
-  requirements: {
-    requirement_code: string;
-    title: string;
-    requirement_type?: string | null;
-    priority?: string | null;
-    status?: string | null;
-  }[],
-) => {
-  return [
-    title,
-    content,
-    ...requirements.map((requirement) =>
-      [
-        requirement.requirement_code,
-        requirement.title,
-        getRequirementTypeLabel(requirement.requirement_type),
-        getRequirementPriorityLabel(requirement.priority),
-        getRequirementStatusLabel(requirement.status),
-      ].join(" "),
-    ),
-  ].join("\n");
-};
+  const source = normalizeReviewText(anchor.source_value);
+  const quote = normalizeReviewText(anchor.quote);
+  const start = source.indexOf(quote);
+  if (
+    !quote ||
+    source !== current ||
+    start < 0 ||
+    start !== source.lastIndexOf(quote)
+  )
+    return null;
+  const offset = Array.from(source.slice(0, start)).length;
+  return {
+    anchor_format: "rendered-text-v1",
+    offset_unit: "unicode_code_point",
+    quote,
+    source_value: source,
+    start_offset: offset,
+    end_offset: offset + Array.from(quote).length,
+    prefix: "",
+    suffix: "",
+  };
+}

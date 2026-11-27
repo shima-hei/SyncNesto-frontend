@@ -6,6 +6,8 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
+import { quoteMarkdownSource } from "@/lib/comments/markdown-source-range";
+import { PublicationImageScope } from "@/components/shared/forms/markdown-image";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import type { PublicationNodeRead } from "@/lib/api/generated/model";
 import type { Content } from "@/features/specifications/lib/specification";
@@ -50,10 +52,12 @@ export function PublicNode({
   node,
   onSelectText,
   reader = false,
+  sharedPublicationId,
 }: {
   node: PublicationNodeRead;
   onSelectText?: (field: string, quote: string, quoteStart: number) => void;
   reader?: boolean;
+  sharedPublicationId?: string;
 }) {
   const structured =
     node.node_kind === "specification" &&
@@ -84,126 +88,127 @@ export function PublicNode({
     ([key, value]) => !body.includes(key) && value != null && value !== "",
   );
   return (
-    <article
-      id={`public-node-${node.id}`}
-      className="flex min-w-0 flex-col gap-3 border-b pb-5 last:border-b-0"
+    <PublicationImageScope.Provider
+      value={
+        sharedPublicationId
+          ? { publicationId: sharedPublicationId, nodeId: node.id }
+          : null
+      }
     >
-      {!reader ? (
-        <p className="text-xs text-muted-foreground">
-          固定した内容
-          {node.source_version ? `・元の版 ${node.source_version}` : ""}
-        </p>
-      ) : null}
-      {structured ? (
-        <SpecificationFields
-          values={{
-            title: String(node.payload.title ?? ""),
-            summary: String(node.payload.summary ?? ""),
-            content: node.payload.content as Content,
-          }}
-          onChange={() => undefined}
-          readOnly
-        />
-      ) : typeof node.payload.title === "string" ? (
-        <h3
-          className={
-            reader
-              ? "text-2xl font-semibold [overflow-wrap:anywhere]"
-              : "text-base font-semibold"
-          }
-        >
-          {node.payload.title}
-        </h3>
-      ) : null}
-      <dl className="flex min-w-0 flex-col gap-3">
-        {displayed.map(([key, value]) => (
-          <div key={key} className="min-w-0">
-            <dt
-              className={
-                reader
-                  ? "text-sm font-semibold"
-                  : "text-xs text-muted-foreground"
-              }
-            >
-              {labels[key] ?? key}
-            </dt>
-            <dd
-              onMouseUp={
-                onSelectText && typeof value === "string"
-                  ? (event) => {
-                      const selection = window.getSelection();
-                      if (
-                        !selection?.anchorNode ||
-                        !selection.focusNode ||
-                        !event.currentTarget.contains(selection.anchorNode) ||
-                        !event.currentTarget.contains(selection.focusNode)
-                      )
-                        return;
-                      const quote = selection.toString().trim();
-                      const start = value.indexOf(quote);
-                      if (
-                        quote &&
-                        start >= 0 &&
-                        start === value.lastIndexOf(quote)
-                      )
-                        onSelectText(
-                          key,
-                          quote,
-                          Array.from(value.slice(0, start)).length,
+      <article
+        id={`public-node-${node.id}`}
+        className="flex min-w-0 flex-col gap-3 border-b pb-5 last:border-b-0"
+      >
+        {!reader ? (
+          <p className="text-xs text-muted-foreground">
+            固定した内容
+            {node.source_version ? `・元の版 ${node.source_version}` : ""}
+          </p>
+        ) : null}
+        {structured ? (
+          <SpecificationFields
+            values={{
+              title: String(node.payload.title ?? ""),
+              summary: String(node.payload.summary ?? ""),
+              content: node.payload.content as Content,
+            }}
+            onChange={() => undefined}
+            readOnly
+            liveLinks={false}
+          />
+        ) : typeof node.payload.title === "string" ? (
+          <h3
+            className={
+              reader
+                ? "text-2xl font-semibold [overflow-wrap:anywhere]"
+                : "text-base font-semibold"
+            }
+          >
+            {node.payload.title}
+          </h3>
+        ) : null}
+        <dl className="flex min-w-0 flex-col gap-3">
+          {displayed.map(([key, value]) => (
+            <div key={key} className="min-w-0">
+              <dt
+                className={
+                  reader
+                    ? "text-sm font-semibold"
+                    : "text-xs text-muted-foreground"
+                }
+              >
+                {labels[key] ?? key}
+              </dt>
+              <dd
+                onMouseUp={
+                  onSelectText && typeof value === "string"
+                    ? (event) => {
+                        const quote = quoteMarkdownSource(
+                          event.currentTarget,
+                          value,
+                          window.getSelection(),
                         );
+                        if (quote)
+                          onSelectText(key, quote.quote, quote.quote_start);
+                      }
+                    : undefined
+                }
+              >
+                {typeof value === "string" ? (
+                  <MarkdownPreview
+                    quoteSourcePositions={Boolean(onSelectText)}
+                    liveLinks={false}
+                    inert
+                    className={
+                      reader
+                        ? "min-h-0 rounded-none border-0 bg-transparent px-0 py-2"
+                        : "min-h-0"
                     }
-                  : undefined
-              }
-            >
-              {typeof value === "string" ? (
-                <MarkdownPreview
-                  liveLinks={false}
-                  inert
-                  className={
-                    reader
-                      ? "min-h-0 rounded-none border-0 bg-transparent px-0 py-2"
-                      : "min-h-0"
-                  }
-                  value={value}
-                  emptyMessage="記載なし"
-                />
-              ) : (
-                <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-sm">
-                  {value == null ? "記載なし" : JSON.stringify(value, null, 2)}
-                </pre>
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      {reader ? (
-        metadata.length ? (
-          <details className="text-sm text-muted-foreground">
-            <summary className="cursor-pointer">固定版の属性</summary>
-            <dl className="grid gap-2 pt-2 sm:grid-cols-2">
-              {metadata.map(([key, value]) => (
-                <div
-                  key={key}
-                  className="min-w-0 text-xs [overflow-wrap:anywhere]"
-                >
-                  <dt>{labels[key] ?? key}</dt>
-                  <dd className="text-foreground">
-                    {typeof value === "string" ? value : JSON.stringify(value)}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+                    value={value}
+                    emptyMessage="記載なし"
+                  />
+                ) : (
+                  <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-sm">
+                    {value == null
+                      ? "記載なし"
+                      : JSON.stringify(value, null, 2)}
+                  </pre>
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        {reader ? (
+          metadata.length ? (
+            <details className="text-sm text-muted-foreground">
+              <summary className="cursor-pointer">固定版の属性</summary>
+              <dl className="grid gap-2 pt-2 sm:grid-cols-2">
+                {metadata.map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="min-w-0 text-xs [overflow-wrap:anywhere]"
+                  >
+                    <dt>{labels[key] ?? key}</dt>
+                    <dd className="text-foreground">
+                      {typeof value === "string"
+                        ? value
+                        : JSON.stringify(value)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          ) : null
+        ) : (
+          <details className="text-sm">
+            <summary>本文全体をテキストで確認</summary>
+            <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap break-words text-xs">
+              {JSON.stringify(node.payload, null, 2)}
+            </pre>
           </details>
-        ) : null
-      ) : (
-        <details className="text-sm">
-          <summary>本文全体をテキストで確認</summary>
-          <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap break-words text-xs">
-            {JSON.stringify(node.payload, null, 2)}
-          </pre>
-        </details>
-      )}
-    </article>
+        )}
+      </article>
+    </PublicationImageScope.Provider>
   );
 }
 
@@ -310,11 +315,13 @@ export function PublicationBody({
   publicationId,
   onReady,
   reader = false,
+  sharedPublicationId,
 }: {
   nodes: PublicationNodeRead[];
   publicationId: string;
   onReady?: (ready: boolean) => void;
   reader?: boolean;
+  sharedPublicationId?: string;
 }) {
   const [graphs, setGraphs] = useState<Record<string, boolean>>({});
   const graphReady = useCallback((id: string, ready: boolean) => {
@@ -344,15 +351,28 @@ export function PublicationBody({
         .map((node) =>
           node.node_kind === "test_design" ? (
             <section key={node.id} id={`public-node-${node.id}`}>
-              <PublicGraph
-                root={node}
-                nodes={nodes}
-                publicationId={publicationId}
-                onReady={graphReady}
-              />
+              <PublicationImageScope.Provider
+                value={
+                  sharedPublicationId
+                    ? { publicationId: sharedPublicationId, nodeId: node.id }
+                    : null
+                }
+              >
+                <PublicGraph
+                  root={node}
+                  nodes={nodes}
+                  publicationId={publicationId}
+                  onReady={graphReady}
+                />
+              </PublicationImageScope.Provider>
             </section>
           ) : (
-            <PublicNode key={node.id} node={node} reader={reader} />
+            <PublicNode
+              key={node.id}
+              node={node}
+              reader={reader}
+              sharedPublicationId={sharedPublicationId}
+            />
           ),
         )}
     </div>

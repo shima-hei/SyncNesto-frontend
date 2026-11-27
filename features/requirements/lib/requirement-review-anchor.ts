@@ -28,6 +28,10 @@ export type RequirementReviewTargetAnchor = {
   quote_start?: number;
   offset_unit?: "unicode_code_point";
   target_version?: number;
+  anchor_format?: "rendered-text-v1";
+  document_version?: number;
+  prefix?: string;
+  suffix?: string;
 };
 
 export const createRequirementReviewAnchor = async ({
