@@ -165,6 +165,7 @@ function DesignBrowser({
     request: number;
   }>();
   const connectionRequest = useRef(0);
+  const [connectionSaving, setConnectionSaving] = useState(false);
   const [name, setName] = useState("");
   const [creation, setCreation] = useState<{
     x?: number;
@@ -697,7 +698,7 @@ function DesignBrowser({
                       onAdd={(position) => setCreation(position ?? {})}
                       referenceIds={referenceIds}
                       logical={logical}
-                      busy={place.isPending}
+                      busy={place.isPending || connectionSaving}
                       canEdit={canEdit}
                     />
                   </>
@@ -839,9 +840,10 @@ function DesignBrowser({
                       nodes={nodes}
                       canEdit={canEdit}
                       onSave={async () => {
-                        setNewConnection(undefined);
                         await refresh();
+                        setNewConnection(undefined);
                       }}
+                      onConnectionSaving={setConnectionSaving}
                       edge={edge}
                       newConnection={newConnection}
                       onNewTarget={
@@ -1172,6 +1174,7 @@ function NodeInspector({
   onNewTarget,
   edge,
   newConnection,
+  onConnectionSaving,
 }: {
   projectId: number;
   node: DesignNode;
@@ -1184,6 +1187,7 @@ function NodeInspector({
   onNewTarget?: () => void;
   edge?: DesignEdge;
   newConnection?: { targetId?: number };
+  onConnectionSaving: (saving: boolean) => void;
 }) {
   const [groupChoice, setGroupChoice] = useState(node.group_ids ?? []);
   const [target, setTarget] = useState(
@@ -1213,6 +1217,7 @@ function NodeInspector({
     onSuccess: onSave,
   });
   const save = useMutation({
+    onMutate: () => onConnectionSaving(true),
     mutationFn: async (remove: boolean) => {
       const row = await readSpecification(projectId, node.id);
       if (!target) throw new Error("接続先を選択してください。");
@@ -1291,6 +1296,7 @@ function NodeInspector({
       throw new Error("接続を作成できる設計を選択してください。");
     },
     onSuccess: onSave,
+    onSettled: () => onConnectionSaving(false),
   });
   return (
     <div className="space-y-3">
