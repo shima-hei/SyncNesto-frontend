@@ -1,8 +1,10 @@
 export {
+  cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost as cancelGuestReview,
   createGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsPost as createGuestReview,
   guestRequirementReviewOptionsProjectsProjectIdGuestRequirementReviewsOptionsGet as readReviewOptions,
 } from "@/lib/api/generated/guest-requirement-reviews/guest-requirement-reviews";
 export {
+  cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost as cancelGuestApproval,
   createGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsPost as createGuestApproval,
   previewGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsPreviewPost as previewGuestApproval,
 } from "@/lib/api/generated/guest-requirement-approvals/guest-requirement-approvals";

@@ -13,4 +13,6 @@ export interface PublicationRecipient {
   /** @minimum 1 */
   version: number;
   expires_at: string;
+  download_allowed?: boolean | null;
+  comment_allowed?: boolean;
 }

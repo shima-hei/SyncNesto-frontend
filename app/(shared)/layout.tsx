@@ -17,7 +17,7 @@ export default async function SharedLayout({
 }) {
   const path = (await headers()).get("x-syncnesto-pathname");
   await requireUser({
-    returnTo: loginReturnPath(path) ?? "/shared/publications",
+    returnTo: loginReturnPath(path) ?? "/shared",
   });
   return <SharedShell>{children}</SharedShell>;
 }

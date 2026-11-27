@@ -35,6 +35,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import { canReviewRequirement } from "@/features/auth/utils/authorization";
+import { cancelGuestReview } from "@/features/guest-requirement-reviews/lib/api";
+import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import {
   reviewItemStatus,
   reviewRequestStatus,
@@ -67,7 +71,9 @@ type ReviewCommand = { version: number } & (
   | { action: "item"; nodeId: string; confirmed: boolean }
   | { action: "remaining" }
   | { action: "submit"; note: string }
+  | { action: "cancel"; reason: string }
 );
+type ReviewDecision = "remaining" | "submit" | "cancel";
 
 const RequirementFormalApprovalWorkspace = dynamic(() =>
   import("./requirement-formal-approval-workspace").then(
@@ -95,6 +101,8 @@ export function RequirementReviewWorkspace({
   initialThreadId?: string;
 }) {
   const client = useQueryClient();
+  const { user } = useAuth();
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
   const reviewKey = ["requirement-workflow-review", projectId, requestId];
   const [selectedId, setSelectedId] = useState<string | null>(
     initialNodeId ?? null,
@@ -106,7 +114,7 @@ export function RequirementReviewWorkspace({
     field: string;
     quote: string;
   } | null>(null);
-  const [decision, setDecision] = useState<"remaining" | "submit" | null>(null);
+  const [decision, setDecision] = useState<ReviewDecision | null>(null);
   const mainContent = useRef<HTMLDivElement>(null);
   const discussion = useRef<HTMLElement>(null);
   const decisionTrigger = useRef<HTMLElement | null>(null);
@@ -195,6 +203,11 @@ export function RequirementReviewWorkspace({
         return confirmRemaining(projectId, requestId, {
           version: command.version,
         });
+      if (command.action === "cancel")
+        return cancelGuestReview(projectId, requestId, {
+          version: command.version,
+          reason: command.reason,
+        });
       return submitReview(projectId, requestId, {
         version: command.version,
         note: command.note || undefined,
@@ -202,6 +215,10 @@ export function RequirementReviewWorkspace({
     },
     onSuccess: (_, command) => {
       if (command.action !== "item") setDecision(null);
+      if (command.action === "cancel") {
+        toast.success("外部レビュー依頼を取り消しました");
+        return;
+      }
       toast.success(
         command.action === "submit"
           ? "レビュー結果を提出しました"
@@ -228,7 +245,7 @@ export function RequirementReviewWorkspace({
     );
   }
 
-  function openDecision(action: "remaining" | "submit", trigger: HTMLElement) {
+  function openDecision(action: ReviewDecision, trigger: HTMLElement) {
     decisionTrigger.current = trigger;
     mutation.reset();
     setDecision(action);
@@ -278,6 +295,11 @@ export function RequirementReviewWorkspace({
   const canCorrect =
     canDiscuss && !workflow.external_review && workflow.status === "requested";
   const canRespond = Boolean(state?.can_respond);
+  const canCancel =
+    workflow.external_review &&
+    workflow.status === "requested" &&
+    user?.user_type === "internal" &&
+    canReviewRequirement(currentProjectRole);
   const busy = mutation.isPending || progress.isFetching;
   const people = new Map(
     workflow.participants.map((item) => [item.user_id, item.name]),
@@ -289,6 +311,19 @@ export function RequirementReviewWorkspace({
 
   function submitDecision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (decision === "cancel") {
+      if (!workflow || !canCancel || busy) return;
+      const reason = String(
+        new FormData(event.currentTarget).get("note") ?? "",
+      ).trim();
+      if (reason)
+        mutation.mutate({
+          action: "cancel",
+          version: workflow.version,
+          reason,
+        });
+      return;
+    }
     if (!decision || !state?.can_respond || busy) return;
     if (decision === "remaining")
       mutation.mutate({ action: decision, version: state.version });
@@ -346,6 +381,17 @@ export function RequirementReviewWorkspace({
           <p className="whitespace-pre-wrap text-sm text-muted-foreground [overflow-wrap:anywhere]">
             {workflow.note}
           </p>
+        ) : null}
+        {canCancel ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-self-start"
+            disabled={busy}
+            onClick={(event) => openDecision("cancel", event.currentTarget)}
+          >
+            外部レビュー依頼を取り消す
+          </Button>
         ) : null}
       </header>
 
@@ -714,26 +760,35 @@ export function RequirementReviewWorkspace({
         >
           <DialogHeader>
             <DialogTitle>
-              {decision === "remaining"
-                ? "残りをまとめて確認"
-                : "レビュー結果を提出"}
+              {decision === "cancel"
+                ? "外部レビュー依頼を取り消す"
+                : decision === "remaining"
+                  ? "残りをまとめて確認"
+                  : "レビュー結果を提出"}
             </DialogTitle>
             <DialogDescription>
-              {decision === "remaining"
-                ? `未確認の要件${remaining}件を確認済みにします。修正依頼中の要件は対象から外れます。`
-                : state?.open_correction_count
-                  ? `未解決の修正依頼${state.open_correction_count}件を含むレビュー結果を提出します。`
-                  : "この対象版のレビュー結果を提出します。"}
+              {decision === "cancel"
+                ? "この依頼と、依頼時に付与した共有許可を取り消します。"
+                : decision === "remaining"
+                  ? `未確認の要件${remaining}件を確認済みにします。修正依頼中の要件は対象から外れます。`
+                  : state?.open_correction_count
+                    ? `未解決の修正依頼${state.open_correction_count}件を含むレビュー結果を提出します。`
+                    : "この対象版のレビュー結果を提出します。"}
             </DialogDescription>
           </DialogHeader>
           <form className="grid gap-4" onSubmit={submitDecision}>
-            {decision === "submit" ? (
+            {decision === "submit" || decision === "cancel" ? (
               <div className="grid gap-2">
-                <label htmlFor={noteId}>提出メッセージ（任意）</label>
+                <label htmlFor={noteId}>
+                  {decision === "cancel"
+                    ? "取消理由"
+                    : "提出メッセージ（任意）"}
+                </label>
                 <Textarea
                   id={noteId}
                   name="note"
-                  maxLength={2000}
+                  maxLength={decision === "cancel" ? 1000 : 2000}
+                  required={decision === "cancel"}
                   readOnly={mutation.isPending}
                 />
               </div>
@@ -753,13 +808,22 @@ export function RequirementReviewWorkspace({
               </Button>
               <Button
                 type="submit"
+                variant={decision === "cancel" ? "destructive" : "default"}
                 disabled={
                   busy ||
-                  !canRespond ||
-                  (decision === "remaining" ? remaining === 0 : remaining > 0)
+                  (decision === "cancel"
+                    ? !canCancel
+                    : !canRespond ||
+                      (decision === "remaining"
+                        ? remaining === 0
+                        : remaining > 0))
                 }
               >
-                {decision === "remaining" ? "まとめて確認する" : "提出する"}
+                {decision === "cancel"
+                  ? "依頼を取り消す"
+                  : decision === "remaining"
+                    ? "まとめて確認する"
+                    : "提出する"}
               </Button>
             </DialogFooter>
           </form>

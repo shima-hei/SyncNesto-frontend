@@ -399,7 +399,7 @@ export function InvitationPage({ invitationId }: { invitationId: string }) {
                   参加できました。資料がまだ表示されない場合は、共有をお待ちください。
                 </p>
                 <Button asChild>
-                  <Link href="/shared/publications" prefetch={false}>
+                  <Link href="/shared" prefetch={false}>
                     共有された内容へ
                   </Link>
                 </Button>

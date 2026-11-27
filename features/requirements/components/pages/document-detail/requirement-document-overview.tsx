@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { selectedTextForLinkSource } from "@/lib/smart-links/quote";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { SourceCommentTabs } from "@/features/artifact-publications/components/source-comment-tabs";
 import { CommentIconButton } from "@/components/shared/comments/comment-thread-actions";
 import {
   CommentPaneResizeHandle,
@@ -107,6 +108,7 @@ export function RequirementDocumentOverview({
   } = useCreateRequirementSection(projectId, documentId);
   const [selectedTargetAnchor, setSelectedTargetAnchor] =
     useState<RequirementReviewTargetAnchor | null>(null);
+  const [internalCommentRequest, setInternalCommentRequest] = useState(0);
   const [activePreviewAnchorKey, setActivePreviewAnchorKey] = useState<
     string | null
   >(null);
@@ -173,6 +175,7 @@ export function RequirementDocumentOverview({
   const selectCommentAnchor = (anchor: RequirementReviewTargetAnchor) => {
     if (!canComment) return;
     setSelectedTargetAnchor(anchor);
+    setInternalCommentRequest((request) => request + 1);
     openComments();
   };
 
@@ -693,17 +696,12 @@ export function RequirementDocumentOverview({
                     : "hidden @min-[61rem]/document-overview:block"
                 }
               />
-              <RequirementTargetCommentsSection
+              <SourceCommentTabs
                 projectId={projectId}
-                targetType="document"
-                targetId={documentId}
-                title="コメント"
-                canComment={canComment}
-                selectedTargetAnchor={selectedTargetAnchor}
-                onTargetAnchorClick={handleTargetAnchorClick}
-                getTargetAnchorStatus={getTargetAnchorStatus}
-                showTargetAnchorInput={false}
-                headerAction={
+                sourceKind="requirement_document"
+                sourceId={documentId}
+                internalRequest={internalCommentRequest}
+                action={
                   <CommentIconButton
                     label="コメントを閉じる"
                     onClick={() => {
@@ -714,18 +712,33 @@ export function RequirementDocumentOverview({
                     <PanelRightCloseIcon aria-hidden="true" />
                   </CommentIconButton>
                 }
-                className={
+                className={cn(
+                  "px-3",
                   outlineOpen
                     ? "@min-[76rem]/document-overview:h-[calc(100dvh-8rem)]"
-                    : "@min-[61rem]/document-overview:h-[calc(100dvh-8rem)]"
-                }
-                contentClassName={cn(
-                  "max-h-[55dvh] overflow-y-auto overscroll-contain",
-                  outlineOpen
-                    ? "@min-[76rem]/document-overview:max-h-none"
-                    : "@min-[61rem]/document-overview:max-h-none",
+                    : "@min-[61rem]/document-overview:h-[calc(100dvh-8rem)]",
                 )}
-              />
+              >
+                <RequirementTargetCommentsSection
+                  projectId={projectId}
+                  targetType="document"
+                  targetId={documentId}
+                  title="コメント"
+                  canComment={canComment}
+                  selectedTargetAnchor={selectedTargetAnchor}
+                  onTargetAnchorClick={handleTargetAnchorClick}
+                  getTargetAnchorStatus={getTargetAnchorStatus}
+                  showTargetAnchorInput={false}
+                  className="h-full"
+                  contentClassName={cn(
+                    "max-h-[55dvh] overflow-y-auto overscroll-contain",
+                    outlineOpen
+                      ? "@min-[76rem]/document-overview:max-h-none"
+                      : "@min-[61rem]/document-overview:max-h-none",
+                  )}
+                  embedded
+                />
+              </SourceCommentTabs>
             </>
           ) : null}
         </aside>

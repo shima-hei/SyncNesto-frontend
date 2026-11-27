@@ -12,26 +12,35 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useFreshShared } from "@/features/artifact-publications/hooks/use-fresh-shared";
-import { ApprovalMfa } from "@/features/guest-fixed-approvals/components/approval-mfa";
 import { reviewRequestStatus } from "@/features/requirements/lib/requirement-workflow-review";
 import { ApiError } from "@/lib/api/error";
-import { formatDate } from "@/lib/format/date";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 import { listApprovals, listReviews } from "../lib/api";
 
 const pageSize = 15;
 
 export function SharedRequirementReviewList({
   publicationId,
+  participationId,
+  compact = false,
   formal = false,
+  onMfaRequired,
 }: {
   publicationId?: string;
+  participationId?: string;
+  compact?: boolean;
   formal?: boolean;
+  onMfaRequired: (required: boolean) => void;
 }) {
   const list = formal ? listApprovals : listReviews;
   const Icon = formal ? FileCheckIcon : MessageSquareIcon;
-  const heading = formal ? "あなたへの正式承認依頼" : "あなたへのレビュー依頼";
+  const heading = formal
+    ? "あなたへの正式承認依頼"
+    : "あなたへの認識合わせ依頼";
   const [page, setPage] = useState(1);
+  const [view, setView] = useState("all");
   const root = useRef<HTMLDivElement>(null);
   const mask = useCallback((hidden: boolean) => {
     if (root.current) root.current.hidden = hidden;
@@ -39,16 +48,30 @@ export function SharedRequirementReviewList({
   const load = useCallback(
     (signal: AbortSignal) =>
       list(
-        { publication_id: publicationId, page, page_size: pageSize },
+        {
+          publication_id: publicationId,
+          participation_id: participationId,
+          responded: compact
+            ? false
+            : view === "all"
+              ? undefined
+              : view === "responded",
+          page,
+          page_size: pageSize,
+        },
         { signal },
       ),
-    [publicationId, page, list],
+    [publicationId, participationId, view, page, list, compact],
   );
   const { value, error, refresh } = useFreshShared(
-    JSON.stringify([formal, publicationId, page]),
+    JSON.stringify([formal, publicationId, participationId, view, page]),
     load,
     mask,
   );
+  const needsMfa = error instanceof ApiError && error.code === "MFA_REQUIRED";
+  useEffect(() => {
+    if (value || error) onMfaRequired(needsMfa);
+  }, [error, needsMfa, onMfaRequired, value]);
   useEffect(() => {
     if (!value?.items.length) return;
     const expiration = Math.min(
@@ -61,19 +84,30 @@ export function SharedRequirementReviewList({
     return () => window.clearTimeout(timer);
   }, [value, refresh]);
 
+  if (needsMfa) return null;
   return (
     <section aria-label={heading} className="grid min-w-0 gap-3">
       <h2 className="text-base font-semibold">{heading}</h2>
-      <div ref={root}>
-        {error instanceof ApiError && error.code === "MFA_REQUIRED" ? (
-          <ApprovalMfa
-            returnTo={
-              publicationId
-                ? `/shared/publications/${publicationId}`
-                : "/shared/publications"
+      {!publicationId && !compact && (
+        <ToggleGroup
+          type="single"
+          className="justify-self-start"
+          aria-label={heading + "の表示"}
+          value={view}
+          onValueChange={(next) => {
+            if (next) {
+              setPage(1);
+              setView(next);
             }
-          />
-        ) : error ? (
+          }}
+        >
+          <ToggleGroupItem value="all">すべて</ToggleGroupItem>
+          <ToggleGroupItem value="pending">要対応</ToggleGroupItem>
+          <ToggleGroupItem value="responded">回答済み</ToggleGroupItem>
+        </ToggleGroup>
+      )}
+      <div ref={root}>
+        {error ? (
           <DataLoadError
             resourceName={heading}
             onRetry={() => void refresh()}
@@ -95,7 +129,13 @@ export function SharedRequirementReviewList({
                       {item.title}
                     </span>
                     <span className="text-xs text-muted-foreground">
+                      {!publicationId && !participationId
+                        ? `${item.public_project_name || "公開名未設定"} ・ `
+                        : ""}
                       {item.version_label}
+                      {item.captured_at
+                        ? ` ・ 固定日時 ${formatDateTime(item.captured_at)}`
+                        : ""}
                       {item.due_on
                         ? ` ・ 回答期限 ${formatDate(item.due_on)}`
                         : ""}

@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicationShareInput } from "./publicationShareInput";
 import type { RequirementFormalApprovalException } from "./requirementFormalApprovalException";
 
 /**
@@ -13,11 +14,9 @@ export interface GuestRequirementFormalApprovalInput {
   publication_id: string;
   /** @pattern ^[a-f0-9]{64}$ */
   expected_public_digest: string;
-  /**
-   * @minItems 1
-   * @maxItems 25
-   */
-  grant_ids: string[];
+  /** @maxItems 25 */
+  grant_ids?: string[];
+  sharing?: PublicationShareInput | null;
   /**
    * @maxItems 24
    * @items.exclusiveMinimum 0

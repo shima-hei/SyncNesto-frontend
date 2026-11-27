@@ -37,6 +37,36 @@ import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
+
 const withQueryKey = <T extends object, K>(
   query: T,
   queryKey: K,
@@ -70,27 +100,6 @@ export const previewPublicationProjectsProjectIdArtifactPublicationsPreviewPost 
     publicationPreviewRequest: PublicationPreviewRequest,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<PublicationPreview> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<PublicationPreview>(
       getPreviewPublicationProjectsProjectIdArtifactPublicationsPreviewPostUrl(
         projectId,
@@ -98,10 +107,10 @@ export const previewPublicationProjectsProjectIdArtifactPublicationsPreviewPost 
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(publicationPreviewRequest),
       },
     );
@@ -182,6 +191,7 @@ export type PreviewPublicationProjectsProjectIdArtifactPublicationsPreviewPostMu
   { projectId: number; data: BodyType<PublicationPreviewRequest> };
 
 /**
+ * 準備する本文と添付構成を保存前に確認する。
  * @summary Preview Publication
  */
 export const usePreviewPublicationProjectsProjectIdArtifactPublicationsPreviewPost =
@@ -232,27 +242,6 @@ export const createPublicationProjectsProjectIdArtifactPublicationsPost =
     publicationCreateRequest: PublicationCreateRequest,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<PublicationRead> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<PublicationRead>(
       getCreatePublicationProjectsProjectIdArtifactPublicationsPostUrl(
         projectId,
@@ -260,10 +249,10 @@ export const createPublicationProjectsProjectIdArtifactPublicationsPost =
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(publicationCreateRequest),
       },
     );
@@ -341,6 +330,7 @@ export type CreatePublicationProjectsProjectIdArtifactPublicationsPostMutationVa
   { projectId: number; data: BodyType<PublicationCreateRequest> };
 
 /**
+ * 未公開の準備版を保存する。同じ操作の再送は同じ結果を返す。
  * @summary Create Publication
  */
 export const useCreatePublicationProjectsProjectIdArtifactPublicationsPost = <
@@ -385,6 +375,15 @@ export const getListPublicationsProjectsProjectIdArtifactPublicationsGetUrl = (
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["state"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? "null" : String(v));
+      });
+      return;
+    }
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? "null" : String(value));
     }
@@ -398,7 +397,7 @@ export const getListPublicationsProjectsProjectIdArtifactPublicationsGetUrl = (
 };
 
 /**
- * 現在の許可範囲にある準備版だけを一覧する。
+ * 現在の許可範囲にある固定版の公開設定を一覧する。
  * @summary List Publications
  */
 export const listPublicationsProjectsProjectIdArtifactPublicationsGet = async (
@@ -504,6 +503,10 @@ export type ListPublicationsProjectsProjectIdArtifactPublicationsGetQueryResult 
 export type ListPublicationsProjectsProjectIdArtifactPublicationsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 現在の許可範囲にある固定版の公開設定を一覧する。
+ * @summary List Publications
+ */
 export function useListPublicationsProjectsProjectIdArtifactPublicationsGet<
   TData = Awaited<
     ReturnType<typeof listPublicationsProjectsProjectIdArtifactPublicationsGet>
@@ -547,6 +550,10 @@ export function useListPublicationsProjectsProjectIdArtifactPublicationsGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の許可範囲にある固定版の公開設定を一覧する。
+ * @summary List Publications
+ */
 export function useListPublicationsProjectsProjectIdArtifactPublicationsGet<
   TData = Awaited<
     ReturnType<typeof listPublicationsProjectsProjectIdArtifactPublicationsGet>
@@ -589,6 +596,10 @@ export function useListPublicationsProjectsProjectIdArtifactPublicationsGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の許可範囲にある固定版の公開設定を一覧する。
+ * @summary List Publications
+ */
 export function useListPublicationsProjectsProjectIdArtifactPublicationsGet<
   TData = Awaited<
     ReturnType<typeof listPublicationsProjectsProjectIdArtifactPublicationsGet>
@@ -616,9 +627,9 @@ export function useListPublicationsProjectsProjectIdArtifactPublicationsGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 現在の許可範囲にある固定版の公開設定を一覧する。
  * @summary List Publications
  */
-
 export function useListPublicationsProjectsProjectIdArtifactPublicationsGet<
   TData = Awaited<
     ReturnType<typeof listPublicationsProjectsProjectIdArtifactPublicationsGet>
@@ -773,6 +784,10 @@ export type ReadPublicationProjectsProjectIdArtifactPublicationsPublicationIdGet
 export type ReadPublicationProjectsProjectIdArtifactPublicationsPublicationIdGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 相手向けの内容metadataと社内対応を分離して取得する。
+ * @summary Read Publication
+ */
 export function useReadPublicationProjectsProjectIdArtifactPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<
@@ -817,6 +832,10 @@ export function useReadPublicationProjectsProjectIdArtifactPublicationsPublicati
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 相手向けの内容metadataと社内対応を分離して取得する。
+ * @summary Read Publication
+ */
 export function useReadPublicationProjectsProjectIdArtifactPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<
@@ -861,6 +880,10 @@ export function useReadPublicationProjectsProjectIdArtifactPublicationsPublicati
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 相手向けの内容metadataと社内対応を分離して取得する。
+ * @summary Read Publication
+ */
 export function useReadPublicationProjectsProjectIdArtifactPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<
@@ -890,9 +913,9 @@ export function useReadPublicationProjectsProjectIdArtifactPublicationsPublicati
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 相手向けの内容metadataと社内対応を分離して取得する。
  * @summary Read Publication
  */
-
 export function useReadPublicationProjectsProjectIdArtifactPublicationsPublicationIdGet<
   TData = Awaited<
     ReturnType<
@@ -1075,6 +1098,10 @@ export type ReadPublicationNodesProjectsProjectIdArtifactPublicationsPublication
 export type ReadPublicationNodesProjectsProjectIdArtifactPublicationsPublicationIdNodesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 公開用本文を順序・byte上限・本人に束縛したcursorで取得する。
+ * @summary Read Publication Nodes
+ */
 export function useReadPublicationNodesProjectsProjectIdArtifactPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<
@@ -1122,6 +1149,10 @@ export function useReadPublicationNodesProjectsProjectIdArtifactPublicationsPubl
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 公開用本文を順序・byte上限・本人に束縛したcursorで取得する。
+ * @summary Read Publication Nodes
+ */
 export function useReadPublicationNodesProjectsProjectIdArtifactPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<
@@ -1167,6 +1198,10 @@ export function useReadPublicationNodesProjectsProjectIdArtifactPublicationsPubl
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 公開用本文を順序・byte上限・本人に束縛したcursorで取得する。
+ * @summary Read Publication Nodes
+ */
 export function useReadPublicationNodesProjectsProjectIdArtifactPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<
@@ -1197,9 +1232,9 @@ export function useReadPublicationNodesProjectsProjectIdArtifactPublicationsPubl
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 公開用本文を順序・byte上限・本人に束縛したcursorで取得する。
  * @summary Read Publication Nodes
  */
-
 export function useReadPublicationNodesProjectsProjectIdArtifactPublicationsPublicationIdNodesGet<
   TData = Awaited<
     ReturnType<

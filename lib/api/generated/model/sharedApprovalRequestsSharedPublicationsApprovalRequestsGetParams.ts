@@ -8,12 +8,11 @@ import type { SharedApprovalRequestsSharedPublicationsApprovalRequestsGetStatus 
 
 export type SharedApprovalRequestsSharedPublicationsApprovalRequestsGetParams =
   {
-    /**
-     * @maxLength 200
-     */
+    /** @maxLength 200 */
     q?: string;
     status?: SharedApprovalRequestsSharedPublicationsApprovalRequestsGetStatus;
     publication_id?: string | null;
+    participation_id?: string | null;
     cursor?: string | null;
     /**
      * @minimum 1

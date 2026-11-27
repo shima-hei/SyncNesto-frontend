@@ -29,4 +29,5 @@ export interface SharedApprovalRead {
   expires_at: string;
   authorization_revision: string;
   public_scope_digest: string;
+  public_project_name?: string | null;
 }

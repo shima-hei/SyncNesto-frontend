@@ -20,4 +20,6 @@ export interface NotificationContext {
   action?: string | null;
   current_status?: string | null;
   target_kind?: string | null;
+  publication_id?: string | null;
+  thread_id?: string | null;
 }

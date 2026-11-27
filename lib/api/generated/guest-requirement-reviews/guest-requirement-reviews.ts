@@ -21,6 +21,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  GuestRequirementDecisionCancel,
   GuestRequirementReviewCreate,
   GuestRequirementReviewOptions,
   GuestRequirementReviewOptionsProjectsProjectIdGuestRequirementReviewsOptionsGetParams,
@@ -521,6 +522,155 @@ export const useCreateGuestRequirementReviewProjectsProjectIdGuestRequirementRev
   > => {
     return useMutation(
       getCreateGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getCancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostUrl =
+  (projectId: number, requestId: string) => {
+    return `/projects/${projectId}/guest-requirement-reviews/${requestId}/cancel`;
+  };
+
+/**
+ * 認識合わせ依頼と、その依頼に付随する閲覧許可を取り消す。
+ * @summary Cancel Guest Requirement Review
+ */
+export const cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost =
+  async (
+    projectId: number,
+    requestId: string,
+    guestRequirementDecisionCancel: GuestRequirementDecisionCancel,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<RequirementWorkflowRead> => {
+    return apiClient<RequirementWorkflowRead>(
+      getCancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostUrl(
+        projectId,
+        requestId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(guestRequirementDecisionCancel),
+      },
+    );
+  };
+
+export const getCancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationKey =
+  () =>
+    [
+      "cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost",
+    ] as const;
+
+export const getCancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost
+        >
+      >,
+      TError,
+      CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost
+      >
+    >,
+    TError,
+    CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getCancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost
+        >
+      >,
+      CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationVariables
+    > = (props) => {
+      const { projectId, requestId, data } = props ?? {};
+
+      return cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost(
+        projectId,
+        requestId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost
+      >
+    >
+  >;
+export type CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationBody =
+  BodyType<GuestRequirementDecisionCancel>;
+export type CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationVariables =
+  {
+    projectId: number;
+    requestId: string;
+    data: BodyType<GuestRequirementDecisionCancel>;
+  };
+
+/**
+ * 認識合わせ依頼と、その依頼に付随する閲覧許可を取り消す。
+ * @summary Cancel Guest Requirement Review
+ */
+export const useCancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost
+          >
+        >,
+        TError,
+        CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof cancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPost
+      >
+    >,
+    TError,
+    CancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getCancelGuestRequirementReviewProjectsProjectIdGuestRequirementReviewsRequestIdCancelPostMutationOptions(
         options,
       ),
       queryClient,

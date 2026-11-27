@@ -21,4 +21,6 @@ export interface SharedRequirementReviewSummary {
   created_at: string;
   expires_at: string;
   responded: boolean;
+  public_project_name?: string | null;
+  captured_at?: string | null;
 }

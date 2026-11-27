@@ -16,12 +16,47 @@ import { MfaSecuritySection } from "../sections/mfa-security-section";
 export function AccountPage({
   mcpEnabled = false,
   mcpInstallUrl,
+  guestWorkspace = false,
 }: {
+  mcpEnabled?: boolean;
+  mcpInstallUrl?: string;
+  guestWorkspace?: boolean;
+}) {
+  if (guestWorkspace) return <AccountForm guestWorkspace />;
+  return (
+    <TenantAccountForm mcpEnabled={mcpEnabled} mcpInstallUrl={mcpInstallUrl} />
+  );
+}
+
+function TenantAccountForm({
+  mcpEnabled,
+  mcpInstallUrl,
+}: {
+  mcpEnabled: boolean;
+  mcpInstallUrl?: string;
+}) {
+  const { tenant } = useTenant();
+  return (
+    <AccountForm
+      tenant={tenant}
+      mcpEnabled={mcpEnabled}
+      mcpInstallUrl={mcpInstallUrl}
+    />
+  );
+}
+
+function AccountForm({
+  tenant = null,
+  guestWorkspace = false,
+  mcpEnabled = false,
+  mcpInstallUrl,
+}: {
+  tenant?: ReturnType<typeof useTenant>["tenant"];
+  guestWorkspace?: boolean;
   mcpEnabled?: boolean;
   mcpInstallUrl?: string;
 }) {
   const { user, isLoading } = useAuth();
-  const { tenant } = useTenant();
 
   if (isLoading) {
     return <AccountPageSkeleton />;
@@ -39,7 +74,11 @@ export function AccountPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="アカウント"
-        description="プロフィール、ログイン情報、外部サービスとの連携を管理します。"
+        description={
+          guestWorkspace
+            ? "プロフィールとログイン情報を管理します。"
+            : "プロフィール、ログイン情報、外部サービスとの連携を管理します。"
+        }
       />
 
       {user.review_access_expires_at ? (
@@ -62,7 +101,9 @@ export function AccountPage({
             <div className="flex flex-col gap-1">
               <h2 className="text-base font-semibold">プロフィール編集</h2>
               <p className="text-sm text-muted-foreground">
-                共通の名前を変更します。組織内の表示名・部署・役職は組織管理者が管理します。
+                {guestWorkspace
+                  ? "表示名を変更します。"
+                  : "共通の名前を変更します。組織内の表示名・部署・役職は組織管理者が管理します。"}
               </p>
             </div>
             <AccountProfileForm key={user.version} user={user} />

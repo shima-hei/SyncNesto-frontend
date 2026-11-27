@@ -13,6 +13,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ArtifactReleaseLink } from "@/features/artifact-releases/components/artifact-release-link";
+import { ArtifactPublicationLink } from "@/features/artifact-publications/components/artifact-publication-link";
+import { SourceCommentTabs } from "@/features/artifact-publications/components/source-comment-tabs";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { Input } from "@/components/ui/input";
@@ -99,6 +101,7 @@ function Editor({ initial }: { initial: Design }) {
   const [activeItemId, setActiveItemId] = useState(selectedItem);
   const [commentTarget, setCommentTarget] =
     useState<DesignCommentTarget | null>(null);
+  const [internalCommentRequest, setInternalCommentRequest] = useState(0);
   const [commentTargetLabel, setCommentTargetLabel] =
     useState("テスト設計書全体");
   const activeItem = design.items.find(
@@ -151,8 +154,18 @@ function Editor({ initial }: { initial: Design }) {
     });
     setCommentTargetLabel(`パターン表 · ${table?.name ?? "新規パターン"}`);
   };
+  const openInternalComments = () => {
+    setInternalCommentRequest((request) => request + 1);
+    setInspector("comments");
+  };
   const commentsPanel = (
-    <div className="min-w-0 scroll-mt-4">
+    <SourceCommentTabs
+      projectId={design.project_id}
+      sourceKind="test_design"
+      sourceId={design.id}
+      internalRequest={internalCommentRequest}
+      className="scroll-mt-4"
+    >
       <DesignCommentsPanel
         projectId={design.project_id}
         designId={design.id}
@@ -229,7 +242,7 @@ function Editor({ initial }: { initial: Design }) {
           setCommentTargetLabel(label);
         }}
       />
-    </div>
+    </SourceCommentTabs>
   );
   const manager = (
     <PatternTablesManager
@@ -255,9 +268,7 @@ function Editor({ initial }: { initial: Design }) {
         setCommentTarget(target);
         setCommentTargetLabel(label);
       }}
-      onOpenComments={() => {
-        setInspector("comments");
-      }}
+      onOpenComments={openInternalComments}
       comments={commentsQuery.data ?? []}
       tab={patternTab}
       onTabChange={setPatternTab}
@@ -292,6 +303,13 @@ function Editor({ initial }: { initial: Design }) {
               kind="test_design"
               sourceId={design.id}
               version={design.version}
+            />
+            <ArtifactPublicationLink
+              projectId={design.project_id}
+              kind="test_design"
+              id={design.id}
+              version={design.version}
+              dirty={state.dirty}
             />
             {permissions.edit && (
               <Button
@@ -531,7 +549,7 @@ function Editor({ initial }: { initial: Design }) {
                   }),
                 ) ?? 0
               }
-              onCellComment={() => setInspector("comments")}
+              onCellComment={openInternalComments}
               renderCell={(row, column) => {
                 if (column.key !== "pattern_table_id") return undefined;
                 const item = design.items.find((i) => i.id === row.id);

@@ -100,11 +100,13 @@ export function LinkInsertPopover({
   onChange,
   disabled,
   iconOnly = false,
+  autoTitleForUrl,
 }: {
   editor: () => HTMLTextAreaElement | null;
   onChange: (change: LinkEditorChange) => boolean | void;
   disabled?: boolean;
   iconOnly?: boolean;
+  autoTitleForUrl?: (href: string) => boolean;
 }) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [query, setQuery] = useState("");
@@ -126,7 +128,13 @@ export function LinkInsertPopover({
   const looksLikeUrl = /^(?:\/|[a-z][a-z\d+.-]*:)/i.test(typed);
   const destination = looksLikeUrl ? safeLinkDestination(typed) : null;
   const parsed =
-    destination && origin ? parseSmartLink(destination, origin) : null;
+    destination && origin && !autoTitleForUrl
+      ? parseSmartLink(destination, origin)
+      : null;
+  const autoTitle = Boolean(
+    parsed || (destination && autoTitleForUrl?.(destination)),
+  );
+  const canSearch = Boolean(scope && !autoTitleForUrl);
   const suggestedLink = useSmartLink(parsed, Boolean(selection));
   const searching = useQuery({
     queryKey: ["smart-link-picker", scope, projectId, group, searchText],
@@ -136,7 +144,11 @@ export function LinkInsertPopover({
         { signal },
       ),
     enabled: Boolean(
-      selection && scope && searchText && !looksLikeUrl && searchText === term,
+      selection &&
+      canSearch &&
+      searchText &&
+      !looksLikeUrl &&
+      searchText === term,
     ),
     staleTime: 5_000,
     gcTime: 30_000,
@@ -206,7 +218,7 @@ export function LinkInsertPopover({
   };
 
   const rows =
-    searchText === term && !looksLikeUrl && !searching.isError
+    canSearch && searchText === term && !looksLikeUrl && !searching.isError
       ? (searching.data ?? [])
       : [];
   return (
@@ -236,8 +248,10 @@ export function LinkInsertPopover({
         </p>
         <Command shouldFilter={false} loop className="bg-transparent">
           <CommandInput
-            aria-label="成果物名・ID・URL"
-            placeholder="成果物名・ID・URLを入力…"
+            aria-label={autoTitleForUrl ? "URL" : "成果物名・ID・URL"}
+            placeholder={
+              autoTitleForUrl ? "URLを入力…" : "成果物名・ID・URLを入力…"
+            }
             value={query}
             onValueChange={(value) => {
               setQuery(value);
@@ -264,7 +278,7 @@ export function LinkInsertPopover({
               }
             }}
           />
-          {!looksLikeUrl && scope ? (
+          {!looksLikeUrl && canSearch ? (
             <div
               className="flex flex-wrap gap-0.5 px-1 pb-1"
               aria-label="成果物の絞り込み"
@@ -287,7 +301,7 @@ export function LinkInsertPopover({
             {destination ? (
               <CommandItem
                 value={destination}
-                onSelect={() => insert(destination, Boolean(parsed))}
+                onSelect={() => insert(destination, autoTitle)}
               >
                 <ExternalLinkIcon aria-hidden="true" />
                 <span className="min-w-0 flex-1">
@@ -344,10 +358,10 @@ export function LinkInsertPopover({
                 className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground"
               >
                 <SearchIcon className="size-3.5" aria-hidden="true" />
-                {!typed
-                  ? "成果物名またはURLを入力してください"
-                  : !scope
-                    ? "URLを入力してください"
+                {!canSearch
+                  ? "URLを入力してください"
+                  : !typed
+                    ? "成果物名またはURLを入力してください"
                     : searching.isError
                       ? "成果物を取得できませんでした"
                       : searching.isFetching || term !== searchText
@@ -370,7 +384,7 @@ export function LinkInsertPopover({
                   if (event.key === "Enter") {
                     event.preventDefault();
                     if (!event.nativeEvent.isComposing && destination)
-                      insert(destination, Boolean(parsed));
+                      insert(destination, autoTitle);
                   }
                 }}
               />

@@ -21,9 +21,20 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  BodyUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost,
+  FileUploadComplete,
+  FileUploadPlan,
+  FileUploadRequest,
+  GuestParticipationDecisionList,
+  GuestParticipationExpiry,
   GuestParticipationList,
+  GuestPublicationGrantList,
   HTTPValidationError,
+  ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+  ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
   ProjectGuestParticipationsProjectsProjectIdGuestParticipationsGetParams,
+  PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
   PublicationEventList,
   PublicationEventsProjectsProjectIdArtifactPublicationsPublicationIdEventsGetParams,
   PublicationGrantList,
@@ -32,12 +43,48 @@ import type {
   PublicationPublish,
   PublicationRecipientCandidatesProjectsProjectIdArtifactPublicationsRecipientCandidatesGetParams,
   PublicationRevoke,
+  PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+  SharedCommentFileRead,
+  SharedCommentMentionCandidate,
+  SharedPublicationCommentCreate,
+  SharedPublicationCommentList,
+  SharedPublicationCommentRead,
 } from "../model";
 
 import { apiClient } from "../../client";
 import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
 
 const withQueryKey = <T extends object, K>(
   query: T,
@@ -185,6 +232,10 @@ export type PublicationRecipientCandidatesProjectsProjectIdArtifactPublicationsR
 export type PublicationRecipientCandidatesProjectsProjectIdArtifactPublicationsRecipientCandidatesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 全Identityの検索ではなく、有効な外部参加資格だけを候補にする。
+ * @summary Publication Recipient Candidates
+ */
 export function usePublicationRecipientCandidatesProjectsProjectIdArtifactPublicationsRecipientCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -231,6 +282,10 @@ export function usePublicationRecipientCandidatesProjectsProjectIdArtifactPublic
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 全Identityの検索ではなく、有効な外部参加資格だけを候補にする。
+ * @summary Publication Recipient Candidates
+ */
 export function usePublicationRecipientCandidatesProjectsProjectIdArtifactPublicationsRecipientCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -275,6 +330,10 @@ export function usePublicationRecipientCandidatesProjectsProjectIdArtifactPublic
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 全Identityの検索ではなく、有効な外部参加資格だけを候補にする。
+ * @summary Publication Recipient Candidates
+ */
 export function usePublicationRecipientCandidatesProjectsProjectIdArtifactPublicationsRecipientCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -304,9 +363,9 @@ export function usePublicationRecipientCandidatesProjectsProjectIdArtifactPublic
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 全Identityの検索ではなく、有効な外部参加資格だけを候補にする。
  * @summary Publication Recipient Candidates
  */
-
 export function usePublicationRecipientCandidatesProjectsProjectIdArtifactPublicationsRecipientCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -366,27 +425,6 @@ export const publishArtifactPublicationProjectsProjectIdArtifactPublicationsPubl
     publicationPublish: PublicationPublish,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<PublicationOperationResult> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<PublicationOperationResult>(
       getPublishArtifactPublicationProjectsProjectIdArtifactPublicationsPublicationIdPublishPostUrl(
         projectId,
@@ -395,10 +433,10 @@ export const publishArtifactPublicationProjectsProjectIdArtifactPublicationsPubl
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(publicationPublish),
       },
     );
@@ -484,6 +522,7 @@ export type PublishArtifactPublicationProjectsProjectIdArtifactPublicationsPubli
   };
 
 /**
+ * 全文と相手を確認した固定版を初めて公開する。
  * @summary Publish Artifact Publication
  */
 export const usePublishArtifactPublicationProjectsProjectIdArtifactPublicationsPublicationIdPublishPost =
@@ -535,27 +574,6 @@ export const withdrawArtifactPublicationProjectsProjectIdArtifactPublicationsPub
     publicationRevoke: PublicationRevoke,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<PublicationOperationResult> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<PublicationOperationResult>(
       getWithdrawArtifactPublicationProjectsProjectIdArtifactPublicationsPublicationIdWithdrawPostUrl(
         projectId,
@@ -564,10 +582,10 @@ export const withdrawArtifactPublicationProjectsProjectIdArtifactPublicationsPub
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(publicationRevoke),
       },
     );
@@ -653,6 +671,7 @@ export type WithdrawArtifactPublicationProjectsProjectIdArtifactPublicationsPubl
   };
 
 /**
+ * 公開全体を停止し、同じ版を再公開しない。
  * @summary Withdraw Artifact Publication
  */
 export const useWithdrawArtifactPublicationProjectsProjectIdArtifactPublicationsPublicationIdWithdrawPost =
@@ -827,6 +846,10 @@ export type PublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdG
 export type PublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdGrantsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 全構成を読める内部本人に許可履歴を返す。
+ * @summary Publication Grants
+ */
 export function usePublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdGrantsGet<
   TData = Awaited<
     ReturnType<
@@ -874,6 +897,10 @@ export function usePublicationGrantsProjectsProjectIdArtifactPublicationsPublica
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 全構成を読める内部本人に許可履歴を返す。
+ * @summary Publication Grants
+ */
 export function usePublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdGrantsGet<
   TData = Awaited<
     ReturnType<
@@ -919,6 +946,10 @@ export function usePublicationGrantsProjectsProjectIdArtifactPublicationsPublica
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 全構成を読める内部本人に許可履歴を返す。
+ * @summary Publication Grants
+ */
 export function usePublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdGrantsGet<
   TData = Awaited<
     ReturnType<
@@ -949,9 +980,9 @@ export function usePublicationGrantsProjectsProjectIdArtifactPublicationsPublica
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 全構成を読める内部本人に許可履歴を返す。
  * @summary Publication Grants
  */
-
 export function usePublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdGrantsGet<
   TData = Awaited<
     ReturnType<
@@ -1013,27 +1044,6 @@ export const addPublicationGrantsProjectsProjectIdArtifactPublicationsPublicatio
     publicationPublish: PublicationPublish,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<PublicationOperationResult> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<PublicationOperationResult>(
       getAddPublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdGrantsPostUrl(
         projectId,
@@ -1042,10 +1052,10 @@ export const addPublicationGrantsProjectsProjectIdArtifactPublicationsPublicatio
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(publicationPublish),
       },
     );
@@ -1131,6 +1141,7 @@ export type AddPublicationGrantsProjectsProjectIdArtifactPublicationsPublication
   };
 
 /**
+ * 公開済み固定版へ本人別許可を明示的に追加する。
  * @summary Add Publication Grants
  */
 export const useAddPublicationGrantsProjectsProjectIdArtifactPublicationsPublicationIdGrantsPost =
@@ -1183,27 +1194,6 @@ export const revokePublicationGrantProjectsProjectIdArtifactPublicationsPublicat
     publicationRevoke: PublicationRevoke,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<PublicationOperationResult> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<PublicationOperationResult>(
       getRevokePublicationGrantProjectsProjectIdArtifactPublicationsPublicationIdGrantsGrantIdRevokePostUrl(
         projectId,
@@ -1213,10 +1203,10 @@ export const revokePublicationGrantProjectsProjectIdArtifactPublicationsPublicat
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(publicationRevoke),
       },
     );
@@ -1304,6 +1294,7 @@ export type RevokePublicationGrantProjectsProjectIdArtifactPublicationsPublicati
   };
 
 /**
+ * 他本人を変えず、指定許可だけを失効する。
  * @summary Revoke Publication Grant
  */
 export const useRevokePublicationGrantProjectsProjectIdArtifactPublicationsPublicationIdGrantsGrantIdRevokePost =
@@ -1478,6 +1469,10 @@ export type PublicationEventsProjectsProjectIdArtifactPublicationsPublicationIdE
 export type PublicationEventsProjectsProjectIdArtifactPublicationsPublicationIdEventsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 公開と失効の業務証跡を返す。
+ * @summary Publication Events
+ */
 export function usePublicationEventsProjectsProjectIdArtifactPublicationsPublicationIdEventsGet<
   TData = Awaited<
     ReturnType<
@@ -1525,6 +1520,10 @@ export function usePublicationEventsProjectsProjectIdArtifactPublicationsPublica
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 公開と失効の業務証跡を返す。
+ * @summary Publication Events
+ */
 export function usePublicationEventsProjectsProjectIdArtifactPublicationsPublicationIdEventsGet<
   TData = Awaited<
     ReturnType<
@@ -1570,6 +1569,10 @@ export function usePublicationEventsProjectsProjectIdArtifactPublicationsPublica
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 公開と失効の業務証跡を返す。
+ * @summary Publication Events
+ */
 export function usePublicationEventsProjectsProjectIdArtifactPublicationsPublicationIdEventsGet<
   TData = Awaited<
     ReturnType<
@@ -1600,9 +1603,9 @@ export function usePublicationEventsProjectsProjectIdArtifactPublicationsPublica
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 公開と失効の業務証跡を返す。
  * @summary Publication Events
  */
-
 export function usePublicationEventsProjectsProjectIdArtifactPublicationsPublicationIdEventsGet<
   TData = Awaited<
     ReturnType<
@@ -1776,6 +1779,10 @@ export type ProjectGuestParticipationsProjectsProjectIdGuestParticipationsGetQue
 export type ProjectGuestParticipationsProjectsProjectIdGuestParticipationsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 内部管理者に参加世代・状態だけを返す。
+ * @summary Project Guest Participations
+ */
 export function useProjectGuestParticipationsProjectsProjectIdGuestParticipationsGet<
   TData = Awaited<
     ReturnType<
@@ -1822,6 +1829,10 @@ export function useProjectGuestParticipationsProjectsProjectIdGuestParticipation
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 内部管理者に参加世代・状態だけを返す。
+ * @summary Project Guest Participations
+ */
 export function useProjectGuestParticipationsProjectsProjectIdGuestParticipationsGet<
   TData = Awaited<
     ReturnType<
@@ -1866,6 +1877,10 @@ export function useProjectGuestParticipationsProjectsProjectIdGuestParticipation
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 内部管理者に参加世代・状態だけを返す。
+ * @summary Project Guest Participations
+ */
 export function useProjectGuestParticipationsProjectsProjectIdGuestParticipationsGet<
   TData = Awaited<
     ReturnType<
@@ -1895,9 +1910,9 @@ export function useProjectGuestParticipationsProjectsProjectIdGuestParticipation
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 内部管理者に参加世代・状態だけを返す。
  * @summary Project Guest Participations
  */
-
 export function useProjectGuestParticipationsProjectsProjectIdGuestParticipationsGet<
   TData = Awaited<
     ReturnType<
@@ -1957,27 +1972,6 @@ export const revokeProjectGuestParticipationProjectsProjectIdGuestParticipations
     publicationRevoke: PublicationRevoke,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<PublicationOperationResult> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<PublicationOperationResult>(
       getRevokeProjectGuestParticipationProjectsProjectIdGuestParticipationsParticipationIdRevokePostUrl(
         projectId,
@@ -1986,10 +1980,10 @@ export const revokeProjectGuestParticipationProjectsProjectIdGuestParticipations
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(publicationRevoke),
       },
     );
@@ -2075,6 +2069,7 @@ export type RevokeProjectGuestParticipationProjectsProjectIdGuestParticipationsP
   };
 
 /**
+ * 参加世代と、その世代の全公開許可を失効する。
  * @summary Revoke Project Guest Participation
  */
 export const useRevokeProjectGuestParticipationProjectsProjectIdGuestParticipationsParticipationIdRevokePost =
@@ -2105,6 +2100,2488 @@ export const useRevokeProjectGuestParticipationProjectsProjectIdGuestParticipati
   > => {
     return useMutation(
       getRevokeProjectGuestParticipationProjectsProjectIdGuestParticipationsParticipationIdRevokePostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getUpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutUrl =
+  (projectId: number, participationId: string) => {
+    return `/projects/${projectId}/guest-participations/${participationId}/expiry`;
+  };
+
+/**
+ * 確認した版の参加期限を変更する。
+ * @summary Update Guest Participation Expiry
+ */
+export const updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut =
+  async (
+    projectId: number,
+    participationId: string,
+    guestParticipationExpiry: GuestParticipationExpiry,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<PublicationOperationResult> => {
+    return apiClient<PublicationOperationResult>(
+      getUpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutUrl(
+        projectId,
+        participationId,
+      ),
+      {
+        ...options,
+        method: "PUT",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(guestParticipationExpiry),
+      },
+    );
+  };
+
+export const getUpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationKey =
+  () =>
+    [
+      "updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut",
+    ] as const;
+
+export const getUpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut
+        >
+      >,
+      TError,
+      UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut
+      >
+    >,
+    TError,
+    UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut
+        >
+      >,
+      UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationVariables
+    > = (props) => {
+      const { projectId, participationId, data } = props ?? {};
+
+      return updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut(
+        projectId,
+        participationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut
+      >
+    >
+  >;
+export type UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationBody =
+  BodyType<GuestParticipationExpiry>;
+export type UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationError =
+  ErrorType<HTTPValidationError>;
+export type UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationVariables =
+  {
+    projectId: number;
+    participationId: string;
+    data: BodyType<GuestParticipationExpiry>;
+  };
+
+/**
+ * 確認した版の参加期限を変更する。
+ * @summary Update Guest Participation Expiry
+ */
+export const useUpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut
+          >
+        >,
+        TError,
+        UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof updateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPut
+      >
+    >,
+    TError,
+    UpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getUpdateGuestParticipationExpiryProjectsProjectIdGuestParticipationsParticipationIdExpiryPutMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetUrl =
+  (
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/guest-participations/${participationId}/grants?${stringifiedParams}`
+      : `/projects/${projectId}/guest-participations/${participationId}/grants`;
+  };
+
+/**
+ * 現在読める固定版の共有許可を参加者別に確認する。
+ * @summary List Guest Participation Grants
+ */
+export const listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet =
+  async (
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<GuestPublicationGrantList> => {
+    return apiClient<GuestPublicationGrantList>(
+      getListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetUrl(
+        projectId,
+        participationId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetQueryKey =
+  (
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/guest-participations/${participationId}/grants`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetQueryKey(
+        projectId,
+        participationId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+        >
+      >
+    > = ({ signal }) =>
+      listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet(
+        projectId,
+        participationId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        participationId !== null &&
+        participationId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+      >
+    >
+  >;
+export type ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 現在読める固定版の共有許可を参加者別に確認する。
+ * @summary List Guest Participation Grants
+ */
+export function useListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params:
+    | undefined
+    | ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 現在読める固定版の共有許可を参加者別に確認する。
+ * @summary List Guest Participation Grants
+ */
+export function useListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params?: ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 現在読める固定版の共有許可を参加者別に確認する。
+ * @summary List Guest Participation Grants
+ */
+export function useListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params?: ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 現在読める固定版の共有許可を参加者別に確認する。
+ * @summary List Guest Participation Grants
+ */
+export function useListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params?: ListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getListGuestParticipationGrantsProjectsProjectIdGuestParticipationsParticipationIdGrantsGetQueryOptions(
+      projectId,
+      participationId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetUrl =
+  (
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/guest-participations/${participationId}/decisions?${stringifiedParams}`
+      : `/projects/${projectId}/guest-participations/${participationId}/decisions`;
+  };
+
+/**
+ * 選択した参加世代に対する現在閲覧できる依頼と回答を確認する。
+ * @summary List Guest Participation Decisions
+ */
+export const listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet =
+  async (
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<GuestParticipationDecisionList> => {
+    return apiClient<GuestParticipationDecisionList>(
+      getListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetUrl(
+        projectId,
+        participationId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetQueryKey =
+  (
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/guest-participations/${participationId}/decisions`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    participationId: string,
+    params?: ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetQueryKey(
+        projectId,
+        participationId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+        >
+      >
+    > = ({ signal }) =>
+      listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet(
+        projectId,
+        participationId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        participationId !== null &&
+        participationId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+      >
+    >
+  >;
+export type ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 選択した参加世代に対する現在閲覧できる依頼と回答を確認する。
+ * @summary List Guest Participation Decisions
+ */
+export function useListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params:
+    | undefined
+    | ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 選択した参加世代に対する現在閲覧できる依頼と回答を確認する。
+ * @summary List Guest Participation Decisions
+ */
+export function useListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params?: ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 選択した参加世代に対する現在閲覧できる依頼と回答を確認する。
+ * @summary List Guest Participation Decisions
+ */
+export function useListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params?: ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 選択した参加世代に対する現在閲覧できる依頼と回答を確認する。
+ * @summary List Guest Participation Decisions
+ */
+export function useListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  participationId: string,
+  params?: ListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof listGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getListGuestParticipationDecisionsProjectsProjectIdGuestParticipationsParticipationIdDecisionsGetQueryOptions(
+      projectId,
+      participationId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getPublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetUrl =
+  (
+    projectId: number,
+    publicationId: string,
+    params?: PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/artifact-publications/${publicationId}/comments/mention-candidates?${stringifiedParams}`
+      : `/projects/${projectId}/artifact-publications/${publicationId}/comments/mention-candidates`;
+  };
+
+/**
+ * @summary Publication Comment Mention Candidates
+ */
+export const publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet =
+  async (
+    projectId: number,
+    publicationId: string,
+    params?: PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedCommentMentionCandidate[]> => {
+    return apiClient<SharedCommentMentionCandidate[]>(
+      getPublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetUrl(
+        projectId,
+        publicationId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getPublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetQueryKey =
+  (
+    projectId: number,
+    publicationId: string,
+    params?: PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/artifact-publications/${publicationId}/comments/mention-candidates`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getPublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    publicationId: string,
+    params?: PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getPublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetQueryKey(
+        projectId,
+        publicationId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+        >
+      >
+    > = ({ signal }) =>
+      publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet(
+        projectId,
+        publicationId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        publicationId !== null &&
+        publicationId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+      >
+    >
+  >;
+export type PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Publication Comment Mention Candidates */
+export function usePublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params:
+    | undefined
+    | PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Publication Comment Mention Candidates */
+export function usePublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params?: PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Publication Comment Mention Candidates */
+export function usePublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params?: PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Publication Comment Mention Candidates */
+export function usePublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params?: PublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getPublicationCommentMentionCandidatesProjectsProjectIdArtifactPublicationsPublicationIdCommentsMentionCandidatesGetQueryOptions(
+      projectId,
+      publicationId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getPlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostUrl =
+  (projectId: number, publicationId: string) => {
+    return `/projects/${projectId}/artifact-publications/${publicationId}/comments/files/plan`;
+  };
+
+/**
+ * @summary Plan Publication Comment File
+ */
+export const planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost =
+  async (
+    projectId: number,
+    publicationId: string,
+    fileUploadRequest: FileUploadRequest,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<FileUploadPlan> => {
+    return apiClient<FileUploadPlan>(
+      getPlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostUrl(
+        projectId,
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(fileUploadRequest),
+      },
+    );
+  };
+
+export const getPlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationKey =
+  () =>
+    [
+      "planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost",
+    ] as const;
+
+export const getPlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost
+        >
+      >,
+      TError,
+      PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost
+      >
+    >,
+    TError,
+    PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getPlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost
+        >
+      >,
+      PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationVariables
+    > = (props) => {
+      const { projectId, publicationId, data } = props ?? {};
+
+      return planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost(
+        projectId,
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost
+      >
+    >
+  >;
+export type PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationBody =
+  BodyType<FileUploadRequest>;
+export type PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationVariables =
+  {
+    projectId: number;
+    publicationId: string;
+    data: BodyType<FileUploadRequest>;
+  };
+
+/** @summary Plan Publication Comment File */
+export const usePlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost
+          >
+        >,
+        TError,
+        PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof planPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPost
+      >
+    >,
+    TError,
+    PlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getPlanPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPlanPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getCompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostUrl =
+  (projectId: number, publicationId: string) => {
+    return `/projects/${projectId}/artifact-publications/${publicationId}/comments/files/complete`;
+  };
+
+/**
+ * @summary Complete Publication Comment File
+ */
+export const completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost =
+  async (
+    projectId: number,
+    publicationId: string,
+    fileUploadComplete: FileUploadComplete,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedCommentFileRead> => {
+    return apiClient<SharedCommentFileRead>(
+      getCompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostUrl(
+        projectId,
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(fileUploadComplete),
+      },
+    );
+  };
+
+export const getCompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationKey =
+  () =>
+    [
+      "completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost",
+    ] as const;
+
+export const getCompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost
+        >
+      >,
+      TError,
+      CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost
+      >
+    >,
+    TError,
+    CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getCompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost
+        >
+      >,
+      CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationVariables
+    > = (props) => {
+      const { projectId, publicationId, data } = props ?? {};
+
+      return completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost(
+        projectId,
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost
+      >
+    >
+  >;
+export type CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationBody =
+  BodyType<FileUploadComplete>;
+export type CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationVariables =
+  {
+    projectId: number;
+    publicationId: string;
+    data: BodyType<FileUploadComplete>;
+  };
+
+/** @summary Complete Publication Comment File */
+export const useCompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost
+          >
+        >,
+        TError,
+        CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof completePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePost
+      >
+    >,
+    TError,
+    CompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getCompletePublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesCompletePostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostUrl =
+  (projectId: number, publicationId: string) => {
+    return `/projects/${projectId}/artifact-publications/${publicationId}/comments/files`;
+  };
+
+/**
+ * @summary Upload Publication Comment File
+ */
+export const uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost =
+  async (
+    projectId: number,
+    publicationId: string,
+    bodyUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost: BodyUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedCommentFileRead> => {
+    const formData = new FormData();
+    formData.append(
+      `file`,
+      bodyUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost.file,
+    );
+    formData.append(
+      `request_id`,
+      bodyUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost.request_id,
+    );
+
+    return apiClient<SharedCommentFileRead>(
+      getUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostUrl(
+        projectId,
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        body: formData,
+      },
+    );
+  };
+
+export const getUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationKey =
+  () =>
+    [
+      "uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost",
+    ] as const;
+
+export const getUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost
+        >
+      >,
+      TError,
+      UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost
+      >
+    >,
+    TError,
+    UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost
+        >
+      >,
+      UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationVariables
+    > = (props) => {
+      const { projectId, publicationId, data } = props ?? {};
+
+      return uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost(
+        projectId,
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost
+      >
+    >
+  >;
+export type UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationBody =
+  BodyType<BodyUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost>;
+export type UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationVariables =
+  {
+    projectId: number;
+    publicationId: string;
+    data: BodyType<BodyUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost>;
+  };
+
+/** @summary Upload Publication Comment File */
+export const useUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost
+          >
+        >,
+        TError,
+        UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof uploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPost
+      >
+    >,
+    TError,
+    UploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getUploadPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getDiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteUrl =
+  (projectId: number, publicationId: string, fileId: string) => {
+    return `/projects/${projectId}/artifact-publications/${publicationId}/comments/files/${fileId}`;
+  };
+
+/**
+ * @summary Discard Publication Comment File
+ */
+export const discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete =
+  async (
+    projectId: number,
+    publicationId: string,
+    fileId: string,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<void> => {
+    return apiClient<void>(
+      getDiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteUrl(
+        projectId,
+        publicationId,
+        fileId,
+      ),
+      {
+        ...options,
+        method: "DELETE",
+      },
+    );
+  };
+
+export const getDiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationKey =
+  () =>
+    [
+      "discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete",
+    ] as const;
+
+export const getDiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete
+        >
+      >,
+      TError,
+      DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete
+      >
+    >,
+    TError,
+    DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getDiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete
+        >
+      >,
+      DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables
+    > = (props) => {
+      const { projectId, publicationId, fileId } = props ?? {};
+
+      return discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete(
+        projectId,
+        publicationId,
+        fileId,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete
+      >
+    >
+  >;
+
+export type DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationError =
+  ErrorType<HTTPValidationError>;
+export type DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables =
+  { projectId: number; publicationId: string; fileId: string };
+
+/** @summary Discard Publication Comment File */
+export const useDiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete
+          >
+        >,
+        TError,
+        DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof discardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDelete
+      >
+    >,
+    TError,
+    DiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getDiscardPublicationCommentFileProjectsProjectIdArtifactPublicationsPublicationIdCommentsFilesFileIdDeleteMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getPublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetUrl =
+  (
+    projectId: number,
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/artifact-publications/${publicationId}/comments/${commentId}/files/${fileId}/content?${stringifiedParams}`
+      : `/projects/${projectId}/artifact-publications/${publicationId}/comments/${commentId}/files/${fileId}/content`;
+  };
+
+/**
+ * @summary Publication Comment File Content
+ */
+export const publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet =
+  async (
+    projectId: number,
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<void> => {
+    return apiClient<void>(
+      getPublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetUrl(
+        projectId,
+        publicationId,
+        commentId,
+        fileId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getPublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryKey =
+  (
+    projectId: number,
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/artifact-publications/${publicationId}/comments/${commentId}/files/${fileId}/content`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getPublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    publicationId: string,
+    commentId: string,
+    fileId: string,
+    params?: PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getPublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryKey(
+        projectId,
+        publicationId,
+        commentId,
+        fileId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+        >
+      >
+    > = ({ signal }) =>
+      publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet(
+        projectId,
+        publicationId,
+        commentId,
+        fileId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        publicationId !== null &&
+        publicationId !== undefined &&
+        commentId !== null &&
+        commentId !== undefined &&
+        fileId !== null &&
+        fileId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+      >
+    >
+  >;
+export type PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/** @summary Publication Comment File Content */
+export function usePublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params:
+    | undefined
+    | PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Publication Comment File Content */
+export function usePublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params?: PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Publication Comment File Content */
+export function usePublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params?: PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/** @summary Publication Comment File Content */
+export function usePublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  commentId: string,
+  fileId: string,
+  params?: PublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getPublicationCommentFileContentProjectsProjectIdArtifactPublicationsPublicationIdCommentsCommentIdFilesFileIdContentGetQueryOptions(
+      projectId,
+      publicationId,
+      commentId,
+      fileId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getPublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetUrl =
+  (
+    projectId: number,
+    publicationId: string,
+    params?: PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/artifact-publications/${publicationId}/comments?${stringifiedParams}`
+      : `/projects/${projectId}/artifact-publications/${publicationId}/comments`;
+  };
+
+/**
+ * 社内の固定版閲覧画面へ共有スレッドを表示する。
+ * @summary Publication Shared Comments
+ */
+export const publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet =
+  async (
+    projectId: number,
+    publicationId: string,
+    params?: PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedPublicationCommentList> => {
+    return apiClient<SharedPublicationCommentList>(
+      getPublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetUrl(
+        projectId,
+        publicationId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getPublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetQueryKey =
+  (
+    projectId: number,
+    publicationId: string,
+    params?: PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/artifact-publications/${publicationId}/comments`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getPublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    publicationId: string,
+    params?: PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getPublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetQueryKey(
+        projectId,
+        publicationId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+        >
+      >
+    > = ({ signal }) =>
+      publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet(
+        projectId,
+        publicationId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        publicationId !== null &&
+        publicationId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+      >
+    >
+  >;
+export type PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 社内の固定版閲覧画面へ共有スレッドを表示する。
+ * @summary Publication Shared Comments
+ */
+export function usePublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params:
+    | undefined
+    | PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 社内の固定版閲覧画面へ共有スレッドを表示する。
+ * @summary Publication Shared Comments
+ */
+export function usePublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params?: PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 社内の固定版閲覧画面へ共有スレッドを表示する。
+ * @summary Publication Shared Comments
+ */
+export function usePublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params?: PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 社内の固定版閲覧画面へ共有スレッドを表示する。
+ * @summary Publication Shared Comments
+ */
+export function usePublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  publicationId: string,
+  params?: PublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof publicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getPublicationSharedCommentsProjectsProjectIdArtifactPublicationsPublicationIdCommentsGetQueryOptions(
+      projectId,
+      publicationId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostUrl =
+  (projectId: number, publicationId: string) => {
+    return `/projects/${projectId}/artifact-publications/${publicationId}/comments`;
+  };
+
+/**
+ * 社内担当者が明示的に選んだ本文を共有スレッドに投稿する。
+ * @summary Add Publication Shared Comment
+ */
+export const addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost =
+  async (
+    projectId: number,
+    publicationId: string,
+    sharedPublicationCommentCreate: SharedPublicationCommentCreate,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<SharedPublicationCommentRead> => {
+    return apiClient<SharedPublicationCommentRead>(
+      getAddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostUrl(
+        projectId,
+        publicationId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(sharedPublicationCommentCreate),
+      },
+    );
+  };
+
+export const getAddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationKey =
+  () =>
+    [
+      "addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost",
+    ] as const;
+
+export const getAddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost
+        >
+      >,
+      TError,
+      AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost
+      >
+    >,
+    TError,
+    AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getAddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost
+        >
+      >,
+      AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationVariables
+    > = (props) => {
+      const { projectId, publicationId, data } = props ?? {};
+
+      return addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost(
+        projectId,
+        publicationId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost
+      >
+    >
+  >;
+export type AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationBody =
+  BodyType<SharedPublicationCommentCreate>;
+export type AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationVariables =
+  {
+    projectId: number;
+    publicationId: string;
+    data: BodyType<SharedPublicationCommentCreate>;
+  };
+
+/**
+ * 社内担当者が明示的に選んだ本文を共有スレッドに投稿する。
+ * @summary Add Publication Shared Comment
+ */
+export const useAddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost
+          >
+        >,
+        TError,
+        AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof addPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPost
+      >
+    >,
+    TError,
+    AddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getAddPublicationSharedCommentProjectsProjectIdArtifactPublicationsPublicationIdCommentsPostMutationOptions(
         options,
       ),
       queryClient,

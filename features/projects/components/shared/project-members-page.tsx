@@ -21,6 +21,7 @@ import { ProjectMemberForm } from "../forms/project-member-form";
 import { ProjectMembersTable } from "../tables/project-members-table";
 import { GuestParticipationsPanel } from "@/features/artifact-publications/components/access-controls";
 import { GuestInvitationsPanel } from "@/features/guest-invitations/components/invitations-panel";
+import { GuestProjectSettings } from "@/features/guest-workspace/components/guest-project-settings";
 
 type ProjectMembersPageProps = {
   projectId: number;
@@ -112,14 +113,16 @@ export function ProjectMembersPage({
         }
       />
 
-      <GuestInvitationsPanel
-        projectId={projectId}
-        canManage={canManageMembers}
-      />
-      <GuestParticipationsPanel
-        projectId={projectId}
-        canManage={canManageMembers}
-      />
+      {canManageMembers && (
+        <section className="grid gap-4" aria-labelledby="project-guests">
+          <h2 id="project-guests" className="text-base font-semibold">
+            ゲスト管理
+          </h2>
+          <GuestProjectSettings projectId={projectId} />
+          <GuestInvitationsPanel projectId={projectId} canManage />
+          <GuestParticipationsPanel projectId={projectId} canManage />
+        </section>
+      )}
 
       {canManageMembers ? (
         <div className="flex flex-col gap-3">

@@ -21,7 +21,12 @@ export function loginReturnPath(value: unknown): string | undefined {
   const mcp = mcpReturnPath(value);
   if (mcp) return mcp;
   if (typeof value !== "string") return undefined;
-  if (value === "/shared/notifications") return value;
+  if (
+    /^\/shared(?:\/(?:notifications|account|decisions|comments|projects(?:\/[a-f0-9-]{36})?))?$/.test(
+      value,
+    )
+  )
+    return value;
   if (isGuestInvitationPath(value)) return value;
   if (isSharedApprovalPath(value)) return value;
   if (

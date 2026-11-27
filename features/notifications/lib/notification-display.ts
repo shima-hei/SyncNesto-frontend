@@ -7,6 +7,8 @@ export function notificationMessage(notification: NotificationRead) {
       return `${actor_name}さんがあなたを「${target_title}」の${notification.target_type === "requirement" ? "オーナー" : "担当者"}に設定しました`;
     case "mentioned":
       return `${actor_name}さんが「${target_title}」のコメントであなたをメンションしました`;
+    case "shared_comment_replied":
+      return `${actor_name}さんが「${target_title}」の共有コメントに返信しました`;
     case "task_returned":
       return `${actor_name}さんが「${target_title}」を差し戻しました`;
     case "fixed_approval_requested": {
@@ -53,6 +55,16 @@ export function notificationHref(
   } = notification.context;
   const targetId = encodeURIComponent(notification.target_id);
   switch (notification.target_type) {
+    case "shared_publication_comment": {
+      const { publication_id, thread_id } = notification.context;
+      if (!publication_id || !thread_id) return null;
+      const params = new URLSearchParams({
+        publication: publication_id,
+        view: "discussion",
+        thread: thread_id,
+      });
+      return `${base}/artifact-publications?${params}#shared-comments`;
+    }
     case "fixed_approval":
       return notification.context.approval_id
         ? `${base}/fixed-approvals/${encodeURIComponent(notification.context.approval_id)}`

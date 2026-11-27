@@ -13,6 +13,7 @@ export const commentMentionsSchema = z
   .max(100);
 
 export type Mention = CommentMentionOccurrence;
+export type TextMention = Pick<Mention, "start" | "end" | "display_name">;
 export type MentionPermission =
   "requirement:read" | "task:read" | "test_plan:read";
 export type MentionQuery = { start: number; end: number; query: string };
@@ -20,7 +21,7 @@ export type MentionQuery = { start: number; end: number; query: string };
 export function getMentionQuery(
   body: string,
   cursor: number,
-  mentions: Mention[],
+  mentions: TextMention[],
 ): MentionQuery | null {
   if (
     mentions.some((mention) => cursor > mention.start && cursor <= mention.end)
@@ -31,12 +32,12 @@ export function getMentionQuery(
   return { start: cursor - match[1].length - 1, end: cursor, query: match[1] };
 }
 
-export function reconcileMentions(
+export function reconcileMentions<T extends TextMention>(
   before: string,
   after: string,
-  mentions: Mention[],
+  mentions: T[],
   selection?: { start: number; end: number } | null,
-): Mention[] {
+): T[] {
   if (before === after) return mentions;
   let start = 0;
   let oldEnd = before.length;
@@ -87,8 +88,11 @@ export function reconcileMentions(
     );
 }
 
-export function getMentionSegments(body: string, mentions: Mention[]) {
-  const segments: { text: string; mention?: Mention }[] = [];
+export function getMentionSegments<T extends TextMention>(
+  body: string,
+  mentions: T[],
+) {
+  const segments: { text: string; mention?: T }[] = [];
   let offset = 0;
   for (const mention of [...mentions].sort((a, b) => a.start - b.start)) {
     if (

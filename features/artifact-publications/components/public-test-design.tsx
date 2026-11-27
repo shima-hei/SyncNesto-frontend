@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { DesignGrid } from "@/features/test-designs/components/tables/design-grid";
 import { gridData } from "@/features/test-designs/lib/sheets";
 import { matrixRows } from "@/features/test-designs/lib/matrix";
@@ -13,8 +13,10 @@ const noop = () => undefined;
 
 export function PublicTestDesign({
   design,
+  title,
 }: {
   design: PublicTestDesignGraph;
+  title?: ReactNode;
 }) {
   const [search, setSearch] = useState("");
   const [table, setTable] = useState(
@@ -57,7 +59,7 @@ export function PublicTestDesign({
       aria-label="公開するテスト設計"
     >
       <h3 className="text-base font-semibold">
-        {design.name}・元の版 {design.version}
+        {title ?? design.name}・元の版 {design.version}
       </h3>
       <p className="whitespace-pre-wrap break-words text-sm">
         {design.description}

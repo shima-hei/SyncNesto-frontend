@@ -13,6 +13,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  GuestRequirementDecisionCancel,
   GuestRequirementFormalApprovalCreate,
   GuestRequirementFormalApprovalInput,
   HTTPValidationError,
@@ -334,6 +335,155 @@ export const useCreateGuestRequirementApprovalProjectsProjectIdGuestRequirementA
   > => {
     return useMutation(
       getCreateGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getCancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostUrl =
+  (projectId: number, requestId: string) => {
+    return `/projects/${projectId}/guest-requirement-approvals/${requestId}/cancel`;
+  };
+
+/**
+ * 要件定義書の正式承認依頼と、付随する共有許可を取り消す。
+ * @summary Cancel Guest Requirement Approval
+ */
+export const cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost =
+  async (
+    projectId: number,
+    requestId: string,
+    guestRequirementDecisionCancel: GuestRequirementDecisionCancel,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<RequirementWorkflowRead> => {
+    return apiClient<RequirementWorkflowRead>(
+      getCancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostUrl(
+        projectId,
+        requestId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(guestRequirementDecisionCancel),
+      },
+    );
+  };
+
+export const getCancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationKey =
+  () =>
+    [
+      "cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost",
+    ] as const;
+
+export const getCancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost
+        >
+      >,
+      TError,
+      CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost
+      >
+    >,
+    TError,
+    CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getCancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost
+        >
+      >,
+      CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationVariables
+    > = (props) => {
+      const { projectId, requestId, data } = props ?? {};
+
+      return cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost(
+        projectId,
+        requestId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost
+      >
+    >
+  >;
+export type CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationBody =
+  BodyType<GuestRequirementDecisionCancel>;
+export type CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationVariables =
+  {
+    projectId: number;
+    requestId: string;
+    data: BodyType<GuestRequirementDecisionCancel>;
+  };
+
+/**
+ * 要件定義書の正式承認依頼と、付随する共有許可を取り消す。
+ * @summary Cancel Guest Requirement Approval
+ */
+export const useCancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost
+          >
+        >,
+        TError,
+        CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof cancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPost
+      >
+    >,
+    TError,
+    CancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getCancelGuestRequirementApprovalProjectsProjectIdGuestRequirementApprovalsRequestIdCancelPostMutationOptions(
         options,
       ),
       queryClient,
