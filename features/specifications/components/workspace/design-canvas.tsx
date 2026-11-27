@@ -384,13 +384,35 @@ export function DesignCanvas({
         </div>
       </div>
       {nodes.length > 1 && (
-        <button type="button" onClick={fit} aria-label="ミニマップから全体を表示"
-          className="absolute right-3 bottom-14 hidden h-16 w-26 overflow-hidden rounded border bg-background/90 shadow-sm sm:block">
-          <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-            {nodes.map(node => {
+        <button
+          type="button"
+          onClick={fit}
+          aria-label="ミニマップから全体を表示"
+          className="absolute right-3 bottom-14 hidden h-16 w-26 overflow-hidden rounded border bg-background/90 shadow-sm sm:block"
+        >
+          <svg
+            width="100%"
+            height="100%"
+            viewBox={`0 0 ${width} ${height}`}
+            aria-hidden="true"
+          >
+            {nodes.map((node) => {
               const position = point(node.id);
-              return <rect key={node.id} x={position.x} y={position.y} width={nodeWidth} height={nodeHeight}
-                className={selected.has(node.id) ? "fill-primary" : "fill-muted-foreground/45"} rx={10} />;
+              return (
+                <rect
+                  key={node.id}
+                  x={position.x}
+                  y={position.y}
+                  width={nodeWidth}
+                  height={nodeHeight}
+                  className={
+                    selected.has(node.id)
+                      ? "fill-primary"
+                      : "fill-muted-foreground/45"
+                  }
+                  rx={10}
+                />
+              );
             })}
           </svg>
         </button>
