@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useDeferredValue, useId, useState, type FormEvent } from "react";
+import {
+  useDeferredValue,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   PanelLeftIcon,
@@ -153,6 +160,11 @@ function DesignBrowser({
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [edge, setEdge] = useState<DesignEdge>();
+  const [newConnection, setNewConnection] = useState<{
+    targetId?: number;
+    request: number;
+  }>();
+  const connectionRequest = useRef(0);
   const [name, setName] = useState("");
   const [creation, setCreation] = useState<{
     x?: number;
@@ -226,6 +238,7 @@ function DesignBrowser({
   const active = nodes.find((node) => node.id === id);
   const select = (value: number, multiple = false) => {
     setEdge(undefined);
+    setNewConnection(undefined);
     setRight(true);
     if (!multiple) {
       setSelected(new Set([value]));
@@ -663,10 +676,23 @@ function DesignBrowser({
                       selected={selected}
                       onSelect={select}
                       onEdge={(item) => {
+                        setNewConnection(undefined);
                         setEdge(item);
                         setRight(true);
                         setSelected(new Set([item.source_id]));
                       }}
+                      onConnect={
+                        kind === "screen" && canEdit
+                          ? (sourceId, targetId) => {
+                              select(sourceId);
+                              connectionRequest.current += 1;
+                              setNewConnection({
+                                targetId,
+                                request: connectionRequest.current,
+                              });
+                            }
+                          : undefined
+                      }
                       onPlace={(positions) => place.mutate(positions)}
                       onAdd={(position) => setCreation(position ?? {})}
                       referenceIds={referenceIds}
@@ -800,18 +826,24 @@ function DesignBrowser({
               {view === "diagram" && right && (
                 <aside className="min-w-0 space-y-3 border-t p-3 lg:w-62 lg:max-w-[45%] lg:min-w-48 lg:shrink-0 lg:resize-x lg:overflow-auto lg:border-t-0 lg:border-l">
                   <h2 className="border-b pb-2 text-sm font-semibold">
-                    {edge ? "接続プロパティ" : "設計プロパティ"}
+                    {edge || newConnection
+                      ? "接続プロパティ"
+                      : "設計プロパティ"}
                   </h2>
                   {active ? (
                     <NodeInspector
-                      key={`${active.id}:${edge?.id ?? ""}:${active.version}`}
+                      key={`${active.id}:${edge?.id ?? ""}:${active.version}:${newConnection?.request ?? ""}`}
                       projectId={projectId}
                       node={active}
                       groups={groups}
                       nodes={nodes}
                       canEdit={canEdit}
-                      onSave={refresh}
+                      onSave={async () => {
+                        setNewConnection(undefined);
+                        await refresh();
+                      }}
                       edge={edge}
+                      newConnection={newConnection}
                       onNewTarget={
                         canCreate && kind === "screen"
                           ? () => setCreation({ source: active.id })
@@ -1139,6 +1171,7 @@ function NodeInspector({
   onReference,
   onNewTarget,
   edge,
+  newConnection,
 }: {
   projectId: number;
   node: DesignNode;
@@ -1150,11 +1183,23 @@ function NodeInspector({
   onReference?: () => void;
   onNewTarget?: () => void;
   edge?: DesignEdge;
+  newConnection?: { targetId?: number };
 }) {
   const [groupChoice, setGroupChoice] = useState(node.group_ids ?? []);
-  const [target, setTarget] = useState(edge?.target_id.toString() ?? "");
+  const [target, setTarget] = useState(
+    (edge?.target_id ?? newConnection?.targetId)?.toString() ?? "",
+  );
   const [condition, setCondition] = useState(edge?.condition ?? "");
   const [name, setName] = useState(edge?.name ?? "");
+  const nameInput = useRef<HTMLInputElement>(null);
+  const targetInput = useRef<HTMLSelectElement>(null);
+  useEffect(() => {
+    if (newConnection)
+      (newConnection.targetId === undefined
+        ? targetInput.current
+        : nameInput.current
+      )?.focus();
+  }, [newConnection]);
   const [mode, setMode] = useState<
     "page" | "modal" | "drawer" | "new_tab" | "other"
   >("page");
@@ -1311,7 +1356,7 @@ function NodeInspector({
       )}
       {canEdit && node.kind !== "api" && (
         <details
-          open={edge ? true : undefined}
+          open={edge || newConnection ? true : undefined}
           className="space-y-2 rounded-md border p-2 text-sm"
         >
           <summary className="cursor-pointer">
@@ -1322,6 +1367,7 @@ function NodeInspector({
                 : "外部キーを追加"}
           </summary>
           <Input
+            ref={nameInput}
             value={name}
             onChange={(event) => setName(event.target.value)}
             aria-label="接続名"
@@ -1329,6 +1375,7 @@ function NodeInspector({
             maxLength={200}
           />
           <select
+            ref={targetInput}
             className={cn(selectClass, "w-full")}
             aria-label="既存の接続先"
             value={target}

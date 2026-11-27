@@ -8,7 +8,13 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { GripIcon, MaximizeIcon, MinusIcon, PlusIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  GripIcon,
+  MaximizeIcon,
+  MinusIcon,
+  PlusIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
@@ -34,6 +40,7 @@ export function DesignCanvas({
   selected,
   onSelect,
   onEdge,
+  onConnect,
   onPlace,
   onAdd,
   canEdit,
@@ -47,6 +54,7 @@ export function DesignCanvas({
   selected: Set<number>;
   onSelect: (id: number, multiple: boolean) => void;
   onEdge: (edge: DesignEdge) => void;
+  onConnect?: (sourceId: number, targetId?: number) => void;
   onPlace: (positions: PlacementInput[]) => void;
   onAdd?: (position?: Position) => void;
   canEdit: boolean;
@@ -69,6 +77,15 @@ export function DesignCanvas({
     left: number;
     top: number;
   } | null>(null);
+  const connectionDrag = useRef<{
+    pointer: number;
+    sourceId: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [connection, setConnection] = useState<
+    (Position & { sourceId: number; targetId?: number }) | null
+  >(null);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState<
     (Position & { ids: Map<number, Position> }) | null
@@ -168,6 +185,40 @@ export function DesignCanvas({
       ],
     ]);
   }
+  function connectionTarget(clientX: number, clientY: number) {
+    const node = document
+      .elementFromPoint(clientX, clientY)
+      ?.closest<HTMLElement>("[data-screen-node-id]");
+    return node && stage.current?.contains(node)
+      ? Number(node.dataset.screenNodeId)
+      : undefined;
+  }
+  function clearConnection() {
+    connectionDrag.current = null;
+    setConnection(null);
+  }
+  function updateConnection(event: PointerEvent<HTMLButtonElement>) {
+    const drag = connectionDrag.current;
+    const rect = stage.current?.getBoundingClientRect();
+    if (!drag || drag.pointer !== event.pointerId || !rect) return;
+    setConnection({
+      sourceId: drag.sourceId,
+      targetId: connectionTarget(event.clientX, event.clientY),
+      x: (event.clientX - rect.left) / zoom,
+      y: (event.clientY - rect.top) / zoom,
+    });
+  }
+  function finishConnection(event: PointerEvent<HTMLButtonElement>) {
+    const drag = connectionDrag.current;
+    if (!drag || drag.pointer !== event.pointerId) return;
+    clearConnection();
+    if (Math.hypot(drag.x - event.clientX, drag.y - event.clientY) < 8) {
+      onConnect?.(drag.sourceId);
+      return;
+    }
+    const target = connectionTarget(event.clientX, event.clientY);
+    if (target !== undefined) onConnect?.(drag.sourceId, target);
+  }
   const fit = () => {
     const area = viewport.current;
     if (!area) return;
@@ -187,6 +238,13 @@ export function DesignCanvas({
   const connections = edges.filter(
     (edge) => visible.has(edge.source_id) && visible.has(edge.target_id),
   );
+  const parallelEdges = new Map<string, DesignEdge[]>();
+  for (const edge of connections) {
+    const key = `${edge.source_id}:${edge.target_id}`;
+    const group = parallelEdges.get(key) ?? [];
+    group.push(edge);
+    parallelEdges.set(key, group);
+  }
   return (
     <div className="relative min-w-0 overflow-hidden bg-muted/25">
       <div
@@ -256,45 +314,53 @@ export function DesignCanvas({
                   <path d="M 0 0 L 8 4 L 0 8 z" fill="currentColor" />
                 </marker>
               </defs>
-              {connections.map((edge) => {
-                const from = point(edge.source_id);
-                const to = point(edge.target_id);
-                const related =
-                  selected.has(edge.source_id) || selected.has(edge.target_id);
-                const parallel = connections.filter(
-                  (item) =>
-                    item.source_id === edge.source_id &&
-                    item.target_id === edge.target_id,
-                );
-                const curve =
-                  (parallel.findIndex((item) => item.id === edge.id) -
-                    (parallel.length - 1) / 2) *
-                  18;
-                const forward = to.x >= from.x;
-                const sourceX = from.x + (forward ? nodeWidth : 0);
-                const sourceY = from.y + 36;
-                const targetX = to.x + (forward ? 0 : nodeWidth);
-                const targetY = to.y + 36;
-                const direction = forward ? 1 : -1;
-                const d =
-                  edge.source_id === edge.target_id
-                    ? `M ${sourceX} ${sourceY} C ${sourceX + 112 + curve} ${sourceY - 110}, ${targetX - 112 - curve} ${targetY - 110}, ${targetX} ${targetY}`
-                    : `M ${sourceX} ${sourceY} C ${sourceX + 64 * direction} ${sourceY + curve}, ${targetX - 64 * direction} ${targetY + curve}, ${targetX} ${targetY}`;
-                return (
-                  <path
-                    key={edge.id}
-                    d={d}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={related ? 2.5 : 1.4}
-                    className={cn(related && "text-primary")}
-                    strokeDasharray={
-                      edge.kind === "logical" ? "5 4" : undefined
-                    }
-                    markerEnd={`url(#${markerId})`}
-                  />
-                );
-              })}
+              {[...parallelEdges.values()].flatMap((parallel) =>
+                parallel.map((edge, index) => {
+                  const from = point(edge.source_id);
+                  const to = point(edge.target_id);
+                  const related =
+                    selected.has(edge.source_id) ||
+                    selected.has(edge.target_id);
+                  const curve = (index - (parallel.length - 1) / 2) * 18;
+                  const forward = to.x >= from.x;
+                  const sourceX = from.x + (forward ? nodeWidth : 0);
+                  const sourceY = from.y + 36;
+                  const targetX = to.x + (forward ? 0 : nodeWidth);
+                  const targetY = to.y + 36;
+                  const direction = forward ? 1 : -1;
+                  const d =
+                    edge.source_id === edge.target_id
+                      ? `M ${sourceX} ${sourceY} C ${sourceX + 112 + curve} ${sourceY - 110}, ${targetX - 112 - curve} ${targetY - 110}, ${targetX} ${targetY}`
+                      : `M ${sourceX} ${sourceY} C ${sourceX + 64 * direction} ${sourceY + curve}, ${targetX - 64 * direction} ${targetY + curve}, ${targetX} ${targetY}`;
+                  return (
+                    <path
+                      key={edge.id}
+                      d={d}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={related ? 2.5 : 1.4}
+                      className={cn(related && "text-primary")}
+                      strokeDasharray={
+                        edge.kind === "logical" ? "5 4" : undefined
+                      }
+                      markerEnd={`url(#${markerId})`}
+                    />
+                  );
+                }),
+              )}
+              {connection && (
+                <line
+                  x1={point(connection.sourceId).x + nodeWidth}
+                  y1={point(connection.sourceId).y + 36}
+                  x2={connection.x}
+                  y2={connection.y}
+                  className="text-primary"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeDasharray="6 4"
+                  markerEnd={`url(#${markerId})`}
+                />
+              )}
             </svg>
             {nodes.map((node) => {
               const position = point(node.id);
@@ -306,10 +372,15 @@ export function DesignCanvas({
               return (
                 <div
                   key={node.id}
+                  data-screen-node-id={
+                    node.kind === "screen" ? node.id : undefined
+                  }
                   className={cn(
                     "absolute rounded-md border bg-background shadow-xs",
                     selected.has(node.id) &&
                       "border-primary ring-2 ring-primary/20",
+                    connection?.targetId === node.id &&
+                      "border-primary ring-2 ring-primary",
                     reference && "border-dashed",
                   )}
                   style={{
@@ -360,6 +431,42 @@ export function DesignCanvas({
                       </span>
                     </button>
                   </div>
+                  {onConnect &&
+                    canEdit &&
+                    node.kind === "screen" &&
+                    !reference && (
+                      <button
+                        type="button"
+                        aria-label={`${title}から遷移先を接続`}
+                        className="absolute top-9 -right-3 z-10 grid size-7 -translate-y-1/2 cursor-crosshair touch-none place-items-center rounded-full border border-primary bg-background text-primary shadow-xs select-none focus-visible:ring-2 focus-visible:ring-primary [-webkit-user-select:none]"
+                        disabled={busy}
+                        onPointerDown={(event) => {
+                          if (event.button !== 0 || connectionDrag.current)
+                            return;
+                          event.stopPropagation();
+                          connectionDrag.current = {
+                            pointer: event.pointerId,
+                            sourceId: node.id,
+                            x: event.clientX,
+                            y: event.clientY,
+                          };
+                          event.currentTarget.setPointerCapture(
+                            event.pointerId,
+                          );
+                        }}
+                        onPointerMove={updateConnection}
+                        onPointerUp={finishConnection}
+                        onLostPointerCapture={clearConnection}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") clearConnection();
+                        }}
+                        onClick={(event) => {
+                          if (event.detail === 0) onConnect(node.id);
+                        }}
+                      >
+                        <ArrowRightIcon className="size-4" />
+                      </button>
+                    )}
                   {!!node.field_labels?.length && (
                     <ul className="border-t px-2 py-1 font-mono text-xs">
                       {node.field_labels.slice(0, 3).map((field, index) => (
