@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getConflictCurrent } from "@/lib/api/conflict";
-import type { TaskRead } from "@/lib/api/generated/model";
+import type { TaskRead, TaskUpdate } from "@/lib/api/generated/model";
 import { useUpdateTaskTasksTaskIdPatch } from "@/lib/api/generated/tasks/tasks";
 
 import { TASK_MESSAGES } from "../constants/task-messages";
@@ -37,17 +37,12 @@ export function useUpdateTask(projectId: number, taskId: number) {
     },
   });
 
-  const updateTask = async (
-    values: TaskFormValues,
-    version: number,
-    currentTask?: TaskRead,
-    onSaved?: () => void,
-  ) => {
+  const saveTask = async (data: TaskUpdate, onSaved?: () => void) => {
     setIsSaving(true);
     try {
       const task = await updateTaskMutation.mutateAsync({
         taskId,
-        data: toTaskUpdate(values, version, currentTask),
+        data,
       });
       // 新versionを表示する前に、成功したフォームの下書きを完了する。
       onSaved?.();
@@ -64,12 +59,23 @@ export function useUpdateTask(projectId: number, taskId: number) {
     }
   };
 
+  const updateTask = (
+    values: TaskFormValues,
+    version: number,
+    currentTask?: TaskRead,
+    onSaved?: () => void,
+  ) => saveTask(toTaskUpdate(values, version, currentTask), onSaved);
+
+  const updateTaskDescription = (description: string, version: number) =>
+    saveTask({ description, version });
+
   const resetConflict = () => {
     setConflictCurrent(null);
   };
 
   return {
     updateTask,
+    updateTaskDescription,
     conflictCurrent,
     resetConflict,
     isConflict: Boolean(conflictCurrent),
