@@ -45,10 +45,7 @@ export async function apiClient<T>(
   const requestHeaders = buildHeaders(headers, body, method);
   const sharedPublication =
     url.split("?", 1)[0] === "/notification-preferences" ||
-    url.split("?", 1)[0] === "/shared/notifications" ||
-    url.startsWith("/shared/notifications/") ||
-    url === "/shared/publications" ||
-    url.startsWith("/shared/publications/") ||
+    url.startsWith("/shared/") ||
     url.startsWith("/guest-invitations/");
   const guestApprovalPath = url.split("?", 1)[0];
   const guestApproval =

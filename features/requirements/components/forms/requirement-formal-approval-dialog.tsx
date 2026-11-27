@@ -16,6 +16,10 @@ import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DecisionShareFields,
+  readDecisionShare,
+} from "@/features/artifact-publications/components/decision-share-fields";
 import { IncludedSourcesPicker } from "@/features/artifact-releases/components/included-sources-picker";
 import { PublishedReviewAttachments } from "@/features/guest-requirement-reviews/components/published-review-attachments";
 import {
@@ -27,6 +31,8 @@ import { ApiError } from "@/lib/api/error";
 import type {
   ArtifactSource,
   PublicationNodeRead,
+  PublicationRead,
+  PublicationShareInput,
   RequirementFormalApprovalInput,
   RequirementFormalApprovalPreview,
 } from "@/lib/api/generated/model";
@@ -44,7 +50,10 @@ type Confirmation = {
   preview: RequirementFormalApprovalPreview;
   key: string;
 };
-type ApprovalInput = RequirementFormalApprovalInput & { grantIds?: string[] };
+type ApprovalInput = RequirementFormalApprovalInput & {
+  grantIds?: string[];
+  sharing?: PublicationShareInput;
+};
 
 export function RequirementFormalApprovalDialog({
   projectId,
@@ -64,8 +73,7 @@ export function RequirementFormalApprovalDialog({
   onRequested?: () => void;
   externalHref?: string;
   publication?: {
-    id: string;
-    publicDigest: string;
+    record: PublicationRead;
     nodes: PublicationNodeRead[];
   };
 }) {
@@ -77,6 +85,12 @@ export function RequirementFormalApprovalDialog({
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [grantIds, setGrantIds] = useState<string[]>([]);
+  const [shareWithGuest, setShareWithGuest] = useState(false);
+  const publicationId = publication?.record.content.id;
+  const newPublication = publication?.record.state === "prepared";
+  const combineSharing = Boolean(
+    publication && (newPublication || shareWithGuest),
+  );
   const [dueOn, setDueOn] = useState("");
   const [note, setNote] = useState("");
   const [attachments, setAttachments] = useState<ArtifactSource[]>([]);
@@ -96,11 +110,11 @@ export function RequirementFormalApprovalDialog({
     retry: false,
   });
   const guests = useQuery({
-    queryKey: ["guest-requirement-review-options", projectId, publication?.id],
+    queryKey: ["guest-requirement-review-options", projectId, publicationId],
     queryFn: ({ signal }) =>
       readReviewOptions(
         projectId,
-        { publication_id: publication!.id },
+        { publication_id: publicationId! },
         { signal },
       ),
     enabled: Boolean(open && publication),
@@ -108,14 +122,16 @@ export function RequirementFormalApprovalDialog({
   });
   const externalInput = ({
     grantIds = [],
+    sharing,
     participant_ids,
     due_on,
     note,
     exceptions,
   }: ApprovalInput) => ({
-    publication_id: publication!.id,
-    expected_public_digest: publication!.publicDigest,
+    publication_id: publication!.record.content.id,
+    expected_public_digest: publication!.record.content.public_digest,
     grant_ids: grantIds,
+    sharing,
     participant_ids,
     due_on,
     note,
@@ -144,9 +160,10 @@ export function RequirementFormalApprovalDialog({
   });
   const busy = preview.isPending || request.isPending;
   const hasRecipients = publication
-    ? grantIds.length > 0
+    ? grantIds.length > 0 || combineSharing
     : selectedIds.length > 0;
-  const selectionFull = grantIds.length + selectedIds.length >= 25;
+  const selectionFull =
+    grantIds.length + selectedIds.length + Number(combineSharing) >= 25;
 
   async function prepare(input: ApprovalInput) {
     const result = await preview.mutateAsync(input);
@@ -163,13 +180,25 @@ export function RequirementFormalApprovalDialog({
     try {
       if (!confirmation) {
         if (!hasRecipients) return;
+        const sharing =
+          publication && combineSharing
+            ? readDecisionShare(values, publication.record)
+            : undefined;
+        if (combineSharing && (!sharing || !dueOn)) {
+          setError(
+            new Error(
+              "参加期限内の共有期限と承認の回答期限を指定してください。",
+            ),
+          );
+          return;
+        }
         await prepare({
           document_version: documentVersion,
           participant_ids: selectedIds,
           due_on: dueOn || undefined,
           note: note.trim() || undefined,
           included_sources: attachments,
-          ...(publication ? { grantIds } : {}),
+          ...(publication ? { grantIds, sharing: sharing ?? undefined } : {}),
         });
       } else if (exceptionPanel) {
         await prepare({
@@ -191,6 +220,17 @@ export function RequirementFormalApprovalDialog({
         await client.invalidateQueries({
           queryKey: ["requirement-workflow", projectId],
         });
+        if (publicationId) {
+          void client.invalidateQueries({
+            queryKey: ["publication", projectId, publicationId],
+          });
+          void client.invalidateQueries({
+            queryKey: ["publication-access", projectId, publicationId],
+          });
+          void client.invalidateQueries({
+            queryKey: ["publications", projectId],
+          });
+        }
         toast.success("正式承認を依頼しました");
         onRequested?.();
       }
@@ -249,6 +289,7 @@ export function RequirementFormalApprovalDialog({
           setAttachments([]);
           setSelectedIds([]);
           setGrantIds([]);
+          setShareWithGuest(false);
           setDueOn("");
           setNote("");
           setError(null);
@@ -275,6 +316,40 @@ export function RequirementFormalApprovalDialog({
                 </Link>
               ) : null}
             </header>
+            {publication && (
+              <fieldset
+                disabled={busy || Boolean(result)}
+                className={
+                  result ? "hidden" : "grid gap-3 rounded-md border p-3 text-sm"
+                }
+              >
+                <legend className="px-1 font-medium">
+                  承認依頼に付随する共有
+                </legend>
+                {!newPublication && (
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={shareWithGuest}
+                      disabled={!shareWithGuest && selectionFull}
+                      onChange={(event) =>
+                        setShareWithGuest(event.target.checked)
+                      }
+                    />
+                    参加中のゲストにこの固定版も共有する
+                  </label>
+                )}
+                {combineSharing && (
+                  <DecisionShareFields
+                    projectId={projectId}
+                    publication={publication.record}
+                    existingParticipants={guests.data?.reviewers.map(
+                      (person) => person.participation_id,
+                    )}
+                  />
+                )}
+              </fieldset>
+            )}
             {result ? (
               <>
                 <section className="grid min-w-0 gap-2">
@@ -292,6 +367,14 @@ export function RequirementFormalApprovalDialog({
                     全{result.section_count}章・{result.requirement_count}要件
                     ・ 文書の更新版 {result.document_version}
                   </p>
+                  {confirmation.input.sharing && (
+                    <p className="text-sm">
+                      この依頼と同時に閲覧を許可します。共有期限{" "}
+                      {new Date(
+                        confirmation.input.sharing.recipients[0].expires_at,
+                      ).toLocaleString("ja-JP")}
+                    </p>
+                  )}
                 </section>
                 <section className="grid gap-2 border-y py-4">
                   <h2 className="font-semibold">承認前の確認</h2>
@@ -496,7 +579,7 @@ export function RequirementFormalApprovalDialog({
                     )}
                   </fieldset>
                 )}
-                {publication ? (
+                {publication && !newPublication ? (
                   <fieldset disabled={busy} className="grid gap-2 text-sm">
                     <legend className="pb-2 font-semibold">外部の承認者</legend>
                     {guests.error ? (
@@ -541,9 +624,10 @@ export function RequirementFormalApprovalDialog({
                   </fieldset>
                 ) : null}
                 <label className="grid gap-2 text-sm">
-                  回答期限（任意）
+                  {combineSharing ? "回答期限" : "回答期限（任意）"}
                   <Input
                     type="date"
+                    required={combineSharing}
                     value={dueOn}
                     onChange={(event) => setDueOn(event.currentTarget.value)}
                     disabled={busy}

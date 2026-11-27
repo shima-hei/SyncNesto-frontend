@@ -33,6 +33,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
+import {
+  DecisionShareFields,
+  readDecisionShare,
+} from "@/features/artifact-publications/components/decision-share-fields";
 import { ChoiceField } from "@/features/fixed-approvals/components/choice-field";
 import {
   approvalPath,
@@ -43,6 +47,7 @@ import type {
   GuestApprovalInput,
   GuestApprovalPreview,
   PublicationNodeRead,
+  PublicationRead,
 } from "@/lib/api/generated/model";
 import {
   createRequest,
@@ -54,27 +59,33 @@ import { approvalKindLabels } from "../lib/display";
 
 export function GuestApprovalRequestPanel({
   projectId,
-  publicationId,
+  publication,
   nodes,
   enabled,
   ready,
+  shareableKind,
 }: {
   projectId: number;
-  publicationId: string;
+  publication: PublicationRead;
   nodes: PublicationNodeRead[];
   enabled: boolean;
   ready: boolean;
+  shareableKind?: string;
 }) {
   const router = useRouter();
+  const publicationId = publication.content.id;
+  const prepared = publication.state === "prepared";
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState("");
   const [search, setSearch] = useState("");
   const [targetPage, setTargetPage] = useState(1);
   const [grant, setGrant] = useState("");
+  const [shareWithGuest, setShareWithGuest] = useState(prepared);
   const [candidateSearch, setCandidateSearch] = useState("");
   const [candidatePage, setCandidatePage] = useState(1);
   const [basisPage, setBasisPage] = useState(1);
   const [note, setNote] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<{
     input: GuestApprovalInput;
@@ -92,6 +103,9 @@ export function GuestApprovalRequestPanel({
   );
   const visible = targets.slice((targetPage - 1) * 20, targetPage * 20);
   const selected = nodes.find((node) => node.id === target);
+  const canShare =
+    selected?.ordinal === 0 && selected.node_kind === shareableKind;
+  const combineSharing = canShare && (prepared || shareWithGuest);
   const choices =
     selected && !visible.some((node) => node.id === selected.id)
       ? [selected, ...visible]
@@ -117,7 +131,7 @@ export function GuestApprovalRequestPanel({
         },
         { signal },
       ),
-    enabled: open && !!target && enabled,
+    enabled: open && !!target && enabled && !prepared,
     retry: false,
     gcTime: 0,
   });
@@ -179,7 +193,7 @@ export function GuestApprovalRequestPanel({
       <CardHeader>
         <CardTitle>この公開内容への判断を依頼</CardTitle>
         <CardDescription>
-          要件の合意、文書・設計・テスト設計の独立した承認を、現在の共有先1名へ依頼します。資料共有とは別操作です。
+          判断する固定版と依頼先1名を指定します。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -192,7 +206,7 @@ export function GuestApprovalRequestPanel({
         </Button>
         {!enabled ? (
           <p className="text-sm text-muted-foreground">
-            公開中の本文全体を確認すると依頼を作成できます。新規依頼を停止している場合も、履歴と取消は合意・承認一覧から確認できます。
+            過去の依頼と取消は合意・承認一覧から確認できます。
           </p>
         ) : (
           <Dialog
@@ -212,10 +226,10 @@ export function GuestApprovalRequestPanel({
                     : "判断する固定内容と相手を選択"}
                 </DialogTitle>
                 <DialogDescription>
-                  公開済みの本文全体と選択添付の構成を維持します。相手へのメール・通知配信はこの段階では行いません。
+                  対象の固定版と公開する添付を確認してください。
                 </DialogDescription>
               </DialogHeader>
-              {confirmed ? (
+              {confirmed && (
                 <>
                   <Alert>
                     <AlertTitle>{confirmed.preview.title}</AlertTitle>
@@ -228,6 +242,22 @@ export function GuestApprovalRequestPanel({
                       <p className="whitespace-pre-wrap">
                         {confirmed.preview.request_note || "依頼文なし"}
                       </p>
+                      {confirmed.preview.decision_expires_at && (
+                        <p>
+                          回答期限{" "}
+                          {new Date(
+                            confirmed.preview.decision_expires_at,
+                          ).toLocaleString("ja-JP")}
+                        </p>
+                      )}
+                      {confirmed.input.sharing && (
+                        <p>
+                          この依頼と同時に閲覧を許可します。共有期限{" "}
+                          {new Date(
+                            confirmed.input.sharing.recipients[0].expires_at,
+                          ).toLocaleString("ja-JP")}
+                        </p>
+                      )}
                       <p>
                         例外 {confirmed.preview.exception_count}
                         件。設計/テスト設計の独立承認は、その選択対象と添付への承認です。他の本文は参考資料です。
@@ -276,200 +306,268 @@ export function GuestApprovalRequestPanel({
                     </Button>
                   </DialogFooter>
                 </>
-              ) : (
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    setValidation("");
-                    if (!bases.data || !grant || !target) {
-                      setValidation(
-                        "判断する内容と有効な共有先を選択してください",
-                      );
-                      return;
-                    }
-                    if (missing.some((row) => !reasons[row.node_id]?.trim())) {
-                      setValidation(
-                        "外部合意が不足する全要件へ例外理由を入力してください",
-                      );
-                      return;
-                    }
-                    preview.mutate({
-                      publication_id: publicationId,
-                      target_node_id: target,
-                      grant_id: grant,
-                      request_note: note.trim() || null,
-                      exceptions: missing.map((row) => ({
-                        node_id: row.node_id,
-                        reason: reasons[row.node_id].trim(),
-                      })),
-                    });
-                  }}
-                >
-                  <FieldGroup>
-                    <Field>
-                      <FieldLabel htmlFor="guest-target-search">
-                        判断対象を探す
-                      </FieldLabel>
-                      <Input
-                        id="guest-target-search"
-                        value={search}
-                        onChange={(event) => {
-                          setSearch(event.target.value);
-                          setTargetPage(1);
-                        }}
-                        disabled={busy}
-                      />
-                    </Field>
-                    <ChoiceField
-                      label="判断する内容"
-                      value={target}
-                      onChange={(value) => {
-                        setTarget(value);
-                        setGrant("");
-                        setReasons({});
-                        setBasisPage(1);
-                        setCandidatePage(1);
+              )}
+              <form
+                hidden={Boolean(confirmed)}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setValidation("");
+                  if (!bases.data || (!grant && !combineSharing) || !target) {
+                    setValidation(
+                      "判断する内容と有効な共有先を選択してください",
+                    );
+                    return;
+                  }
+                  if (missing.some((row) => !reasons[row.node_id]?.trim())) {
+                    setValidation(
+                      "外部合意が不足する全要件へ例外理由を入力してください",
+                    );
+                    return;
+                  }
+                  const expires = deadline ? new Date(deadline) : null;
+                  if (expires && !Number.isFinite(expires.valueOf())) {
+                    setValidation("回答期限を確認してください");
+                    return;
+                  }
+                  const sharing = combineSharing
+                    ? readDecisionShare(
+                        new FormData(event.currentTarget),
+                        publication,
+                      )
+                    : undefined;
+                  if (combineSharing && (!expires || !sharing)) {
+                    setValidation(
+                      "参加期限内の共有期限と、共有期限内の回答期限を指定してください。",
+                    );
+                    return;
+                  }
+                  preview.mutate({
+                    publication_id: publicationId,
+                    target_node_id: target,
+                    grant_id: combineSharing ? undefined : grant,
+                    sharing,
+                    request_note: note.trim() || null,
+                    decision_expires_at: expires?.toISOString(),
+                    exceptions: missing.map((row) => ({
+                      node_id: row.node_id,
+                      reason: reasons[row.node_id].trim(),
+                    })),
+                  });
+                }}
+              >
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="guest-target-search">
+                      判断対象を探す
+                    </FieldLabel>
+                    <Input
+                      id="guest-target-search"
+                      value={search}
+                      onChange={(event) => {
+                        setSearch(event.target.value);
+                        setTargetPage(1);
                       }}
-                      choices={choices.map((node) => ({
-                        value: node.id,
-                        label: `${String(node.payload.title ?? "固定した内容")} · ${approvalKindLabels[node.node_kind]}`,
-                      }))}
                       disabled={busy}
                     />
-                    <DataPagination
-                      page={targetPage}
-                      pageSize={20}
-                      total={targets.length}
-                      currentCount={visible.length}
-                      onPageChange={setTargetPage}
-                      isFetching={false}
-                    />
-                    {target ? (
-                      <>
-                        <Field>
-                          <FieldLabel htmlFor="guest-candidate-search">
-                            共有先の氏名で絞る
-                          </FieldLabel>
-                          <Input
-                            id="guest-candidate-search"
-                            value={candidateSearch}
-                            onChange={(event) => {
-                              setCandidateSearch(event.target.value);
-                              setCandidatePage(1);
-                            }}
-                            disabled={busy}
-                          />
-                        </Field>
-                        <ChoiceField
-                          label="判断を依頼する相手"
-                          value={grant}
-                          onChange={setGrant}
-                          choices={
-                            candidates.data?.items.map((row) => ({
-                              value: row.grant_id,
-                              label: row.name,
-                            })) ?? []
-                          }
-                          disabled={busy || candidates.isPending}
-                        />
-                        <FormApiError error={candidates.error} />
-                        {candidates.data ? (
-                          <DataPagination
-                            page={candidatePage}
-                            pageSize={20}
-                            total={candidates.data.total}
-                            currentCount={candidates.data.items.length}
-                            onPageChange={setCandidatePage}
-                            isFetching={candidates.isFetching}
-                          />
-                        ) : null}
-                        {candidates.data?.total === 0 ? (
-                          <p className="text-sm">
-                            有効な共有先がいません。先に下の共有先管理で、相手と期限を明示して許可してください。
-                          </p>
-                        ) : null}
-                      </>
-                    ) : null}
-                    <Field>
-                      <FieldLabel htmlFor="guest-request-note">
-                        依頼の目的・確認してほしいこと
-                      </FieldLabel>
-                      <Textarea
-                        id="guest-request-note"
-                        value={note}
-                        onChange={(event) => setNote(event.target.value)}
-                        maxLength={2000}
+                  </Field>
+                  <ChoiceField
+                    label="判断する内容"
+                    value={target}
+                    onChange={(value) => {
+                      setTarget(value);
+                      setGrant("");
+                      setShareWithGuest(prepared);
+                      setReasons({});
+                      setBasisPage(1);
+                      setCandidatePage(1);
+                    }}
+                    choices={choices.map((node) => ({
+                      value: node.id,
+                      label: `${String(node.payload.title ?? "固定した内容")} · ${approvalKindLabels[node.node_kind]}`,
+                    }))}
+                    disabled={busy}
+                  />
+                  <DataPagination
+                    page={targetPage}
+                    pageSize={20}
+                    total={targets.length}
+                    currentCount={visible.length}
+                    onPageChange={setTargetPage}
+                    isFetching={false}
+                  />
+                  {target && canShare && !prepared && (
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={shareWithGuest}
                         disabled={busy}
+                        onChange={(event) =>
+                          setShareWithGuest(event.target.checked)
+                        }
                       />
-                      <FieldDescription>
-                        相手に表示されます。既存の非公開ゴールや社内メモは自動挿入しません。
-                      </FieldDescription>
-                    </Field>
-                    <FormApiError error={bases.error} />
-                    {missing.length ? (
-                      <>
-                        <p className="text-sm font-medium">
-                          外部合意不足の例外 {missing.length}件
-                        </p>
-                        {missing
-                          .slice((basisPage - 1) * 20, basisPage * 20)
-                          .map((row) => (
-                            <Field key={row.node_id}>
-                              <FieldLabel
-                                htmlFor={`guest-exception-${row.node_id}`}
-                              >
-                                {row.title} ·{" "}
-                                {basisLabels[row.state] ?? "外部合意不足"}
-                              </FieldLabel>
-                              <Textarea
-                                id={`guest-exception-${row.node_id}`}
-                                value={reasons[row.node_id] ?? ""}
-                                onChange={(event) =>
-                                  setReasons((previous) => ({
-                                    ...previous,
-                                    [row.node_id]: event.target.value,
-                                  }))
-                                }
-                                maxLength={2000}
-                                disabled={busy}
-                              />
-                              <FieldDescription>
-                                この理由も相手に公開されます。文書承認で個別要件を合意済みには変更しません。
-                              </FieldDescription>
-                            </Field>
-                          ))}
-                        <DataPagination
-                          page={basisPage}
-                          pageSize={20}
-                          total={missing.length}
-                          currentCount={
-                            missing.slice((basisPage - 1) * 20, basisPage * 20)
-                              .length
-                          }
-                          onPageChange={setBasisPage}
-                          isFetching={bases.isFetching}
+                      参加中のゲストにこの固定版も共有する
+                    </label>
+                  )}
+                  {target && combineSharing && (
+                    <fieldset disabled={busy} className="rounded-md border p-3">
+                      <legend className="px-1 text-sm font-medium">
+                        承認依頼に付随する共有
+                      </legend>
+                      <DecisionShareFields
+                        projectId={projectId}
+                        publication={publication}
+                        existingParticipants={candidates.data?.items.map(
+                          (row) => row.participation_id,
+                        )}
+                      />
+                    </fieldset>
+                  )}
+                  {target && !combineSharing && !prepared ? (
+                    <>
+                      <Field>
+                        <FieldLabel htmlFor="guest-candidate-search">
+                          共有先の氏名で絞る
+                        </FieldLabel>
+                        <Input
+                          id="guest-candidate-search"
+                          value={candidateSearch}
+                          onChange={(event) => {
+                            setCandidateSearch(event.target.value);
+                            setCandidatePage(1);
+                          }}
+                          disabled={busy}
                         />
-                      </>
-                    ) : null}
-                    {validation ? (
-                      <p role="alert" className="text-sm text-destructive">
-                        {validation}
+                      </Field>
+                      <ChoiceField
+                        label="判断を依頼する相手"
+                        value={grant}
+                        onChange={setGrant}
+                        choices={
+                          candidates.data?.items.map((row) => ({
+                            value: row.grant_id,
+                            label: row.name,
+                          })) ?? []
+                        }
+                        disabled={busy || candidates.isPending}
+                      />
+                      <FormApiError error={candidates.error} />
+                      {candidates.data ? (
+                        <DataPagination
+                          page={candidatePage}
+                          pageSize={20}
+                          total={candidates.data.total}
+                          currentCount={candidates.data.items.length}
+                          onPageChange={setCandidatePage}
+                          isFetching={candidates.isFetching}
+                        />
+                      ) : null}
+                      {candidates.data?.total === 0 ? (
+                        <p className="text-sm">有効な共有先がいません。</p>
+                      ) : null}
+                    </>
+                  ) : null}
+                  <Field>
+                    <FieldLabel htmlFor="guest-request-note">
+                      依頼の目的・確認してほしいこと
+                    </FieldLabel>
+                    <Textarea
+                      id="guest-request-note"
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      maxLength={2000}
+                      disabled={busy}
+                    />
+                    <FieldDescription>
+                      相手に表示されます。既存の非公開ゴールや社内メモは自動挿入しません。
+                    </FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="guest-decision-expiry">
+                      回答期限
+                    </FieldLabel>
+                    <Input
+                      id="guest-decision-expiry"
+                      type="datetime-local"
+                      required={combineSharing}
+                      value={deadline}
+                      onChange={(event) => setDeadline(event.target.value)}
+                      disabled={busy}
+                    />
+                    <FieldDescription>
+                      {combineSharing
+                        ? "共有期限以内の日時を指定してください。"
+                        : "空欄の場合は資料の共有期限まで回答できます。"}
+                    </FieldDescription>
+                  </Field>
+                  <FormApiError error={bases.error} />
+                  {missing.length ? (
+                    <>
+                      <p className="text-sm font-medium">
+                        外部合意不足の例外 {missing.length}件
                       </p>
-                    ) : null}
-                    <FormApiError error={preview.error} />
-                    <DialogFooter>
-                      <Button
-                        type="submit"
-                        disabled={busy || !target || !grant || !bases.data}
-                      >
-                        {preview.isPending
-                          ? "確認しています…"
-                          : "相手に見せる依頼を確認"}
-                      </Button>
-                    </DialogFooter>
-                  </FieldGroup>
-                </form>
-              )}
+                      {missing
+                        .slice((basisPage - 1) * 20, basisPage * 20)
+                        .map((row) => (
+                          <Field key={row.node_id}>
+                            <FieldLabel
+                              htmlFor={`guest-exception-${row.node_id}`}
+                            >
+                              {row.title} ·{" "}
+                              {basisLabels[row.state] ?? "外部合意不足"}
+                            </FieldLabel>
+                            <Textarea
+                              id={`guest-exception-${row.node_id}`}
+                              value={reasons[row.node_id] ?? ""}
+                              onChange={(event) =>
+                                setReasons((previous) => ({
+                                  ...previous,
+                                  [row.node_id]: event.target.value,
+                                }))
+                              }
+                              maxLength={2000}
+                              disabled={busy}
+                            />
+                            <FieldDescription>
+                              この理由も相手に公開されます。文書承認で個別要件を合意済みには変更しません。
+                            </FieldDescription>
+                          </Field>
+                        ))}
+                      <DataPagination
+                        page={basisPage}
+                        pageSize={20}
+                        total={missing.length}
+                        currentCount={
+                          missing.slice((basisPage - 1) * 20, basisPage * 20)
+                            .length
+                        }
+                        onPageChange={setBasisPage}
+                        isFetching={bases.isFetching}
+                      />
+                    </>
+                  ) : null}
+                  {validation ? (
+                    <p role="alert" className="text-sm text-destructive">
+                      {validation}
+                    </p>
+                  ) : null}
+                  <FormApiError error={preview.error} />
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      disabled={
+                        busy ||
+                        !target ||
+                        (!grant && !combineSharing) ||
+                        !bases.data
+                      }
+                    >
+                      {preview.isPending
+                        ? "確認しています…"
+                        : "相手に見せる依頼を確認"}
+                    </Button>
+                  </DialogFooter>
+                </FieldGroup>
+              </form>
             </DialogContent>
           </Dialog>
         )}

@@ -10,7 +10,6 @@ import {
   type LinkEditorChange,
 } from "@/components/shared/smart-links/link-insert-popover";
 import { DraftLinkPreview } from "@/components/shared/smart-links/draft-link-preview";
-import type { CommentImageRead } from "@/lib/api/generated/model";
 import {
   completeCommentImageProjectsProjectIdCommentImagesKindUploadCompletePost as complete,
   discardCommentImageProjectsProjectIdCommentImagesImageIdDelete as discard,
@@ -24,13 +23,52 @@ type ImageKind = "task" | "requirement" | "specification" | "test_design";
 type PendingImage = {
   file: File;
   preview: string;
-  uploaded?: CommentImageRead;
+  uploaded?: { id: string };
+  requestId: string;
 };
-const acceptedTypes = ["image/png", "image/jpeg", "image/webp"];
+export const commentImageTypes = ["image/png", "image/jpeg", "image/webp"];
 const sizeLimit = 3 * 1024 * 1024;
 const countLimit = 4;
 
+type FileDraftOptions = {
+  upload: (file: File, requestId: string) => Promise<{ id: string }>;
+  discard: (id: string) => Promise<unknown>;
+  acceptedTypes: readonly string[];
+  messages: { invalid: string; count: string; failed: string };
+  normalize?: (file: File) => File;
+  onChange?: () => void;
+};
+
 export function useCommentComposeMedia(projectId: number, kind?: ImageKind) {
+  return useCommentDraftFiles(
+    kind
+      ? {
+          upload: async (file) => {
+            const uploadPlan = await plan(
+              projectId,
+              kind,
+              fileUploadMetadata(file, file.name),
+            );
+            return uploadWithPlan(
+              file,
+              uploadPlan,
+              () => upload(projectId, kind, { file }),
+              (token) => complete(projectId, kind, { upload_token: token }),
+            );
+          },
+          discard: (identity) => discard(projectId, identity),
+          acceptedTypes: commentImageTypes,
+          messages: {
+            invalid: "PNG・JPEG・WebPの画像を3 MiB以下で選択してください。",
+            count: "1件のコメントに画像を4枚まで添付できます。",
+            failed: "画像を送信できませんでした。もう一度お試しください。",
+          },
+        }
+      : undefined,
+  );
+}
+
+export function useCommentDraftFiles(options?: FileDraftOptions) {
   const [images, setImages] = useState<PendingImage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -46,11 +84,14 @@ export function useCommentComposeMedia(projectId: number, kind?: ImageKind) {
   }, []);
 
   const addFiles = (files: FileList | File[]) => {
-    if (!kind || inFlight.current) return;
-    const selected = Array.from(files);
+    if (!options || inFlight.current) return;
+    const selected = Array.from(
+      files,
+      (file) => options.normalize?.(file) ?? file,
+    );
     const allowed = selected.filter(
       (file) =>
-        acceptedTypes.includes(file.type) &&
+        options.acceptedTypes.includes(file.type) &&
         file.size > 0 &&
         file.size <= sizeLimit,
     );
@@ -59,14 +100,15 @@ export function useCommentComposeMedia(projectId: number, kind?: ImageKind) {
       .map((file) => {
         const preview = URL.createObjectURL(file);
         objectUrls.current.add(preview);
-        return { file, preview };
+        return { file, preview, requestId: crypto.randomUUID() };
       });
     setImages([...images, ...newImages]);
+    if (newImages.length) options.onChange?.();
     setError(
       allowed.length !== selected.length
-        ? "PNG・JPEG・WebPの画像を3 MiB以下で選択してください。"
+        ? options.messages.invalid
         : newImages.length !== selected.length
-          ? "1件のコメントに画像を4枚まで添付できます。"
+          ? options.messages.count
           : null,
     );
   };
@@ -80,18 +122,20 @@ export function useCommentComposeMedia(projectId: number, kind?: ImageKind) {
     images,
     error,
     sending,
-    addFiles: kind ? addFiles : undefined,
+    addFiles: options ? addFiles : undefined,
+    maxFiles: countLimit,
     remove: (image: PendingImage) => {
       if (inFlight.current) return;
-      if (image.uploaded)
-        void discard(projectId, image.uploaded.id).catch(() => undefined);
+      if (image.uploaded && options)
+        void options.discard(image.uploaded.id).catch(() => undefined);
+      options?.onChange?.();
       revoke(image.preview);
       setImages((current) =>
         current.filter((item) => item.preview !== image.preview),
       );
       setError(null);
     },
-    formEvents: kind
+    formEvents: options
       ? {
           onPaste: (event: ClipboardEvent) => {
             if (!event.clipboardData.files.length) return;
@@ -117,23 +161,12 @@ export function useCommentComposeMedia(projectId: number, kind?: ImageKind) {
       setError(null);
       try {
         const ids: string[] = [];
-        if (kind) {
+        if (options) {
           try {
             for (const image of images) {
               let saved = image.uploaded;
               if (!saved) {
-                const { file } = image;
-                const uploadPlan = await plan(
-                  projectId,
-                  kind,
-                  fileUploadMetadata(file, file.name),
-                );
-                saved = await uploadWithPlan(
-                  file,
-                  uploadPlan,
-                  () => upload(projectId, kind, { file }),
-                  (token) => complete(projectId, kind, { upload_token: token }),
-                );
+                saved = await options.upload(image.file, image.requestId);
                 const uploaded = saved;
                 setImages((current) =>
                   current.map((item) =>
@@ -146,7 +179,7 @@ export function useCommentComposeMedia(projectId: number, kind?: ImageKind) {
               ids.push(saved.id);
             }
           } catch {
-            setError("画像を送信できませんでした。もう一度お試しください。");
+            setError(options.messages.failed);
             return false;
           }
         }
@@ -177,26 +210,66 @@ export function CommentComposeTools({
   onMention?: () => void;
   children: ReactNode;
 }) {
-  const files = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-2">
       <DraftLinkPreview value={body} />
+      <CommentDraftFileList media={media} label="投稿前の添付画像" />
+      <div className="flex items-center justify-between gap-2 text-muted-foreground">
+        <div className="flex items-center gap-0.5">
+          {onMention ? (
+            <CommentIconButton
+              label="メンションを追加"
+              onClick={onMention}
+              disabled={media.sending}
+            >
+              <AtSignIcon aria-hidden="true" />
+            </CommentIconButton>
+          ) : null}
+          <CommentAttachButton
+            media={media}
+            label="画像を添付"
+            accept={commentImageTypes.join(",")}
+          />
+          <LinkInsertPopover
+            iconOnly
+            editor={editor}
+            onChange={onLinkChange}
+            disabled={media.sending}
+          />
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function CommentDraftFileList({
+  media,
+  label,
+}: {
+  media: ReturnType<typeof useCommentDraftFiles>;
+  label: string;
+}) {
+  return (
+    <>
       {media.images.length ? (
-        <ul
-          role="list"
-          aria-label="投稿前の添付画像"
-          className="flex flex-wrap gap-2"
-        >
+        <ul role="list" aria-label={label} className="flex flex-wrap gap-2">
           {media.images.map((image) => (
             <li key={image.preview} className="relative w-20 shrink-0">
-              <Image
-                src={image.preview}
-                alt={image.file.name}
-                width={80}
-                height={56}
-                unoptimized
-                className="h-14 w-20 rounded-md bg-muted object-contain"
-              />
+              {commentImageTypes.includes(image.file.type) ? (
+                <Image
+                  src={image.preview}
+                  alt={image.file.name}
+                  width={80}
+                  height={56}
+                  unoptimized
+                  className="h-14 w-20 rounded-md bg-muted object-contain"
+                />
+              ) : (
+                <span className="block break-words rounded-md bg-muted px-2 py-4 text-xs">
+                  {image.file.name}
+                </span>
+              )}
               <CommentIconButton
                 label={`${image.file.name}を添付から外す`}
                 variant="secondary"
@@ -215,49 +288,45 @@ export function CommentComposeTools({
           {media.error}
         </p>
       ) : null}
-      <div className="flex items-center justify-between gap-2 text-muted-foreground">
-        <div className="flex items-center gap-0.5">
-          {onMention ? (
-            <CommentIconButton
-              label="メンションを追加"
-              onClick={onMention}
-              disabled={media.sending}
-            >
-              <AtSignIcon aria-hidden="true" />
-            </CommentIconButton>
-          ) : null}
-          {media.addFiles ? (
-            <>
-              <input
-                ref={files}
-                type="file"
-                accept={acceptedTypes.join(",")}
-                multiple
-                hidden
-                onChange={(event) => {
-                  if (event.target.files?.length)
-                    media.addFiles?.(event.target.files);
-                  event.target.value = "";
-                }}
-              />
-              <CommentIconButton
-                label="画像を添付"
-                onClick={() => files.current?.click()}
-                disabled={media.sending || media.images.length >= countLimit}
-              >
-                <PaperclipIcon aria-hidden="true" />
-              </CommentIconButton>
-            </>
-          ) : null}
-          <LinkInsertPopover
-            iconOnly
-            editor={editor}
-            onChange={onLinkChange}
-            disabled={media.sending}
+    </>
+  );
+}
+
+export function CommentAttachButton({
+  media,
+  label,
+  accept,
+}: {
+  media: ReturnType<typeof useCommentDraftFiles>;
+  label: string;
+  accept: string;
+}) {
+  const files = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      {media.addFiles ? (
+        <>
+          <input
+            ref={files}
+            type="file"
+            accept={accept}
+            multiple
+            hidden
+            onChange={(event) => {
+              if (event.target.files?.length)
+                media.addFiles?.(event.target.files);
+              event.target.value = "";
+            }}
           />
-        </div>
-        {children}
-      </div>
-    </div>
+          <CommentIconButton
+            label={label}
+            onClick={() => files.current?.click()}
+            disabled={media.sending || media.images.length >= media.maxFiles}
+          >
+            <PaperclipIcon aria-hidden="true" />
+          </CommentIconButton>
+        </>
+      ) : null}
+    </>
   );
 }

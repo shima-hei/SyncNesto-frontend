@@ -33,7 +33,8 @@ export function NotificationList({
       let current = notification;
       if (
         !notification.is_read ||
-        notification.target_type === "fixed_approval"
+        notification.target_type === "fixed_approval" ||
+        notification.target_type === "shared_publication_comment"
       ) {
         current = await markRead.mutateAsync(notification.id);
         onRead?.();

@@ -8,6 +8,8 @@
 export type ListSharedRequirementApprovalsSharedPublicationsRequirementApprovalsGetParams =
   {
     publication_id?: string | null;
+    participation_id?: string | null;
+    responded?: boolean | null;
     /** @minimum 1 */
     page?: number;
     /**

@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { SharedPublicationSummaryOwnDecisionStatus } from "./sharedPublicationSummaryOwnDecisionStatus";
 
 /**
  * 一覧に内部ID・作成者・他宛先・組織情報を持ち込まない。
@@ -15,4 +16,8 @@ export interface SharedPublicationSummary {
   captured_at: string;
   expires_at: string;
   authorization_revision: string;
+  public_project_name: string | null;
+  shared_at: string;
+  own_decision_status?: SharedPublicationSummaryOwnDecisionStatus;
+  decision_refresh_at?: string | null;
 }

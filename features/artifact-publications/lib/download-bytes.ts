@@ -1,27 +1,39 @@
 import type { PublicFile } from "@/lib/api/generated/model";
 
 const MAX_BYTES = 20 * 1024 * 1024;
+const sharedFilePath =
+  /^\/api\/shared\/publications\/[a-f0-9-]{36}\/files\/[a-f0-9-]{36}\/content\?revision=[a-f0-9]{64}$/i;
+
+export function sharedFileContentPath(
+  publicationId: string,
+  fileId: string,
+  revision: string,
+): string {
+  return `/api/shared/publications/${encodeURIComponent(publicationId)}/files/${encodeURIComponent(fileId)}/content?revision=${encodeURIComponent(revision)}`;
+}
 
 export async function readSharedDownload(
   url: string,
   file: PublicFile,
   signal: AbortSignal,
 ): Promise<Blob> {
-  const target = new URL(url);
+  const sameOrigin = sharedFilePath.test(url);
+  const target = new URL(url, "http://localhost");
   if (
-    target.protocol !== "http:" ||
-    !["localhost", "127.0.0.1"].includes(target.hostname) ||
-    target.username ||
-    target.password ||
-    target.hash ||
-    !/^\/[^/]+\/delivery-v1\/[a-f0-9]{64}$/.test(target.pathname) ||
+    (!sameOrigin &&
+      (target.protocol !== "http:" ||
+        !["localhost", "127.0.0.1"].includes(target.hostname) ||
+        target.username ||
+        target.password ||
+        target.hash ||
+        !/^\/[^/]+\/delivery-v1\/[a-f0-9]{64}$/.test(target.pathname))) ||
     file.byte_size < 1 ||
     file.byte_size > MAX_BYTES
   )
     throw new Error("配信先を確認できません");
   signal.throwIfAborted();
-  const response = await fetch(target, {
-    credentials: "omit",
+  const response = await fetch(sameOrigin ? url : target, {
+    credentials: sameOrigin ? "same-origin" : "omit",
     cache: "no-store",
     referrerPolicy: "no-referrer",
     redirect: "error",

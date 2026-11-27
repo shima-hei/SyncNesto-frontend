@@ -12,4 +12,5 @@ import type { PublicFile } from "./publicFile";
 export interface SharedPublicationFiles {
   items: PublicFile[];
   authorization_revision: string;
+  download_allowed: boolean;
 }

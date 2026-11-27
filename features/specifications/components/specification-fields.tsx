@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -37,6 +37,8 @@ import type {
 import { reviewElementId, type Values } from "../lib/specification";
 
 type Review = (path: string, label: string) => void;
+type RenderReadOnlyText = (path: string, value: string) => ReactNode;
+const ReadOnlyText = createContext<RenderReadOnlyText | undefined>(undefined);
 function ReviewLabel({
   path,
   label,
@@ -98,6 +100,9 @@ export function TextField({
   maxLength?: number;
 }) {
   const id = reviewElementId(path);
+  const renderReadOnlyText = useContext(ReadOnlyText);
+  const readOnlyText =
+    readOnly && value ? renderReadOnlyText?.(path, value) : undefined;
   return (
     <Field
       id={id}
@@ -121,13 +126,14 @@ export function TextField({
       </div>
       {readOnly ? (
         <div className="min-h-8 whitespace-pre-wrap break-words text-sm">
-          {value && bodyImageField ? (
-            <MarkdownBodyText value={value} liveLinks={liveLinks} />
-          ) : value && (link || multiline) ? (
-            <LinkedText text={value} />
-          ) : (
-            value || "未記入"
-          )}
+          {readOnlyText ??
+            (value && bodyImageField ? (
+              <MarkdownBodyText value={value} liveLinks={liveLinks} />
+            ) : value && (link || multiline) ? (
+              <LinkedText text={value} />
+            ) : (
+              value || "未記入"
+            ))}
         </div>
       ) : multiline ? (
         <LinkTextarea
@@ -591,6 +597,7 @@ export function SpecificationFields({
   onReview,
   imageProjectId,
   liveLinks,
+  renderReadOnlyText,
 }: {
   values: Values;
   onChange: (values: Values) => void;
@@ -598,221 +605,224 @@ export function SpecificationFields({
   onReview?: Review;
   imageProjectId?: number;
   liveLinks?: boolean;
+  renderReadOnlyText?: RenderReadOnlyText;
 }) {
   const content = values.content;
   const set = (key: string, value: unknown) =>
     onChange({ ...values, content: { ...content, [key]: value } });
   return (
-    <FieldGroup className="min-w-0 gap-6">
-      <TextField
-        path="title"
-        label="設計書名（必須）"
-        value={values.title}
-        onChange={(title) => onChange({ ...values, title })}
-        readOnly={readOnly}
-        onReview={onReview}
-        maxLength={200}
-        placeholder={
-          content.type === "api" ? "例: ログインAPI…" : "例: ログイン画面…"
-        }
-      />
-      <TextField
-        path="summary"
-        label="目的・実現すること"
-        value={values.summary}
-        bodyImageField
-        liveLinks={liveLinks}
-        images={
-          imageProjectId
-            ? { projectId: imageProjectId, kind: "specification" }
-            : undefined
-        }
-        onChange={(summary) => onChange({ ...values, summary })}
-        multiline
-        readOnly={readOnly}
-        onReview={onReview}
-        maxLength={10000}
-        help="関連する要件を読み、誰が何をできるようにする設計かを書きます。"
-        placeholder="例: 登録済みの利用者が、安全にログインできる…"
-      />
-      {content.type === "api" ? (
-        <>
-          <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
-            <Field
-              id={reviewElementId("content/method")}
-              tabIndex={-1}
-              className="scroll-mt-24 focus:outline-2 focus:outline-ring"
-            >
-              <ReviewLabel
-                path="content/method"
-                label="HTTPメソッド"
-                inputId="specification-method"
+    <ReadOnlyText.Provider value={renderReadOnlyText}>
+      <FieldGroup className="min-w-0 gap-6">
+        <TextField
+          path="title"
+          label="設計書名（必須）"
+          value={values.title}
+          onChange={(title) => onChange({ ...values, title })}
+          readOnly={readOnly}
+          onReview={onReview}
+          maxLength={200}
+          placeholder={
+            content.type === "api" ? "例: ログインAPI…" : "例: ログイン画面…"
+          }
+        />
+        <TextField
+          path="summary"
+          label="目的・実現すること"
+          value={values.summary}
+          bodyImageField
+          liveLinks={liveLinks}
+          images={
+            imageProjectId
+              ? { projectId: imageProjectId, kind: "specification" }
+              : undefined
+          }
+          onChange={(summary) => onChange({ ...values, summary })}
+          multiline
+          readOnly={readOnly}
+          onReview={onReview}
+          maxLength={10000}
+          help="関連する要件を読み、誰が何をできるようにする設計かを書きます。"
+          placeholder="例: 登録済みの利用者が、安全にログインできる…"
+        />
+        {content.type === "api" ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
+              <Field
+                id={reviewElementId("content/method")}
+                tabIndex={-1}
+                className="scroll-mt-24 focus:outline-2 focus:outline-ring"
+              >
+                <ReviewLabel
+                  path="content/method"
+                  label="HTTPメソッド"
+                  inputId="specification-method"
+                  onReview={onReview}
+                />
+                {readOnly ? (
+                  <p className="text-sm">{content.method}</p>
+                ) : (
+                  <Select
+                    value={content.method ?? "GET"}
+                    onValueChange={(value) => set("method", value)}
+                  >
+                    <SelectTrigger id="specification-method">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {[
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE",
+                          "HEAD",
+                          "OPTIONS",
+                        ].map((method) => (
+                          <SelectItem key={method} value={method}>
+                            {method}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              </Field>
+              <TextField
+                path="content/path"
+                label="パス"
+                value={content.path}
+                onChange={(value) => set("path", value)}
+                readOnly={readOnly}
                 onReview={onReview}
+                maxLength={1000}
+                placeholder="例: /auth/login…"
               />
-              {readOnly ? (
-                <p className="text-sm">{content.method}</p>
-              ) : (
-                <Select
-                  value={content.method ?? "GET"}
-                  onValueChange={(value) => set("method", value)}
-                >
-                  <SelectTrigger id="specification-method">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {[
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "PATCH",
-                        "DELETE",
-                        "HEAD",
-                        "OPTIONS",
-                      ].map((method) => (
-                        <SelectItem key={method} value={method}>
-                          {method}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            </Field>
+            </div>
             <TextField
-              path="content/path"
-              label="パス"
-              value={content.path}
-              onChange={(value) => set("path", value)}
+              path="content/authentication"
+              label="認証方法"
+              value={content.authentication}
+              onChange={(value) => set("authentication", value)}
+              readOnly={readOnly}
+              onReview={onReview}
+              placeholder="例: ログイン済みセッションが必要…"
+            />
+            <TextField
+              path="content/authorization"
+              label="操作できる人・権限"
+              value={content.authorization}
+              onChange={(value) => set("authorization", value)}
+              readOnly={readOnly}
+              onReview={onReview}
+              placeholder="例: このプロジェクトの編集権限を持つメンバー…"
+            />
+            <Fields
+              title="リクエスト項目"
+              help="呼び出す側が渡す情報です。必須条件と入力規則を具体化します。"
+              path="content/request_fields"
+              rows={content.request_fields ?? []}
+              readOnly={readOnly}
+              onReview={onReview}
+              onChange={(rows) => set("request_fields", rows)}
+            />
+            <Fields
+              title="レスポンス項目"
+              help="呼び出した結果として返す情報です。"
+              path="content/response_fields"
+              rows={content.response_fields ?? []}
+              readOnly={readOnly}
+              onReview={onReview}
+              onChange={(rows) => set("response_fields", rows)}
+            />
+            <Rules
+              title="成功・エラー時の応答"
+              help="成功だけでなく、入力エラー・権限不足・競合時の応答も整理します。"
+              path="content/responses"
+              rows={content.responses ?? []}
+              nameLabel="HTTPステータス・エラーコード"
+              destinationLabel="応答の例"
+              readOnly={readOnly}
+              onReview={onReview}
+              onChange={(rows) => set("responses", rows)}
+            />
+          </>
+        ) : (
+          <>
+            <TextField
+              path="content/route"
+              label="画面URL・識別子"
+              value={content.route}
+              onChange={(value) => set("route", value)}
               readOnly={readOnly}
               onReview={onReview}
               maxLength={1000}
-              placeholder="例: /auth/login…"
+              placeholder="例: /login…"
             />
-          </div>
-          <TextField
-            path="content/authentication"
-            label="認証方法"
-            value={content.authentication}
-            onChange={(value) => set("authentication", value)}
-            readOnly={readOnly}
-            onReview={onReview}
-            placeholder="例: ログイン済みセッションが必要…"
-          />
-          <TextField
-            path="content/authorization"
-            label="操作できる人・権限"
-            value={content.authorization}
-            onChange={(value) => set("authorization", value)}
-            readOnly={readOnly}
-            onReview={onReview}
-            placeholder="例: このプロジェクトの編集権限を持つメンバー…"
-          />
-          <Fields
-            title="リクエスト項目"
-            help="呼び出す側が渡す情報です。必須条件と入力規則を具体化します。"
-            path="content/request_fields"
-            rows={content.request_fields ?? []}
-            readOnly={readOnly}
-            onReview={onReview}
-            onChange={(rows) => set("request_fields", rows)}
-          />
-          <Fields
-            title="レスポンス項目"
-            help="呼び出した結果として返す情報です。"
-            path="content/response_fields"
-            rows={content.response_fields ?? []}
-            readOnly={readOnly}
-            onReview={onReview}
-            onChange={(rows) => set("response_fields", rows)}
-          />
-          <Rules
-            title="成功・エラー時の応答"
-            help="成功だけでなく、入力エラー・権限不足・競合時の応答も整理します。"
-            path="content/responses"
-            rows={content.responses ?? []}
-            nameLabel="HTTPステータス・エラーコード"
-            destinationLabel="応答の例"
-            readOnly={readOnly}
-            onReview={onReview}
-            onChange={(rows) => set("responses", rows)}
-          />
-        </>
-      ) : (
-        <>
-          <TextField
-            path="content/route"
-            label="画面URL・識別子"
-            value={content.route}
-            onChange={(value) => set("route", value)}
-            readOnly={readOnly}
-            onReview={onReview}
-            maxLength={1000}
-            placeholder="例: /login…"
-          />
-          <TextField
-            path="content/audience"
-            label="利用する人・操作権限"
-            value={content.audience}
-            onChange={(value) => set("audience", value)}
-            readOnly={readOnly}
-            onReview={onReview}
-            placeholder="例: 未ログインの利用者…"
-          />
-          <TextField
-            path="content/reference_url"
-            label="デザイン・参考資料のURL（任意）"
-            link
-            value={content.reference_url}
-            onChange={(value) => set("reference_url", value || null)}
-            readOnly={readOnly}
-            onReview={onReview}
-            maxLength={2000}
-            placeholder="例: https://www.figma.com/design/…"
-          />
-          <Fields
-            title="入力・表示項目"
-            help="画面に必要な情報を、入力するものと表示するものに分けて整理します。"
-            path="content/fields"
-            rows={content.fields ?? []}
-            screen
-            readOnly={readOnly}
-            onReview={onReview}
-            onChange={(rows) => set("fields", rows)}
-          />
-          <Rules
-            title="操作・画面遷移"
-            help="ボタンを押したとき、何を確認してどの状態・画面に進むかを書きます。"
-            path="content/actions"
-            rows={content.actions ?? []}
-            nameLabel="操作名"
-            destinationLabel="遷移先・完了後の状態"
-            readOnly={readOnly}
-            onReview={onReview}
-            onChange={(rows) => set("actions", rows)}
-          />
-          <Rules
-            title="状態ごとの表示"
-            help="読込中、データなし、エラー、権限なし、完了時の表示を確認します。"
-            path="content/states"
-            rows={content.states ?? []}
-            nameLabel="状態"
-            readOnly={readOnly}
-            onReview={onReview}
-            onChange={(rows) => set("states", rows)}
-          />
-        </>
-      )}
-      <TextField
-        path="content/notes"
-        label="補足・まだ決まっていないこと"
-        value={content.notes}
-        onChange={(value) => set("notes", value)}
-        multiline
-        readOnly={readOnly}
-        onReview={onReview}
-        maxLength={20000}
-      />
-    </FieldGroup>
+            <TextField
+              path="content/audience"
+              label="利用する人・操作権限"
+              value={content.audience}
+              onChange={(value) => set("audience", value)}
+              readOnly={readOnly}
+              onReview={onReview}
+              placeholder="例: 未ログインの利用者…"
+            />
+            <TextField
+              path="content/reference_url"
+              label="デザイン・参考資料のURL（任意）"
+              link
+              value={content.reference_url}
+              onChange={(value) => set("reference_url", value || null)}
+              readOnly={readOnly}
+              onReview={onReview}
+              maxLength={2000}
+              placeholder="例: https://www.figma.com/design/…"
+            />
+            <Fields
+              title="入力・表示項目"
+              help="画面に必要な情報を、入力するものと表示するものに分けて整理します。"
+              path="content/fields"
+              rows={content.fields ?? []}
+              screen
+              readOnly={readOnly}
+              onReview={onReview}
+              onChange={(rows) => set("fields", rows)}
+            />
+            <Rules
+              title="操作・画面遷移"
+              help="ボタンを押したとき、何を確認してどの状態・画面に進むかを書きます。"
+              path="content/actions"
+              rows={content.actions ?? []}
+              nameLabel="操作名"
+              destinationLabel="遷移先・完了後の状態"
+              readOnly={readOnly}
+              onReview={onReview}
+              onChange={(rows) => set("actions", rows)}
+            />
+            <Rules
+              title="状態ごとの表示"
+              help="読込中、データなし、エラー、権限なし、完了時の表示を確認します。"
+              path="content/states"
+              rows={content.states ?? []}
+              nameLabel="状態"
+              readOnly={readOnly}
+              onReview={onReview}
+              onChange={(rows) => set("states", rows)}
+            />
+          </>
+        )}
+        <TextField
+          path="content/notes"
+          label="補足・まだ決まっていないこと"
+          value={content.notes}
+          onChange={(value) => set("notes", value)}
+          multiline
+          readOnly={readOnly}
+          onReview={onReview}
+          maxLength={20000}
+        />
+      </FieldGroup>
+    </ReadOnlyText.Provider>
   );
 }

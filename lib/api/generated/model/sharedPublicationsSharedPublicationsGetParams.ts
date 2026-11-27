@@ -7,9 +7,7 @@
 import type { SharedPublicationsSharedPublicationsGetKind } from "./sharedPublicationsSharedPublicationsGetKind";
 
 export type SharedPublicationsSharedPublicationsGetParams = {
-  /**
-   * @maxLength 200
-   */
+  /** @maxLength 200 */
   q?: string;
   kind?: SharedPublicationsSharedPublicationsGetKind;
   cursor?: string | null;
@@ -18,4 +16,5 @@ export type SharedPublicationsSharedPublicationsGetParams = {
    * @maximum 100
    */
   page_size?: number;
+  participation_id?: string | null;
 };

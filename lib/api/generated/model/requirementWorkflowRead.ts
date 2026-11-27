@@ -37,4 +37,5 @@ export interface RequirementWorkflowRead {
   participants: RequirementWorkflowParticipantRead[];
   approval_basis?: RequirementFormalApprovalBasis | null;
   external_review?: boolean;
+  external_approval?: boolean;
 }

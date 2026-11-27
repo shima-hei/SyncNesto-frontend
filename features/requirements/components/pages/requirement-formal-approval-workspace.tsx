@@ -20,7 +20,12 @@ import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { RevokeAccessDialog } from "@/features/artifact-publications/components/access-controls";
 import { SnapshotContent } from "@/features/artifact-releases/components/snapshot-content";
+import { useAuth } from "@/features/auth/providers/auth-provider";
+import { canReviewRequirement } from "@/features/auth/utils/authorization";
+import { cancelGuestApproval } from "@/features/guest-requirement-reviews/lib/api";
+import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { reviewTargetTitle } from "@/features/requirements/lib/requirement-workflow-review";
 import type {
   ArtifactNodeRead,
@@ -45,6 +50,8 @@ export function RequirementFormalApprovalWorkspace({
   requestId: string;
 }) {
   const client = useQueryClient();
+  const { user } = useAuth();
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -169,6 +176,34 @@ export function RequirementFormalApprovalWorkspace({
       <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b pb-4">
         <h1 className="text-xl font-semibold">要件定義書の正式承認</h1>
         <Badge variant="outline">{stateText}</Badge>
+        {request.external_approval &&
+          request.status === "requested" &&
+          user?.user_type === "internal" &&
+          canReviewRequirement(currentProjectRole) && (
+            <RevokeAccessDialog
+              label="承認依頼を取り消す"
+              description="この依頼と、依頼時に付与した共有許可を取り消します。"
+              version={request.version}
+              onConfirm={({ version, reason }) =>
+                cancelGuestApproval(projectId, requestId, { version, reason })
+              }
+              onRefresh={() =>
+                Promise.all([
+                  client.invalidateQueries({ queryKey }),
+                  client.invalidateQueries({
+                    queryKey: ["requirement-workflow", projectId],
+                  }),
+                  client.invalidateQueries({
+                    queryKey: [
+                      "requirement-workflow-review",
+                      projectId,
+                      requestId,
+                    ],
+                  }),
+                ])
+              }
+            />
+          )}
       </header>
       <section className="grid min-w-0 gap-3 border-b pb-4">
         <h2 className="text-2xl font-semibold tracking-tight [overflow-wrap:anywhere]">

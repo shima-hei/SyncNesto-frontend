@@ -7,7 +7,9 @@ import {
   useRef,
   useState,
   type ComponentProps,
+  type RefObject,
 } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { UserAvatar } from "@/components/shared/display/user-avatar";
 import {
@@ -22,43 +24,89 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { useListProjectMemberUsersProjectsProjectIdMemberUsersGet } from "@/lib/api/generated/projects/projects";
-import type { UserSummary } from "@/lib/api/generated/model/userSummary";
+import { listProjectMemberUsersProjectsProjectIdMemberUsersGet } from "@/lib/api/generated/projects/projects";
 import {
   getMentionQuery,
   reconcileMentions,
   type Mention,
   type MentionPermission,
   type MentionQuery,
+  type TextMention,
 } from "@/lib/comments/mentions";
 import { cn } from "@/lib/utils";
 
 import { CommentContent } from "./comment-content";
 
-type MentionTextareaProps = Omit<
+type MentionFields<M extends TextMention> = Omit<
   ComponentProps<typeof Textarea>,
   "value" | "onChange" | "ref"
 > & {
-  projectId: number;
-  permission: MentionPermission;
   value: string;
-  mentions?: Mention[];
-  onChange: (body: string, mentions: Mention[]) => void;
+  mentions?: M[];
+  onChange: (body: string, mentions: M[]) => void;
 };
 
-const emptyMentions: Mention[] = [];
+type MentionTextareaProps = MentionFields<Mention> & {
+  projectId: number;
+  permission: MentionPermission;
+};
+
+type Candidate = {
+  id: string | number;
+  name: string;
+  avatar_url?: string | null;
+  email?: string | null;
+};
 
 export function MentionTextarea({
   projectId,
   permission,
+  ...props
+}: MentionTextareaProps) {
+  return (
+    <MentionEditor
+      {...props}
+      candidateKey={["project-mention-candidates", projectId, permission]}
+      loadCandidates={async (q, signal) =>
+        (
+          await listProjectMemberUsersProjectsProjectIdMemberUsersGet(
+            projectId,
+            { q: q || undefined, limit: 30, mention_permission: permission },
+            { signal },
+          )
+        ).items
+      }
+      makeMention={(user, offsets): Mention => ({
+        ...offsets,
+        user_id: user.id,
+      })}
+    />
+  );
+}
+
+const emptyMentions: never[] = [];
+
+export function MentionEditor<M extends TextMention, C extends Candidate>({
+  candidateKey,
+  loadCandidates,
+  makeMention,
+  signal,
+  inputRef,
   value,
   mentions = emptyMentions,
   onChange,
   className,
   disabled,
   ...props
-}: MentionTextareaProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+}: MentionFields<M> & {
+  candidateKey: readonly unknown[];
+  loadCandidates: (q: string, signal: AbortSignal) => Promise<C[]>;
+  makeMention: (candidate: C, offsets: TextMention) => M;
+  signal?: AbortSignal;
+  inputRef?: RefObject<HTMLTextAreaElement | null>;
+}) {
+  const internalRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = inputRef ?? internalRef;
   const highlightRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const composing = useRef(false);
@@ -70,6 +118,7 @@ export function MentionTextarea({
   } | null>(null);
   const [queryLocation, setActive] = useState<MentionQuery | null>(null);
   const active =
+    !signal?.aborted &&
     queryLocation &&
     value.slice(queryLocation.start, queryLocation.end) ===
       `@${queryLocation.query}`
@@ -92,24 +141,34 @@ export function MentionTextarea({
     };
     textarea.addEventListener("beforeinput", captureSelection);
     return () => textarea.removeEventListener("beforeinput", captureSelection);
-  }, []);
+  }, [textareaRef]);
+
+  useEffect(() => {
+    if (!signal) return;
+    const close = () => setActive(null);
+    signal.addEventListener("abort", close, { once: true });
+    return () => signal.removeEventListener("abort", close);
+  }, [signal]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(queryText), 150);
     return () => clearTimeout(timer);
   }, [queryText]);
 
-  const query = useListProjectMemberUsersProjectsProjectIdMemberUsersGet(
-    projectId,
-    {
-      q: debouncedQuery || undefined,
-      limit: 30,
-      mention_permission: permission,
-    },
-    { query: { enabled: active !== null && !disabled, retry: false } },
-  );
+  const query = useQuery({
+    queryKey: [...candidateKey, debouncedQuery],
+    queryFn: ({ signal: request }) =>
+      loadCandidates(
+        debouncedQuery,
+        signal ? AbortSignal.any([signal, request]) : request,
+      ),
+    enabled: active !== null && !disabled,
+    retry: false,
+    gcTime: signal ? 0 : undefined,
+  });
   const waiting = queryText !== debouncedQuery || query.isFetching;
-  const candidates = waiting ? [] : (query.data?.items ?? []);
+  const candidates =
+    waiting || query.error || !active ? [] : (query.data ?? []);
   const selected =
     candidates.find((user) => String(user.id) === selectedId) ?? candidates[0];
   const selectedValue = selected ? String(selected.id) : "";
@@ -149,7 +208,7 @@ export function MentionTextarea({
     const observer = new ResizeObserver(sync);
     observer.observe(textarea);
     return () => observer.disconnect();
-  }, [value, mentions, className]);
+  }, [value, mentions, className, textareaRef]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -175,7 +234,7 @@ export function MentionTextarea({
       }
     });
     return () => cancelAnimationFrame(frame);
-  }, [active, selectedValue, waiting, disabled]);
+  }, [active, selectedValue, waiting, disabled, textareaRef]);
 
   function updateQuery(
     textarea: HTMLTextAreaElement,
@@ -193,19 +252,21 @@ export function MentionTextarea({
     setActive(getMentionQuery(body, textarea.selectionStart, currentMentions));
   }
 
-  function choose(user: UserSummary) {
-    if (!active || composing.current || imeCommit.current) return;
+  function choose(user: C) {
+    if (!active || signal?.aborted || composing.current || imeCommit.current)
+      return;
     const token = `@${user.name}`;
     const body =
       value.slice(0, active.start) + token + " " + value.slice(active.end);
     if (props.maxLength && body.length > props.maxLength) return;
     const nextMentions = reconcileMentions(value, body, mentions, active);
-    nextMentions.push({
-      user_id: user.id,
-      display_name: user.name,
-      start: active.start,
-      end: active.start + token.length,
-    });
+    nextMentions.push(
+      makeMention(user, {
+        display_name: user.name,
+        start: active.start,
+        end: active.start + token.length,
+      }),
+    );
     onChange(
       body,
       nextMentions.sort((a, b) => a.start - b.start),
@@ -393,9 +454,11 @@ export function MentionTextarea({
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate">{user.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {user.email}
-                      </p>
+                      {user.email && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
+                      )}
                     </div>
                   </CommandItem>
                 ))}

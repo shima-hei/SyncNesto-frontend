@@ -23,13 +23,11 @@ import { createPublication, previewPublication } from "../lib/api";
 
 export function RequirementPublicationPrepare({
   projectId,
-  documentId,
-  version,
+  source,
   onPrepared,
 }: {
   projectId: number;
-  documentId: number;
-  version: number;
+  source: ArtifactSource;
   onPrepared: (publicationId: string) => void;
 }) {
   const titleId = useId();
@@ -39,17 +37,32 @@ export function RequirementPublicationPrepare({
     publication?: PublicationPreviewRequest;
   }>({});
   const submissionLock = useRef(false);
-  const document = useQuery({
-    queryKey: ["requirement-publication-source", projectId, documentId],
-    queryFn: () => readSource(projectId, "requirement_document", documentId),
+  const label = {
+    requirement: "個別要件",
+    requirement_document: "要件定義書",
+    specification: "設計書",
+    test_design: "テスト設計書",
+  }[source.kind];
+  const canIncludeSources =
+    source.kind === "requirement" || source.kind === "requirement_document";
+  const sourceQuery = useQuery({
+    queryKey: [
+      "publication-source-to-prepare",
+      projectId,
+      source.kind,
+      source.id,
+    ],
+    queryFn: () => readSource(projectId, source.kind, source.id),
     retry: false,
   });
   const prepare = useMutation({
     mutationFn: async () => {
       const operation = attempt.current;
       if (!operation.release) {
+        const confirmedVersion = source.version || sourceQuery.data?.version;
+        if (!confirmedVersion) throw new Error("対象版を確認してください");
         const input = {
-          source: { kind: "requirement_document", id: documentId, version },
+          source: { ...source, version: confirmedVersion },
           included_sources: attachments,
           projection_version: "internal-preview-v2",
         } as const;
@@ -86,22 +99,23 @@ export function RequirementPublicationPrepare({
         !attempt.current.publication
       ) {
         attempt.current = {};
-        void document.refetch();
+        void sourceQuery.refetch();
       }
     },
     onSettled: () => {
       submissionLock.current = false;
     },
   });
-  if (document.isPending) return <Skeleton className="h-32" />;
-  if (document.error)
+  if (sourceQuery.isPending) return <Skeleton className="h-32" />;
+  if (sourceQuery.error)
     return (
       <DataLoadError
-        resourceName="要件定義書"
-        onRetry={() => void document.refetch()}
+        resourceName={label}
+        onRetry={() => void sourceQuery.refetch()}
       />
     );
-  const stale = document.data.version !== version;
+  const stale =
+    source.version > 0 && sourceQuery.data.version !== source.version;
 
   return (
     <form
@@ -116,32 +130,37 @@ export function RequirementPublicationPrepare({
       }}
     >
       <h2 id={titleId} className="text-lg font-semibold">
-        {document.data.title}
+        {sourceQuery.data.title}
       </h2>
       <p className="text-sm text-muted-foreground">
-        要件定義書全体の公開内容を準備します。準備後に本文を確認し、閲覧を許可する相手を選びます。
+        {canIncludeSources
+          ? `${label}と選択した関連資料で固定版を準備します。`
+          : `${label}の保存済み内容で固定版を準備します。`}
       </p>
-      <details className="rounded-md border p-3 text-sm">
-        <summary className="cursor-pointer">
-          添付資料{attachments.length ? `（${attachments.length}件）` : ""}
-        </summary>
-        <div className="mt-3">
-          <IncludedSourcesPicker
-            projectId={projectId}
-            value={attachments}
-            onChange={(value) => {
-              attempt.current = {};
-              prepare.reset();
-              setAttachments(value);
-            }}
-            disabled={prepare.isPending || stale}
-            limit={20}
-          />
-        </div>
-      </details>
+      {canIncludeSources && (
+        <details className="rounded-md border p-3 text-sm">
+          <summary className="cursor-pointer">
+            添付資料{attachments.length ? `（${attachments.length}件）` : ""}
+          </summary>
+          <div className="mt-3">
+            <IncludedSourcesPicker
+              projectId={projectId}
+              value={attachments}
+              onChange={(value) => {
+                attempt.current = {};
+                prepare.reset();
+                setAttachments(value);
+              }}
+              disabled={prepare.isPending || stale}
+              limit={20}
+            />
+          </div>
+        </details>
+      )}
       {stale ? (
         <p role="status" className="text-sm text-muted-foreground">
-          定義書が更新されました。定義書に戻り、最新の内容を確認してください。
+          {label}
+          が更新されました。元の画面に戻り、最新の内容を確認してください。
         </p>
       ) : null}
       <FormApiError error={prepare.error} />

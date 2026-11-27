@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ApprovalExceptionInput } from "./approvalExceptionInput";
+import type { PublicationShareInput } from "./publicationShareInput";
 
 /**
  * 現在許可済みの相手と、相手に示す依頼文・例外。
@@ -12,8 +13,10 @@ import type { ApprovalExceptionInput } from "./approvalExceptionInput";
 export interface GuestApprovalInput {
   publication_id: string;
   target_node_id: string;
-  grant_id: string;
+  grant_id?: string | null;
+  sharing?: PublicationShareInput | null;
   request_note?: string | null;
+  decision_expires_at?: string | null;
   /** @maxItems 1000 */
   exceptions?: ApprovalExceptionInput[];
 }

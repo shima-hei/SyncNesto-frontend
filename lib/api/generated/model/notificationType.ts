@@ -14,6 +14,7 @@ export type NotificationType =
 export const NotificationType = {
   assigned: "assigned",
   mentioned: "mentioned",
+  shared_comment_replied: "shared_comment_replied",
   task_returned: "task_returned",
   fixed_approval_requested: "fixed_approval_requested",
   fixed_approval_decided: "fixed_approval_decided",

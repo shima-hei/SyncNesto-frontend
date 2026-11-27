@@ -20,7 +20,10 @@ const fencedBlock =
   /^ {0,3}((?:`{3,}|~{3,}))[^\r\n]*\r?\n[\s\S]*?(?:^ {0,3}\1(?:(?<=`)`*|(?<=~)~*)[\x20\t]*(?=\r?$)|(?![\s\S]))/gm;
 const inlineCode = /(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g;
 
-export function editorLinks(source: string): EditorLink[] {
+export function editorLinks(
+  source: string,
+  includeSharedPaths = false,
+): EditorLink[] {
   const output: EditorLink[] = [];
   const protectedRanges = Array.from(source.matchAll(fencedBlock), (match) => [
     match.index,
@@ -42,7 +45,10 @@ export function editorLinks(source: string): EditorLink[] {
   const inCode = (position: number) =>
     protectedRanges.some(([start, end]) => position >= start && position < end);
   const addRaw = (offset: number, end: number) => {
-    for (const part of getCommentLinkSegments(source.slice(offset, end))) {
+    for (const part of getCommentLinkSegments(
+      source.slice(offset, end),
+      includeSharedPaths,
+    )) {
       const start = offset;
       offset += part.text.length;
       if (part.href && !inCode(start)) {

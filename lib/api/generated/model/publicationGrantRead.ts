@@ -18,6 +18,9 @@ export interface PublicationGrantRead {
   effective_status: PublicationGrantReadEffectiveStatus;
   expires_at: string;
   version: number;
+  download_allowed: boolean | null;
+  comment_allowed: boolean;
+  decision_only: boolean;
   revoked_at: string | null;
   revocation_reason: string | null;
 }

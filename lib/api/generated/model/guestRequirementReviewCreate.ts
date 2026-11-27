@@ -4,6 +4,7 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicationShareInput } from "./publicationShareInput";
 
 /**
  * 公開された版の選択範囲にレビューを依頼する。
@@ -11,11 +12,9 @@
 export interface GuestRequirementReviewCreate {
   publication_id: string;
   target_node_id: string;
-  /**
-   * @minItems 1
-   * @maxItems 25
-   */
-  grant_ids: string[];
+  /** @maxItems 25 */
+  grant_ids?: string[];
+  sharing?: PublicationShareInput | null;
   request_key: string;
   /** @pattern ^[a-f0-9]{64}$ */
   expected_public_digest: string;

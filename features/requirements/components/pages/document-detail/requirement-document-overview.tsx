@@ -51,6 +51,7 @@ import {
 } from "../../../lib/requirement-cache";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { SourceCommentTabs } from "@/features/artifact-publications/components/source-comment-tabs";
 import { CommentIconButton } from "@/components/shared/comments/comment-thread-actions";
 import {
   CommentPaneResizeHandle,
@@ -135,6 +136,7 @@ export function RequirementDocumentOverview({
       current[key] === value ? current : { ...current, [key]: value },
     );
   }, []);
+  const [internalCommentRequest, setInternalCommentRequest] = useState(0);
   const {
     sections,
     isLoading: isSectionsLoading,
@@ -194,6 +196,7 @@ export function RequirementDocumentOverview({
   };
   const selectCommentAnchor = (anchor: PreviewQuote) => {
     if (!canComment) return;
+    setInternalCommentRequest((request) => request + 1);
     if (reanchor) {
       setReanchor({ comment: reanchor.comment, selection: anchor });
       setReanchorError(undefined);
@@ -711,58 +714,12 @@ export function RequirementDocumentOverview({
                     : "hidden @min-[61rem]/document-overview:block"
                 }
               />
-              <RequirementTargetCommentsSection
+              <SourceCommentTabs
                 projectId={projectId}
-                targetType="document"
-                targetId={documentId}
-                title="コメント"
-                canComment={canComment}
-                selectedTargetAnchor={selectedTargetAnchor}
-                onTargetAnchorClick={handleTargetAnchorClick}
-                getTargetAnchorStatus={getTargetAnchorStatus}
-                onReanchor={(comment) => {
-                  setReanchor({ comment });
-                  setReanchorError(undefined);
-                  scrollToRequirementContent(articleRef.current);
-                }}
-                anchorEditor={
-                  reanchor ? (
-                    <div className="flex flex-col gap-2 border-t p-3 text-sm">
-                      <p role="status">
-                        {reanchor.selection
-                          ? "新しい引用箇所を確認してください。"
-                          : "本文から新しい引用箇所を選択してください。"}
-                      </p>
-                      {reanchor.selection ? (
-                        <blockquote className="border-s-2 ps-2 break-words">
-                          {reanchor.selection.quote}
-                        </blockquote>
-                      ) : null}
-                      <FormApiError error={reanchorError} />
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={!reanchor.selection || savingAnchor}
-                          onClick={() => void confirmReanchor()}
-                        >
-                          引用箇所を更新
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={savingAnchor}
-                          onClick={() => setReanchor(null)}
-                        >
-                          キャンセル
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null
-                }
-                showTargetAnchorInput={false}
-                headerAction={
+                sourceKind="requirement_document"
+                sourceId={documentId}
+                internalRequest={internalCommentRequest}
+                action={
                   <CommentIconButton
                     label="コメントを閉じる"
                     onClick={() => {
@@ -773,18 +730,74 @@ export function RequirementDocumentOverview({
                     <PanelRightCloseIcon aria-hidden="true" />
                   </CommentIconButton>
                 }
-                className={
+                className={cn(
+                  "px-3",
                   outlineOpen
                     ? "@min-[76rem]/document-overview:h-[calc(100dvh-8rem)]"
-                    : "@min-[61rem]/document-overview:h-[calc(100dvh-8rem)]"
-                }
-                contentClassName={cn(
-                  "max-h-[55dvh] overflow-y-auto overscroll-contain",
-                  outlineOpen
-                    ? "@min-[76rem]/document-overview:max-h-none"
-                    : "@min-[61rem]/document-overview:max-h-none",
+                    : "@min-[61rem]/document-overview:h-[calc(100dvh-8rem)]",
                 )}
-              />
+              >
+                <RequirementTargetCommentsSection
+                  projectId={projectId}
+                  targetType="document"
+                  targetId={documentId}
+                  title="コメント"
+                  canComment={canComment}
+                  selectedTargetAnchor={selectedTargetAnchor}
+                  onTargetAnchorClick={handleTargetAnchorClick}
+                  getTargetAnchorStatus={getTargetAnchorStatus}
+                  onReanchor={(comment) => {
+                    setReanchor({ comment });
+                    setReanchorError(undefined);
+                    scrollToRequirementContent(articleRef.current);
+                  }}
+                  anchorEditor={
+                    reanchor ? (
+                      <div className="flex flex-col gap-2 border-t p-3 text-sm">
+                        <p role="status">
+                          {reanchor.selection
+                            ? "新しい引用箇所を確認してください。"
+                            : "本文から新しい引用箇所を選択してください。"}
+                        </p>
+                        {reanchor.selection ? (
+                          <blockquote className="border-s-2 ps-2 break-words">
+                            {reanchor.selection.quote}
+                          </blockquote>
+                        ) : null}
+                        <FormApiError error={reanchorError} />
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!reanchor.selection || savingAnchor}
+                            onClick={() => void confirmReanchor()}
+                          >
+                            引用箇所を更新
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={savingAnchor}
+                            onClick={() => setReanchor(null)}
+                          >
+                            キャンセル
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null
+                  }
+                  showTargetAnchorInput={false}
+                  className="h-full"
+                  contentClassName={cn(
+                    "max-h-[55dvh] overflow-y-auto overscroll-contain",
+                    outlineOpen
+                      ? "@min-[76rem]/document-overview:max-h-none"
+                      : "@min-[61rem]/document-overview:max-h-none",
+                  )}
+                  embedded
+                />
+              </SourceCommentTabs>
             </>
           ) : null}
         </aside>

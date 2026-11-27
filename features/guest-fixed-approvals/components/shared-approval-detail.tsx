@@ -346,6 +346,7 @@ export function SharedApprovalDetail({
               key={`${row.authorization_revision}:files`}
               publicationId={publicationId}
               files={value.content.metadata.content.files}
+              downloadAllowed={value.content.downloadAllowed}
               revision={row.authorization_revision}
               signal={data.operationSignal}
             />

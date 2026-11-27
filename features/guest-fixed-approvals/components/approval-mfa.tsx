@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { startMfaReauthenticationAuthMfaReauthPost } from "@/lib/api/generated/mfa/mfa";
 
 export function ApprovalMfa({ returnTo }: { returnTo: string }) {
+  const passwordId = useId();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -48,11 +49,9 @@ export function ApprovalMfa({ returnTo }: { returnTo: string }) {
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="approval-reauth-password">
-                現在のパスワード
-              </FieldLabel>
+              <FieldLabel htmlFor={passwordId}>現在のパスワード</FieldLabel>
               <Input
-                id="approval-reauth-password"
+                id={passwordId}
                 name="password"
                 type="password"
                 autoComplete="current-password"

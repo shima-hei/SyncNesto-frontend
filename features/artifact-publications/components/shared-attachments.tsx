@@ -1,21 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { PublicFile } from "@/lib/api/generated/model";
 import { displayBytes } from "@/features/artifact-releases/lib/display";
-import { downloadSharedFile } from "../lib/access-api";
-import { readSharedDownload } from "../lib/download-bytes";
+import {
+  readSharedDownload,
+  sharedFileContentPath,
+} from "../lib/download-bytes";
 
 export function SharedAttachments({
   publicationId,
   files,
+  downloadAllowed,
   revision,
   signal,
 }: {
   publicationId: string;
   files: PublicFile[];
+  downloadAllowed: boolean;
   revision: string;
   signal?: AbortSignal;
 }) {
@@ -69,21 +74,14 @@ export function SharedAttachments({
         document.visibilityState === "visible" &&
         navigator.onLine;
       setActive(file.id);
-      setPhase("準備中");
+      setPhase("取得中");
       setFeedback((old) => ({ ...old, [file.id]: "" }));
       try {
-        const link = await downloadSharedFile(
-          publicationId,
-          file.id,
-          { expected_authorization_revision: revision },
-          { signal: operation.signal },
+        const blob = await readSharedDownload(
+          sharedFileContentPath(publicationId, file.id, revision),
+          file,
+          operation.signal,
         );
-        if (!valid() || link.authorization_revision !== revision) return;
-        const expiresAt = Date.parse(link.expires_at);
-        if (!Number.isFinite(expiresAt) || expiresAt <= Date.now())
-          throw new Error("期限切れ");
-        setPhase("取得中");
-        const blob = await readSharedDownload(link.url, file, operation.signal);
         if (!valid()) return;
         const href = URL.createObjectURL(blob);
         blobs.current.add(href);
@@ -130,28 +128,51 @@ export function SharedAttachments({
               <span className="min-w-0 break-all text-sm">
                 {file.filename} · {displayBytes(file.byte_size)}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={active !== null || !signal}
-                onClick={() => void start(file)}
-                aria-label={`${file.filename}をダウンロード`}
-              >
-                {active === file.id ? (
-                  <>
-                    <Spinner data-icon="inline-start" />
-                    {phase}
-                  </>
-                ) : (
-                  "ダウンロード"
-                )}
-              </Button>
+              {downloadAllowed && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={active !== null || !signal}
+                  onClick={() => void start(file)}
+                  aria-label={`${file.filename}をダウンロード`}
+                >
+                  {active === file.id ? (
+                    <>
+                      <Spinner data-icon="inline-start" />
+                      {phase}
+                    </>
+                  ) : (
+                    "ダウンロード"
+                  )}
+                </Button>
+              )}
               {active === file.id ? (
                 <Button variant="ghost" size="sm" onClick={() => cancel(file)}>
                   取消
                 </Button>
               ) : null}
             </div>
+            {signal &&
+            [
+              "image/png",
+              "image/jpeg",
+              "image/gif",
+              "image/webp",
+              "image/avif",
+            ].includes(file.content_type) ? (
+              <Image
+                unoptimized
+                loading="lazy"
+                width={320}
+                height={180}
+                className="h-auto max-h-72 max-w-full rounded-md border object-contain object-left"
+                src={
+                  sharedFileContentPath(publicationId, file.id, revision) +
+                  "&inline=true"
+                }
+                alt={file.filename}
+              />
+            ) : null}
             <p aria-live="polite" className="text-sm text-muted-foreground">
               {feedback[file.id]}
             </p>
