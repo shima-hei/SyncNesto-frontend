@@ -11,13 +11,8 @@ import {
 import { ImagePlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { apiClient } from "@/lib/api/client";
+import { discardBodyImage, uploadBodyImage } from "@/lib/api/body-image-upload";
 import { textareaDropOffset } from "@/lib/comments/textarea-drop-offset";
-import { fileUploadMetadata, uploadWithPlan } from "@/lib/api/file-upload";
-import type {
-  CommentImageRead,
-  FileUploadPlan,
-} from "@/lib/api/generated/model";
 import {
   bodyImagePrefix,
   imageMarkdown,
@@ -37,35 +32,6 @@ type Job = {
   path: string;
   error?: string;
 };
-
-function discard(path: string, imageId: string) {
-  void apiClient(`${path}/${imageId}`, { method: "DELETE" }).catch(() => {});
-}
-
-async function upload(file: File, path: string) {
-  const filename = file.name || "image.png";
-  const plan = await apiClient<FileUploadPlan>(`${path}/upload-plan`, {
-    method: "POST",
-    body: JSON.stringify(fileUploadMetadata(file, filename)),
-  });
-  return uploadWithPlan(
-    file,
-    plan,
-    () => {
-      const form = new FormData();
-      form.append("file", file, filename);
-      return apiClient<CommentImageRead>(`${path}/upload`, {
-        method: "POST",
-        body: form,
-      });
-    },
-    (token) =>
-      apiClient<CommentImageRead>(`${path}/upload-complete`, {
-        method: "POST",
-        body: JSON.stringify({ upload_token: token }),
-      }),
-  );
-}
 
 export function useMarkdownImageInsert({
   value,
@@ -150,13 +116,13 @@ export function useMarkdownImageInsert({
 
   async function run(job: Job) {
     try {
-      const image = await upload(job.file, job.path);
+      const image = await uploadBodyImage(job.file, job.path);
       if (
         !mounted.current ||
         latest.current.path !== job.path ||
         !latest.current.value.includes(job.marker)
       ) {
-        discard(job.path, image.id);
+        discardBodyImage(job.path, image.id);
         return;
       }
       const alt = image.filename.replace(/\.[^.]+$/, "") || "画像";

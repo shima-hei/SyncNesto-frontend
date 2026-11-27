@@ -1,11 +1,13 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { discardBodyImage, uploadBodyImage } from "@/lib/api/body-image-upload";
+import { bodyImageId, bodyImagePrefix } from "@/lib/markdown-body-images";
 import type { HtmlMockup } from "@/lib/api/generated/model";
 import { downloadDesign, previewMockup } from "../../lib/workspace";
 import { MockupPreviewFrame } from "./mockup-preview-frame";
@@ -29,6 +31,19 @@ export function HtmlMockupEditor({
   const [selected, setSelected] = useState(items[0]?.id);
   const [mode, setMode] = useState<"split" | "code" | "preview">("split");
   const [notice, setNotice] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const uploadActive = useRef(false);
+  const current = useRef({ items, onChange, projectId });
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    current.current = { items, onChange, projectId };
+  }, [items, onChange, projectId]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const item = items.find((value) => value.id === selected) ?? items[0];
   const preview = useMutation({
     mutationFn: (data: HtmlMockup) => previewMockup(projectId, data),
@@ -62,8 +77,13 @@ export function HtmlMockupEditor({
       setNotice("ファイルを読み込めませんでした。");
     }
   };
-  const imageFile = (file: File) => {
-    if (!item) return;
+  const imageFile = async (file: File) => {
+    const id = item?.id;
+    if (!id || uploadActive.current) return;
+    if (images.size >= 8) {
+      setNotice("モックアップに配置できる画像は8枚までです。");
+      return;
+    }
     if (
       file.size > maxImageBytes ||
       !["image/png", "image/jpeg", "image/webp"].includes(file.type)
@@ -71,22 +91,42 @@ export function HtmlMockupEditor({
       setNotice("65KB以内のPNG・JPEG・WebP画像を選択してください。");
       return;
     }
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      if (typeof reader.result !== "string") return;
-      const html = `${item.html ?? ""}\n<img src="${reader.result}" alt="">`;
+    const path = `/projects/${projectId}/body-images/specification`;
+    uploadActive.current = true;
+    setUploading(true);
+    setNotice("");
+    try {
+      const image = await uploadBodyImage(file, path);
+      const values = current.current;
+      const target = values.items.find((mockup) => mockup.id === id);
+      if (!mounted.current || values.projectId !== projectId || !target) {
+        discardBodyImage(path, image.id);
+        return;
+      }
+      const html = `${target.html ?? ""}\n<img src="${bodyImagePrefix}${image.id}" alt="">`;
       if (html.length > 100_000) {
+        discardBodyImage(path, image.id);
         setNotice("HTMLの上限を超えるため追加できません。");
         return;
       }
-      update({ ...item, html });
+      values.onChange(
+        values.items.map((mockup) =>
+          mockup.id === id ? { ...mockup, html } : mockup,
+        ),
+      );
       setNotice("");
-    });
-    reader.addEventListener("error", () =>
-      setNotice("画像を読み込めませんでした。"),
-    );
-    reader.readAsDataURL(file);
+    } catch {
+      if (mounted.current) setNotice("画像をアップロードできませんでした。");
+    } finally {
+      uploadActive.current = false;
+      if (mounted.current) setUploading(false);
+    }
   };
+  const images = new Set(
+    [...(item?.html ?? "").matchAll(/<img\b[^>]*?\ssrc=["']([^"']+)["']/gi)]
+      .map((entry) => bodyImageId(entry[1]))
+      .filter((id): id is string => Boolean(id)),
+  );
   return (
     <section className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -191,7 +231,7 @@ export function HtmlMockupEditor({
             <Button
               variant="outline"
               size="sm"
-              disabled={preview.isPending}
+              disabled={preview.isPending || uploading}
               onClick={() => preview.mutate(item)}
             >
               プレビューを更新
@@ -210,10 +250,19 @@ export function HtmlMockupEditor({
             >
               CSS原本
             </Button>
+            {Array.from(images, (id, index) => (
+              <Button key={id} asChild variant="ghost" size="sm">
+                <a href={`${bodyImagePrefix}${id}`} download>
+                  画像 {index + 1}
+                </a>
+              </Button>
+            ))}
           </div>
-          {(notice || activePreview?.css_blocked) && (
+          {(uploading || notice || activePreview?.css_blocked) && (
             <p role="status" className="text-sm text-muted-foreground">
-              {notice || "外部参照を含むCSSをプレビューから除外しました。"}
+              {uploading
+                ? "画像をアップロード中…"
+                : notice || "外部参照を含むCSSをプレビューから除外しました。"}
             </p>
           )}
           <FormApiError error={preview.error} />
@@ -247,7 +296,7 @@ export function HtmlMockupEditor({
                         const file = event.clipboardData.files[0];
                         if (!readOnly && property === "html" && file) {
                           event.preventDefault();
-                          imageFile(file);
+                          void imageFile(file);
                         }
                       }}
                     />
@@ -271,9 +320,11 @@ export function HtmlMockupEditor({
                     aria-label="モックアップ画像"
                     accept="image/png,image/jpeg,image/webp"
                     className="max-w-full text-xs"
+                    disabled={uploading}
                     onChange={(event) => {
                       const file = event.currentTarget.files?.[0];
-                      if (file) imageFile(file);
+                      event.currentTarget.value = "";
+                      if (file) void imageFile(file);
                     }}
                   />
                 )}
