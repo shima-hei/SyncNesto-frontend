@@ -37,7 +37,7 @@ export type RenderedQuote = {
   offset_unit: "unicode_code_point";
 };
 
-function projection(root: HTMLElement) {
+function projection(root: HTMLElement, includePositions = true) {
   const values: string[] = [];
   const points: Array<Point | null> = [];
   const append = (character: string, point: Point | null) => {
@@ -46,17 +46,18 @@ function projection(root: HTMLElement) {
       character = " ";
     }
     values.push(character);
-    points.push(point);
+    if (includePositions) points.push(point);
   };
   const visit = (node: Node) => {
     if (node instanceof Text) {
       let offset = 0;
       for (const character of node.data) {
-        append(character, {
-          node,
-          start: offset,
-          end: offset + character.length,
-        });
+        append(
+          character,
+          includePositions
+            ? { node, start: offset, end: offset + character.length }
+            : null,
+        );
         offset += character.length;
       }
     } else if (node instanceof Element && !node.matches(ignored)) {
@@ -75,7 +76,7 @@ function projection(root: HTMLElement) {
 }
 
 export function renderedText(root: HTMLElement) {
-  return projection(root).values.join("");
+  return projection(root, false).values.join("");
 }
 
 export function quoteRenderedRange(
@@ -214,14 +215,19 @@ export function showQuoteRange(range: Range) {
       : "smooth",
   });
   const highlights = globalThis.CSS?.highlights;
+  window.clearTimeout(highlightTimer);
   if (!highlights || typeof Highlight === "undefined") {
     const selection = range.startContainer.ownerDocument?.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
+    highlightTimer = window.setTimeout(() => {
+      if (selection?.rangeCount === 1 && selection.getRangeAt(0) === range) {
+        selection.removeAllRanges();
+      }
+    }, 1800);
     return;
   }
   highlights.set("document-review-quote", new Highlight(range));
-  window.clearTimeout(highlightTimer);
   highlightTimer = window.setTimeout(
     () => highlights.delete("document-review-quote"),
     1800,
