@@ -25,6 +25,13 @@ import type {
   WireframeComponent,
 } from "@/lib/api/generated/model";
 import { cn } from "@/lib/utils";
+import {
+  applyWireframePart,
+  enclosingPart,
+  wireframePartDefinition,
+  wireframeSubtree,
+} from "../../lib/wireframe-parts";
+import { WireframePartDialog } from "./wireframe-part-dialog";
 
 const componentLabels = {
   text: "テキスト",
@@ -175,6 +182,8 @@ function componentPreview(item: WireframeComponent, text: string) {
 }
 
 export function WireframeEditor({
+  projectId,
+  canRegisterParts,
   items,
   fields,
   events,
@@ -184,6 +193,8 @@ export function WireframeEditor({
   readOnly,
   onReview,
 }: {
+  projectId: number;
+  canRegisterParts: boolean;
   items: WireframeArtboard[];
   fields: SpecificationField[];
   events: ScreenEvent[];
@@ -223,6 +234,7 @@ export function WireframeEditor({
   const board = items.find((item) => item.id === boardId) ?? items[0];
   const components = board?.components ?? [];
   const active = components.find((item) => item.id && selection.has(item.id));
+  const partPlacement = active ? enclosingPart(components, active) : undefined;
   const save = (next: WireframeArtboard[]) => {
     setHistory({ past: [...history.past.slice(-29), items], future: [] });
     onChange(next);
@@ -277,7 +289,21 @@ export function WireframeEditor({
     components.filter(
       (item) => item.id && selection.has(item.id) && !item.locked,
     );
+  const selectionWithParts = () => {
+    const selected = selectedItems();
+    const roots = new Set(
+      selected.flatMap((item) => (item.id && item.part_pin ? [item.id] : [])),
+    );
+    if (!roots.size) return selected;
+    const partLayers = new Set(
+      wireframeSubtree(components, roots).map((item) => item.id),
+    );
+    return components.filter(
+      (item) => selected.includes(item) || partLayers.has(item.id),
+    );
+  };
   const duplicate = (values: WireframeComponent[]) => {
+    if (components.length + values.length > 200) return;
     const ids = new Map(values.map((item) => [item.id, crypto.randomUUID()]));
     const created = values.map((item) => ({
       ...item,
@@ -287,8 +313,25 @@ export function WireframeEditor({
         (components.some((entry) => entry.id === item.parent_id)
           ? item.parent_id
           : null),
-      x: (item.x ?? 0) + 16,
-      y: (item.y ?? 0) + 16,
+      x: Math.min(
+        10000,
+        (item.x ?? 0) + (ids.has(item.parent_id ?? undefined) ? 0 : 16),
+      ),
+      y: Math.min(
+        10000,
+        (item.y ?? 0) + (ids.has(item.parent_id ?? undefined) ? 0 : 16),
+      ),
+      part_pin: item.part_pin
+        ? {
+            ...item.part_pin,
+            layer_ids: Object.fromEntries(
+              Object.entries(item.part_pin.layer_ids).flatMap(([key, id]) => {
+                const next = ids.get(id);
+                return next ? [[key, next]] : [];
+              }),
+            ),
+          }
+        : undefined,
     }));
     updateComponents([...components, ...created]);
     setSelection(
@@ -296,7 +339,7 @@ export function WireframeEditor({
     );
   };
   const remove = () => {
-    const removed = new Set(selectedItems().map((item) => item.id));
+    const removed = new Set(selectionWithParts().map((item) => item.id));
     updateComponents(
       components
         .filter((item) => !removed.has(item.id))
@@ -497,7 +540,7 @@ export function WireframeEditor({
           event.key.toLowerCase() === "d"
         ) {
           event.preventDefault();
-          duplicate(selectedItems());
+          duplicate(selectionWithParts());
         }
         if (
           (event.metaKey || event.ctrlKey) &&
@@ -505,7 +548,7 @@ export function WireframeEditor({
           selection.size
         ) {
           event.preventDefault();
-          clipboard.current = selectedItems();
+          clipboard.current = selectionWithParts();
         }
         if (
           (event.metaKey || event.ctrlKey) &&
@@ -580,7 +623,7 @@ export function WireframeEditor({
               size="icon-sm"
               aria-label="選択要素を複製"
               disabled={!active}
-              onClick={() => duplicate(selectedItems())}
+              onClick={() => duplicate(selectionWithParts())}
             >
               <CopyIcon />
             </Button>
@@ -589,7 +632,7 @@ export function WireframeEditor({
               size="sm"
               disabled={!active}
               onClick={() => {
-                clipboard.current = selectedItems();
+                clipboard.current = selectionWithParts();
               }}
             >
               コピー
@@ -636,6 +679,46 @@ export function WireframeEditor({
             >
               左揃え
             </Button>
+            {board && !preview && (
+              <WireframePartDialog
+                key={board.id}
+                projectId={projectId}
+                canRegister={canRegisterParts}
+                placement={partPlacement?.locked ? undefined : partPlacement}
+                selection={() =>
+                  wireframePartDefinition(
+                    board,
+                    wireframeSubtree(
+                      components,
+                      new Set(
+                        selectedItems().flatMap((item) =>
+                          item.id ? [item.id] : [],
+                        ),
+                      ),
+                    ),
+                  )
+                }
+                revision={() =>
+                  partPlacement?.id
+                    ? wireframePartDefinition(
+                        board,
+                        wireframeSubtree(
+                          components,
+                          new Set([partPlacement.id]),
+                        ).filter((layer) => layer.id !== partPlacement.id),
+                        partPlacement,
+                      )
+                    : null
+                }
+                onApply={(part, target) => {
+                  const next = applyWireframePart(components, part, target);
+                  if (next.components.length > 200) return false;
+                  updateComponents(next.components);
+                  setSelection(new Set([next.rootId]));
+                  return true;
+                }}
+              />
+            )}
           </>
         )}
         <Button
@@ -713,6 +796,7 @@ export function WireframeEditor({
                     }}
                   >
                     {item.name}
+                    {item.part_pin ? ` · 版 ${item.part_pin.version}` : ""}
                     {item.locked ? " · ロック" : ""}
                     {item.hidden ? " · 非表示" : ""}
                   </button>
@@ -786,6 +870,12 @@ export function WireframeEditor({
               </h4>
               {active ? (
                 <>
+                  {partPlacement?.part_pin && (
+                    <p className="rounded-md bg-muted px-2 py-1 font-medium">
+                      共通部品 {partPlacement.name} · 配置版{" "}
+                      {partPlacement.part_pin.version}
+                    </p>
+                  )}
                   <Input
                     aria-label="要素の名前"
                     value={active.name ?? ""}

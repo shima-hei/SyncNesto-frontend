@@ -114,6 +114,7 @@ export function SpecificationPage({
       row={query.data}
       inline={inline}
       canEdit={canUpdateDocument(currentProjectRole)}
+      canRegisterParts={canCreateDocument(currentProjectRole)}
       canDelete={canDeleteDocument(currentProjectRole)}
       canApprove={canReviewRequirement(currentProjectRole)}
     />
@@ -126,6 +127,7 @@ function DesignEditor({
   projectId,
   row,
   canEdit,
+  canRegisterParts,
   canDelete,
   canApprove,
   inline,
@@ -133,6 +135,7 @@ function DesignEditor({
   projectId: number;
   row: SpecificationRead;
   canEdit: boolean;
+  canRegisterParts: boolean;
   canDelete: boolean;
   canApprove: boolean;
   inline: boolean;
@@ -477,6 +480,7 @@ function DesignEditor({
           values={current}
           tab={tab}
           readOnly={!canEdit}
+          canRegisterParts={canRegisterParts}
           onChange={(values) =>
             setDraft({
               values,

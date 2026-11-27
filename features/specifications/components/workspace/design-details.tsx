@@ -149,6 +149,7 @@ export function DesignDetails({
   onReview,
   revision,
   dirty = false,
+  canRegisterParts = false,
 }: {
   projectId: number;
   id?: number;
@@ -159,6 +160,7 @@ export function DesignDetails({
   onReview?: Review;
   revision?: number;
   dirty?: boolean;
+  canRegisterParts?: boolean;
 }) {
   const { content } = values;
   const [layout, setLayout] = useState("wireframe");
@@ -358,6 +360,8 @@ export function DesignDetails({
           </div>
           {layout === "wireframe" ? (
             <Wireframes
+              projectId={projectId}
+              canRegisterParts={canRegisterParts}
               items={content.artboards ?? []}
               fields={content.fields ?? []}
               events={content.actions ?? []}

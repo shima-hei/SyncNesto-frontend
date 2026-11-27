@@ -41,7 +41,12 @@ import type {
   PlacementRead,
   PlacementUpdate,
   ReadDesignImpactProjectsProjectIdDesignWorkspaceImpactSpecificationIdGetParams,
+  ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
   SpecificationRead,
+  WireframePartCreate,
+  WireframePartRead,
+  WireframePartSummary,
+  WireframePartUpdate,
 } from "../model";
 
 import { apiClient } from "../../client";
@@ -1668,6 +1673,886 @@ export const usePreviewDesignMockupProjectsProjectIdDesignWorkspaceMockupPreview
   > => {
     return useMutation(
       getPreviewDesignMockupProjectsProjectIdDesignWorkspaceMockupPreviewPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/design-workspace/wireframe-parts`;
+  };
+
+/**
+ * 案件の共通部品一覧を取得する。
+ * @summary Design Wireframe Parts
+ */
+export const designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet =
+  async (
+    projectId: number,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<WireframePartSummary[]> => {
+    return apiClient<WireframePartSummary[]>(
+      getDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetQueryKey =
+  (projectId: number) => {
+    return [`/projects/${projectId}/design-workspace/wireframe-parts`] as const;
+  };
+
+export const getDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetQueryKey(
+        projectId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+        >
+      >
+    > = ({ signal }) =>
+      designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet(
+        projectId,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type DesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+      >
+    >
+  >;
+export type DesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 案件の共通部品一覧を取得する。
+ * @summary Design Wireframe Parts
+ */
+export function useDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 案件の共通部品一覧を取得する。
+ * @summary Design Wireframe Parts
+ */
+export function useDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 案件の共通部品一覧を取得する。
+ * @summary Design Wireframe Parts
+ */
+export function useDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 案件の共通部品一覧を取得する。
+ * @summary Design Wireframe Parts
+ */
+export function useDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getDesignWireframePartsProjectsProjectIdDesignWorkspaceWireframePartsGetQueryOptions(
+      projectId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/design-workspace/wireframe-parts`;
+  };
+
+/**
+ * 選んだレイアウトを案件共通部品として登録する。
+ * @summary Create Design Wireframe Part
+ */
+export const createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost =
+  async (
+    projectId: number,
+    wireframePartCreate: WireframePartCreate,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<WireframePartRead> => {
+    return apiClient<WireframePartRead>(
+      getCreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(wireframePartCreate),
+      },
+    );
+  };
+
+export const getCreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationKey =
+  () =>
+    [
+      "createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost",
+    ] as const;
+
+export const getCreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost
+        >
+      >,
+      TError,
+      CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost
+      >
+    >,
+    TError,
+    CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getCreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost
+        >
+      >,
+      CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationVariables
+    > = (props) => {
+      const { projectId, data } = props ?? {};
+
+      return createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost(
+        projectId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost
+      >
+    >
+  >;
+export type CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationBody =
+  BodyType<WireframePartCreate>;
+export type CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationVariables =
+  { projectId: number; data: BodyType<WireframePartCreate> };
+
+/**
+ * 選んだレイアウトを案件共通部品として登録する。
+ * @summary Create Design Wireframe Part
+ */
+export const useCreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost
+          >
+        >,
+        TError,
+        CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof createDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPost
+      >
+    >,
+    TError,
+    CreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getCreateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetUrl =
+  (
+    projectId: number,
+    partId: string,
+    params?: ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/design-workspace/wireframe-parts/${partId}?${stringifiedParams}`
+      : `/projects/${projectId}/design-workspace/wireframe-parts/${partId}`;
+  };
+
+/**
+ * 共通部品の最新または指定の固定版を取得する。
+ * @summary Read Design Wireframe Part
+ */
+export const readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet =
+  async (
+    projectId: number,
+    partId: string,
+    params?: ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<WireframePartRead> => {
+    return apiClient<WireframePartRead>(
+      getReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetUrl(
+        projectId,
+        partId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetQueryKey =
+  (
+    projectId: number,
+    partId: string,
+    params?: ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/design-workspace/wireframe-parts/${partId}`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    partId: string,
+    params?: ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetQueryKey(
+        projectId,
+        partId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+        >
+      >
+    > = ({ signal }) =>
+      readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet(
+        projectId,
+        partId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        partId !== null &&
+        partId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+      >
+    >
+  >;
+export type ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 共通部品の最新または指定の固定版を取得する。
+ * @summary Read Design Wireframe Part
+ */
+export function useReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  partId: string,
+  params:
+    | undefined
+    | ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 共通部品の最新または指定の固定版を取得する。
+ * @summary Read Design Wireframe Part
+ */
+export function useReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  partId: string,
+  params?: ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 共通部品の最新または指定の固定版を取得する。
+ * @summary Read Design Wireframe Part
+ */
+export function useReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  partId: string,
+  params?: ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 共通部品の最新または指定の固定版を取得する。
+ * @summary Read Design Wireframe Part
+ */
+export function useReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  partId: string,
+  params?: ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetQueryOptions(
+      projectId,
+      partId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchUrl =
+  (projectId: number, partId: string) => {
+    return `/projects/${projectId}/design-workspace/wireframe-parts/${partId}`;
+  };
+
+/**
+ * 共通部品の新しい版を作成する。
+ * @summary Update Design Wireframe Part
+ */
+export const updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch =
+  async (
+    projectId: number,
+    partId: string,
+    wireframePartUpdate: WireframePartUpdate,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<WireframePartRead> => {
+    return apiClient<WireframePartRead>(
+      getUpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchUrl(
+        projectId,
+        partId,
+      ),
+      {
+        ...options,
+        method: "PATCH",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(wireframePartUpdate),
+      },
+    );
+  };
+
+export const getUpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationKey =
+  () =>
+    [
+      "updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch",
+    ] as const;
+
+export const getUpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch
+        >
+      >,
+      TError,
+      UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch
+      >
+    >,
+    TError,
+    UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getUpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch
+        >
+      >,
+      UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationVariables
+    > = (props) => {
+      const { projectId, partId, data } = props ?? {};
+
+      return updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch(
+        projectId,
+        partId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch
+      >
+    >
+  >;
+export type UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationBody =
+  BodyType<WireframePartUpdate>;
+export type UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationError =
+  ErrorType<HTTPValidationError>;
+export type UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationVariables =
+  { projectId: number; partId: string; data: BodyType<WireframePartUpdate> };
+
+/**
+ * 共通部品の新しい版を作成する。
+ * @summary Update Design Wireframe Part
+ */
+export const useUpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch
+          >
+        >,
+        TError,
+        UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof updateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatch
+      >
+    >,
+    TError,
+    UpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getUpdateDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdPatchMutationOptions(
         options,
       ),
       queryClient,

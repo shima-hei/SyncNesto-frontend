@@ -6,9 +6,10 @@
  */
 import type { WireframeComponentKind } from "./wireframeComponentKind";
 import type { WireframeComponentLayout } from "./wireframeComponentLayout";
+import type { WireframePartPin } from "./wireframePartPin";
 
 /**
- * アートボード上の再帰配置と画面項目・イベントへの参照。
+ * 画面固有の項目・イベントと、選択した共通部品の版を保持する。
  */
 export interface WireframeComponent {
   id?: string;
@@ -40,8 +41,6 @@ export interface WireframeComponent {
   hidden?: boolean;
   locked?: boolean;
   parent_id?: string | null;
-  field_id?: string | null;
-  event_id?: string | null;
   layout?: WireframeComponentLayout;
   /**
    * @minimum 0
@@ -65,4 +64,7 @@ export interface WireframeComponent {
   column_span?: number;
   /** @maxItems 30 */
   table_rows?: string[][];
+  field_id?: string | null;
+  event_id?: string | null;
+  part_pin?: WireframePartPin | null;
 }
