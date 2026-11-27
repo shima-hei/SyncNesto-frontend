@@ -4,7 +4,11 @@ import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Button } from "@/components/ui/button";
 import { SnapshotNode } from "@/features/artifact-releases/components/snapshot-content";
 import { TestDesignSnapshot } from "@/features/artifact-releases/components/test-design-snapshot";
-import { isSelectionInsideElement } from "@/features/requirements/lib/requirement-review-anchor";
+import {
+  fixedQuoteRange,
+  quoteMarkdownSource,
+} from "@/lib/comments/markdown-source-range";
+import { showQuoteRange } from "@/lib/comments/rendered-range";
 import {
   reviewTargetKind,
   reviewTargetTitle,
@@ -35,7 +39,7 @@ export function ReviewContent({
   projectId,
   complete,
   canDiscuss,
-  highlights,
+  highlight,
   onQuote,
 }: {
   node: ArtifactNodeRead;
@@ -43,7 +47,7 @@ export function ReviewContent({
   projectId: number;
   complete: boolean;
   canDiscuss: boolean;
-  highlights: ReadonlyMap<string, string[]>;
+  highlight: { field: string; quote: string; start: number | null } | null;
   onQuote: (anchor: RequirementReviewAnchor) => void;
 }) {
   const article = useRef<HTMLElement>(null);
@@ -53,6 +57,21 @@ export function ReviewContent({
     typeof node.payload.requirement_code === "string"
       ? node.payload.requirement_code
       : null;
+  useEffect(() => {
+    if (!highlight) return;
+    const field = article.current?.querySelector<HTMLElement>(
+      `[data-review-field="${CSS.escape(highlight.field)}"]`,
+    );
+    const source = node.payload[highlight.field];
+    if (!field || typeof source !== "string") return;
+    const range = fixedQuoteRange(
+      field,
+      source,
+      highlight.quote,
+      highlight.start,
+    );
+    if (range) showQuoteRange(range);
+  }, [highlight, node.payload]);
 
   useEffect(() => {
     if (!canDiscuss || !fields) return;
@@ -62,35 +81,17 @@ export function ReviewContent({
       const start = selection?.anchorNode;
       const container = start instanceof Element ? start : start?.parentElement;
       const element = container?.closest<HTMLElement>("[data-review-field]");
-      if (
-        !selection ||
-        !element ||
-        !article.current?.contains(element) ||
-        !isSelectionInsideElement(selection, element)
-      )
+      if (!selection || !element || !article.current?.contains(element)) {
+        setAnchor(null);
         return;
+      }
       const field = element.dataset.reviewField;
-      const quote = selection.toString().trim();
       const source = field ? node.payload[field] : null;
-      if (
-        !field ||
-        typeof source !== "string" ||
-        !quote ||
-        Array.from(quote).length > 1000
-      ) {
-        setAnchor(null);
-        return;
-      }
-      const offset = source.indexOf(quote);
-      if (offset < 0 || offset !== source.lastIndexOf(quote)) {
-        setAnchor(null);
-        return;
-      }
-      setAnchor({
-        field,
-        quote,
-        quote_start: Array.from(source.slice(0, offset)).length,
-      });
+      const quote =
+        typeof source === "string"
+          ? quoteMarkdownSource(element, source, selection)
+          : null;
+      setAnchor(field && quote ? { field, ...quote } : null);
     }
 
     document.addEventListener("selectionchange", readSelection);
@@ -146,7 +147,7 @@ export function ReviewContent({
                 liveLinks={false}
                 className="min-h-0 border-0 bg-transparent px-0 py-2 [overflow-wrap:anywhere]"
                 value={source}
-                highlightQuotes={highlights.get(field)}
+                quoteSourcePositions
               />
             </div>
             {canDiscuss && anchor?.field === field ? (

@@ -27,6 +27,7 @@ import type { ReviewAnchorStatus } from "../../lib/requirement-review-anchor";
 import { RequirementTargetCommentForm } from "../forms/requirement-target-comment-form";
 import { RequirementSectionSkeleton } from "../shared/requirement-section-skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
 
 type RequirementTargetCommentsSectionProps = {
   projectId: number;
@@ -45,6 +46,8 @@ type RequirementTargetCommentsSectionProps = {
   contentClassName?: string;
   embedded?: boolean;
   headerAction?: React.ReactNode;
+  onReanchor?: (comment: RequirementTargetCommentRead) => void;
+  anchorEditor?: React.ReactNode;
 };
 
 export function RequirementTargetCommentsSection({
@@ -62,6 +65,8 @@ export function RequirementTargetCommentsSection({
   contentClassName,
   embedded = false,
   headerAction,
+  onReanchor,
+  anchorEditor,
 }: RequirementTargetCommentsSectionProps) {
   const { user } = useAuth();
   const { currentProjectRole } = useCurrentProjectRole(projectId);
@@ -162,6 +167,7 @@ export function RequirementTargetCommentsSection({
           onReopen={reopenTargetComment}
           onTargetAnchorClick={onTargetAnchorClick}
           getTargetAnchorStatus={getTargetAnchorStatus}
+          onReanchor={onReanchor}
         />
       )}
       renderEditForm={({ comment, onClose }) => (
@@ -264,8 +270,10 @@ export function RequirementTargetCommentsSection({
       >
         {thread}
       </div>
+      {anchorEditor}
       {composer ? (
         <div
+          hidden={Boolean(anchorEditor)}
           className={cn(
             "shrink-0 border-t border-border/60 pt-3",
             !embedded && "px-3 pb-2",
@@ -326,6 +334,7 @@ type CommentBodyProps = {
   getTargetAnchorStatus?: (
     targetAnchor: Record<string, unknown>,
   ) => ReviewAnchorStatus | null;
+  onReanchor?: (comment: RequirementTargetCommentRead) => void;
 };
 
 function CommentBody({
@@ -340,12 +349,15 @@ function CommentBody({
   onReopen,
   onTargetAnchorClick,
   getTargetAnchorStatus,
+  onReanchor,
 }: CommentBodyProps) {
   const targetAnchorStatus = comment.target_anchor
     ? getTargetAnchorStatus?.(comment.target_anchor)
     : null;
   const anchor = comment.target_anchor;
   const quote = typeof anchor?.quote === "string" ? anchor.quote : null;
+  const missingQuote =
+    anchor?.scope === "document_preview" && targetAnchorStatus === "missing";
   const anchorLabel =
     typeof anchor?.label === "string"
       ? anchor.label
@@ -372,7 +384,7 @@ function CommentBody({
     >
       {anchor && anchorLabel ? (
         <div className="border-s-2 ps-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">
-          {onTargetAnchorClick ? (
+          {onTargetAnchorClick && !missingQuote ? (
             <button
               type="button"
               className="text-start font-medium underline-offset-2 hover:underline"
@@ -393,7 +405,22 @@ function CommentBody({
           ) : quote ? (
             <blockquote className="whitespace-pre-wrap">{quote}</blockquote>
           ) : null}
-          {targetAnchorStatus && targetAnchorStatus !== "current" ? (
+          {missingQuote ? (
+            <>
+              <p>本文の変更により、元の引用箇所を特定できません。</p>
+              {canMutate && !comment.parent_comment_id && onReanchor ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1"
+                  onClick={() => onReanchor(comment)}
+                >
+                  引用箇所を再指定
+                </Button>
+              ) : null}
+            </>
+          ) : targetAnchorStatus && targetAnchorStatus !== "current" ? (
             <p>{getTargetAnchorStatusLabel(targetAnchorStatus)}</p>
           ) : null}
         </div>
@@ -424,7 +451,7 @@ const getTargetAnchorStatusLabel = (status: ReviewAnchorStatus) => {
     case "current":
       return "";
     case "moved":
-      return "対象の位置が変わりました";
+      return "本文の変更後に引用箇所を再特定しました";
     case "changed":
       return "対象の内容が変わりました";
     case "missing":

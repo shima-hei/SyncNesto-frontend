@@ -1,5 +1,6 @@
 "use client";
-import { LinkedText } from "@/components/shared/smart-links/linked-text";
+
+import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
 import { selectedTextForLinkSource } from "@/lib/smart-links/quote";
 import { OverviewReturn } from "@/components/shared/navigation/overview-return";
 import { VerificationEntry } from "@/features/requirement-verifications/components/verification-entry";
@@ -876,7 +877,7 @@ function RequirementInfo({
   targetAnchors?: RequirementReviewFieldAnchor[];
   onSelectTargetAnchor?: (targetAnchor: RequirementCommentAnchor) => void;
 }) {
-  const valueRef = useRef<HTMLSpanElement>(null);
+  const valueRef = useRef<HTMLDivElement>(null);
   const fieldAnchors = field
     ? targetAnchors.filter((targetAnchor) => targetAnchor.field === field)
     : [];
@@ -921,14 +922,14 @@ function RequirementInfo({
           </Button>
         ) : null}
       </div>
-      <span ref={valueRef} className="whitespace-pre-wrap break-words text-sm">
+      <div ref={valueRef} className="whitespace-pre-wrap break-words text-sm">
         {displayValue ?? (
-          <LinkedText
-            text={value}
+          <MarkdownBodyText
+            value={value}
             renderText={(text) => renderHighlightedValue(text, fieldAnchors)}
           />
         )}
-      </span>
+      </div>
     </div>
   );
 }

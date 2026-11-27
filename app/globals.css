@@ -237,3 +237,7 @@
     @apply font-sans;
   }
 }
+::highlight(document-review-quote) {
+  background-color: var(--status-warning-bg);
+  color: var(--status-warning-fg);
+}

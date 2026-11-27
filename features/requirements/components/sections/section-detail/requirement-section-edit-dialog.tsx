@@ -13,6 +13,7 @@ import { RequirementSectionForm } from "../../forms/requirement-section-form";
 import type { RequirementSectionFormValues } from "../../../types/requirement-section-form";
 
 type RequirementSectionEditDialogProps = {
+  projectId: number;
   open: boolean;
   section: RequirementSectionRead;
   isPending: boolean;
@@ -26,6 +27,7 @@ type RequirementSectionEditDialogProps = {
 };
 
 export function RequirementSectionEditDialog({
+  projectId,
   open,
   section,
   isPending,
@@ -43,6 +45,7 @@ export function RequirementSectionEditDialog({
           </DialogDescription>
         </DialogHeader>
         <RequirementSectionForm
+          projectId={projectId}
           initialValues={toSectionFormValues(section)}
           submitLabel="セクション更新"
           resetOnSuccess={false}

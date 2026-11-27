@@ -86,7 +86,7 @@ export function ReviewDiscussion({
   canCorrect: boolean;
   draft: DiscussionDraft | null;
   onDraft: (draft: DiscussionDraft | null) => void;
-  onHighlight: (field: string, quote: string) => void;
+  onHighlight: (field: string, quote: string, start: number | null) => void;
 }) {
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<string | null>(
@@ -302,7 +302,13 @@ export function ReviewDiscussion({
                   <button
                     type="button"
                     className="self-start max-w-full rounded-sm border-s-2 ps-2 text-start text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-ring [overflow-wrap:anywhere]"
-                    onClick={() => onHighlight(thread.field!, thread.quote!)}
+                    onClick={() =>
+                      onHighlight(
+                        thread.field!,
+                        thread.quote!,
+                        thread.quote_start,
+                      )
+                    }
                   >
                     {thread.quote}
                   </button>

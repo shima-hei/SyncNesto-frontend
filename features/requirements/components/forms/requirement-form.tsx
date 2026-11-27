@@ -28,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getConflictFields } from "@/lib/api/conflict";
@@ -283,6 +282,7 @@ export function RequirementForm({
                 </FieldLabel>
                 <LinkTextarea
                   id={descriptionId}
+                  images={{ projectId, kind: "requirement" }}
                   name="description"
                   className="min-h-32"
                   rows={5}
@@ -302,6 +302,7 @@ export function RequirementForm({
                 </FieldLabel>
                 <LinkTextarea
                   id={acceptanceCriteriaId}
+                  images={{ projectId, kind: "requirement" }}
                   name="acceptanceCriteria"
                   className="min-h-24"
                   rows={4}
@@ -444,14 +445,13 @@ export function RequirementForm({
             <FieldGroup className="mt-4">
               <Field>
                 <FieldLabel htmlFor={rationaleId}>背景・理由</FieldLabel>
-                <Textarea
+                <LinkTextarea
                   id={rationaleId}
+                  images={{ projectId, kind: "requirement" }}
                   name="rationale"
                   autoComplete="off"
                   value={values.rationale}
-                  onChange={(event) =>
-                    updateValue("rationale", event.target.value)
-                  }
+                  onValueChange={(value) => updateValue("rationale", value)}
                 />
               </Field>
               <Field>

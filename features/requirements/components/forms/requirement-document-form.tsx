@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { LinkTextarea } from "@/components/shared/smart-links/link-textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { StandardCreationAttempt } from "../../lib/standard-creation-store";
@@ -299,11 +300,12 @@ export function RequirementDocumentForm({
               <FieldLabel htmlFor={purposeId}>
                 目的・チームで実現したいこと
               </FieldLabel>
-              <Textarea
+              <LinkTextarea
                 id={purposeId}
+                images={{ projectId, kind: "requirement" }}
                 placeholder="誰の、どの困りごとを解決するかを書きます…"
                 value={values.purpose}
-                onChange={(event) => updateValue("purpose", event.target.value)}
+                onValueChange={(value) => updateValue("purpose", value)}
               />
             </Field>
 

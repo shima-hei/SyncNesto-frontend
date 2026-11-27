@@ -254,6 +254,7 @@ export function SelectedRequirementSectionContent({
       </Card>
 
       <RequirementSectionEditDialog
+        projectId={projectId}
         open={editDialogOpen}
         section={section}
         isPending={isUpdatePending}

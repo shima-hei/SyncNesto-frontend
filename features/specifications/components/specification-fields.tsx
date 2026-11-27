@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { LinkedText } from "@/components/shared/smart-links/linked-text";
 import { LinkTextarea } from "@/components/shared/smart-links/link-textarea";
+import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
+import type { BodyImageScope } from "@/lib/markdown-body-images";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -75,6 +77,9 @@ export function TextField({
   readOnly,
   onReview,
   link,
+  images,
+  bodyImageField,
+  liveLinks,
   maxLength = 5000,
 }: {
   path: string;
@@ -87,6 +92,9 @@ export function TextField({
   readOnly?: boolean;
   onReview?: Review;
   link?: boolean;
+  images?: BodyImageScope;
+  bodyImageField?: boolean;
+  liveLinks?: boolean;
   maxLength?: number;
 }) {
   const id = reviewElementId(path);
@@ -112,17 +120,20 @@ export function TextField({
         )}
       </div>
       {readOnly ? (
-        <p className="min-h-8 whitespace-pre-wrap break-words text-sm">
-          {value && (link || multiline) ? (
+        <div className="min-h-8 whitespace-pre-wrap break-words text-sm">
+          {value && bodyImageField ? (
+            <MarkdownBodyText value={value} liveLinks={liveLinks} />
+          ) : value && (link || multiline) ? (
             <LinkedText text={value} />
           ) : (
             value || "未記入"
           )}
-        </p>
+        </div>
       ) : multiline ? (
         <LinkTextarea
           id={`${id}-input`}
           name={path}
+          images={images}
           value={value ?? ""}
           onValueChange={(value) => onChange?.(value)}
           placeholder={placeholder}
@@ -578,11 +589,15 @@ export function SpecificationFields({
   onChange,
   readOnly = false,
   onReview,
+  imageProjectId,
+  liveLinks,
 }: {
   values: Values;
   onChange: (values: Values) => void;
   readOnly?: boolean;
   onReview?: Review;
+  imageProjectId?: number;
+  liveLinks?: boolean;
 }) {
   const content = values.content;
   const set = (key: string, value: unknown) =>
@@ -605,6 +620,13 @@ export function SpecificationFields({
         path="summary"
         label="目的・実現すること"
         value={values.summary}
+        bodyImageField
+        liveLinks={liveLinks}
+        images={
+          imageProjectId
+            ? { projectId: imageProjectId, kind: "specification" }
+            : undefined
+        }
         onChange={(summary) => onChange({ ...values, summary })}
         multiline
         readOnly={readOnly}

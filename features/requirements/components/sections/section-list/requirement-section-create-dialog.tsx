@@ -12,6 +12,7 @@ import { RequirementSectionForm } from "../../forms/requirement-section-form";
 import type { RequirementSectionFormValues } from "../../../types/requirement-section-form";
 
 type RequirementSectionCreateDialogProps = {
+  projectId: number;
   open: boolean;
   nextSortOrder: number;
   isPending: boolean;
@@ -21,6 +22,7 @@ type RequirementSectionCreateDialogProps = {
 };
 
 export function RequirementSectionCreateDialog({
+  projectId,
   open,
   nextSortOrder,
   isPending,
@@ -38,6 +40,7 @@ export function RequirementSectionCreateDialog({
           </DialogDescription>
         </DialogHeader>
         <RequirementSectionForm
+          projectId={projectId}
           nextSortOrder={nextSortOrder}
           isPending={isPending}
           error={error}
