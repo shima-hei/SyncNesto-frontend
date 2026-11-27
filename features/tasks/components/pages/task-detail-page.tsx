@@ -32,7 +32,6 @@ import {
 } from "lucide-react";
 
 import { ResourceDeleteDialog } from "@/components/shared/dialogs/resource-delete-dialog";
-import { MarkdownPreview } from "@/components/shared/forms/markdown-textarea";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -55,6 +54,7 @@ import { TaskEditableSection } from "../forms/task-editable-section";
 import { TaskAssignee } from "../shared/task-assignee";
 import { TaskRequirementEditor } from "../forms/task-requirement-editor";
 import { TaskDependenciesSection } from "../sections/task-dependencies-section";
+import { TaskDescriptionSection } from "../sections/task-description-section";
 import { TaskChangeLogsSection } from "../sections/task-change-logs-section";
 import { TaskCommentsSection } from "../sections/task-comments-section";
 import { TaskHierarchySection } from "../sections/task-hierarchy-section";
@@ -245,21 +245,11 @@ export function TaskDetailPage({ projectId, taskId }: TaskDetailPageProps) {
       </header>
       <div className="grid min-w-0 items-start gap-x-8 gap-y-5 @min-[57rem]/task-detail:grid-cols-[minmax(0,1fr)_19rem] @min-[57rem]/task-detail:grid-rows-[max-content_1fr] @min-[74rem]/task-detail:grid-cols-[minmax(0,1fr)_23rem]">
         <div className="min-w-0 space-y-4">
-          <section className="min-w-0 space-y-2">
-            <TaskEditableSection
-              task={task}
-              section="description"
-              heading="説明"
-              label="説明を編集"
-              canUpdate={canUpdate}
-            >
-              <MarkdownPreview
-                value={task.description ?? ""}
-                emptyMessage="説明はありません。"
-                className="min-h-0 min-w-0 rounded-none border-0 bg-transparent p-0"
-              />
-            </TaskEditableSection>
-          </section>
+          <TaskDescriptionSection
+            key={task.id}
+            task={task}
+            canUpdate={canUpdate}
+          />
           <TaskHierarchySection
             key={task.id}
             projectId={projectId}
