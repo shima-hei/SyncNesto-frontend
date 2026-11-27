@@ -20,4 +20,6 @@ export interface SpecificationCommentCreate {
    * @maxLength 5000
    */
   body: string;
+  quote?: string | null;
+  quote_start?: number | null;
 }

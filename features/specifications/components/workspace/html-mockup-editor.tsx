@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,28 @@ import { discardBodyImage, uploadBodyImage } from "@/lib/api/body-image-upload";
 import { bodyImageId, bodyImagePrefix } from "@/lib/markdown-body-images";
 import type { HtmlMockup } from "@/lib/api/generated/model";
 import { downloadDesign, previewMockup } from "../../lib/workspace";
+import {
+  reviewElementId,
+  type DesignReviewQuote,
+} from "../../lib/specification";
 import { MockupPreviewFrame } from "./mockup-preview-frame";
 
 const maxImageBytes = 65_000;
+
+// Textarea exposes LF line endings. Keep offsets in the saved, unnormalized source.
+function sourceIndex(source: string, editorIndex: number) {
+  let index = 0;
+  for (
+    let offset = 0;
+    offset < editorIndex && index < source.length;
+    offset++
+  ) {
+    index += source[index] === "\r" && source[index + 1] === "\n" ? 2 : 1;
+  }
+  return index;
+}
+
+const editorLength = (source: string) => source.replace(/\r\n?/g, "\n").length;
 
 export function HtmlMockupEditor({
   projectId,
@@ -20,21 +39,27 @@ export function HtmlMockupEditor({
   onChange,
   readOnly,
   onReview,
+  focusPath,
+  focusQuote,
 }: {
   projectId: number;
   items: HtmlMockup[];
   onChange: (items: HtmlMockup[]) => void;
   readOnly: boolean;
-  onReview?: (path: string) => void;
+  onReview?: (path: string, quote?: DesignReviewQuote) => void;
+  focusPath?: string | null;
+  focusQuote?: DesignReviewQuote;
 }) {
-  const field = useId();
-  const [selected, setSelected] = useState(items[0]?.id);
+  const focused = focusPath?.match(/^content\/mockups\/([^/]+)\/(html|css)$/);
+  const [selected, setSelected] = useState(focused?.[1] ?? items[0]?.id);
   const [mode, setMode] = useState<"split" | "code" | "preview">("split");
   const [notice, setNotice] = useState("");
   const [uploading, setUploading] = useState(false);
   const uploadActive = useRef(false);
   const current = useRef({ items, onChange, projectId });
   const mounted = useRef(false);
+  const htmlCode = useRef<HTMLTextAreaElement>(null);
+  const cssCode = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     current.current = { items, onChange, projectId };
   }, [items, onChange, projectId]);
@@ -44,6 +69,33 @@ export function HtmlMockupEditor({
       mounted.current = false;
     };
   }, []);
+  const focusedId = focused?.[1];
+  const focusedProperty = focused?.[2] as "html" | "css" | undefined;
+  useEffect(() => {
+    if (!focusedProperty || focusedId !== selected) return;
+    const editor = (focusedProperty === "html" ? htmlCode : cssCode).current;
+    if (!editor) return;
+    editor.scrollIntoView({ block: "center" });
+    editor.focus({ preventScroll: true });
+    if (focusQuote) {
+      const source =
+        current.current.items.find((item) => item.id === focusedId)?.[
+          focusedProperty
+        ] ?? "";
+      const characters = Array.from(source);
+      const start = characters.slice(0, focusQuote.quote_start).join("").length;
+      if (
+        source.slice(start, start + focusQuote.quote.length) ===
+        focusQuote.quote
+      ) {
+        const offset = editorLength(source.slice(0, start));
+        editor.setSelectionRange(
+          offset,
+          offset + editorLength(focusQuote.quote),
+        );
+      }
+    }
+  }, [focusQuote, focusedId, focusedProperty, selected]);
   const item = items.find((value) => value.id === selected) ?? items[0];
   const preview = useMutation({
     mutationFn: (data: HtmlMockup) => previewMockup(projectId, data),
@@ -273,47 +325,89 @@ export function HtmlMockupEditor({
           >
             {mode !== "preview" && (
               <div className="min-w-0 space-y-2">
-                {(["html", "css"] as const).map((property) => (
-                  <div className="space-y-1" key={property}>
-                    <label
-                      htmlFor={`${field}-${property}`}
-                      className="text-sm font-medium"
-                    >
-                      {property.toUpperCase()}
-                    </label>
-                    <Textarea
-                      id={`${field}-${property}`}
-                      aria-label={property.toUpperCase()}
-                      rows={9}
-                      readOnly={readOnly}
-                      className="font-mono text-xs"
-                      maxLength={property === "html" ? 100_000 : 50_000}
-                      value={item[property] ?? ""}
-                      onChange={(event) =>
-                        update({ ...item, [property]: event.target.value })
-                      }
-                      onPaste={(event) => {
-                        const file = event.clipboardData.files[0];
-                        if (!readOnly && property === "html" && file) {
-                          event.preventDefault();
-                          void imageFile(file);
+                {(["html", "css"] as const).map((property) => {
+                  const editor = property === "html" ? htmlCode : cssCode;
+                  const path = `content/mockups/${item.id}/${property}`;
+                  return (
+                    <div className="space-y-1" key={property}>
+                      <label
+                        htmlFor={reviewElementId(path)}
+                        className="text-sm font-medium"
+                      >
+                        {property.toUpperCase()}
+                      </label>
+                      <Textarea
+                        ref={editor}
+                        id={reviewElementId(path)}
+                        aria-label={property.toUpperCase()}
+                        rows={9}
+                        readOnly={readOnly}
+                        className="font-mono text-xs"
+                        maxLength={property === "html" ? 100_000 : 50_000}
+                        value={item[property] ?? ""}
+                        onChange={(event) =>
+                          update({ ...item, [property]: event.target.value })
                         }
-                      }}
-                    />
-                    {!readOnly && (
-                      <input
-                        aria-label={`${property.toUpperCase()}ファイル`}
-                        type="file"
-                        className="max-w-full text-xs"
-                        accept={`.${property}`}
-                        onChange={(event) => {
-                          const file = event.currentTarget.files?.[0];
-                          if (file) void fileText(file, property);
+                        onPaste={(event) => {
+                          const file = event.clipboardData.files[0];
+                          if (!readOnly && property === "html" && file) {
+                            event.preventDefault();
+                            void imageFile(file);
+                          }
                         }}
                       />
-                    )}
-                  </div>
-                ))}
+                      {onReview && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const textarea = editor.current;
+                            if (!textarea) return;
+                            const source = item[property] ?? "";
+                            const start = sourceIndex(
+                              source,
+                              textarea.selectionStart,
+                            );
+                            const quote = source.slice(
+                              start,
+                              sourceIndex(source, textarea.selectionEnd),
+                            );
+                            if (
+                              !quote.trim() ||
+                              Array.from(quote).length > 800
+                            ) {
+                              setNotice(
+                                "指摘するコードを800文字以内で選択してください。",
+                              );
+                              textarea.focus();
+                              return;
+                            }
+                            onReview(path, {
+                              quote,
+                              quote_start: Array.from(source.slice(0, start))
+                                .length,
+                            });
+                          }}
+                        >
+                          {property.toUpperCase()}の選択範囲を指摘
+                        </Button>
+                      )}
+                      {!readOnly && (
+                        <input
+                          aria-label={`${property.toUpperCase()}ファイル`}
+                          type="file"
+                          className="max-w-full text-xs"
+                          accept={`.${property}`}
+                          onChange={(event) => {
+                            const file = event.currentTarget.files?.[0];
+                            if (file) void fileText(file, property);
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
                 {!readOnly && (
                   <input
                     type="file"

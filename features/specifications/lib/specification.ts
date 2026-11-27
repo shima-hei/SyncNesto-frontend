@@ -104,6 +104,9 @@ export const specificationCode = (
 export const reviewElementId = (path: string) =>
   `specification-field-${encodeURIComponent(path)}`;
 
+export type DesignReviewQuote = { quote: string; quote_start: number };
+export type DesignReviewTarget = { path: string; quote?: DesignReviewQuote };
+
 export function reviewPathLabel(values: Values, path: string): string {
   const labels: Record<string, string> = {
     title: "設計書名",
@@ -123,6 +126,8 @@ export function reviewPathLabel(values: Values, path: string): string {
     relationships: "論理リレーション",
     artboards: "ワイヤーフレーム",
     mockups: "HTMLモックアップ",
+    html: "HTML",
+    css: "CSS",
     processing_steps: "処理ステップ",
     physical_name: "物理名",
     screen_kind: "画面種別",

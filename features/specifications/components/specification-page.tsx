@@ -53,6 +53,8 @@ import {
   statusLabels,
   type Kind,
   type Values,
+  type DesignReviewQuote,
+  type DesignReviewTarget,
 } from "../lib/specification";
 import { designKey } from "../lib/workspace";
 import { mergeSpecifications } from "../lib/merge";
@@ -162,9 +164,18 @@ function DesignEditor({
     ["links", "impact", "review", "history"].includes(localTab)
       ? localTab
       : "content";
-  const [target, setTarget] = useState<string | null>(null);
+  const [target, setTarget] = useState<DesignReviewTarget | null>(null);
   const [internalRequest, setInternalRequest] = useState(0);
   const [focused, setFocused] = useState<string | null>(params.get("focus"));
+  const [focusedQuote, setFocusedQuote] = useState<DesignReviewQuote>();
+  const [historyVersion, setHistoryVersion] = useState<number>();
+  const requestedVersion = Number(params.get("version"));
+  const initialHistoryVersion =
+    Number.isSafeInteger(requestedVersion) &&
+    requestedVersion >= 1 &&
+    requestedVersion <= row.version
+      ? requestedVersion
+      : undefined;
   const [deleting, setDeleting] = useState(false);
   const drafts = useFormDraft<Draft>({
     userId: canEdit ? user?.id : undefined,
@@ -255,12 +266,15 @@ function DesignEditor({
     const base = specificationHref(projectId, row.id);
     window.history.replaceState(null, "", next.size ? `${base}?${next}` : base);
   };
-  const review = (path: string) => {
+  const review = (path: string, context?: string | DesignReviewQuote) => {
     if (dirty) {
       toast.info("指摘を登録する前に設計を保存してください。");
       return;
     }
-    setTarget(path);
+    setTarget({
+      path,
+      quote: typeof context === "object" ? context : undefined,
+    });
     setInternalRequest((value) => value + 1);
     chooseTab("review");
   };
@@ -464,15 +478,28 @@ function DesignEditor({
               canEdit={canEdit}
               target={target}
               onTarget={setTarget}
-              onNavigate={(path) => {
+              onNavigate={(path, quote) => {
                 setFocused(path);
+                setFocusedQuote(quote);
                 chooseTab(detailsTab(row.kind, path));
+              }}
+              onHistory={(version, path, quote) => {
+                setHistoryVersion(version);
+                setFocused(path);
+                setFocusedQuote(quote);
+                chooseTab("history");
               }}
             />
           </SourceCommentTabs>
         </div>
       ) : tab === "history" ? (
-        <DesignHistory projectId={projectId} row={row} />
+        <DesignHistory
+          projectId={projectId}
+          row={row}
+          initialVersion={historyVersion ?? initialHistoryVersion}
+          focusPath={focused}
+          focusQuote={focusedQuote}
+        />
       ) : (
         <DesignDetails
           projectId={projectId}
@@ -481,6 +508,8 @@ function DesignEditor({
           tab={tab}
           readOnly={!canEdit}
           canRegisterParts={canRegisterParts}
+          focusPath={focused}
+          focusQuote={focusedQuote}
           onChange={(values) =>
             setDraft({
               values,
@@ -572,12 +601,20 @@ function DesignEditor({
 function DesignHistory({
   projectId,
   row,
+  initialVersion,
+  focusPath,
+  focusQuote,
 }: {
   projectId: number;
   row: SpecificationRead;
+  initialVersion?: number;
+  focusPath?: string | null;
+  focusQuote?: DesignReviewQuote;
 }) {
-  const [version, setVersion] = useState<number>();
-  const [tab, setTab] = useState("content");
+  const [version, setVersion] = useState(initialVersion);
+  const [tab, setTab] = useState(
+    focusPath ? detailsTab(row.kind, focusPath) : "content",
+  );
   const revisions = useQuery({
     queryKey: [...specificationKeys.detail(projectId, row.id), "history"],
     queryFn: () => listRevisions(projectId, row.id),
@@ -648,6 +685,8 @@ function DesignHistory({
               readOnly
               tab={tab}
               revision={past.version}
+              focusPath={focusPath}
+              focusQuote={focusQuote}
             />
           )}
         </div>

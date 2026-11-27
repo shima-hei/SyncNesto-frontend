@@ -26,6 +26,7 @@ import {
   type Content,
   type Values,
 } from "../../lib/specification";
+import type { DesignReviewQuote } from "../../lib/specification";
 import {
   designKey,
   readDesignCollections,
@@ -85,7 +86,7 @@ const stepKinds = {
   transaction: "トランザクション",
   other: "その他",
 } as const;
-type Review = (path: string) => void;
+type Review = (path: string, context?: string | DesignReviewQuote) => void;
 
 export const designTabs = {
   screen: [
@@ -150,6 +151,8 @@ export function DesignDetails({
   revision,
   dirty = false,
   canRegisterParts = false,
+  focusPath,
+  focusQuote,
 }: {
   projectId: number;
   id?: number;
@@ -161,9 +164,13 @@ export function DesignDetails({
   revision?: number;
   dirty?: boolean;
   canRegisterParts?: boolean;
+  focusPath?: string | null;
+  focusQuote?: DesignReviewQuote;
 }) {
   const { content } = values;
-  const [layout, setLayout] = useState("wireframe");
+  const [layout, setLayout] = useState(
+    focusPath?.startsWith("content/mockups/") ? "html" : "wireframe",
+  );
   const set = (next: Content) => onChange({ ...values, content: next });
   const isBasic =
     content.type === "screen" ? tab === "basic" : tab === "content";
@@ -391,6 +398,8 @@ export function DesignDetails({
               readOnly={readOnly}
               onChange={(mockups) => set({ ...content, mockups })}
               onReview={onReview}
+              focusPath={focusPath}
+              focusQuote={focusQuote}
             />
           ) : (
             <TextField
