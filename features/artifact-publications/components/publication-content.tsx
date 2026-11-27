@@ -21,6 +21,7 @@ import { PublicationImageScope } from "@/components/shared/forms/markdown-image"
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import type { PublicationNodeRead } from "@/lib/api/generated/model";
 import type { Content } from "@/features/specifications/lib/specification";
+import { PublicDesignDiagrams } from "./public-design-diagrams";
 import { readPublicationNodes } from "../lib/api";
 import { decodePublicationGraph } from "../lib/graph";
 import {
@@ -112,7 +113,8 @@ export function PublicNode({
     typeof node.payload.content === "object";
   const fields = Object.entries(node.payload).filter(
     ([key]) =>
-      key !== "title" && (!structured || !["summary", "content"].includes(key)),
+      key !== "title" &&
+      (!structured || !["summary", "content", "diagram_links"].includes(key)),
   );
   const mainFields: Record<string, string[]> = {
     requirement_document: [
@@ -473,6 +475,7 @@ export function PublicationBody({
           本文全体を取得しました。内部状態の表示は、顧客による合意・正式承認を表すものではありません。
         </p>
       ) : null}
+      <PublicDesignDiagrams nodes={nodes} />
       {nodes
         .filter((n) => n.node_kind !== "test_design_part")
         .map((node) => {
