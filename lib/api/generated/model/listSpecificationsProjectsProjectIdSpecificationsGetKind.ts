@@ -10,6 +10,7 @@ export type ListSpecificationsProjectsProjectIdSpecificationsGetKind =
   | null;
 
 export const ListSpecificationsProjectsProjectIdSpecificationsGetKind = {
-  api: "api",
   screen: "screen",
+  api: "api",
+  database: "database",
 } as const;

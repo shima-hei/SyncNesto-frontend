@@ -8,13 +8,9 @@ import type { ListSpecificationsProjectsProjectIdSpecificationsGetKind } from ".
 
 export type ListSpecificationsProjectsProjectIdSpecificationsGetParams = {
   kind?: ListSpecificationsProjectsProjectIdSpecificationsGetKind;
-  /**
-   * @maxLength 200
-   */
+  /** @maxLength 200 */
   q?: string;
-  /**
-   * @minimum 1
-   */
+  /** @minimum 1 */
   page?: number;
   /**
    * @minimum 1

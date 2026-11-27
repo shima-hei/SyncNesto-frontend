@@ -7,6 +7,7 @@ export * from "./auth/auth";
 export * from "./body-images/body-images";
 export * from "./comment-images/comment-images";
 export * from "./demo/demo";
+export * from "./design-workspace/design-workspace";
 export * from "./document-comment-anchors/document-comment-anchors";
 export * from "./documents/documents";
 export * from "./drafts/drafts";

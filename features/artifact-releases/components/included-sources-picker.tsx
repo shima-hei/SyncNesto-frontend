@@ -148,7 +148,7 @@ export function IncludedSourcesPicker({
                 }
               />
               <FieldLabel htmlFor={`support-${item.kind}-${item.id}`}>
-                {item.kind === "test_design" ? "テスト設計" : "画面・API設計"}：
+                {item.kind === "test_design" ? "テスト設計" : "設計"}：
                 {item.title}（v{item.version}）
               </FieldLabel>
             </Field>

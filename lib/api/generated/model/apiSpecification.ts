@@ -5,6 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ApiSpecificationMethod } from "./apiSpecificationMethod";
+import type { ApiSpecificationOperation } from "./apiSpecificationOperation";
+import type { DesignMapping } from "./designMapping";
+import type { ProcessingStep } from "./processingStep";
 import type { SpecificationField } from "./specificationField";
 import type { SpecificationRule } from "./specificationRule";
 
@@ -13,6 +16,12 @@ import type { SpecificationRule } from "./specificationRule";
  */
 export interface ApiSpecification {
   type?: "api";
+  collection_id?: string | null;
+  operation?: ApiSpecificationOperation;
+  /** @maxItems 100 */
+  mappings?: DesignMapping[];
+  /** @maxItems 100 */
+  processing_steps?: ProcessingStep[];
   method?: ApiSpecificationMethod;
   /** @maxLength 1000 */
   path?: string;

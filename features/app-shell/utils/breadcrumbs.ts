@@ -34,7 +34,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   "fixed-approvals": "合意・承認",
   "audit-logs": "監査ログ",
   documents: "ドキュメント",
-  specifications: "画面・API設計",
+  specifications: "設計",
   forbidden: "アクセス権限なし",
   help: "ヘルプ",
   joined: "プロジェクト",

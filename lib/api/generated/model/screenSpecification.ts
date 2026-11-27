@@ -4,14 +4,29 @@
  * Syncnesto API
  * OpenAPI spec version: 0.1.0
  */
+import type { DesignMapping } from "./designMapping";
+import type { HtmlMockup } from "./htmlMockup";
+import type { ScreenEvent } from "./screenEvent";
+import type { ScreenSpecificationScreenKind } from "./screenSpecificationScreenKind";
+import type { ScreenState } from "./screenState";
+import type { ScreenTransition } from "./screenTransition";
 import type { SpecificationField } from "./specificationField";
-import type { SpecificationRule } from "./specificationRule";
+import type { WireframeArtboard } from "./wireframeArtboard";
 
 /**
  * 画面項目、振る舞い、遷移、例外時の表示。
  */
 export interface ScreenSpecification {
   type?: "screen";
+  screen_kind?: ScreenSpecificationScreenKind;
+  /** @maxItems 150 */
+  transitions?: ScreenTransition[];
+  /** @maxItems 20 */
+  artboards?: WireframeArtboard[];
+  /** @maxItems 100 */
+  mappings?: DesignMapping[];
+  /** @maxItems 15 */
+  mockups?: HtmlMockup[];
   /** @maxLength 1000 */
   route?: string;
   /** @maxLength 5000 */
@@ -20,9 +35,9 @@ export interface ScreenSpecification {
   /** @maxItems 200 */
   fields?: SpecificationField[];
   /** @maxItems 100 */
-  actions?: SpecificationRule[];
+  actions?: ScreenEvent[];
   /** @maxItems 100 */
-  states?: SpecificationRule[];
+  states?: ScreenState[];
   /** @maxLength 20000 */
   notes?: string;
 }

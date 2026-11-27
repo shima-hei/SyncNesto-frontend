@@ -343,6 +343,8 @@ function Fields({
                         path: "パス",
                         query: "クエリ",
                         header: "ヘッダー",
+                        cookie: "Cookie",
+                        action: "操作",
                         body: "本文・入力",
                         display: "表示",
                       }[row.location ?? "body"]
@@ -747,7 +749,7 @@ export function SpecificationFields({
               onChange={(rows) => set("responses", rows)}
             />
           </>
-        ) : (
+        ) : content.type === "screen" ? (
           <>
             <TextField
               path="content/route"
@@ -811,6 +813,16 @@ export function SpecificationFields({
               onChange={(rows) => set("states", rows)}
             />
           </>
+        ) : (
+          <TextField
+            path="content/physical_name"
+            label="物理テーブル名"
+            value={content.physical_name}
+            onChange={(value) => set("physical_name", value)}
+            readOnly={readOnly}
+            onReview={onReview}
+            maxLength={63}
+          />
         )}
         <TextField
           path="content/notes"

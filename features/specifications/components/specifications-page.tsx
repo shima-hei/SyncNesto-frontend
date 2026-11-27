@@ -1,206 +1,1411 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useDeferredValue, useId, useState, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  PanelLeftIcon,
+  PanelRightIcon,
+  PlusIcon,
+  ScanIcon,
+} from "lucide-react";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
-import { DataPagination } from "@/components/shared/navigation/data-pagination";
+import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
-import { canCreateDocument } from "@/features/auth/utils/authorization";
+  canCreateDocument,
+  canUpdateDocument,
+} from "@/features/auth/utils/authorization";
 import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { formatDateTime } from "@/lib/format/date";
-import { listSpecifications } from "../lib/api";
+import { cn } from "@/lib/utils";
+import type {
+  CollectionRead,
+  CollectionInput,
+  CollectionInputConfiguration,
+  DesignEdge,
+  DesignNode,
+  PlacementInput,
+} from "@/lib/api/generated/model";
 import {
+  createSpecification,
+  readSpecification,
+  updateSpecification,
+} from "../lib/api";
+import {
+  initialValues,
   kindLabels,
   specificationCode,
   specificationHref,
   specificationKeys,
   statusLabels,
+  type Kind,
 } from "../lib/specification";
+import {
+  createDesignCollection,
+  designKey,
+  readDesignCollections,
+  readDesignDiagram,
+  savePlacements,
+  screenKinds,
+  updateDesignCollection,
+  updateMemberships,
+} from "../lib/workspace";
+import { SpecificationPage } from "./specification-page";
+import { DesignCanvas } from "./workspace/design-canvas";
+import { DesignOverview } from "./workspace/design-overview";
+import { DesignFormats, OpenApiImportPanel } from "./workspace/design-formats";
+
+type View = "all" | Kind;
+const labels: Record<View, string> = {
+  all: "設計概要",
+  screen: kindLabels.screen,
+  api: kindLabels.api,
+  database: kindLabels.database,
+};
+const selectClass = "h-8 min-w-0 rounded-md border bg-background px-2 text-sm";
 
 export function SpecificationsPage({ projectId }: { projectId: number }) {
-  const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const rawKind = params.get("kind");
-  const kind = rawKind === "api" || rawKind === "screen" ? rawKind : undefined;
-  const requestedPage = Number(params.get("page"));
-  const page =
-    Number.isSafeInteger(requestedPage) &&
-    requestedPage > 0 &&
-    requestedPage <= 10000
-      ? requestedPage
-      : 1;
-  const q = (params.get("q") ?? "").slice(0, 200);
-  const [search, setSearch] = useState(q);
-  const { currentProjectRole } = useCurrentProjectRole(projectId);
-  const query = useQuery({
-    queryKey: [...specificationKeys.all(projectId), kind, page, q],
-    queryFn: () =>
-      listSpecifications(projectId, { kind, page, page_size: 20, q }),
-    retry: false,
-  });
+  const params = useSearchParams();
+  const raw = params.get("kind");
+  const kind: View =
+    raw === "screen" || raw === "api" || raw === "database" ? raw : "all";
   const navigate = (updates: Record<string, string>) => {
     const next = new URLSearchParams(params);
     for (const [key, value] of Object.entries(updates)) {
       if (value) next.set(key, value);
       else next.delete(key);
     }
-    router.replace(`${pathname}?${next}`, { scroll: false });
+    router.replace(next.size ? `${pathname}?${next}` : pathname, {
+      scroll: false,
+    });
   };
-  const canCreate = canCreateDocument(currentProjectRole);
   return (
-    <div className="flex min-w-0 flex-col gap-5">
-      <PageHeader
-        title="画面・API設計"
-        description="要件を、画面の振る舞いとAPIの入出力に具体化します。設計した内容はタスク・テスト項目とつなげて確認できます。"
-        actions={
-          canCreate ? (
+    <div className="flex min-w-0 flex-col gap-4">
+      <PageHeader title="設計" />
+      <nav
+        aria-label="設計ワークスペース"
+        className="flex flex-wrap gap-0.5 border-b"
+      >
+        {(Object.keys(labels) as View[]).map((tab) => (
+          <Button
+            asChild
+            key={tab}
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "rounded-none border-b-2 border-transparent",
+              kind === tab && "border-primary font-semibold text-primary",
+            )}
+          >
+            <Link
+              href={`${pathname}${tab === "all" ? "" : `?kind=${tab}`}`}
+              aria-current={kind === tab ? "page" : undefined}
+            >
+              {labels[tab]}
+            </Link>
+          </Button>
+        ))}
+      </nav>
+      {kind === "all" ? (
+        <DesignOverview projectId={projectId} />
+      ) : (
+        <DesignBrowser
+          key={kind}
+          projectId={projectId}
+          kind={kind}
+          initialGroup={params.get("group") ?? ""}
+          initialView={params.get("view") ?? ""}
+          onView={(view) => navigate({ view })}
+        />
+      )}
+    </div>
+  );
+}
+
+function DesignBrowser({
+  projectId,
+  kind,
+  initialGroup,
+  initialView,
+  onView,
+}: {
+  projectId: number;
+  kind: Kind;
+  initialGroup: string;
+  initialView: string;
+  onView: (value: string) => void;
+}) {
+  const cache = useQueryClient();
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
+  const canCreate = canCreateDocument(currentProjectRole);
+  const canEdit = canUpdateDocument(currentProjectRole);
+  const [group, setGroup] = useState(initialGroup);
+  const [setId, setSetId] = useState("");
+  const [q, setQ] = useState("");
+  const search = useDeferredValue(q);
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [edge, setEdge] = useState<DesignEdge>();
+  const [name, setName] = useState("");
+  const [creation, setCreation] = useState<{
+    x?: number;
+    y?: number;
+    source?: number;
+  } | null>(null);
+  const [left, setLeft] = useState(true);
+  const [right, setRight] = useState(true);
+  const [maximized, setMaximized] = useState(false);
+  const [logical, setLogical] = useState(false);
+  const [apiSort, setApiSort] = useState("path");
+  const [order, setOrder] = useState<"ascending" | "descending">("ascending");
+  const [showStatus, setShowStatus] = useState(true);
+  const [collectionEditor, setCollectionEditor] = useState<
+    CollectionRead | "group" | "api_set" | "db_model" | null
+  >(null);
+  const view = initialView || (kind === "api" ? "tree" : "diagram");
+  const refresh = async () => {
+    await Promise.all([
+      cache.invalidateQueries({ queryKey: designKey(projectId) }),
+      cache.invalidateQueries({ queryKey: specificationKeys.all(projectId) }),
+    ]);
+  };
+  const collections = useQuery({
+    queryKey: [...designKey(projectId), "collections"],
+    queryFn: () => readDesignCollections(projectId),
+  });
+  const groups =
+    collections.data?.filter((item) => item.kind === "group") ?? [];
+  const sets =
+    collections.data?.filter(
+      (item) => item.kind === (kind === "api" ? "api_set" : "db_model"),
+    ) ?? [];
+  const selectedSet = sets.find((item) => item.id === setId);
+  const graph = useQuery({
+    queryKey: [...designKey(projectId), kind, group, search, page],
+    queryFn: () =>
+      readDesignDiagram(projectId, {
+        kind,
+        group_id: group || undefined,
+        q: search,
+        page,
+        page_size: 50,
+      }),
+    retry: false,
+  });
+  const id = selected.size === 1 ? [...selected][0] : undefined;
+  const nodes = graph.data?.nodes ?? [];
+  const matches = nodes.filter(
+    (node) =>
+      (!group || node.group_ids?.includes(group)) &&
+      (!setId || node.collection_id === setId),
+  );
+  const matchingIds = new Set(matches.map((node) => node.id));
+  const edgeList = (graph.data?.edges ?? []).filter(
+    (item) =>
+      (kind !== "database" ||
+        item.kind === (logical ? "logical" : "foreign_key")) &&
+      (matchingIds.has(item.source_id) || matchingIds.has(item.target_id)),
+  );
+  const referenceIds = new Set(
+    edgeList
+      .flatMap((item) => [item.source_id, item.target_id])
+      .filter((value) => !matchingIds.has(value)),
+  );
+  const diagram = nodes.filter(
+    (node) =>
+      !node.placement?.hidden &&
+      (matchingIds.has(node.id) || referenceIds.has(node.id)),
+  );
+  const active = nodes.find((node) => node.id === id);
+  const select = (value: number, multiple = false) => {
+    setEdge(undefined);
+    setRight(true);
+    if (!multiple) {
+      setSelected(new Set([value]));
+      return;
+    }
+    setSelected((previous) => {
+      const next = new Set(previous);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  };
+  const place = useMutation({
+    mutationFn: (positions: PlacementInput[]) =>
+      savePlacements(projectId, {
+        group_id: group || null,
+        placements: positions,
+      }),
+    onSuccess: refresh,
+  });
+  const create = useMutation({
+    mutationFn: async ({
+      title,
+      asGroup,
+    }: {
+      title: string;
+      asGroup: string;
+    }) => {
+      const { content } = initialValues(kind);
+      if ((content.type === "api" || content.type === "database") && setId)
+        content.collection_id = setId;
+      const created = await createSpecification(projectId, {
+        title,
+        summary: "",
+        content,
+      });
+      if (asGroup) {
+        try {
+          await updateMemberships(projectId, created.id, {
+            version: created.version,
+            group_ids: [asGroup],
+          });
+        } catch {
+          return {
+            row: created,
+            partial:
+              "設計を作成しました。グループへの登録はプロパティから再試行できます。",
+          };
+        }
+      }
+      try {
+        if (
+          creation?.x !== undefined &&
+          creation.y !== undefined &&
+          kind !== "api"
+        ) {
+          await savePlacements(projectId, {
+            group_id: group || null,
+            placements: [
+              { specification_id: created.id, x: creation.x, y: creation.y },
+            ],
+          });
+        }
+        if (creation?.source && kind !== "api") {
+          const source = await readSpecification(projectId, creation.source);
+          if (source.content.type === "screen") {
+            await updateSpecification(projectId, source.id, {
+              title: source.title,
+              summary: source.summary,
+              version: source.version,
+              content: {
+                ...source.content,
+                transitions: [
+                  ...(source.content.transitions ?? []),
+                  {
+                    id: crypto.randomUUID(),
+                    target_id: created.id,
+                    name: title,
+                  },
+                ],
+              },
+            });
+          }
+        }
+      } catch {
+        return {
+          row: created,
+          partial:
+            "設計を作成しました。配置または接続の保存を再試行してください。",
+        };
+      }
+      return { row: created };
+    },
+    onSuccess: async ({ row }) => {
+      setName("");
+      setCreation(null);
+      select(row.id);
+      await refresh();
+    },
+  });
+  const createLabel =
+    kind === "screen"
+      ? "画面を追加"
+      : kind === "api"
+        ? "APIを追加"
+        : "テーブルを追加";
+  const saveName = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (name.trim()) create.mutate({ title: name.trim(), asGroup: group });
+  };
+  const sorted = [...matches].sort((a, b) =>
+    order === "ascending"
+      ? a.title.localeCompare(b.title, "ja")
+      : b.title.localeCompare(a.title, "ja"),
+  );
+  const content = (
+    <div className="min-w-0 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+        <div
+          className="flex flex-wrap items-center gap-1"
+          aria-label="設計の表示形式"
+        >
+          {(kind === "screen"
+            ? [
+                ["diagram", "画面遷移図"],
+                ["list", "画面一覧"],
+              ]
+            : kind === "api"
+              ? [
+                  ["tree", "APIツリー"],
+                  ["output", "取込・出力"],
+                ]
+              : [
+                  ["diagram", "ER図"],
+                  ["list", "テーブル一覧"],
+                  ["dictionary", "データ辞書"],
+                  ["output", "DDL"],
+                ]
+          ).map(([key, label]) => (
+            <Button
+              key={key}
+              size="sm"
+              variant={view === key ? "secondary" : "ghost"}
+              aria-pressed={view === key}
+              onClick={() => onView(key)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          {view === "diagram" && (
             <>
-              <Button asChild variant="outline">
-                <Link href={`${specificationHref(projectId)}/new?kind=screen`}>
-                  画面を設計
-                </Link>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="左ペイン"
+                aria-pressed={left}
+                onClick={() => setLeft((value) => !value)}
+              >
+                <PanelLeftIcon />
               </Button>
-              <Button asChild>
-                <Link href={`${specificationHref(projectId)}/new?kind=api`}>
-                  APIを設計
-                </Link>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="右ペイン"
+                aria-pressed={right}
+                onClick={() => setRight((value) => !value)}
+              >
+                <PanelRightIcon />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={maximized ? "最大化を解除" : "最大化"}
+                onClick={() => setMaximized((value) => !value)}
+              >
+                <ScanIcon />
               </Button>
             </>
-          ) : undefined
-        }
-      />
-      <Tabs
-        value={kind ?? "all"}
-        onValueChange={(value) =>
-          navigate({ kind: value === "all" ? "" : value, page: "" })
-        }
-      >
-        <TabsList variant="line">
-          <TabsTrigger value="all">すべて</TabsTrigger>
-          <TabsTrigger value="screen">画面設計書</TabsTrigger>
-          <TabsTrigger value="api">API設計書</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      <form
-        className="flex max-w-xl gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          navigate({ q: search.trim(), page: "" });
-        }}
-      >
-        <Input
-          aria-label="設計書を検索"
-          name="q"
-          value={search}
-          maxLength={200}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="名前・目的で検索…"
-        />
-        <Button type="submit" variant="outline">
-          検索
-        </Button>
-        {q && (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              setSearch("");
-              navigate({ q: "", page: "" });
-            }}
-          >
-            解除
-          </Button>
-        )}
-      </form>
-      {query.isPending ? (
-        <p role="status">設計書を読み込み中…</p>
-      ) : query.error ? (
-        <DataLoadError
-          resourceName="設計書"
-          isRetrying={query.isFetching}
-          onRetry={() => void query.refetch()}
-        />
-      ) : query.data?.items.length ? (
-        <>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>設計書</TableHead>
-                  <TableHead>種類</TableHead>
-                  <TableHead>確認状況</TableHead>
-                  <TableHead>更新</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {query.data.items.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <Link
-                        className="font-medium underline-offset-4 hover:underline"
-                        href={specificationHref(projectId, row.id)}
-                      >
-                        {row.title}
-                      </Link>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {specificationCode(row)}
-                      </p>
-                    </TableCell>
-                    <TableCell>{kindLabels[row.kind]}</TableCell>
-                    <TableCell>{statusLabels[row.status]}</TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">
-                      {formatDateTime(row.updated_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <DataPagination
-            page={page}
-            pageSize={20}
-            total={query.data.total}
-            currentCount={query.data.items.length}
-            isFetching={query.isFetching}
-            isLoading={query.isPending}
-            onPageChange={(next) => navigate({ page: String(next) })}
+          )}
+          {canCreate && (
+            <Button size="sm" onClick={() => setCreation({})}>
+              <PlusIcon />
+              {createLabel}
+            </Button>
+          )}
+        </div>
+      </div>
+      {(creation || view === "list") && canCreate && (
+        <form className="flex max-w-xl gap-2" onSubmit={saveName}>
+          <Input
+            aria-label="新しい設計の名前"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={200}
+            autoFocus={Boolean(creation)}
+            placeholder={
+              creation?.source ? "新しい接続先の画面名" : "名前のみで仮登録"
+            }
           />
-        </>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={create.isPending || !name.trim()}
+          >
+            {createLabel}
+          </Button>
+          {creation && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setCreation(null)}
+            >
+              取消
+            </Button>
+          )}
+        </form>
+      )}
+      <FormApiError error={create.error ?? place.error} />
+      {create.data?.partial && (
+        <p role="status" className="text-sm">
+          {create.data.partial}
+        </p>
+      )}
+      {collectionEditor && (
+        <CollectionEditor
+          key={
+            typeof collectionEditor === "string"
+              ? collectionEditor
+              : collectionEditor.id
+          }
+          projectId={projectId}
+          editing={collectionEditor}
+          groups={groups}
+          onCancel={() => setCollectionEditor(null)}
+          onSaved={async (item) => {
+            setCollectionEditor(null);
+            if (item.kind === "group") setGroup(item.id);
+            else setSetId(item.id);
+            await refresh();
+          }}
+        />
+      )}
+      {view === "output" ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className={selectClass}
+              aria-label="対象セット・モデル"
+              value={setId}
+              onChange={(event) => setSetId(event.target.value)}
+            >
+              <option value="">既定</option>
+              {sets.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setCollectionEditor(
+                    selectedSet ?? (kind === "api" ? "api_set" : "db_model"),
+                  )
+                }
+              >
+                {selectedSet ? "設定を編集" : "セット・モデルを追加"}
+              </Button>
+            )}
+          </div>
+          {kind === "api" && canEdit && selectedSet && (
+            <OpenApiImportPanel
+              key={selectedSet.id}
+              projectId={projectId}
+              collection={selectedSet}
+              onImported={() => void refresh()}
+            />
+          )}
+          {kind !== "screen" && (
+            <DesignFormats
+              key={setId}
+              projectId={projectId}
+              kind={kind}
+              collectionId={setId || undefined}
+            />
+          )}
+        </div>
       ) : (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>
-              {q
-                ? "条件に合う設計書はありません"
-                : "要件から設計を始めましょう"}
-            </EmptyTitle>
-            <EmptyDescription>
-              {q
-                ? "検索する言葉や種類を変えてください。"
-                : "画面なら入力項目と操作、APIなら入出力と権限から整理します。名前だけで下書きを保存し、チームで補っていけます。"}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <>
+          {collections.error && <FormApiError error={collections.error} />}
+          {graph.error ? (
+            <DataLoadError
+              resourceName="設計"
+              isRetrying={graph.isFetching}
+              onRetry={() => void graph.refetch()}
+            />
+          ) : (
+            <div
+              className={cn(
+                "min-w-0 overflow-hidden rounded-md border",
+                view !== "list" && "flex flex-col lg:flex-row",
+              )}
+            >
+              {(left || view !== "diagram") && (
+                <aside
+                  className={cn(
+                    "min-w-0 space-y-3 bg-muted/20 p-3",
+                    view !== "list" &&
+                      "border-b lg:w-52 lg:max-w-[45%] lg:min-w-42 lg:shrink-0 lg:resize-x lg:overflow-auto lg:border-r lg:border-b-0",
+                  )}
+                >
+                  <Input
+                    aria-label="設計を検索"
+                    placeholder="設計を検索"
+                    value={q}
+                    maxLength={200}
+                    onChange={(event) => {
+                      setPage(1);
+                      setQ(event.target.value);
+                    }}
+                  />
+                  <label className="flex flex-col gap-1 text-xs font-medium">
+                    機能グループ
+                    <select
+                      aria-label="機能グループ"
+                      className={selectClass}
+                      value={group}
+                      onChange={(event) => setGroup(event.target.value)}
+                    >
+                      <option value="">すべての機能</option>
+                      {orderedGroups(groups).map(({ item, depth }) => (
+                        <option
+                          key={item.id}
+                          value={item.id}
+                        >{`${"　".repeat(depth)}${item.name}`}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {canEdit && (
+                    <div className="flex flex-wrap gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCollectionEditor("group")}
+                      >
+                        ＋ グループ
+                      </Button>
+                      {group && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setCollectionEditor(
+                              groups.find((item) => item.id === group) ?? null,
+                            )
+                          }
+                        >
+                          編集
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  {kind !== "screen" && (
+                    <label className="flex flex-col gap-1 text-xs font-medium">
+                      {kind === "api" ? "API仕様セット" : "DBモデル"}
+                      <select
+                        className={selectClass}
+                        value={setId}
+                        onChange={(event) => setSetId(event.target.value)}
+                      >
+                        <option value="">すべて</option>
+                        {sets.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {kind === "api" && (
+                    <label className="flex flex-col gap-1 text-xs font-medium">
+                      分類
+                      <select
+                        className={selectClass}
+                        value={apiSort}
+                        onChange={(event) => setApiSort(event.target.value)}
+                      >
+                        <option value="path">パス</option>
+                        <option value="tag">タグ</option>
+                        <option value="group">機能グループ</option>
+                      </select>
+                    </label>
+                  )}
+                  {view !== "list" && (
+                    <NodeList
+                      nodes={matches}
+                      selected={selected}
+                      onSelect={select}
+                      sort={apiSort}
+                      groups={groups}
+                      kind={kind}
+                    />
+                  )}
+                </aside>
+              )}
+              <div className="min-w-0 flex-1">
+                {graph.isPending ? (
+                  <p className="p-4" role="status">
+                    設計を読み込み中…
+                  </p>
+                ) : view === "diagram" && kind !== "api" ? (
+                  <>
+                    {kind === "database" && (
+                      <div className="border-b p-2">
+                        <Button
+                          variant={logical ? "secondary" : "outline"}
+                          size="sm"
+                          onClick={() => setLogical((value) => !value)}
+                        >
+                          {logical
+                            ? "論理名・論理リレーション"
+                            : "物理名・外部キー"}
+                        </Button>
+                      </div>
+                    )}
+                    <DesignCanvas
+                      projectId={projectId}
+                      nodes={diagram}
+                      edges={edgeList}
+                      selected={selected}
+                      onSelect={select}
+                      onEdge={(item) => {
+                        setEdge(item);
+                        setRight(true);
+                        setSelected(new Set([item.source_id]));
+                      }}
+                      onPlace={(positions) => place.mutate(positions)}
+                      onAdd={(position) => setCreation(position ?? {})}
+                      referenceIds={referenceIds}
+                      logical={logical}
+                      busy={place.isPending}
+                      canEdit={canEdit}
+                    />
+                  </>
+                ) : view === "tree" ? (
+                  <div className="space-y-3 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      {active
+                        ? active.title
+                        : "左側のツリーからAPIを選択してください。"}
+                    </p>
+                    {active && (
+                      <SpecificationPage
+                        projectId={projectId}
+                        id={active.id}
+                        inline
+                      />
+                    )}
+                    {!matches.length && canCreate && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCreation({})}
+                      >
+                        最初のAPIを追加
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2 overflow-x-auto p-3">
+                    {view === "list" && (
+                      <label className="text-sm">
+                        <input
+                          type="checkbox"
+                          className="mr-2 accent-primary"
+                          checked={showStatus}
+                          onChange={(event) =>
+                            setShowStatus(event.target.checked)
+                          }
+                        />
+                        状態列
+                      </label>
+                    )}
+                    <table className="w-full min-w-[38rem] text-left text-sm">
+                      <thead className="border-b text-xs text-muted-foreground">
+                        <tr>
+                          <th className="p-2">ID</th>
+                          <th aria-sort={order}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                setOrder((value) =>
+                                  value === "ascending"
+                                    ? "descending"
+                                    : "ascending",
+                                )
+                              }
+                            >
+                              設計名
+                            </Button>
+                          </th>
+                          <th>識別子</th>
+                          <th>
+                            {view === "dictionary" ? "カラム" : "機能グループ"}
+                          </th>
+                          {showStatus && <th>状態</th>}
+                          <th>更新日時</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {sorted.map((node) => (
+                          <tr key={node.id}>
+                            <td className="p-2 font-mono text-xs">
+                              {specificationCode(node)}
+                            </td>
+                            <td>
+                              {canEdit && view === "list" ? (
+                                <QuickTitle
+                                  key={`${node.id}:${node.version}`}
+                                  projectId={projectId}
+                                  node={node}
+                                  onSave={refresh}
+                                />
+                              ) : (
+                                node.title
+                              )}
+                              <Link
+                                href={specificationHref(projectId, node.id)}
+                                className="text-xs text-primary underline-offset-4 hover:underline"
+                              >
+                                開く
+                              </Link>
+                            </td>
+                            <td className="p-2 font-mono text-xs">
+                              {node.identifier || "未設定"}
+                            </td>
+                            <td>
+                              {view === "dictionary"
+                                ? node.field_labels?.join(" / ")
+                                : node.group_ids
+                                    ?.map(
+                                      (groupId) =>
+                                        groups.find(
+                                          (item) => item.id === groupId,
+                                        )?.name,
+                                    )
+                                    .filter(Boolean)
+                                    .join("、")}
+                            </td>
+                            {showStatus && <td>{statusLabels[node.status]}</td>}
+                            <td className="text-xs text-muted-foreground">
+                              {formatDateTime(node.updated_at)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {!sorted.length && (
+                      <p className="py-4 text-sm text-muted-foreground">
+                        表示する設計はありません。
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              {view === "diagram" && right && (
+                <aside className="min-w-0 space-y-3 border-t p-3 lg:w-62 lg:max-w-[45%] lg:min-w-48 lg:shrink-0 lg:resize-x lg:overflow-auto lg:border-t-0 lg:border-l">
+                  <h2 className="border-b pb-2 text-sm font-semibold">
+                    {edge ? "接続プロパティ" : "設計プロパティ"}
+                  </h2>
+                  {active ? (
+                    <NodeInspector
+                      key={`${active.id}:${edge?.id ?? ""}:${active.version}`}
+                      projectId={projectId}
+                      node={active}
+                      groups={groups}
+                      nodes={nodes}
+                      canEdit={canEdit}
+                      onSave={refresh}
+                      edge={edge}
+                      onNewTarget={
+                        canCreate && kind === "screen"
+                          ? () => setCreation({ source: active.id })
+                          : undefined
+                      }
+                      onPlacement={
+                        referenceIds.has(active.id)
+                          ? undefined
+                          : () =>
+                              place.mutate([
+                                {
+                                  specification_id: active.id,
+                                  x: active.placement?.x ?? 38,
+                                  y: active.placement?.y ?? 40,
+                                  version: active.placement?.version ?? 0,
+                                  hidden: !active.placement?.hidden,
+                                },
+                              ])
+                      }
+                      onReference={
+                        referenceIds.has(active.id)
+                          ? () => setGroup(active.group_ids?.[0] ?? "")
+                          : undefined
+                      }
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      図または一覧で設計を選択
+                    </p>
+                  )}
+                </aside>
+              )}
+            </div>
+          )}
+          {!!graph.data && graph.data.total > 50 && (
+            <DataPagination
+              page={page}
+              total={graph.data.total}
+              pageSize={50}
+              currentCount={matches.length}
+              onPageChange={setPage}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+  return maximized ? (
+    <div
+      role="dialog"
+      aria-label="設計図の最大表示"
+      className="fixed inset-0 z-50 overflow-auto bg-background p-4"
+    >
+      {content}
+    </div>
+  ) : (
+    content
+  );
+}
+
+function orderedGroups(
+  groups: CollectionRead[],
+  parent: string | null = null,
+  depth = 0,
+): { item: CollectionRead; depth: number }[] {
+  return groups
+    .filter((item) => (item.parent_id ?? null) === parent)
+    .flatMap((item) => [
+      { item, depth },
+      ...orderedGroups(groups, item.id, depth + 1),
+    ]);
+}
+
+function NodeList({
+  nodes,
+  selected,
+  onSelect,
+  sort,
+  groups,
+  kind,
+}: {
+  nodes: DesignNode[];
+  selected: Set<number>;
+  onSelect: (id: number) => void;
+  sort: string;
+  groups: CollectionRead[];
+  kind: Kind;
+}) {
+  const grouped = new Map<string, DesignNode[]>();
+  for (const node of nodes) {
+    const keys =
+      kind !== "api"
+        ? [""]
+        : sort === "tag"
+          ? node.tags?.length
+            ? node.tags
+            : ["タグなし"]
+          : sort === "group"
+            ? node.group_ids?.length
+              ? node.group_ids.map(
+                  (id) =>
+                    groups.find((item) => item.id === id)?.name ?? "未分類",
+                )
+              : ["未分類"]
+            : [
+                node.identifier?.split("/").slice(0, 2).join("/") ||
+                  "パス未確定",
+              ];
+    for (const key of keys)
+      grouped.set(key, [...(grouped.get(key) ?? []), node]);
+  }
+  return (
+    <div className="max-h-[40dvh] space-y-2 overflow-auto">
+      {[...grouped]
+        .sort(([a], [b]) => a.localeCompare(b, "ja"))
+        .map(([label, records]) => (
+          <div key={label}>
+            {label && (
+              <p className="px-1 text-xs font-medium text-muted-foreground">
+                {label}
+              </p>
+            )}
+            {records.map((node) => (
+              <button
+                key={node.id}
+                type="button"
+                aria-pressed={selected.has(node.id)}
+                onClick={() => onSelect(node.id)}
+                className={cn(
+                  "flex w-full min-w-0 items-center gap-1.5 rounded px-1 py-1.5 text-left text-xs hover:bg-muted",
+                  selected.has(node.id) && "bg-primary/10 text-primary",
+                )}
+              >
+                <span className="shrink-0 font-mono text-[0.65rem]">
+                  {kind === "api"
+                    ? node.subtype || "API"
+                    : specificationCode(node)}
+                </span>
+                <span className="min-w-0 truncate" title={node.title}>
+                  {node.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        ))}
+    </div>
+  );
+}
+
+function CollectionEditor({
+  projectId,
+  editing,
+  groups,
+  onSaved,
+  onCancel,
+}: {
+  projectId: number;
+  editing: CollectionRead | CollectionInput["kind"];
+  groups: CollectionRead[];
+  onSaved: (item: CollectionRead) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const field = useId();
+  const existing = typeof editing === "string" ? null : editing;
+  const kind = typeof editing === "string" ? editing : editing.kind;
+  const [name, setName] = useState(existing?.name ?? "");
+  const [parent, setParent] = useState(existing?.parent_id ?? "");
+  const [settings, setSettings] = useState(
+    JSON.stringify(
+      existing?.configuration ??
+        (kind === "db_model" ? { product: "PostgreSQL", version: "17" } : {}),
+      null,
+      2,
+    ),
+  );
+  const save = useMutation({
+    mutationFn: () => {
+      const value: unknown = kind === "group" ? {} : JSON.parse(settings);
+      if (!value || typeof value !== "object" || Array.isArray(value))
+        throw new Error("設定はJSONオブジェクトで指定してください。");
+      const data: CollectionInput = {
+        name,
+        kind,
+        parent_id: parent || null,
+        version: existing?.version ?? 0,
+        configuration: value as CollectionInputConfiguration,
+      };
+      return existing
+        ? updateDesignCollection(projectId, existing.id, data)
+        : createDesignCollection(projectId, data);
+    },
+    onSuccess: onSaved,
+  });
+  return (
+    <form
+      className="space-y-2 rounded-md border p-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        save.mutate();
+      }}
+    >
+      <label className="text-sm font-medium" htmlFor={field}>
+        {kind === "group"
+          ? "グループ名"
+          : kind === "api_set"
+            ? "仕様セット名"
+            : "DBモデル名"}
+      </label>
+      <Input
+        id={field}
+        autoFocus
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        maxLength={200}
+        required
+      />
+      {kind === "group" ? (
+        <label className="flex items-center gap-2 text-sm">
+          親グループ
+          <select
+            className={selectClass}
+            value={parent}
+            onChange={(event) => setParent(event.target.value)}
+          >
+            <option value="">なし</option>
+            {orderedGroups(groups)
+              .filter(({ item }) => item.id !== existing?.id)
+              .map(({ item, depth }) => (
+                <option
+                  key={item.id}
+                  value={item.id}
+                >{`${"　".repeat(depth)}${item.name}`}</option>
+              ))}
+          </select>
+        </label>
+      ) : (
+        <textarea
+          className="w-full rounded-md border bg-background p-2 font-mono text-xs"
+          aria-label="セット・モデルの設定"
+          rows={5}
+          value={settings}
+          onChange={(event) => setSettings(event.target.value)}
+        />
+      )}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          disabled={save.isPending || !name.trim()}
+          type="submit"
+        >
+          保存
+        </Button>
+        <Button size="sm" variant="ghost" type="button" onClick={onCancel}>
+          取消
+        </Button>
+      </div>
+      <FormApiError error={save.error} />
+    </form>
+  );
+}
+
+function QuickTitle({
+  projectId,
+  node,
+  onSave,
+}: {
+  projectId: number;
+  node: DesignNode;
+  onSave: () => Promise<void>;
+}) {
+  const [value, setValue] = useState(node.title);
+  const save = useMutation({
+    mutationFn: async () => {
+      const row = await readSpecification(projectId, node.id);
+      return updateSpecification(projectId, node.id, {
+        title: value.trim(),
+        summary: row.summary,
+        content: row.content,
+        version: node.version,
+      });
+    },
+    onSuccess: onSave,
+  });
+  return (
+    <form
+      className="py-1"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (value.trim() && value.trim() !== node.title) save.mutate();
+      }}
+    >
+      <Input
+        className="h-7"
+        value={value}
+        aria-label={`${node.title}の名前`}
+        maxLength={200}
+        onChange={(event) => setValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.nativeEvent.isComposing && event.key === "Enter")
+            event.preventDefault();
+        }}
+        onBlur={() => {
+          if (
+            value.trim() &&
+            value.trim() !== node.title &&
+            !save.isPending &&
+            !save.error
+          )
+            save.mutate();
+        }}
+      />
+      <FormApiError error={save.error} />
+    </form>
+  );
+}
+
+function NodeInspector({
+  projectId,
+  node,
+  groups,
+  nodes,
+  canEdit,
+  onSave,
+  onPlacement,
+  onReference,
+  onNewTarget,
+  edge,
+}: {
+  projectId: number;
+  node: DesignNode;
+  groups: CollectionRead[];
+  nodes: DesignNode[];
+  canEdit: boolean;
+  onSave: () => Promise<void>;
+  onPlacement?: () => void;
+  onReference?: () => void;
+  onNewTarget?: () => void;
+  edge?: DesignEdge;
+}) {
+  const [groupChoice, setGroupChoice] = useState(node.group_ids ?? []);
+  const [target, setTarget] = useState(edge?.target_id.toString() ?? "");
+  const [condition, setCondition] = useState(edge?.condition ?? "");
+  const [name, setName] = useState(edge?.name ?? "");
+  const [mode, setMode] = useState<
+    "page" | "modal" | "drawer" | "new_tab" | "other"
+  >("page");
+  const [parameters, setParameters] = useState("");
+  const memberships = useMutation({
+    mutationFn: () =>
+      updateMemberships(projectId, node.id, {
+        version: node.version,
+        group_ids: groupChoice,
+      }),
+    onSuccess: onSave,
+  });
+  const save = useMutation({
+    mutationFn: async (remove: boolean) => {
+      const row = await readSpecification(projectId, node.id);
+      if (!target) throw new Error("接続先を選択してください。");
+      const content = row.content;
+      if (content.type === "screen") {
+        const existing = (content.transitions ?? []).find(
+          (item) => item.id === edge?.id,
+        );
+        const transitions = (content.transitions ?? []).filter(
+          (item) => item.id !== edge?.id,
+        );
+        if (!remove)
+          transitions.push({
+            ...existing,
+            id: existing?.id ?? crypto.randomUUID(),
+            name,
+            condition,
+            target_id: Number(target),
+            mode: existing?.mode ?? mode,
+            parameters: existing?.parameters ?? parameters,
+          });
+        return updateSpecification(projectId, node.id, {
+          title: row.title,
+          summary: row.summary,
+          version: node.version,
+          content: { ...content, transitions },
+        });
+      }
+      if (content.type === "database") {
+        if (edge?.kind === "logical") {
+          const existing = (content.relationships ?? []).find(
+            (item) => item.id === edge.id,
+          );
+          const relationships = (content.relationships ?? []).filter(
+            (item) => item.id !== edge.id,
+          );
+          if (!remove)
+            relationships.push({
+              ...existing,
+              id: edge.id,
+              name,
+              target_id: Number(target),
+            });
+          return updateSpecification(projectId, node.id, {
+            title: row.title,
+            summary: row.summary,
+            version: node.version,
+            content: { ...content, relationships },
+          });
+        }
+        const existing = (content.constraints ?? []).find(
+          (item) => item.id === edge?.id,
+        );
+        const constraints = (content.constraints ?? []).filter(
+          (item) => item.id !== edge?.id,
+        );
+        if (!remove)
+          constraints.push({
+            ...existing,
+            id: existing?.id ?? crypto.randomUUID(),
+            kind: "foreign_key",
+            name,
+            target_id: Number(target),
+            target_column_ids:
+              existing?.target_id === Number(target)
+                ? existing?.target_column_ids
+                : [],
+          });
+        return updateSpecification(projectId, node.id, {
+          title: row.title,
+          summary: row.summary,
+          version: node.version,
+          content: { ...content, constraints },
+        });
+      }
+      throw new Error("接続を作成できる設計を選択してください。");
+    },
+    onSuccess: onSave,
+  });
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="font-mono text-xs text-muted-foreground">
+          {specificationCode(node)} · {statusLabels[node.status]}
+        </p>
+        <p className="font-semibold">{node.title}</p>
+        <p className="font-mono text-xs text-muted-foreground">
+          {node.identifier || "識別子未設定"}
+        </p>
+        {node.kind === "screen" && node.subtype && (
+          <p className="text-xs">
+            {screenKinds[node.subtype as keyof typeof screenKinds]}
+          </p>
+        )}
+      </div>
+      <Button asChild size="sm" variant="outline">
+        <Link href={specificationHref(projectId, node.id)}>個別設計を開く</Link>
+      </Button>
+      {node.summary && <p className="line-clamp-3 text-sm">{node.summary}</p>}
+      {onReference && (
+        <Button variant="ghost" size="sm" onClick={onReference}>
+          所属グループへ移動
+        </Button>
+      )}
+      {canEdit && groups.length > 0 && !edge && (
+        <details className="rounded-md border p-2 text-sm">
+          <summary className="cursor-pointer">機能グループ</summary>
+          <fieldset className="space-y-1 pt-2">
+            {orderedGroups(groups).map(({ item, depth }) => (
+              <label
+                key={item.id}
+                className="flex items-center gap-2"
+                style={{ paddingInlineStart: depth * 10 }}
+              >
+                <input
+                  type="checkbox"
+                  checked={groupChoice.includes(item.id)}
+                  className="accent-primary"
+                  onChange={(event) =>
+                    setGroupChoice((value) =>
+                      event.target.checked
+                        ? [...value, item.id]
+                        : value.filter((groupId) => groupId !== item.id),
+                    )
+                  }
+                />
+                {item.name}
+              </label>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={memberships.isPending}
+              onClick={() => memberships.mutate()}
+            >
+              所属を保存
+            </Button>
+          </fieldset>
+          <FormApiError error={memberships.error} />
+        </details>
+      )}
+      {canEdit && node.kind !== "api" && (
+        <details
+          open={edge ? true : undefined}
+          className="space-y-2 rounded-md border p-2 text-sm"
+        >
+          <summary className="cursor-pointer">
+            {edge
+              ? "接続を編集"
+              : node.kind === "screen"
+                ? "遷移先を接続"
+                : "外部キーを追加"}
+          </summary>
+          <Input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            aria-label="接続名"
+            placeholder="接続名"
+            maxLength={200}
+          />
+          <select
+            className={cn(selectClass, "w-full")}
+            aria-label="既存の接続先"
+            value={target}
+            onChange={(event) => setTarget(event.target.value)}
+          >
+            <option value="">接続先を選択</option>
+            {nodes
+              .filter((item) => item.kind === node.kind)
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+          </select>
+          {node.kind === "screen" && (
+            <Input
+              value={condition}
+              onChange={(event) => setCondition(event.target.value)}
+              aria-label="遷移条件"
+              placeholder="遷移条件"
+              maxLength={3000}
+            />
+          )}
+          {node.kind === "screen" && !edge && (
+            <>
+              <select
+                aria-label="遷移方式"
+                className={cn(selectClass, "w-full")}
+                value={mode}
+                onChange={(event) => setMode(event.target.value as typeof mode)}
+              >
+                <option value="page">ページ遷移</option>
+                <option value="modal">モーダル</option>
+                <option value="drawer">ドロワー</option>
+                <option value="new_tab">別タブ</option>
+                <option value="other">その他</option>
+              </select>
+              <Input
+                value={parameters}
+                onChange={(event) => setParameters(event.target.value)}
+                aria-label="引き渡しパラメータ"
+                placeholder="パラメータ"
+              />
+            </>
+          )}
+          <div className="flex flex-wrap gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!target || save.isPending}
+              onClick={() => save.mutate(false)}
+            >
+              接続を保存
+            </Button>
+            {edge && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={save.isPending}
+                onClick={() => save.mutate(true)}
+              >
+                接続を削除
+              </Button>
+            )}
+            {onNewTarget && !edge && (
+              <Button variant="ghost" size="sm" onClick={onNewTarget}>
+                新規画面へ接続
+              </Button>
+            )}
+          </div>
+          <FormApiError error={save.error} />
+        </details>
+      )}
+      {canEdit && onPlacement && (
+        <Button variant="ghost" size="sm" onClick={onPlacement}>
+          {node.placement?.hidden ? "図に再配置" : "図から配置解除"}
+        </Button>
       )}
     </div>
   );

@@ -160,7 +160,7 @@ type SharedKind = NonNullable<
 const kinds: { value: SharedKind; label: string }[] = [
   { value: "requirement_document", label: "要件定義書" },
   { value: "requirement", label: "個別要件" },
-  { value: "specification", label: "画面・API設計" },
+  { value: "specification", label: "設計" },
   { value: "test_design", label: "テスト設計" },
 ];
 const ownDecisionLabels = {

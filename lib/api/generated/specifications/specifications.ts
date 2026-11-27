@@ -47,6 +47,36 @@ import type { ErrorType, BodyType } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase()))
+        layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
+
 const withQueryKey = <T extends object, K>(
   query: T,
   queryKey: K,
@@ -181,6 +211,10 @@ export type ListSpecificationsProjectsProjectIdSpecificationsGetQueryResult =
 export type ListSpecificationsProjectsProjectIdSpecificationsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 一覧を種類・名前・目的で絞り込む。
+ * @summary List Specifications
+ */
 export function useListSpecificationsProjectsProjectIdSpecificationsGet<
   TData = Awaited<
     ReturnType<typeof listSpecificationsProjectsProjectIdSpecificationsGet>
@@ -224,6 +258,10 @@ export function useListSpecificationsProjectsProjectIdSpecificationsGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 一覧を種類・名前・目的で絞り込む。
+ * @summary List Specifications
+ */
 export function useListSpecificationsProjectsProjectIdSpecificationsGet<
   TData = Awaited<
     ReturnType<typeof listSpecificationsProjectsProjectIdSpecificationsGet>
@@ -266,6 +304,10 @@ export function useListSpecificationsProjectsProjectIdSpecificationsGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 一覧を種類・名前・目的で絞り込む。
+ * @summary List Specifications
+ */
 export function useListSpecificationsProjectsProjectIdSpecificationsGet<
   TData = Awaited<
     ReturnType<typeof listSpecificationsProjectsProjectIdSpecificationsGet>
@@ -293,9 +335,9 @@ export function useListSpecificationsProjectsProjectIdSpecificationsGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 一覧を種類・名前・目的で絞り込む。
  * @summary List Specifications
  */
-
 export function useListSpecificationsProjectsProjectIdSpecificationsGet<
   TData = Awaited<
     ReturnType<typeof listSpecificationsProjectsProjectIdSpecificationsGet>
@@ -352,36 +394,15 @@ export const createSpecificationProjectsProjectIdSpecificationsPost = async (
   specificationCreate: SpecificationCreate,
   options?: Parameters<typeof apiClient>[1],
 ): Promise<SpecificationRead> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<
-      string | readonly string[] | undefined
-    >(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return apiClient<SpecificationRead>(
     getCreateSpecificationProjectsProjectIdSpecificationsPostUrl(projectId),
     {
       ...options,
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getHeaders(options?.headers),
-      },
+      headers: getHeaders(
+        { "Content-Type": "application/json" },
+        options?.headers,
+      ),
       body: JSON.stringify(specificationCreate),
     },
   );
@@ -455,6 +476,7 @@ export type CreateSpecificationProjectsProjectIdSpecificationsPostMutationVariab
   { projectId: number; data: BodyType<SpecificationCreate> };
 
 /**
+ * 最小の入力から下書きを作成する。
  * @summary Create Specification
  */
 export const useCreateSpecificationProjectsProjectIdSpecificationsPost = <
@@ -618,6 +640,10 @@ export type SpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandid
 export type SpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandidatesGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 閲覧できる関連先だけを検索する。最大50件。
+ * @summary Specification Link Candidates
+ */
 export function useSpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -662,6 +688,10 @@ export function useSpecificationLinkCandidatesProjectsProjectIdSpecificationsLin
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 閲覧できる関連先だけを検索する。最大50件。
+ * @summary Specification Link Candidates
+ */
 export function useSpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -706,6 +736,10 @@ export function useSpecificationLinkCandidatesProjectsProjectIdSpecificationsLin
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 閲覧できる関連先だけを検索する。最大50件。
+ * @summary Specification Link Candidates
+ */
 export function useSpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -735,9 +769,9 @@ export function useSpecificationLinkCandidatesProjectsProjectIdSpecificationsLin
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 閲覧できる関連先だけを検索する。最大50件。
  * @summary Specification Link Candidates
  */
-
 export function useSpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandidatesGet<
   TData = Awaited<
     ReturnType<
@@ -909,6 +943,10 @@ export type RelatedSpecificationsProjectsProjectIdSpecificationsRelatedGetQueryR
 export type RelatedSpecificationsProjectsProjectIdSpecificationsRelatedGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 要件・タスク・テストから逆引きする。
+ * @summary Related Specifications
+ */
 export function useRelatedSpecificationsProjectsProjectIdSpecificationsRelatedGet<
   TData = Awaited<
     ReturnType<
@@ -953,6 +991,10 @@ export function useRelatedSpecificationsProjectsProjectIdSpecificationsRelatedGe
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 要件・タスク・テストから逆引きする。
+ * @summary Related Specifications
+ */
 export function useRelatedSpecificationsProjectsProjectIdSpecificationsRelatedGet<
   TData = Awaited<
     ReturnType<
@@ -997,6 +1039,10 @@ export function useRelatedSpecificationsProjectsProjectIdSpecificationsRelatedGe
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 要件・タスク・テストから逆引きする。
+ * @summary Related Specifications
+ */
 export function useRelatedSpecificationsProjectsProjectIdSpecificationsRelatedGet<
   TData = Awaited<
     ReturnType<
@@ -1026,9 +1072,9 @@ export function useRelatedSpecificationsProjectsProjectIdSpecificationsRelatedGe
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 要件・タスク・テストから逆引きする。
  * @summary Related Specifications
  */
-
 export function useRelatedSpecificationsProjectsProjectIdSpecificationsRelatedGet<
   TData = Awaited<
     ReturnType<
@@ -1185,6 +1231,10 @@ export type ReadSpecificationProjectsProjectIdSpecificationsSpecificationIdGetQu
 export type ReadSpecificationProjectsProjectIdSpecificationsSpecificationIdGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 現在の版と本文を取得する。
+ * @summary Read Specification
+ */
 export function useReadSpecificationProjectsProjectIdSpecificationsSpecificationIdGet<
   TData = Awaited<
     ReturnType<
@@ -1229,6 +1279,10 @@ export function useReadSpecificationProjectsProjectIdSpecificationsSpecification
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の版と本文を取得する。
+ * @summary Read Specification
+ */
 export function useReadSpecificationProjectsProjectIdSpecificationsSpecificationIdGet<
   TData = Awaited<
     ReturnType<
@@ -1273,6 +1327,10 @@ export function useReadSpecificationProjectsProjectIdSpecificationsSpecification
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 現在の版と本文を取得する。
+ * @summary Read Specification
+ */
 export function useReadSpecificationProjectsProjectIdSpecificationsSpecificationIdGet<
   TData = Awaited<
     ReturnType<
@@ -1302,9 +1360,9 @@ export function useReadSpecificationProjectsProjectIdSpecificationsSpecification
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 現在の版と本文を取得する。
  * @summary Read Specification
  */
-
 export function useReadSpecificationProjectsProjectIdSpecificationsSpecificationIdGet<
   TData = Awaited<
     ReturnType<
@@ -1364,27 +1422,6 @@ export const updateSpecificationProjectsProjectIdSpecificationsSpecificationIdPa
     specificationUpdate: SpecificationUpdate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<SpecificationRead> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<SpecificationRead>(
       getUpdateSpecificationProjectsProjectIdSpecificationsSpecificationIdPatchUrl(
         projectId,
@@ -1393,10 +1430,10 @@ export const updateSpecificationProjectsProjectIdSpecificationsSpecificationIdPa
       {
         ...options,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(specificationUpdate),
       },
     );
@@ -1482,6 +1519,7 @@ export type UpdateSpecificationProjectsProjectIdSpecificationsSpecificationIdPat
   };
 
 /**
+ * 他の編集を上書きしない版付き更新。
  * @summary Update Specification
  */
 export const useUpdateSpecificationProjectsProjectIdSpecificationsSpecificationIdPatch =
@@ -1641,6 +1679,7 @@ export type DeleteSpecificationProjectsProjectIdSpecificationsSpecificationIdDel
   };
 
 /**
+ * 既存ごみ箱で復元できる論理削除。
  * @summary Delete Specification
  */
 export const useDeleteSpecificationProjectsProjectIdSpecificationsSpecificationIdDelete =
@@ -1692,27 +1731,6 @@ export const updateSpecificationStatusProjectsProjectIdSpecificationsSpecificati
     specificationStatusUpdate: SpecificationStatusUpdate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<SpecificationRead> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<SpecificationRead>(
       getUpdateSpecificationStatusProjectsProjectIdSpecificationsSpecificationIdStatusPatchUrl(
         projectId,
@@ -1721,10 +1739,10 @@ export const updateSpecificationStatusProjectsProjectIdSpecificationsSpecificati
       {
         ...options,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(specificationStatusUpdate),
       },
     );
@@ -1810,6 +1828,7 @@ export type UpdateSpecificationStatusProjectsProjectIdSpecificationsSpecificatio
   };
 
 /**
+ * レビュー依頼・差し戻し・承認を記録する。
  * @summary Update Specification Status
  */
 export const useUpdateSpecificationStatusProjectsProjectIdSpecificationsSpecificationIdStatusPatch =
@@ -1958,6 +1977,10 @@ export type SpecificationRevisionsProjectsProjectIdSpecificationsSpecificationId
 export type SpecificationRevisionsProjectsProjectIdSpecificationsSpecificationIdRevisionsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 最新100版の履歴を取得する。
+ * @summary Specification Revisions
+ */
 export function useSpecificationRevisionsProjectsProjectIdSpecificationsSpecificationIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -2002,6 +2025,10 @@ export function useSpecificationRevisionsProjectsProjectIdSpecificationsSpecific
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 最新100版の履歴を取得する。
+ * @summary Specification Revisions
+ */
 export function useSpecificationRevisionsProjectsProjectIdSpecificationsSpecificationIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -2046,6 +2073,10 @@ export function useSpecificationRevisionsProjectsProjectIdSpecificationsSpecific
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 最新100版の履歴を取得する。
+ * @summary Specification Revisions
+ */
 export function useSpecificationRevisionsProjectsProjectIdSpecificationsSpecificationIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -2075,9 +2106,9 @@ export function useSpecificationRevisionsProjectsProjectIdSpecificationsSpecific
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 最新100版の履歴を取得する。
  * @summary Specification Revisions
  */
-
 export function useSpecificationRevisionsProjectsProjectIdSpecificationsSpecificationIdRevisionsGet<
   TData = Awaited<
     ReturnType<
@@ -2241,6 +2272,10 @@ export type ReadSpecificationRevisionProjectsProjectIdSpecificationsSpecificatio
 export type ReadSpecificationRevisionProjectsProjectIdSpecificationsSpecificationIdRevisionsNumberGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 選択した1版だけを取得する。
+ * @summary Read Specification Revision
+ */
 export function useReadSpecificationRevisionProjectsProjectIdSpecificationsSpecificationIdRevisionsNumberGet<
   TData = Awaited<
     ReturnType<
@@ -2286,6 +2321,10 @@ export function useReadSpecificationRevisionProjectsProjectIdSpecificationsSpeci
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 選択した1版だけを取得する。
+ * @summary Read Specification Revision
+ */
 export function useReadSpecificationRevisionProjectsProjectIdSpecificationsSpecificationIdRevisionsNumberGet<
   TData = Awaited<
     ReturnType<
@@ -2331,6 +2370,10 @@ export function useReadSpecificationRevisionProjectsProjectIdSpecificationsSpeci
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 選択した1版だけを取得する。
+ * @summary Read Specification Revision
+ */
 export function useReadSpecificationRevisionProjectsProjectIdSpecificationsSpecificationIdRevisionsNumberGet<
   TData = Awaited<
     ReturnType<
@@ -2361,9 +2404,9 @@ export function useReadSpecificationRevisionProjectsProjectIdSpecificationsSpeci
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 選択した1版だけを取得する。
  * @summary Read Specification Revision
  */
-
 export function useReadSpecificationRevisionProjectsProjectIdSpecificationsSpecificationIdRevisionsNumberGet<
   TData = Awaited<
     ReturnType<
@@ -2548,6 +2591,10 @@ export type SpecificationCommentsProjectsProjectIdSpecificationsSpecificationIdC
 export type SpecificationCommentsProjectsProjectIdSpecificationsSpecificationIdCommentsGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 指摘箇所の変更も通知する。
+ * @summary Specification Comments
+ */
 export function useSpecificationCommentsProjectsProjectIdSpecificationsSpecificationIdCommentsGet<
   TData = Awaited<
     ReturnType<
@@ -2595,6 +2642,10 @@ export function useSpecificationCommentsProjectsProjectIdSpecificationsSpecifica
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 指摘箇所の変更も通知する。
+ * @summary Specification Comments
+ */
 export function useSpecificationCommentsProjectsProjectIdSpecificationsSpecificationIdCommentsGet<
   TData = Awaited<
     ReturnType<
@@ -2640,6 +2691,10 @@ export function useSpecificationCommentsProjectsProjectIdSpecificationsSpecifica
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 指摘箇所の変更も通知する。
+ * @summary Specification Comments
+ */
 export function useSpecificationCommentsProjectsProjectIdSpecificationsSpecificationIdCommentsGet<
   TData = Awaited<
     ReturnType<
@@ -2670,9 +2725,9 @@ export function useSpecificationCommentsProjectsProjectIdSpecificationsSpecifica
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 指摘箇所の変更も通知する。
  * @summary Specification Comments
  */
-
 export function useSpecificationCommentsProjectsProjectIdSpecificationsSpecificationIdCommentsGet<
   TData = Awaited<
     ReturnType<
@@ -2734,27 +2789,6 @@ export const createSpecificationCommentProjectsProjectIdSpecificationsSpecificat
     specificationCommentCreate: SpecificationCommentCreate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<SpecificationCommentRead> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<SpecificationCommentRead>(
       getCreateSpecificationCommentProjectsProjectIdSpecificationsSpecificationIdCommentsPostUrl(
         projectId,
@@ -2763,10 +2797,10 @@ export const createSpecificationCommentProjectsProjectIdSpecificationsSpecificat
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(specificationCommentCreate),
       },
     );
@@ -2852,6 +2886,7 @@ export type CreateSpecificationCommentProjectsProjectIdSpecificationsSpecificati
   };
 
 /**
+ * 確認した版の項目へ1件の指摘を投稿する。
  * @summary Create Specification Comment
  */
 export const useCreateSpecificationCommentProjectsProjectIdSpecificationsSpecificationIdCommentsPost =
@@ -2904,27 +2939,6 @@ export const updateSpecificationCommentProjectsProjectIdSpecificationsSpecificat
     specificationCommentUpdate: SpecificationCommentUpdate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<SpecificationCommentRead> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<SpecificationCommentRead>(
       getUpdateSpecificationCommentProjectsProjectIdSpecificationsSpecificationIdCommentsCommentIdPatchUrl(
         projectId,
@@ -2934,10 +2948,10 @@ export const updateSpecificationCommentProjectsProjectIdSpecificationsSpecificat
       {
         ...options,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(specificationCommentUpdate),
       },
     );
@@ -3025,6 +3039,7 @@ export type UpdateSpecificationCommentProjectsProjectIdSpecificationsSpecificati
   };
 
 /**
+ * 指摘を解決・再オープンする。
  * @summary Update Specification Comment
  */
 export const useUpdateSpecificationCommentProjectsProjectIdSpecificationsSpecificationIdCommentsCommentIdPatch =
@@ -3173,6 +3188,10 @@ export type SpecificationLinksProjectsProjectIdSpecificationsSpecificationIdLink
 export type SpecificationLinksProjectsProjectIdSpecificationsSpecificationIdLinksGetQueryError =
   ErrorType<HTTPValidationError>;
 
+/**
+ * 閲覧できる関連先の名前と移動先だけを返す。
+ * @summary Specification Links
+ */
 export function useSpecificationLinksProjectsProjectIdSpecificationsSpecificationIdLinksGet<
   TData = Awaited<
     ReturnType<
@@ -3217,6 +3236,10 @@ export function useSpecificationLinksProjectsProjectIdSpecificationsSpecificatio
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 閲覧できる関連先の名前と移動先だけを返す。
+ * @summary Specification Links
+ */
 export function useSpecificationLinksProjectsProjectIdSpecificationsSpecificationIdLinksGet<
   TData = Awaited<
     ReturnType<
@@ -3261,6 +3284,10 @@ export function useSpecificationLinksProjectsProjectIdSpecificationsSpecificatio
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * 閲覧できる関連先の名前と移動先だけを返す。
+ * @summary Specification Links
+ */
 export function useSpecificationLinksProjectsProjectIdSpecificationsSpecificationIdLinksGet<
   TData = Awaited<
     ReturnType<
@@ -3290,9 +3317,9 @@ export function useSpecificationLinksProjectsProjectIdSpecificationsSpecificatio
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
+ * 閲覧できる関連先の名前と移動先だけを返す。
  * @summary Specification Links
  */
-
 export function useSpecificationLinksProjectsProjectIdSpecificationsSpecificationIdLinksGet<
   TData = Awaited<
     ReturnType<
@@ -3352,27 +3379,6 @@ export const createSpecificationLinkProjectsProjectIdSpecificationsSpecification
     specificationLinkCreate: SpecificationLinkCreate,
     options?: Parameters<typeof apiClient>[1],
   ): Promise<SpecificationLinkRead[]> => {
-    const getHeaders = (
-      h?: NonNullable<RequestInit["headers"]>,
-    ): Record<string, string | readonly string[]> => {
-      if (!h) return {};
-      if (h instanceof Headers) return Object.fromEntries(h.entries());
-      if (Symbol.iterator in h) {
-        return Object.fromEntries(
-          Array.from(
-            h as Iterable<Iterable<string>>,
-            (entry) => Array.from(entry) as [string, string],
-          ),
-        );
-      }
-      const headers: Record<string, string | readonly string[]> = {};
-      for (const [name, value] of Object.entries<
-        string | readonly string[] | undefined
-      >(h)) {
-        if (value !== undefined) headers[name] = value;
-      }
-      return headers;
-    };
     return apiClient<SpecificationLinkRead[]>(
       getCreateSpecificationLinkProjectsProjectIdSpecificationsSpecificationIdLinksPostUrl(
         projectId,
@@ -3381,10 +3387,10 @@ export const createSpecificationLinkProjectsProjectIdSpecificationsSpecification
       {
         ...options,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getHeaders(options?.headers),
-        },
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
         body: JSON.stringify(specificationLinkCreate),
       },
     );
@@ -3470,6 +3476,7 @@ export type CreateSpecificationLinkProjectsProjectIdSpecificationsSpecificationI
   };
 
 /**
+ * 同一Project内の資源を選択して関連付ける。
  * @summary Create Specification Link
  */
 export const useCreateSpecificationLinkProjectsProjectIdSpecificationsSpecificationIdLinksPost =
@@ -3609,6 +3616,7 @@ export type DeleteSpecificationLinkProjectsProjectIdSpecificationsSpecificationI
   { projectId: number; specificationId: number; linkId: number };
 
 /**
+ * 関連だけを解除し、参照先のデータは保持する。
  * @summary Delete Specification Link
  */
 export const useDeleteSpecificationLinkProjectsProjectIdSpecificationsSpecificationIdLinksLinkIdDelete =

@@ -9,6 +9,7 @@ export type SpecificationListItemKind =
   (typeof SpecificationListItemKind)[keyof typeof SpecificationListItemKind];
 
 export const SpecificationListItemKind = {
-  api: "api",
   screen: "screen",
+  api: "api",
+  database: "database",
 } as const;

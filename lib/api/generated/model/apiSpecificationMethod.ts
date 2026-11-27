@@ -16,4 +16,5 @@ export const ApiSpecificationMethod = {
   DELETE: "DELETE",
   HEAD: "HEAD",
   OPTIONS: "OPTIONS",
+  TRACE: "TRACE",
 } as const;
