@@ -32,6 +32,12 @@ import {
   wireframeSubtree,
 } from "../../lib/wireframe-parts";
 import { WireframePartDialog } from "./wireframe-part-dialog";
+import {
+  WireframeAreaFields,
+  WireframeReviewArea,
+  readWireframeArea,
+  type WireframeArea,
+} from "./wireframe-review-area";
 
 const componentLabels = {
   text: "テキスト",
@@ -192,6 +198,7 @@ export function WireframeEditor({
   onCreateReference,
   readOnly,
   onReview,
+  focusPath,
   initialPreview = false,
 }: {
   projectId?: number;
@@ -208,9 +215,12 @@ export function WireframeEditor({
   ) => void;
   readOnly: boolean;
   onReview?: (path: string) => void;
+  focusPath?: string | null;
   initialPreview?: boolean;
 }) {
-  const [boardId, setBoardId] = useState(items[0]?.id);
+  const [focusedArea] = useState(() => readWireframeArea(focusPath));
+  const [boardId, setBoardId] = useState(focusedArea?.boardId ?? items[0]?.id);
+  const [reviewArea, setReviewArea] = useState<WireframeArea>();
   const [selection, setSelection] = useState(new Set<string>());
   const [template, setTemplate] = useState("blank");
   const [zoom, setZoom] = useState(1);
@@ -234,6 +244,8 @@ export function WireframeEditor({
     resize: boolean;
   } | null>(null);
   const board = items.find((item) => item.id === boardId) ?? items[0];
+  const savedArea =
+    focusedArea && focusedArea.boardId === board?.id ? focusedArea : undefined;
   const components = board?.components ?? [];
   const active = components.find((item) => item.id && selection.has(item.id));
   const partPlacement = active ? enclosingPart(components, active) : undefined;
@@ -280,6 +292,7 @@ export function WireframeEditor({
     };
     save([...items, next]);
     setBoardId(next.id);
+    setReviewArea(undefined);
     setSelection(new Set());
   };
   const add = (kind: Layer, at?: { x: number; y: number }) => {
@@ -574,6 +587,7 @@ export function WireframeEditor({
           onChange={(event) => {
             setBoardId(event.target.value);
             setSelection(new Set());
+            setReviewArea(undefined);
           }}
         >
           {!items.length && <option value="">アートボードなし</option>}
@@ -723,6 +737,21 @@ export function WireframeEditor({
             )}
           </>
         )}
+        {board && onReview && (
+          <Button
+            type="button"
+            size="sm"
+            variant={reviewArea ? "secondary" : "ghost"}
+            aria-pressed={Boolean(reviewArea)}
+            onClick={() =>
+              setReviewArea((area) =>
+                area ? undefined : { x: 0, y: 0, width: 120, height: 80 },
+              )
+            }
+          >
+            指摘する範囲を選択
+          </Button>
+        )}
         <Button
           variant={preview ? "secondary" : "ghost"}
           size="sm"
@@ -752,6 +781,19 @@ export function WireframeEditor({
           {Math.round(zoom * 100)}%
         </label>
       </div>
+      {board?.id && reviewArea && onReview && (
+        <WireframeAreaFields
+          area={reviewArea}
+          width={board.width ?? 1024}
+          height={board.height ?? 650}
+          onChange={setReviewArea}
+          onReview={() =>
+            onReview(
+              `content/artboards/${board.id}/area/${reviewArea.x}/${reviewArea.y}/${reviewArea.width}/${reviewArea.height}`,
+            )
+          }
+        />
+      )}
       {board && (
         <div className="grid min-w-0 items-start gap-2 lg:grid-cols-[12rem_minmax(0,1fr)] xl:grid-cols-[12rem_minmax(0,1fr)_15rem]">
           <aside className="max-h-[70dvh] space-y-2 overflow-auto rounded-md border p-2">
@@ -862,6 +904,15 @@ export function WireframeEditor({
                 }}
               >
                 {render(null, board.layout ?? "free")}
+                {(reviewArea || savedArea) && (
+                  <WireframeReviewArea
+                    area={reviewArea ?? savedArea}
+                    selecting={Boolean(reviewArea)}
+                    onChange={setReviewArea}
+                    width={board.width ?? 1024}
+                    height={board.height ?? 650}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -1236,6 +1287,7 @@ export function WireframeEditor({
                       onClick={() => {
                         save(items.filter((item) => item.id !== board.id));
                         setBoardId(undefined);
+                        setReviewArea(undefined);
                       }}
                     >
                       アートボードを削除

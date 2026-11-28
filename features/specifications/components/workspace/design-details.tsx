@@ -405,6 +405,7 @@ export function DesignDetails({
               states={content.states ?? []}
               readOnly={readOnly}
               onReview={onReview}
+              focusPath={focusPath}
               onChange={(artboards) =>
                 set({
                   ...content,

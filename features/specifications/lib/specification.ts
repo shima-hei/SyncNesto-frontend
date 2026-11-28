@@ -125,6 +125,7 @@ export function reviewPathLabel(values: Values, path: string): string {
     indexes: "インデックス",
     relationships: "論理リレーション",
     artboards: "ワイヤーフレーム",
+    area: "範囲",
     mockups: "HTMLモックアップ",
     html: "HTML",
     css: "CSS",
