@@ -572,6 +572,8 @@ export * from "./readWorkflowReviewThreadProjectsProjectIdRequirementWorkflowReq
 export * from "./relatedSpecificationsProjectsProjectIdSpecificationsRelatedGetParams";
 export * from "./relatedSpecificationsProjectsProjectIdSpecificationsRelatedGetTargetType";
 export * from "./removeMemberTenantsCurrentMembersUserIdDeleteParams";
+export * from "./representativePreview";
+export * from "./representativePreviewKind";
 export * from "./requirementAgreementPage";
 export * from "./requirementAgreementPageState";
 export * from "./requirementAgreementResult";

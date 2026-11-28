@@ -44,6 +44,11 @@ const Wireframes = dynamic(() =>
 const HtmlMockups = dynamic(() =>
   import("./html-mockup-editor").then((module) => module.HtmlMockupEditor),
 );
+const RepresentativePreview = dynamic(() =>
+  import("./screen-representative-preview").then(
+    (module) => module.ScreenRepresentativePreview,
+  ),
+);
 const select =
   "h-8 max-w-full min-w-0 rounded-md border bg-background px-2 text-sm";
 const uid = () => crypto.randomUUID();
@@ -350,6 +355,14 @@ export function DesignDetails({
     if (tab === "content")
       return (
         <section className="min-w-0 space-y-3">
+          <RepresentativePreview
+            projectId={projectId}
+            content={content}
+            readOnly={readOnly}
+            onChange={(representative_preview) =>
+              set({ ...content, representative_preview })
+            }
+          />
           <div className="flex flex-wrap gap-1">
             {(
               [
@@ -379,7 +392,20 @@ export function DesignDetails({
               states={content.states ?? []}
               readOnly={readOnly}
               onReview={onReview}
-              onChange={(artboards) => set({ ...content, artboards })}
+              onChange={(artboards) =>
+                set({
+                  ...content,
+                  artboards,
+                  representative_preview:
+                    content.representative_preview?.kind === "wireframe" &&
+                    !artboards.some(
+                      (item) =>
+                        item.id === content.representative_preview?.target_id,
+                    )
+                      ? null
+                      : content.representative_preview,
+                })
+              }
               onCreateReference={(kind, item, artboards) => {
                 if (kind === "field")
                   set({
@@ -400,7 +426,20 @@ export function DesignDetails({
               projectId={projectId}
               items={content.mockups ?? []}
               readOnly={readOnly}
-              onChange={(mockups) => set({ ...content, mockups })}
+              onChange={(mockups) =>
+                set({
+                  ...content,
+                  mockups,
+                  representative_preview:
+                    content.representative_preview?.kind === "html" &&
+                    !mockups.some(
+                      (item) =>
+                        item.id === content.representative_preview?.target_id,
+                    )
+                      ? null
+                      : content.representative_preview,
+                })
+              }
               onReview={onReview}
               focusPath={focusPath}
               focusQuote={focusQuote}

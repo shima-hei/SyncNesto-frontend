@@ -6,9 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
+import { MarkdownImage } from "@/components/shared/forms/markdown-image";
 import { MockupPreviewFrame } from "@/features/specifications/components/workspace/mockup-preview-frame";
 import type { Values } from "@/features/specifications/lib/specification";
 import type { HtmlMockup } from "@/lib/api/generated/model";
+import { bodyImagePrefix } from "@/lib/markdown-body-images";
 import { readSharedDesignMockup } from "../lib/access-api";
 
 const FixedWireframes = dynamic(() =>
@@ -47,12 +49,14 @@ type SharedScope = {
 function SharedMockups({
   items,
   scope,
+  preferred,
 }: {
   items: HtmlMockup[];
   scope: SharedScope;
+  preferred?: string;
 }) {
   const id = useId();
-  const [selected, setSelected] = useState(items[0]?.id);
+  const [selected, setSelected] = useState(preferred ?? items[0]?.id);
   const [requested, setRequested] = useState(false);
   const item = items.find((mockup) => mockup.id === selected);
   const { publicationId, nodeId, revision } = scope;
@@ -174,8 +178,25 @@ export function PublicDesignPresentation({
       </details>
     );
   }
-  if (!(content.artboards?.length || (scope && content.mockups?.length)))
+  const representative = content.representative_preview;
+  const image =
+    representative?.kind === "image" ? representative.target_id : undefined;
+  const artboards = content.artboards ?? [];
+  const firstArtboard =
+    representative?.kind === "wireframe"
+      ? artboards.find((item) => item.id === representative.target_id)
+      : undefined;
+  if (!(artboards.length || (scope && content.mockups?.length) || image))
     return null;
+  const mockups = scope && Boolean(content.mockups?.length) && (
+    <SharedMockups
+      scope={scope}
+      items={content.mockups ?? []}
+      preferred={
+        representative?.kind === "html" ? representative.target_id : undefined
+      }
+    />
+  );
   return (
     <details
       className="min-w-0 rounded-md border p-3"
@@ -186,9 +207,26 @@ export function PublicDesignPresentation({
       </summary>
       {open && (
         <div className="mt-3 min-w-0 space-y-4">
-          {Boolean(content.artboards?.length) && (
+          {image && (
+            <MarkdownImage
+              src={`${bodyImagePrefix}${image}`}
+              alt="代表プレビューの参考画像"
+              inert
+            />
+          )}
+          {representative?.kind === "html" && mockups}
+          {Boolean(artboards.length) && (
             <FixedWireframes
-              items={content.artboards ?? []}
+              items={
+                firstArtboard
+                  ? [
+                      firstArtboard,
+                      ...artboards.filter(
+                        (item) => item.id !== firstArtboard.id,
+                      ),
+                    ]
+                  : artboards
+              }
               fields={content.fields ?? []}
               events={content.actions ?? []}
               states={content.states ?? []}
@@ -199,9 +237,7 @@ export function PublicDesignPresentation({
               onCreateReference={() => undefined}
             />
           )}
-          {scope && Boolean(content.mockups?.length) && (
-            <SharedMockups scope={scope} items={content.mockups ?? []} />
-          )}
+          {representative?.kind !== "html" && mockups}
         </div>
       )}
     </details>

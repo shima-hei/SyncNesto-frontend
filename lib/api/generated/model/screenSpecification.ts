@@ -6,6 +6,7 @@
  */
 import type { DesignMapping } from "./designMapping";
 import type { HtmlMockup } from "./htmlMockup";
+import type { RepresentativePreview } from "./representativePreview";
 import type { ScreenEvent } from "./screenEvent";
 import type { ScreenSpecificationScreenKind } from "./screenSpecificationScreenKind";
 import type { ScreenState } from "./screenState";
@@ -27,6 +28,7 @@ export interface ScreenSpecification {
   mappings?: DesignMapping[];
   /** @maxItems 15 */
   mockups?: HtmlMockup[];
+  representative_preview?: RepresentativePreview | null;
   /** @maxLength 1000 */
   route?: string;
   /** @maxLength 5000 */
