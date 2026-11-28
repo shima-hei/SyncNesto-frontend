@@ -595,7 +595,7 @@ function Rules({
   );
 }
 
-function ApiOperationMetadata({
+export function ApiOperationMetadata({
   content,
   onChange,
   readOnly,

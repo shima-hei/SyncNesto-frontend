@@ -33,7 +33,7 @@ import {
   readDesignDiagram,
   screenKinds,
 } from "../../lib/workspace";
-import { TextField } from "../specification-fields";
+import { ApiOperationMetadata, TextField } from "../specification-fields";
 import { DesignGrid } from "./design-grid";
 import { DesignFormats } from "./design-formats";
 import { ApiOperationEditor } from "./api-operation-editor";
@@ -290,6 +290,14 @@ export function DesignDetails({
               onChange={(path) => set({ ...content, path })}
               onReview={onReview}
             />
+            <div className="sm:col-span-2">
+              <ApiOperationMetadata
+                content={content}
+                onChange={(operation) => set({ ...content, operation })}
+                readOnly={readOnly}
+                onReview={onReview}
+              />
+            </div>
           </>
         )}
         {content.type === "database" && (

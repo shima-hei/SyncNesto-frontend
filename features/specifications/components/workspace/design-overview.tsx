@@ -30,9 +30,17 @@ export function DesignOverview({ projectId }: { projectId: number }) {
       />
     );
   if (!overview.data) return null;
-  const { counts, pending, recent, groups, group_counts, linked_requirements } =
-    overview.data;
-  const row = (item: SpecificationListItem) => (
+  const {
+    counts,
+    pending,
+    recent,
+    groups,
+    group_counts,
+    linked_requirements,
+    unresolved_reviews = [],
+    impact_candidates = [],
+  } = overview.data;
+  const row = (item: SpecificationListItem, tab?: "review" | "impact") => (
     <li
       className="grid grid-cols-[auto_1fr_auto] items-center gap-2 py-2 text-sm"
       key={item.id}
@@ -42,7 +50,10 @@ export function DesignOverview({ projectId }: { projectId: number }) {
       </span>
       <Link
         className="min-w-0 truncate hover:underline"
-        href={specificationHref(projectId, item.id)}
+        href={{
+          pathname: specificationHref(projectId, item.id),
+          query: tab ? { tab } : undefined,
+        }}
       >
         {item.title}
       </Link>
@@ -106,11 +117,31 @@ export function DesignOverview({ projectId }: { projectId: number }) {
             対応が必要な設計
           </h2>
           {pending.length ? (
-            <ul className="divide-y">{pending.map(row)}</ul>
+            <ul className="divide-y">{pending.map((item) => row(item))}</ul>
           ) : (
             <p className="py-3 text-sm text-muted-foreground">
               レビュー待ち・修正依頼はありません。
             </p>
+          )}
+          {unresolved_reviews.length > 0 && (
+            <>
+              <h2 className="mt-5 border-b pb-2 text-base font-semibold">
+                未解決のレビュー指摘
+              </h2>
+              <ul className="divide-y">
+                {unresolved_reviews.map((item) => row(item, "review"))}
+              </ul>
+            </>
+          )}
+          {impact_candidates.length > 0 && (
+            <>
+              <h2 className="mt-5 border-b pb-2 text-base font-semibold">
+                変更影響の確認候補
+              </h2>
+              <ul className="divide-y">
+                {impact_candidates.map((item) => row(item, "impact"))}
+              </ul>
+            </>
           )}
           <h2 className="mt-6 border-b pb-2 text-base font-semibold">
             最近更新された設計

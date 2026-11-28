@@ -168,7 +168,10 @@ function DesignEditor({
     ["links", "impact", "review", "history"].includes(localTab)
       ? localTab
       : "content";
-  const [target, setTarget] = useState<DesignReviewTarget | null>(null);
+  const [target, setTarget] = useState<DesignReviewTarget | null>(() => {
+    const path = params.get("review");
+    return !inline && canEdit && path && path.length <= 300 ? { path } : null;
+  });
   const [internalRequest, setInternalRequest] = useState(0);
   const [focused, setFocused] = useState<string | null>(params.get("focus"));
   const [focusedQuote, setFocusedQuote] = useState<DesignReviewQuote>();

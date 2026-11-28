@@ -16,6 +16,8 @@ export interface DesignOverview {
   counts: DesignCount[];
   recent: SpecificationListItem[];
   pending: SpecificationListItem[];
+  unresolved_reviews?: SpecificationListItem[];
+  impact_candidates?: SpecificationListItem[];
   groups: CollectionRead[];
   group_counts: DesignOverviewGroupCounts;
   linked_requirements: number;

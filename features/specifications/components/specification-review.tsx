@@ -29,6 +29,7 @@ import {
 } from "@/components/shared/comments/comment-composer";
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 import { listComments, createComment, resolveComment } from "../lib/api";
+import { designKey } from "../lib/workspace";
 import {
   initialValues,
   reviewElementId,
@@ -54,13 +55,20 @@ export function SpecificationReview({
   target: DesignReviewTarget | null;
   onTarget: (value: DesignReviewTarget | null) => void;
   onNavigate: (path: string, quote?: DesignReviewQuote) => void;
-  onHistory: (version: number, path: string, quote: DesignReviewQuote) => void;
+  onHistory: (version: number, path: string, quote?: DesignReviewQuote) => void;
 }) {
   const cache = useQueryClient();
   const [body, setBody] = useState("");
   const media = useCommentComposeMedia(projectId, "specification");
   const [showResolved, setShowResolved] = useState(false);
   const key = [...specificationKeys.detail(projectId, row.id), "comments"];
+  const refreshComments = () =>
+    Promise.all([
+      cache.invalidateQueries({ queryKey: key }),
+      cache.invalidateQueries({
+        queryKey: [...designKey(projectId), "overview"],
+      }),
+    ]);
   const query = useInfiniteQuery({
     queryKey: key,
     initialPageParam: 1,
@@ -82,7 +90,7 @@ export function SpecificationReview({
     onSuccess: async () => {
       setBody("");
       onTarget(null);
-      await cache.invalidateQueries({ queryKey: key });
+      await refreshComments();
       toast.success("指摘を追加しました。");
     },
     onError: () =>
@@ -100,7 +108,7 @@ export function SpecificationReview({
       version: number;
       is_resolved: boolean;
     }) => resolveComment(projectId, row.id, id, { version, is_resolved }),
-    onSuccess: () => cache.invalidateQueries({ queryKey: key }),
+    onSuccess: refreshComments,
     onError: (error) => {
       toast.error(getApiErrorMessage(error));
       void cache.invalidateQueries({ queryKey: key });
@@ -252,26 +260,28 @@ export function SpecificationReview({
                   >
                     {comment.field_snapshot}
                   </pre>
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="px-0"
-                    onClick={() =>
-                      onHistory(
-                        comment.specification_version,
-                        comment.field_path,
-                        {
-                          quote: comment.field_snapshot,
-                          quote_start: comment.quote_start!,
-                        },
-                      )
-                    }
-                  >
-                    指摘時の版 {comment.specification_version}
-                  </Button>
                 </div>
               )}
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="px-0"
+                onClick={() =>
+                  onHistory(
+                    comment.specification_version,
+                    comment.field_path,
+                    comment.quote_start == null
+                      ? undefined
+                      : {
+                          quote: comment.field_snapshot,
+                          quote_start: comment.quote_start,
+                        },
+                  )
+                }
+              >
+                指摘時の版 {comment.specification_version}
+              </Button>
               <p className="whitespace-pre-wrap break-words text-sm">
                 <CommentContent body={comment.body} />
               </p>

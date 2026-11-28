@@ -11,7 +11,6 @@ import {
   type FormEvent,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import {
   PanelLeftIcon,
   PanelRightIcon,
@@ -352,7 +351,7 @@ function DesignBrowser({
       }
       return { row: created };
     },
-    onSuccess: async ({ row, partial }) => {
+    onSuccess: async ({ row }) => {
       setName("");
       setCreation(null);
       if (
@@ -362,7 +361,6 @@ function DesignBrowser({
         setPage(1);
         setQ(row.title);
       }
-      if (partial) toast.warning(partial);
       select(row.id);
       await refresh();
     },
@@ -1362,9 +1360,30 @@ function NodeInspector({
           </p>
         )}
       </div>
-      <Button asChild size="sm" variant="outline">
-        <Link href={specificationHref(projectId, node.id)}>個別設計を開く</Link>
-      </Button>
+      <div className="flex flex-wrap gap-1">
+        <Button asChild size="sm" variant="outline">
+          <Link href={specificationHref(projectId, node.id)}>
+            個別設計を開く
+          </Link>
+        </Button>
+        {canEdit && node.kind === "screen" && (
+          <Button asChild size="sm" variant="ghost">
+            <Link
+              href={{
+                pathname: specificationHref(projectId, node.id),
+                query: {
+                  tab: "review",
+                  review: edge
+                    ? `content/transitions/${edge.id}/name`
+                    : "title",
+                },
+              }}
+            >
+              {edge ? "遷移線に指摘" : "画面に指摘"}
+            </Link>
+          </Button>
+        )}
+      </div>
       {node.summary && <p className="line-clamp-3 text-sm">{node.summary}</p>}
       {onReference && (
         <Button variant="ghost" size="sm" onClick={onReference}>
