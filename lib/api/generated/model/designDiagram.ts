@@ -16,4 +16,6 @@ export interface DesignDiagram {
   nodes: DesignNode[];
   edges: DesignEdge[];
   total: number;
+  reference_ids?: number[];
+  has_more_references?: boolean;
 }

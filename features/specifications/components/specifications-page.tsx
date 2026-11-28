@@ -206,22 +206,34 @@ function DesignBrowser({
     ) ?? [];
   const selectedSet = sets.find((item) => item.id === setId);
   const graph = useQuery({
-    queryKey: [...designKey(projectId), kind, group, search, page],
+    queryKey: [
+      ...designKey(projectId),
+      kind,
+      group,
+      setId,
+      search,
+      page,
+      view === "diagram",
+    ],
     queryFn: () =>
       readDesignDiagram(projectId, {
         kind,
         group_id: group || undefined,
+        collection_id: setId || undefined,
+        include_references: view === "diagram",
         q: search,
         page,
         page_size: 50,
       }),
     retry: false,
-    enabled: !screenList,
+    enabled: !screenList && view !== "output",
   });
   const id = selected.size === 1 ? [...selected][0] : undefined;
   const nodes = graph.data?.nodes ?? [];
+  const outsidePage = new Set(graph.data?.reference_ids ?? []);
   const matches = nodes.filter(
     (node) =>
+      !outsidePage.has(node.id) &&
       (!group || node.group_ids?.includes(group)) &&
       (!setId || node.collection_id === setId),
   );
@@ -587,7 +599,10 @@ function DesignBrowser({
                       aria-label="機能グループ"
                       className={selectClass}
                       value={group}
-                      onChange={(event) => setGroup(event.target.value)}
+                      onChange={(event) => {
+                        setPage(1);
+                        setGroup(event.target.value);
+                      }}
                     >
                       <option value="">すべての機能</option>
                       {orderedGroups(groups).map(({ item, depth }) => (
@@ -628,7 +643,11 @@ function DesignBrowser({
                       <select
                         className={selectClass}
                         value={setId}
-                        onChange={(event) => setSetId(event.target.value)}
+                        onChange={(event) => {
+                          setSetId(event.target.value);
+                          setPage(1);
+                          setSelected(new Set());
+                        }}
                       >
                         <option value="">すべて</option>
                         {sets.map((item) => (
@@ -727,6 +746,14 @@ function DesignBrowser({
                       busy={place.isPending || connectionSaving}
                       canEdit={canEdit}
                     />
+                    {graph.data?.has_more_references && (
+                      <p
+                        role="status"
+                        className="p-2 text-sm text-muted-foreground"
+                      >
+                        参照先が200件を超えています。グループや検索条件を変更すると接続を絞り込めます。
+                      </p>
+                    )}
                   </>
                 ) : view === "tree" ? (
                   <div className="space-y-3 p-4">
@@ -893,7 +920,13 @@ function DesignBrowser({
                       }
                       onReference={
                         referenceIds.has(active.id)
-                          ? () => setGroup(active.group_ids?.[0] ?? "")
+                          ? () => {
+                              setPage(1);
+                              setQ(active.title);
+                              setGroup(active.group_ids?.[0] ?? "");
+                              if (kind === "database")
+                                setSetId(active.collection_id ?? "");
+                            }
                           : undefined
                       }
                     />
@@ -1170,9 +1203,47 @@ function NodeInspector({
       )?.focus();
   }, [newConnection]);
   const [mode, setMode] = useState<
-    "page" | "modal" | "drawer" | "new_tab" | "other"
-  >("page");
-  const [parameters, setParameters] = useState("");
+    "page" | "modal" | "drawer" | "new_tab" | "other" | undefined
+  >();
+  const [parameters, setParameters] = useState<string>();
+  const [trigger, setTrigger] = useState<string>();
+  const [eventId, setEventId] = useState<string>();
+  const [connectionOpen, setConnectionOpen] = useState(
+    Boolean(edge || newConnection),
+  );
+  const [targetSearch, setTargetSearch] = useState("");
+  const search = useDeferredValue(targetSearch.trim());
+  const screen = useQuery({
+    queryKey: specificationKeys.detail(projectId, node.id),
+    queryFn: () => readSpecification(projectId, node.id),
+    enabled: canEdit && connectionOpen && node.kind === "screen",
+  });
+  const screenContent =
+    screen.data?.content.type === "screen" ? screen.data.content : undefined;
+  const transition = screenContent?.transitions?.find(
+    (item) => item.id === edge?.id,
+  );
+  const relay = useQuery({
+    queryKey: [
+      ...designKey(projectId),
+      "connection-targets",
+      node.kind,
+      search,
+    ],
+    queryFn: () =>
+      readDesignDiagram(projectId, {
+        kind: node.kind,
+        q: search,
+        page_size: 20,
+      }),
+    enabled: canEdit && connectionOpen && Boolean(search),
+    retry: false,
+  });
+  const targets = new Map(
+    [...nodes, ...(relay.data?.nodes ?? [])]
+      .filter((item) => item.kind === node.kind)
+      .map((item) => [item.id, item]),
+  );
   const memberships = useMutation({
     mutationFn: () =>
       updateMemberships(projectId, node.id, {
@@ -1201,8 +1272,11 @@ function NodeInspector({
             name,
             condition,
             target_id: Number(target),
-            mode: existing?.mode ?? mode,
-            parameters: existing?.parameters ?? parameters,
+            mode: mode ?? existing?.mode ?? "page",
+            parameters: parameters ?? existing?.parameters ?? "",
+            trigger: trigger ?? existing?.trigger ?? "",
+            event_id:
+              eventId === undefined ? existing?.event_id : eventId || null,
           });
         return updateSpecification(projectId, node.id, {
           title: row.title,
@@ -1285,7 +1359,7 @@ function NodeInspector({
       {node.summary && <p className="line-clamp-3 text-sm">{node.summary}</p>}
       {onReference && (
         <Button variant="ghost" size="sm" onClick={onReference}>
-          所属グループへ移動
+          {node.group_ids?.length ? "所属グループへ移動" : "接続先の設計を表示"}
         </Button>
       )}
       {canEdit && groups.length > 0 && !edge && (
@@ -1328,6 +1402,7 @@ function NodeInspector({
       {canEdit && node.kind !== "api" && (
         <details
           open={edge || newConnection ? true : undefined}
+          onToggle={(event) => setConnectionOpen(event.currentTarget.open)}
           className="space-y-2 rounded-md border p-2 text-sm"
         >
           <summary className="cursor-pointer">
@@ -1345,6 +1420,13 @@ function NodeInspector({
             placeholder="接続名"
             maxLength={200}
           />
+          <Input
+            aria-label="接続先を名前で検索"
+            placeholder="接続先を名前で検索"
+            value={targetSearch}
+            onChange={(event) => setTargetSearch(event.target.value)}
+            maxLength={200}
+          />
           <select
             ref={targetInput}
             className={cn(selectClass, "w-full")}
@@ -1353,13 +1435,14 @@ function NodeInspector({
             onChange={(event) => setTarget(event.target.value)}
           >
             <option value="">接続先を選択</option>
-            {nodes
-              .filter((item) => item.kind === node.kind)
-              .map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
+            {target && !targets.has(Number(target)) && (
+              <option value={target}>設計 {target}</option>
+            )}
+            {[...targets.values()].map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
           </select>
           {node.kind === "screen" && (
             <Input
@@ -1370,12 +1453,35 @@ function NodeInspector({
               maxLength={3000}
             />
           )}
-          {node.kind === "screen" && !edge && (
+          {node.kind === "screen" && (
             <>
+              <select
+                aria-label="発火イベント"
+                className={cn(selectClass, "w-full")}
+                value={eventId ?? transition?.event_id ?? ""}
+                onChange={(event) => setEventId(event.target.value)}
+              >
+                <option value="">イベント未指定</option>
+                {screenContent?.actions?.map(
+                  (event) =>
+                    event.id && (
+                      <option key={event.id} value={event.id}>
+                        {event.name || "名称未設定"}
+                      </option>
+                    ),
+                )}
+              </select>
+              <Input
+                aria-label="発火条件"
+                placeholder="発火条件"
+                value={trigger ?? transition?.trigger ?? ""}
+                onChange={(event) => setTrigger(event.target.value)}
+                maxLength={200}
+              />
               <select
                 aria-label="遷移方式"
                 className={cn(selectClass, "w-full")}
-                value={mode}
+                value={mode ?? transition?.mode ?? "page"}
                 onChange={(event) => setMode(event.target.value as typeof mode)}
               >
                 <option value="page">ページ遷移</option>
@@ -1385,10 +1491,11 @@ function NodeInspector({
                 <option value="other">その他</option>
               </select>
               <Input
-                value={parameters}
+                value={parameters ?? transition?.parameters ?? ""}
                 onChange={(event) => setParameters(event.target.value)}
                 aria-label="引き渡しパラメータ"
                 placeholder="パラメータ"
+                maxLength={3000}
               />
             </>
           )}
@@ -1417,7 +1524,7 @@ function NodeInspector({
               </Button>
             )}
           </div>
-          <FormApiError error={save.error} />
+          <FormApiError error={save.error ?? relay.error ?? screen.error} />
         </details>
       )}
       {canEdit && onPlacement && (

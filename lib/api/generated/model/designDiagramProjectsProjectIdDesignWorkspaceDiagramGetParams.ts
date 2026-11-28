@@ -9,6 +9,8 @@ import type { DesignDiagramProjectsProjectIdDesignWorkspaceDiagramGetKind } from
 export type DesignDiagramProjectsProjectIdDesignWorkspaceDiagramGetParams = {
   kind: DesignDiagramProjectsProjectIdDesignWorkspaceDiagramGetKind;
   group_id?: string | null;
+  collection_id?: string | null;
+  include_references?: boolean;
   /** @maxLength 200 */
   q?: string;
   /** @minimum 1 */
