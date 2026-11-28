@@ -25,6 +25,16 @@ import type {
 import { specificationCode, specificationHref } from "../../lib/specification";
 
 type Position = { x: number; y: number };
+type DiagramNode = Pick<
+  DesignNode,
+  | "id"
+  | "kind"
+  | "title"
+  | "identifier"
+  | "version"
+  | "placement"
+  | "field_labels"
+>;
 const nodeWidth = 212;
 const nodeHeight = 88;
 const step = 12;
@@ -47,9 +57,10 @@ export function DesignCanvas({
   busy,
   referenceIds,
   logical,
+  historical = false,
 }: {
   projectId: number;
-  nodes: DesignNode[];
+  nodes: DiagramNode[];
   edges: DesignEdge[];
   selected: Set<number>;
   onSelect: (id: number, multiple: boolean) => void;
@@ -61,6 +72,7 @@ export function DesignCanvas({
   busy: boolean;
   referenceIds: Set<number>;
   logical: boolean;
+  historical?: boolean;
 }) {
   const markerId = useId();
   const viewport = useRef<HTMLDivElement>(null);
@@ -96,6 +108,12 @@ export function DesignCanvas({
       node.placement ?? defaultPosition(index),
     ]),
   );
+  const detailHref = (node: DiagramNode) => {
+    const href = specificationHref(projectId, node.id);
+    return historical ? `${href}?tab=history&version=${node.version}` : href;
+  };
+  const selectedNode =
+    selected.size === 1 && nodes.find((node) => selected.has(node.id));
   const point = (id: number): Position => {
     const start = positions.get(id) ?? defaultPosition(0);
     return offset?.ids.has(id)
@@ -122,7 +140,7 @@ export function DesignCanvas({
     }));
     if (values.length) onPlace(values);
   };
-  function start(event: PointerEvent<HTMLButtonElement>, node: DesignNode) {
+  function start(event: PointerEvent<HTMLButtonElement>, node: DiagramNode) {
     if (event.button !== 0 || busy || !canEdit || referenceIds.has(node.id))
       return;
     event.stopPropagation();
@@ -164,7 +182,7 @@ export function DesignCanvas({
     drag.current = null;
     setOffset(null);
   }
-  function keyMove(event: KeyboardEvent<HTMLButtonElement>, node: DesignNode) {
+  function keyMove(event: KeyboardEvent<HTMLButtonElement>, node: DiagramNode) {
     const movement: Record<string, Position> = {
       ArrowLeft: { x: -step, y: 0 },
       ArrowRight: { x: step, y: 0 },
@@ -414,13 +432,12 @@ export function DesignCanvas({
                       className="flex min-w-0 flex-1 flex-col gap-1 rounded p-2 text-left focus-visible:outline-ring"
                       onClick={(event) => onSelect(node.id, event.shiftKey)}
                       onDoubleClick={() => {
-                        window.location.assign(
-                          specificationHref(projectId, node.id),
-                        );
+                        window.location.assign(detailHref(node));
                       }}
                     >
                       <span className="font-mono text-xs text-muted-foreground">
                         {specificationCode(node)}
+                        {historical && ` · 版 ${node.version}`}
                         {reference && " · 参照"}
                       </span>
                       <span
@@ -584,13 +601,9 @@ export function DesignCanvas({
                 {edge.name || (edge.kind === "transition" ? "遷移" : "関連")}
               </Button>
             ))}
-          {selected.size === 1 && (
+          {selectedNode && (
             <Button asChild size="sm" variant="ghost">
-              <Link
-                href={specificationHref(projectId, Array.from(selected)[0])}
-              >
-                設計を開く
-              </Link>
+              <Link href={detailHref(selectedNode)}>設計を開く</Link>
             </Button>
           )}
         </div>

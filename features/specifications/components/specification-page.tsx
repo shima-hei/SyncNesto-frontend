@@ -69,6 +69,10 @@ import {
 } from "./workspace/design-details";
 import { DesignImpactPanel, DesignMappings } from "./workspace/design-impact";
 import { DesignFormats } from "./workspace/design-formats";
+import {
+  FixedDesignDependencies,
+  type DesignSnapshot,
+} from "./workspace/fixed-design-dependencies";
 
 export function SpecificationPage({
   projectId,
@@ -630,7 +634,7 @@ function DesignHistory({
     enabled: Boolean(version),
     retry: false,
   });
-  const past = fixed.data?.snapshot as unknown as SpecificationRead | undefined;
+  const past = fixed.data?.snapshot as unknown as DesignSnapshot | undefined;
   return (
     <section className="space-y-3">
       {revisions.isPending && <p role="status">版履歴を読み込み中…</p>}
@@ -666,8 +670,23 @@ function DesignHistory({
                 {label}
               </Button>
             ))}
+            {past.dependencies && (
+              <Button
+                size="sm"
+                variant={tab === "fixed-dependencies" ? "secondary" : "ghost"}
+                onClick={() => setTab("fixed-dependencies")}
+              >
+                固定版の関連・配置
+              </Button>
+            )}
           </div>
-          {tab === "output" && past.kind !== "screen" ? (
+          {tab === "fixed-dependencies" ? (
+            <FixedDesignDependencies
+              key={past.version}
+              projectId={projectId}
+              snapshot={past}
+            />
+          ) : tab === "output" && past.kind !== "screen" ? (
             <DesignFormats
               key={past.version}
               projectId={projectId}
