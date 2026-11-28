@@ -114,6 +114,11 @@ export function PublicNode({
     node.node_kind === "specification" &&
     node.payload.content !== null &&
     typeof node.payload.content === "object";
+  const designValues = structured && {
+    title: String(node.payload.title ?? ""),
+    summary: String(node.payload.summary ?? ""),
+    content: node.payload.content as Content,
+  };
   const fields = Object.entries(node.payload).filter(
     ([key]) =>
       key !== "title" &&
@@ -157,13 +162,9 @@ export function PublicNode({
             {node.source_version ? `・元の版 ${node.source_version}` : ""}
           </p>
         ) : null}
-        {structured ? (
+        {designValues ? (
           <SpecificationFields
-            values={{
-              title: String(node.payload.title ?? ""),
-              summary: String(node.payload.summary ?? ""),
-              content: node.payload.content as Content,
-            }}
+            values={designValues}
             onChange={() => undefined}
             readOnly
             liveLinks={false}
@@ -204,9 +205,10 @@ export function PublicNode({
             <AddQuote action={quoteAction} field="title" />
           </>
         ) : null}
-        {structured && (
+        {designValues && (
           <PublicDesignPresentation
-            content={node.payload.content as Content}
+            values={designValues}
+            version={node.source_version ?? 1}
             scope={
               sharedPublicationId && authorizationRevision
                 ? {

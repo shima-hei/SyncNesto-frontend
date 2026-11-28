@@ -141,7 +141,7 @@ export function detailsTab(kind: Content["type"], path: string): string {
 }
 
 export function DesignDetails({
-  projectId,
+  projectId: scopedProjectId,
   id,
   values,
   onChange,
@@ -154,19 +154,21 @@ export function DesignDetails({
   focusPath,
   focusQuote,
 }: {
-  projectId: number;
   id?: number;
   values: Values;
   onChange: (value: Values) => void;
   readOnly: boolean;
   tab: string;
   onReview?: Review;
-  revision?: number;
   dirty?: boolean;
   canRegisterParts?: boolean;
   focusPath?: string | null;
   focusQuote?: DesignReviewQuote;
-}) {
+} & (
+  | { projectId: number; revision?: number }
+  | { projectId?: never; revision: number; readOnly: true }
+)) {
+  const projectId = scopedProjectId ?? 0;
   const { content } = values;
   const [layout, setLayout] = useState(
     focusPath?.startsWith("content/mockups/") ? "html" : "wireframe",
@@ -177,7 +179,9 @@ export function DesignDetails({
   const collections = useQuery({
     queryKey: [...designKey(projectId), "collections"],
     queryFn: () => readDesignCollections(projectId),
-    enabled: isBasic && content.type !== "screen" && !revision,
+    enabled: Boolean(
+      scopedProjectId && isBasic && content.type !== "screen" && !revision,
+    ),
   });
   function title(label: string, field: "title" | "summary") {
     return (

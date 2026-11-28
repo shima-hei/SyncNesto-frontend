@@ -129,7 +129,7 @@ export function TextField({
           {readOnlyText ??
             (value && bodyImageField ? (
               <MarkdownBodyText value={value} liveLinks={liveLinks} />
-            ) : value && (link || multiline) ? (
+            ) : value && liveLinks !== false && (link || multiline) ? (
               <LinkedText text={value} />
             ) : (
               value || "未記入"

@@ -4,9 +4,10 @@ import dynamic from "next/dynamic";
 import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { MockupPreviewFrame } from "@/features/specifications/components/workspace/mockup-preview-frame";
-import type { Content } from "@/features/specifications/lib/specification";
+import type { Values } from "@/features/specifications/lib/specification";
 import type { HtmlMockup } from "@/lib/api/generated/model";
 import { readSharedDesignMockup } from "../lib/access-api";
 
@@ -15,6 +16,27 @@ const FixedWireframes = dynamic(() =>
     (module) => module.WireframeEditor,
   ),
 );
+
+const FixedDetails = dynamic(() =>
+  import("@/features/specifications/components/workspace/design-details").then(
+    (module) => module.DesignDetails,
+  ),
+);
+
+const detailTabs = {
+  api: [
+    ["request", "リクエスト"],
+    ["responses", "レスポンス"],
+    ["processing", "処理仕様"],
+    ["security", "認証・認可"],
+  ],
+  database: [
+    ["columns", "カラム"],
+    ["constraints", "制約"],
+    ["indexes", "インデックス"],
+    ["relationships", "リレーション"],
+  ],
+} as const;
 
 type SharedScope = {
   publicationId: string;
@@ -107,17 +129,52 @@ function SharedMockups({
 }
 
 export function PublicDesignPresentation({
-  content,
+  values,
+  version,
   scope,
 }: {
-  content: Content;
+  values: Values;
+  version: number;
   scope?: SharedScope;
 }) {
   const [open, setOpen] = useState(false);
-  if (
-    content.type !== "screen" ||
-    !(content.artboards?.length || (scope && content.mockups?.length))
-  )
+  const { content } = values;
+  if (content.type !== "screen") {
+    const tabs = detailTabs[content.type];
+    return (
+      <details
+        className="min-w-0 rounded-md border p-3"
+        onToggle={(event) => setOpen(event.currentTarget.open)}
+      >
+        <summary className="cursor-pointer text-sm font-medium">
+          {content.type === "api" ? "固定版のAPI定義" : "固定版のテーブル定義"}
+        </summary>
+        {open && (
+          <Tabs defaultValue={tabs[0][0]} className="mt-3 min-w-0">
+            <TabsList className="h-auto w-fit max-w-full flex-wrap justify-start">
+              {tabs.map(([value, label]) => (
+                <TabsTrigger key={value} value={value}>
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {tabs.map(([value]) => (
+              <TabsContent key={value} className="min-w-0" value={value}>
+                <FixedDetails
+                  values={values}
+                  revision={version}
+                  tab={value}
+                  readOnly
+                  onChange={() => undefined}
+                />
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
+      </details>
+    );
+  }
+  if (!(content.artboards?.length || (scope && content.mockups?.length)))
     return null;
   return (
     <details
