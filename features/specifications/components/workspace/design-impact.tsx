@@ -27,6 +27,15 @@ import {
 
 const select =
   "h-8 min-w-0 max-w-full rounded-md border bg-background px-2 text-sm";
+const pathPart = (value: string) =>
+  value.replaceAll("~", "~0").replaceAll("/", "~1");
+
+function fieldId(value: unknown) {
+  if (value === null || typeof value !== "object") return undefined;
+  const row = value as Record<string, unknown>;
+  const id = row.id ?? row["x-syncnesto-id"];
+  return typeof id === "string" ? id : undefined;
+}
 
 function paths(
   value: unknown,
@@ -37,11 +46,10 @@ function paths(
     return prefix === "content" ? [] : [{ path: prefix, label }];
   if (Array.isArray(value))
     return value.flatMap((item) => {
-      if (item === null || typeof item !== "object" || !("id" in item))
-        return [];
-      const name =
-        "name" in item && item.name ? String(item.name) : String(item.id);
-      return paths(item, `${prefix}/${item.id}`, `${label} / ${name}`);
+      const id = fieldId(item);
+      if (!id) return [];
+      const name = typeof item.name === "string" && item.name ? item.name : id;
+      return paths(item, `${prefix}/${pathPart(id)}`, `${label} / ${name}`);
     });
   if (prefix.split("/").length > 12) return [];
   return Object.entries(value)
@@ -54,10 +62,15 @@ function paths(
           "artboards",
           "description",
           "x-syncnesto-id",
-        ].includes(key) && !key.includes("/"),
+          "x-syncnesto-property-order",
+        ].includes(key),
     )
     .flatMap(([key, child]) =>
-      paths(child, `${prefix}/${key}`, label ? `${label} / ${key}` : key),
+      paths(
+        child,
+        `${prefix}/${pathPart(prefix.endsWith("/properties") ? (fieldId(child) ?? key) : key)}`,
+        label ? `${label} / ${key}` : key,
+      ),
     );
 }
 
@@ -287,7 +300,9 @@ export function DesignImpactPanel({
           <p className="text-sm text-muted-foreground">
             {query.data.base_version
               ? `比較元 版${query.data.base_version} → 現在 版${query.data.source_version}`
-              : "比較できる変更はありません。"}
+              : query.data.items.length
+                ? `現在 版${query.data.source_version} · 共通定義との比較`
+                : "比較できる変更はありません。"}
           </p>
           <ul className="divide-y">
             {query.data.items.map((item) => (
