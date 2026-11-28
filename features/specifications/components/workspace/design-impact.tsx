@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,14 +89,17 @@ export function DesignMappings({
 }) {
   const [kind, setKind] = useState<Content["type"]>("api");
   const [target, setTarget] = useState(0);
+  const [targetSearch, setTargetSearch] = useState("");
+  const search = useDeferredValue(targetSearch.trim());
   const [source, setSource] = useState("");
   const [targetPath, setTargetPath] = useState("");
   const [meaning, setMeaning] =
     useState<NonNullable<DesignMapping["meaning"]>>("maps");
   const [note, setNote] = useState("");
   const list = useQuery({
-    queryKey: [...designKey(projectId), "mapping", kind],
-    queryFn: () => readDesignDiagram(projectId, { kind, page_size: 100 }),
+    queryKey: [...designKey(projectId), "mapping", kind, search],
+    queryFn: () =>
+      readDesignDiagram(projectId, { kind, q: search, page_size: 50 }),
     enabled: !readOnly,
   });
   const detail = useQuery({
@@ -124,7 +127,7 @@ export function DesignMappings({
                   target_id: target,
                   target_path: targetPath,
                   meaning,
-                  name: note,
+                  description: note,
                 },
               ],
             });
@@ -169,6 +172,7 @@ export function DesignMappings({
             value={kind}
             onChange={(event) => {
               setKind(event.target.value as typeof kind);
+              setTargetSearch("");
               setTarget(0);
               setTargetPath("");
             }}
@@ -177,6 +181,14 @@ export function DesignMappings({
             <option value="screen">画面</option>
             <option value="database">DB</option>
           </select>
+          <Input
+            aria-label="対応先の設計を検索"
+            className="h-8 max-w-52"
+            maxLength={200}
+            placeholder="対応先の設計を検索"
+            value={targetSearch}
+            onChange={(event) => setTargetSearch(event.target.value)}
+          />
           <select
             aria-label="対応先の設計"
             className={select}
@@ -187,6 +199,12 @@ export function DesignMappings({
             }}
           >
             <option value={0}>対応先の設計</option>
+            {target > 0 &&
+              !list.data?.nodes.some((item) => item.id === target) && (
+                <option value={target}>
+                  {detail.data?.title ?? `設計 ${target}`}
+                </option>
+              )}
             {list.data?.nodes
               .filter((item) => item.id !== id)
               .map((item) => (
@@ -243,7 +261,7 @@ export function DesignMappings({
             >
               {item.target_path}
             </Link>
-            <span>{item.name}</span>
+            <span>{item.description || item.name}</span>
             {!readOnly && (
               <Button
                 size="sm"
