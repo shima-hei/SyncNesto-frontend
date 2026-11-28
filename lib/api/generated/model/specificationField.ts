@@ -21,6 +21,20 @@ export interface SpecificationField {
   default_value?: string;
   /** @maxLength 3000 */
   constraints?: string;
+  minimum?: number | null;
+  maximum?: number | null;
+  min_length?: number | null;
+  max_length?: number | null;
+  /** @maxLength 100 */
+  format?: string;
+  /** @maxLength 1000 */
+  pattern?: string;
+  /**
+   * @maxItems 100
+   * @items.minLength 1
+   * @items.maxLength 200
+   */
+  choices?: string[];
   /** @maxLength 1000 */
   visibility?: string;
   /** @maxLength 1000 */

@@ -3,6 +3,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
@@ -55,6 +61,7 @@ export function HtmlMockupEditor({
   const [mode, setMode] = useState<"split" | "code" | "preview">("split");
   const [notice, setNotice] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const uploadActive = useRef(false);
   const current = useRef({ items, onChange, projectId });
   const mounted = useRef(false);
@@ -288,6 +295,42 @@ export function HtmlMockupEditor({
             >
               プレビューを更新
             </Button>
+            <Dialog open={fullscreen} onOpenChange={setFullscreen}>
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={preview.isPending || uploading}
+                  onClick={() => preview.mutate(item)}
+                >
+                  全画面プレビュー
+                </Button>
+              </DialogTrigger>
+              {fullscreen && (
+                <DialogContent
+                  className="grid h-dvh max-w-none grid-rows-[auto_minmax(0,1fr)] rounded-none sm:max-w-none"
+                  aria-describedby={undefined}
+                >
+                  <DialogTitle className="pr-8">
+                    {item.name || "HTMLモックアップ"}のプレビュー
+                  </DialogTitle>
+                  <div className="min-h-0 overflow-auto bg-muted/30 p-3">
+                    {preview.isPending ? (
+                      <p role="status">プレビューを更新中…</p>
+                    ) : activePreview ? (
+                      <MockupPreviewFrame
+                        document={activePreview.document}
+                        width={item.width}
+                        height={item.height}
+                      />
+                    ) : (
+                      <FormApiError error={preview.error} />
+                    )}
+                  </div>
+                </DialogContent>
+              )}
+            </Dialog>
             <Button
               variant="ghost"
               size="sm"

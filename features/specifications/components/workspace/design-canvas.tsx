@@ -235,7 +235,12 @@ export function DesignCanvas({
       return;
     }
     const target = connectionTarget(event.clientX, event.clientY);
-    if (target !== undefined) onConnect?.(drag.sourceId, target);
+    const underPointer = document.elementFromPoint(
+      event.clientX,
+      event.clientY,
+    );
+    if (target !== undefined || stage.current?.contains(underPointer))
+      onConnect?.(drag.sourceId, target);
   }
   const fit = () => {
     const area = viewport.current;

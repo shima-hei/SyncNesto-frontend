@@ -45,6 +45,7 @@ import {
 import {
   initialValues,
   kindLabels,
+  relatedHref,
   reviewElementId,
   reviewPathLabel,
   specificationCode,
@@ -56,7 +57,13 @@ import {
   type DesignReviewQuote,
   type DesignReviewTarget,
 } from "../lib/specification";
-import { designKey } from "../lib/workspace";
+import {
+  designKey,
+  readDesignCollections,
+  readMemberships,
+  screenKinds,
+  updateMemberships,
+} from "../lib/workspace";
 import { mergeSpecifications } from "../lib/merge";
 import { SpecificationForm } from "./specification-form";
 import { SpecificationReview } from "./specification-review";
@@ -184,6 +191,23 @@ function DesignEditor({
       ? requestedVersion
       : undefined;
   const [deleting, setDeleting] = useState(false);
+  const [groupDraft, setGroupDraft] = useState<{
+    ids: string[];
+    version: number;
+  }>();
+  const memberships = useQuery({
+    queryKey: [...designKey(projectId), "memberships", row.id],
+    queryFn: () => readMemberships(projectId, row.id),
+    enabled: row.kind === "screen",
+  });
+  const collections = useQuery({
+    queryKey: [...designKey(projectId), "collections"],
+    queryFn: () => readDesignCollections(projectId),
+    enabled: row.kind === "screen",
+  });
+  const groups =
+    collections.data?.filter((item) => item.kind === "group") ?? [];
+  const selectedGroups = groupDraft?.ids ?? memberships.data?.group_ids ?? [];
   const drafts = useFormDraft<Draft>({
     userId: canEdit ? user?.id : undefined,
     scope: createDraftScope(
@@ -213,6 +237,17 @@ function DesignEditor({
       cache.invalidateQueries({ queryKey: designKey(projectId) }),
     ]);
   };
+  const groupSave = useMutation({
+    mutationFn: (value: { ids: string[]; version: number }) =>
+      updateMemberships(projectId, row.id, {
+        group_ids: value.ids,
+        version: value.version,
+      }),
+    onSuccess: async (saved) => {
+      setGroupDraft(undefined);
+      await refresh(saved);
+    },
+  });
   const saved = useMutation({
     mutationFn: ({ values, version }: { values: Values; version: number }) =>
       updateSpecification(projectId, row.id, {
@@ -245,7 +280,7 @@ function DesignEditor({
   const links = useQuery({
     queryKey: [...specificationKeys.detail(projectId, row.id), "links"],
     queryFn: () => listLinks(projectId, row.id),
-    enabled: deleting,
+    enabled: deleting || (row.kind === "screen" && tab === "basic"),
   });
   useEffect(() => {
     if (!dirty) return;
@@ -309,6 +344,24 @@ function DesignEditor({
         <span aria-hidden="true">/</span>
         <span className="font-mono">{specificationCode(row)}</span>
         {identifier && <span className="font-mono">{identifier}</span>}
+        {current.content.type === "screen" && (
+          <>
+            <Badge variant="outline">
+              {screenKinds[current.content.screen_kind ?? "other"]}
+            </Badge>
+            {groups
+              .filter((group) => memberships.data?.group_ids.includes(group.id))
+              .map((group) => (
+                <Link
+                  className="hover:underline"
+                  key={group.id}
+                  href={`${specificationHref(projectId)}?kind=screen&group=${group.id}`}
+                >
+                  {group.name}
+                </Link>
+              ))}
+          </>
+        )}
       </div>
       <PageHeader
         title={row.title}
@@ -439,6 +492,85 @@ function DesignEditor({
           <TabsTrigger value="history">版履歴</TabsTrigger>
         </TabsList>
       </Tabs>
+      {row.kind === "screen" && tab === "basic" && (
+        <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-2">
+          <fieldset className="space-y-1 text-sm">
+            <legend className="font-medium">機能グループ</legend>
+            {groups.map((group) => (
+              <label key={group.id} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={selectedGroups.includes(group.id)}
+                  disabled={
+                    !canEdit || !memberships.data || groupSave.isPending
+                  }
+                  onChange={(event) => {
+                    if (!memberships.data) return;
+                    setGroupDraft({
+                      version: groupDraft?.version ?? memberships.data.version,
+                      ids: event.target.checked
+                        ? [...selectedGroups, group.id]
+                        : selectedGroups.filter((id) => id !== group.id),
+                    });
+                  }}
+                />
+                {group.name}
+              </label>
+            ))}
+            {groupDraft && (
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={dirty || groupSave.isPending}
+                  onClick={() => groupSave.mutate(groupDraft)}
+                >
+                  所属を保存
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={groupSave.isPending}
+                  onClick={() => {
+                    setGroupDraft(undefined);
+                    groupSave.reset();
+                    void memberships.refetch();
+                  }}
+                >
+                  選択を戻す
+                </Button>
+              </div>
+            )}
+            <FormApiError
+              error={groupSave.error ?? memberships.error ?? collections.error}
+            />
+          </fieldset>
+          <section className="space-y-1 text-sm">
+            <h2 className="font-medium">関連要件</h2>
+            <ul>
+              {links.data
+                ?.filter((link) => link.target_type === "requirement")
+                .map((link) => (
+                  <li key={link.id}>
+                    <Link
+                      className="text-primary hover:underline"
+                      href={relatedHref(projectId, link)}
+                    >
+                      {link.title}
+                    </Link>
+                  </li>
+                ))}
+            </ul>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => chooseTab("links")}
+            >
+              関連を開く
+            </Button>
+          </section>
+        </div>
+      )}
       {tab === "links" ? (
         <div className="space-y-5">
           <DesignMappings

@@ -2878,6 +2878,294 @@ export const useUpdateDesignCollectionProjectsProjectIdDesignWorkspaceCollection
       queryClient,
     );
   };
+export const getReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetUrl =
+  (projectId: number, specificationId: number) => {
+    return `/projects/${projectId}/design-workspace/memberships/${specificationId}`;
+  };
+
+/**
+ * 設計の現在版と同じ案件の所属グループを返す。
+ * @summary Read Design Memberships
+ */
+export const readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet =
+  async (
+    projectId: number,
+    specificationId: number,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<MembershipUpdate> => {
+    return apiClient<MembershipUpdate>(
+      getReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetUrl(
+        projectId,
+        specificationId,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetQueryKey =
+  (projectId: number, specificationId: number) => {
+    return [
+      `/projects/${projectId}/design-workspace/memberships/${specificationId}`,
+    ] as const;
+  };
+
+export const getReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    specificationId: number,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetQueryKey(
+        projectId,
+        specificationId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+        >
+      >
+    > = ({ signal }) =>
+      readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet(
+        projectId,
+        specificationId,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        specificationId !== null &&
+        specificationId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type ReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+      >
+    >
+  >;
+export type ReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 設計の現在版と同じ案件の所属グループを返す。
+ * @summary Read Design Memberships
+ */
+export function useReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  specificationId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 設計の現在版と同じ案件の所属グループを返す。
+ * @summary Read Design Memberships
+ */
+export function useReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  specificationId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 設計の現在版と同じ案件の所属グループを返す。
+ * @summary Read Design Memberships
+ */
+export function useReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  specificationId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 設計の現在版と同じ案件の所属グループを返す。
+ * @summary Read Design Memberships
+ */
+export function useReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet<
+  TData = Awaited<
+    ReturnType<
+      typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  specificationId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof readDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getReadDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdGetQueryOptions(
+      projectId,
+      specificationId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getUpdateDesignMembershipsProjectsProjectIdDesignWorkspaceMembershipsSpecificationIdPutUrl =
   (projectId: number, specificationId: number) => {
     return `/projects/${projectId}/design-workspace/memberships/${specificationId}`;

@@ -723,6 +723,7 @@ function FieldGrid({
       onChange={onChange}
       readOnly={readOnly}
       onReview={onReview}
+      bulkLimit={200}
       label="項目"
       path={path}
       create={() => ({
@@ -757,8 +758,10 @@ function FieldGrid({
             [
               ["description", "説明"],
               ["default_value", "初期値"],
-              ["validation", "入力形式・正規表現"],
-              ["constraints", "範囲・文字数・選択肢"],
+              ["format", "入力形式"],
+              ["pattern", "正規表現"],
+              ["validation", "入力規則の補足"],
+              ["constraints", "制約の補足"],
               ["visibility", "表示条件"],
               ["enabled_when", "活性条件"],
               ["error_message", "エラーメッセージ"],
@@ -773,6 +776,52 @@ function FieldGrid({
               onChange={(value) => update({ ...row, [key]: value })}
             />
           ))}
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                ["minimum", "最小値"],
+                ["maximum", "最大値"],
+                ["min_length", "最小文字数"],
+                ["max_length", "最大文字数"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="flex flex-col gap-1 text-xs">
+                {label}
+                <Input
+                  type="number"
+                  step={key.endsWith("_length") ? 1 : "any"}
+                  min={key.endsWith("_length") ? 0 : undefined}
+                  value={row[key] ?? ""}
+                  readOnly={readOnly}
+                  onChange={(event) =>
+                    update({
+                      ...row,
+                      [key]: Number.isFinite(event.target.valueAsNumber)
+                        ? event.target.valueAsNumber
+                        : null,
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <label className="flex flex-col gap-1 text-xs">
+            選択肢（1行に1つ）
+            <Textarea
+              key={`${row.id}:${(row.choices ?? []).join("\n")}`}
+              defaultValue={(row.choices ?? []).join("\n")}
+              readOnly={readOnly}
+              onBlur={(event) =>
+                update({
+                  ...row,
+                  choices: event.target.value
+                    .split(/\r?\n/)
+                    .map((value) => value.trim())
+                    .filter(Boolean),
+                })
+              }
+            />
+          </label>
         </>
       )}
     />

@@ -43,12 +43,14 @@ import type {
 } from "@/lib/api/generated/model";
 import {
   createSpecification,
+  listLinks,
   readSpecification,
   updateSpecification,
 } from "../lib/api";
 import {
   initialValues,
   kindLabels,
+  relatedHref,
   specificationCode,
   specificationHref,
   specificationKeys,
@@ -1346,6 +1348,17 @@ function NodeInspector({
   const existingRelation = db?.relationships?.find(
     (item) => item.id === edge?.id,
   );
+  const linked = useQuery({
+    queryKey: [...specificationKeys.detail(projectId, node.id), "links"],
+    queryFn: () => listLinks(projectId, node.id),
+    enabled: node.kind === "screen",
+  });
+  const dependencies =
+    linked.data?.filter(
+      (item) =>
+        item.target_type === "requirement" ||
+        item.target_type === "specification",
+    ) ?? [];
   const foreignKey: DatabaseConstraint = {
     ...existingForeignKey,
     ...physical,
@@ -1570,6 +1583,23 @@ function NodeInspector({
         </details>
       )}
       {node.summary && <p className="line-clamp-3 text-sm">{node.summary}</p>}
+      {node.kind === "screen" && dependencies.length > 0 && (
+        <section className="space-y-1 text-xs">
+          <h3 className="font-medium">関連要件・設計</h3>
+          <ul className="max-h-40 space-y-1 overflow-auto">
+            {dependencies.map((item) => (
+              <li key={item.id}>
+                <Link
+                  className="text-primary hover:underline"
+                  href={relatedHref(projectId, item)}
+                >
+                  {item.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {onReference && (
         <Button variant="ghost" size="sm" onClick={onReference}>
           {node.group_ids?.length ? "所属グループへ移動" : "接続先の設計を表示"}
