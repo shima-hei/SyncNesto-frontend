@@ -656,9 +656,20 @@ function DesignHistory({
       </div>
       {past && (
         <div className="space-y-3 border-t pt-3">
-          <h2 className="font-semibold">
-            版 {past.version} · {statusLabels[past.status]}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold">
+              版 {past.version} · {statusLabels[past.status]}
+            </h2>
+            {past.status === "approved" && (
+              <ArtifactPublicationLink
+                projectId={projectId}
+                kind="specification"
+                id={past.id}
+                version={past.version}
+                label="この承認版を共有"
+              />
+            )}
+          </div>
           <div className="flex flex-wrap gap-1">
             {designTabs[past.kind].map(([key, label]) => (
               <Button

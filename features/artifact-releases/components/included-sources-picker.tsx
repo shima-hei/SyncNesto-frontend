@@ -23,12 +23,14 @@ export function IncludedSourcesPicker({
   onChange,
   disabled,
   limit = 100,
+  exclude,
 }: {
   projectId: number;
   value: ArtifactSource[];
   onChange: (value: ArtifactSource[]) => void;
   disabled: boolean;
   limit?: number;
+  exclude?: Pick<ArtifactSource, "kind" | "id">;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -63,7 +65,7 @@ export function IncludedSourcesPicker({
         version: item.version,
         title: item.name,
       })),
-  ];
+  ].filter((item) => item.kind !== exclude?.kind || item.id !== exclude.id);
   return (
     <FieldSet disabled={disabled}>
       <FieldLegend>一緒に固定する設計・テスト設計（任意）</FieldLegend>

@@ -122,7 +122,10 @@ export function PublicNode({
   const fields = Object.entries(node.payload).filter(
     ([key]) =>
       key !== "title" &&
-      (!structured || !["summary", "content", "diagram_links"].includes(key)),
+      (!structured ||
+        !["summary", "content", "diagram_links", "diagram_position"].includes(
+          key,
+        )),
   );
   const mainFields: Record<string, string[]> = {
     requirement_document: [

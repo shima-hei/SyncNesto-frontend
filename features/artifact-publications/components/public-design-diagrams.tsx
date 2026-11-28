@@ -13,6 +13,7 @@ type PublishedDesign = {
   version?: number | null;
   subtitle: string;
   links: unknown[];
+  position?: Point;
 };
 
 const titles = { screen: "画面遷移図", database: "ER図" } as const;
@@ -40,6 +41,8 @@ function publishedDesigns(nodes: PublicationNodeRead[], kind: Kind) {
     )
       return [];
     const content = record(node.payload.content);
+    const placement = record(node.payload.diagram_position);
+    if (placement?.hidden === true) return [];
     const identifier = content?.[kind === "screen" ? "route" : "physical_name"];
     return [
       {
@@ -48,6 +51,10 @@ function publishedDesigns(nodes: PublicationNodeRead[], kind: Kind) {
         name: String(node.payload.title ?? ""),
         subtitle: typeof identifier === "string" ? identifier : "",
         version: node.source_version,
+        position:
+          typeof placement?.x === "number" && typeof placement?.y === "number"
+            ? { x: placement.x, y: placement.y }
+            : undefined,
         links: Array.isArray(node.payload.diagram_links)
           ? node.payload.diagram_links
           : [],
@@ -100,7 +107,7 @@ export function PublicDesignDiagrams({
   const positions = new Map<number, Point>(
     designs.map((node, index) => [
       node.ordinal,
-      {
+      node.position ?? {
         x: 24 + (index % maxColumns) * 284,
         y: 24 + Math.floor(index / maxColumns) * 158,
       },
@@ -126,8 +133,14 @@ export function PublicDesignDiagrams({
       ];
     }),
   );
-  const width = 100 + Math.min(designs.length, maxColumns) * 284;
-  const height = 158 * Math.ceil(designs.length / maxColumns);
+  const width = Math.max(
+    100 + Math.min(designs.length, maxColumns) * 284,
+    ...Array.from(positions.values(), (point) => point.x + nodeWidth + 64),
+  );
+  const height = Math.max(
+    158 * Math.ceil(designs.length / maxColumns),
+    ...Array.from(positions.values(), (point) => point.y + nodeHeight + 64),
+  );
   return (
     <section
       className="space-y-3 rounded-lg border p-3"

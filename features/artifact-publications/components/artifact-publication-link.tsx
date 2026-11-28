@@ -12,12 +12,14 @@ export function ArtifactPublicationLink({
   id,
   version,
   dirty = false,
+  label = "共有",
 }: {
   projectId: number;
   kind: "specification" | "test_design";
   id: number;
   version: number;
   dirty?: boolean;
+  label?: string;
 }) {
   const { user } = useAuth();
   const { currentProjectRole } = useCurrentProjectRole(projectId);
@@ -37,7 +39,7 @@ export function ArtifactPublicationLink({
         title="編集内容を保存してから共有します"
       >
         <Share2 data-icon="inline-start" />
-        共有
+        {label}
       </Button>
     );
   const query = new URLSearchParams({
@@ -51,7 +53,7 @@ export function ArtifactPublicationLink({
         href={`/projects/joined/${projectId}/artifact-publications?${query}`}
       >
         <Share2 data-icon="inline-start" />
-        共有
+        {label}
       </Link>
     </Button>
   );
