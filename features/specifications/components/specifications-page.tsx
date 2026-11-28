@@ -64,6 +64,7 @@ import {
 } from "../lib/workspace";
 import { SpecificationPage } from "./specification-page";
 import { DesignCanvas } from "./workspace/design-canvas";
+import { DesignNodeList } from "./workspace/design-node-list";
 import { DesignOverview } from "./workspace/design-overview";
 import { DesignReviewRequestDialog } from "./workspace/design-review-requests";
 import { ScreenListTable } from "./workspace/screen-list-table";
@@ -652,7 +653,7 @@ function DesignBrowser({
                     </label>
                   )}
                   {view !== "list" && (
-                    <NodeList
+                    <DesignNodeList
                       nodes={matches}
                       selected={selected}
                       onSelect={select}
@@ -941,82 +942,6 @@ function orderedGroups(
       { item, depth },
       ...orderedGroups(groups, item.id, depth + 1),
     ]);
-}
-
-function NodeList({
-  nodes,
-  selected,
-  onSelect,
-  sort,
-  groups,
-  kind,
-}: {
-  nodes: DesignNode[];
-  selected: Set<number>;
-  onSelect: (id: number) => void;
-  sort: string;
-  groups: CollectionRead[];
-  kind: Kind;
-}) {
-  const grouped = new Map<string, DesignNode[]>();
-  for (const node of nodes) {
-    const keys =
-      kind !== "api"
-        ? [""]
-        : sort === "tag"
-          ? node.tags?.length
-            ? node.tags
-            : ["タグなし"]
-          : sort === "group"
-            ? node.group_ids?.length
-              ? node.group_ids.map(
-                  (id) =>
-                    groups.find((item) => item.id === id)?.name ?? "未分類",
-                )
-              : ["未分類"]
-            : [
-                node.identifier?.split("/").slice(0, 2).join("/") ||
-                  "パス未確定",
-              ];
-    for (const key of keys)
-      grouped.set(key, [...(grouped.get(key) ?? []), node]);
-  }
-  return (
-    <div className="max-h-[40dvh] space-y-2 overflow-auto">
-      {[...grouped]
-        .sort(([a], [b]) => a.localeCompare(b, "ja"))
-        .map(([label, records]) => (
-          <div key={label}>
-            {label && (
-              <p className="px-1 text-xs font-medium text-muted-foreground">
-                {label}
-              </p>
-            )}
-            {records.map((node) => (
-              <button
-                key={node.id}
-                type="button"
-                aria-pressed={selected.has(node.id)}
-                onClick={() => onSelect(node.id)}
-                className={cn(
-                  "flex w-full min-w-0 items-center gap-1.5 rounded px-1 py-1.5 text-left text-xs hover:bg-muted",
-                  selected.has(node.id) && "bg-primary/10 text-primary",
-                )}
-              >
-                <span className="shrink-0 font-mono text-[0.65rem]">
-                  {kind === "api"
-                    ? node.subtype || "API"
-                    : specificationCode(node)}
-                </span>
-                <span className="min-w-0 truncate" title={node.title}>
-                  {node.title}
-                </span>
-              </button>
-            ))}
-          </div>
-        ))}
-    </div>
-  );
 }
 
 function CollectionEditor({

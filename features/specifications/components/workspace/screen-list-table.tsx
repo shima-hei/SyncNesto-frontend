@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,47 @@ const cellInput =
   "h-8 min-w-0 border-transparent bg-transparent px-1 shadow-none focus-visible:border-ring";
 const filterInput = "h-8 rounded-md border bg-background px-2 text-sm";
 const emptyBatch: ScreenListBatch = { request_id: "", edits: [] };
+const estimatedRowHeight = 43;
+const screenColumnWidth: Record<Column, number> = {
+  id: 91,
+  title: 180,
+  screen_kind: 130,
+  route: 165,
+  groups: 160,
+  related_requirements: 112,
+  related_apis: 112,
+  assignee: 130,
+  status: 143,
+  updated_at: 147,
+};
+
+function virtualRows(
+  rows: ScreenListRow[],
+  heights: ReadonlyMap<number, number>,
+  top: number,
+  extent: number,
+  pinned: ReadonlySet<number>,
+) {
+  const result: (
+    { row: ScreenListRow; index: number } | { spacer: number; index: number }
+  )[] = [];
+  let position = 0;
+  let spacer = 0;
+  for (const [index, row] of rows.entries()) {
+    const height = heights.get(row.id) ?? estimatedRowHeight;
+    if (
+      pinned.has(row.id) ||
+      (position + height >= top - 210 && position <= top + extent + 210)
+    ) {
+      if (spacer) result.push({ spacer, index });
+      result.push({ row, index });
+      spacer = 0;
+    } else spacer += height;
+    position += height;
+  }
+  if (spacer) result.push({ spacer, index: rows.length });
+  return result;
+}
 
 function mergeEdits(previous: ScreenListEdit[], incoming: ScreenListEdit[]) {
   const byId = new Map(
@@ -128,6 +169,11 @@ export function ScreenListTable({
   const [batch, setBatch] = useState<ScreenListBatch>(emptyBatch);
   const [paste, setPaste] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const viewport = useRef<HTMLDivElement>(null);
+  const [range, setRange] = useState({ top: 0, height: 540 });
+  const [heights, setHeights] = useState(new Map<number, number>());
+  const [focusedRow, setFocusedRow] = useState<number>();
+  const [expandedGroups, setExpandedGroups] = useState(new Set<number>());
   const drafts = useFormDraft({
     userId: canEdit ? user?.id : undefined,
     scope: createDraftScope(
@@ -187,6 +233,55 @@ export function ScreenListTable({
     return true;
   };
   const rows = listing.data?.items ?? [];
+  const virtual = !grouped && rows.length > 25;
+  const pinned = new Set(expandedGroups);
+  if (focusedRow !== undefined) pinned.add(focusedRow);
+  const windowRows = virtual
+    ? virtualRows(rows, heights, range.top, range.height, pinned)
+    : [];
+  const measuredRows = windowRows
+    .flatMap((item) => ("row" in item ? [item.row.id] : []))
+    .join(",");
+  useEffect(() => {
+    if (!virtual || !viewport.current) return;
+    const element = viewport.current;
+    const observer = new ResizeObserver((entries) => {
+      const changes = entries.flatMap((entry) => {
+        const id = (entry.target as HTMLElement).dataset.screenRow;
+        return id
+          ? [
+              [
+                Number(id),
+                Math.ceil(entry.target.getBoundingClientRect().height),
+              ] as const,
+            ]
+          : [];
+      });
+      if (changes.length)
+        setHeights((previous) => {
+          const measured = changes.filter(
+            ([id, height]) => previous.get(id) !== height,
+          );
+          return measured.length
+            ? new Map([...previous, ...measured])
+            : previous;
+        });
+      if (entries.some((entry) => entry.target === element)) {
+        const top = Math.floor(element.scrollTop / 16) * 16;
+        const height = element.clientHeight;
+        setRange((previous) =>
+          previous.top === top && previous.height === height
+            ? previous
+            : { top, height },
+        );
+      }
+    });
+    observer.observe(element);
+    element
+      .querySelectorAll("[data-screen-row]")
+      .forEach((row) => observer.observe(row));
+    return () => observer.disconnect();
+  }, [virtual, measuredRows]);
   const memberOptions = members.data ?? [];
   const visible = columns.filter((column) => !hidden.includes(column));
   const updates = new Map(
@@ -320,7 +415,18 @@ export function ScreenListTable({
             .map((group) => group.name)
             .join("、") || "未所属";
         return canEdit && groups.length ? (
-          <details>
+          <details
+            onToggle={(event) => {
+              const open = event.currentTarget.open;
+              setExpandedGroups((previous) => {
+                if (previous.has(row.id) === open) return previous;
+                const next = new Set(previous);
+                if (open) next.add(row.id);
+                else next.delete(row.id);
+                return next;
+              });
+            }}
+          >
             <summary className="cursor-pointer" aria-label={label}>
               {text}
             </summary>
@@ -586,10 +692,17 @@ export function ScreenListTable({
         />
       ) : (
         <div
+          ref={viewport}
           className="max-h-[62dvh] overflow-auto rounded-md border"
           role="region"
           aria-label="画面一覧の表"
           tabIndex={0}
+          onScroll={(event) => {
+            const top = Math.floor(event.currentTarget.scrollTop / 16) * 16;
+            setRange((previous) =>
+              previous.top === top ? previous : { ...previous, top },
+            );
+          }}
           onCopy={(event) => {
             const target = event.target;
             if (
@@ -611,10 +724,43 @@ export function ScreenListTable({
             }
           }}
         >
-          <table className="w-full min-w-6xl border-separate border-spacing-0 text-left text-sm">
+          <table
+            className={cn(
+              "w-full min-w-6xl border-separate border-spacing-0 text-left text-sm",
+              virtual && "table-fixed",
+            )}
+            aria-rowcount={
+              virtual
+                ? rows.length + 1 + (canCreate && canEdit ? 1 : 0)
+                : undefined
+            }
+            style={
+              virtual
+                ? {
+                    minWidth:
+                      40 +
+                      visible.reduce(
+                        (width, name) => width + screenColumnWidth[name],
+                        0,
+                      ),
+                  }
+                : undefined
+            }
+          >
             <caption className="sr-only">
               画面設計一覧。列見出しのボタンで並べ替えできます。
             </caption>
+            {virtual && (
+              <colgroup>
+                <col style={{ width: 40 }} />
+                {visible.map((column) => (
+                  <col
+                    key={column}
+                    style={{ width: screenColumnWidth[column] }}
+                  />
+                ))}
+              </colgroup>
+            )}
             <thead className="sticky top-0 z-10 bg-muted text-xs">
               <tr>
                 <th scope="col" className="w-10 border-b p-2">
@@ -688,45 +834,74 @@ export function ScreenListTable({
                     </th>
                   </tr>
                 )}
-                {entries.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={cn(updates.has(row.id) && "bg-primary/5")}
-                  >
-                    <td className="border-b p-2">
-                      <input
-                        type="checkbox"
-                        aria-label={row.title + "を選択"}
-                        checked={selected.has(row.id)}
-                        onChange={(event) =>
-                          setSelected((previous) => {
-                            const next = new Set(previous);
-                            if (event.target.checked) next.add(row.id);
-                            else next.delete(row.id);
-                            return next;
-                          })
-                        }
-                      />
-                    </td>
-                    {visible.map((column) => (
-                      <td
-                        key={column}
-                        className={cn(
-                          "border-b border-l px-2 py-1 align-top",
-                          [
-                            "title",
-                            "route",
-                            "groups",
-                            "assignee",
-                            "screen_kind",
-                          ].includes(column) && "min-w-32",
-                        )}
-                      >
-                        {cell(row, column)}
+                {(virtual
+                  ? windowRows
+                  : entries.map((row, index) => ({ row, index }))
+                ).map((item) => {
+                  if ("spacer" in item)
+                    return (
+                      <tr key={`space-${item.index}`} aria-hidden="true">
+                        <td
+                          colSpan={visible.length + 1}
+                          style={{ height: item.spacer }}
+                        />
+                      </tr>
+                    );
+                  const { row, index } = item;
+                  return (
+                    <tr
+                      key={row.id}
+                      data-screen-row={row.id}
+                      aria-rowindex={virtual ? index + 2 : undefined}
+                      onFocusCapture={() => {
+                        if (virtual) setFocusedRow(row.id);
+                      }}
+                      onBlurCapture={(event) => {
+                        if (
+                          virtual &&
+                          !event.currentTarget.contains(event.relatedTarget)
+                        )
+                          setFocusedRow((previous) =>
+                            previous === row.id ? undefined : previous,
+                          );
+                      }}
+                      className={cn(updates.has(row.id) && "bg-primary/5")}
+                    >
+                      <td className="border-b p-2">
+                        <input
+                          type="checkbox"
+                          aria-label={row.title + "を選択"}
+                          checked={selected.has(row.id)}
+                          onChange={(event) =>
+                            setSelected((previous) => {
+                              const next = new Set(previous);
+                              if (event.target.checked) next.add(row.id);
+                              else next.delete(row.id);
+                              return next;
+                            })
+                          }
+                        />
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      {visible.map((column) => (
+                        <td
+                          key={column}
+                          className={cn(
+                            "border-b border-l px-2 py-1 align-top",
+                            [
+                              "title",
+                              "route",
+                              "groups",
+                              "assignee",
+                              "screen_kind",
+                            ].includes(column) && "min-w-32",
+                          )}
+                        >
+                          {cell(row, column)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             ))}
             {(!rows.length || (canCreate && canEdit)) && (
@@ -744,7 +919,7 @@ export function ScreenListTable({
                   </tr>
                 )}
                 {canCreate && canEdit && (
-                  <tr>
+                  <tr aria-rowindex={virtual ? rows.length + 2 : undefined}>
                     <td
                       colSpan={visible.length + 1}
                       className="bg-muted/25 p-2"
