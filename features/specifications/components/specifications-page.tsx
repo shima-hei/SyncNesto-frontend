@@ -22,6 +22,7 @@ import { DataLoadError } from "@/components/shared/feedback/data-load-error";
 import { FormApiError } from "@/components/shared/forms/form-api-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { DataPagination } from "@/components/shared/navigation/data-pagination";
 import {
   canCreateDocument,
@@ -34,6 +35,8 @@ import type {
   CollectionRead,
   CollectionInput,
   CollectionInputConfiguration,
+  DatabaseConstraint,
+  DatabaseRelationship,
   DesignEdge,
   DesignNode,
   PlacementInput,
@@ -62,9 +65,11 @@ import {
   updateDesignCollection,
   updateMemberships,
 } from "../lib/workspace";
+import { asObject, asString } from "../lib/openapi-schema";
 import { SpecificationPage } from "./specification-page";
 import { ApiSetSettings } from "./workspace/api-set-settings";
 import { DesignCanvas } from "./workspace/design-canvas";
+import { ConstraintDetails } from "./workspace/design-details";
 import { DesignNodeList } from "./workspace/design-node-list";
 import { DesignOverview } from "./workspace/design-overview";
 import { DesignReviewRequestDialog } from "./workspace/design-review-requests";
@@ -160,6 +165,8 @@ function DesignBrowser({
   const [group, setGroup] = useState(initialGroup);
   const [setId, setSetId] = useState("");
   const [q, setQ] = useState("");
+  const [namespace, setNamespace] = useState("");
+  const schema = useDeferredValue(namespace);
   const search = useDeferredValue(q);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -212,6 +219,7 @@ function DesignBrowser({
       group,
       setId,
       search,
+      schema,
       page,
       view === "diagram",
     ],
@@ -222,6 +230,7 @@ function DesignBrowser({
         collection_id: setId || undefined,
         include_references: view === "diagram",
         q: search,
+        namespace: kind === "database" ? schema : undefined,
         page,
         page_size: 50,
       }),
@@ -289,6 +298,8 @@ function DesignBrowser({
       const { content } = initialValues(kind);
       if ((content.type === "api" || content.type === "database") && setId)
         content.collection_id = setId;
+      if (content.type === "database" && namespace)
+        content.namespace = namespace;
       const created = await createSpecification(projectId, {
         title,
         summary: "",
@@ -620,6 +631,21 @@ function DesignBrowser({
                       ))}
                     </select>
                   </label>
+                  {kind === "database" && (
+                    <label className="flex flex-col gap-1 text-xs font-medium">
+                      スキーマで絞り込む
+                      <Input
+                        value={namespace}
+                        maxLength={63}
+                        placeholder="すべてのスキーマ"
+                        onChange={(event) => {
+                          setNamespace(event.target.value);
+                          setPage(1);
+                          setSelected(new Set());
+                        }}
+                      />
+                    </label>
+                  )}
                   {canEdit && (
                     <div className="flex flex-wrap gap-1">
                       <Button
@@ -714,7 +740,11 @@ function DesignBrowser({
                         <Button
                           variant={logical ? "secondary" : "outline"}
                           size="sm"
-                          onClick={() => setLogical((value) => !value)}
+                          onClick={() => {
+                            setLogical((value) => !value);
+                            setEdge(undefined);
+                            setNewConnection(undefined);
+                          }}
                         >
                           {logical
                             ? "論理名・論理リレーション"
@@ -735,7 +765,7 @@ function DesignBrowser({
                         setSelected(new Set([item.source_id]));
                       }}
                       onConnect={
-                        kind === "screen" && canEdit
+                        canEdit
                           ? (sourceId, targetId) => {
                               select(sourceId);
                               connectionRequest.current += 1;
@@ -893,11 +923,12 @@ function DesignBrowser({
                   </h2>
                   {active ? (
                     <NodeInspector
-                      key={`${active.id}:${edge?.id ?? ""}:${active.version}:${newConnection?.request ?? ""}`}
+                      key={`${active.id}:${edge?.id ?? ""}:${active.version}:${newConnection?.request ?? ""}:${logical}`}
                       projectId={projectId}
                       node={active}
                       groups={groups}
                       nodes={nodes}
+                      logical={logical}
                       canEdit={canEdit}
                       onSave={async () => {
                         await refresh();
@@ -931,8 +962,10 @@ function DesignBrowser({
                               setPage(1);
                               setQ(active.title);
                               setGroup(active.group_ids?.[0] ?? "");
-                              if (kind === "database")
+                              if (kind === "database") {
                                 setSetId(active.collection_id ?? "");
+                                setNamespace(active.subtype ?? "");
+                              }
                             }
                           : undefined
                       }
@@ -1012,6 +1045,16 @@ function CollectionEditor({
       2,
     ),
   );
+  const dbConfiguration = (() => {
+    if (kind !== "db_model") return null;
+    try {
+      return asObject(JSON.parse(settings));
+    } catch {
+      return null;
+    }
+  })();
+  const setModelSetting = (key: string, value: unknown) =>
+    setSettings(JSON.stringify({ ...dbConfiguration, [key]: value }, null, 2));
   const save = useMutation({
     mutationFn: () => {
       const value: unknown = kind === "group" ? {} : JSON.parse(settings);
@@ -1086,13 +1129,62 @@ function CollectionEditor({
         />
       )}
       {kind === "db_model" && (
-        <textarea
-          className="w-full rounded-md border bg-background p-2 font-mono text-xs"
-          aria-label="セット・モデルの設定"
-          rows={5}
-          value={settings}
-          onChange={(event) => setSettings(event.target.value)}
-        />
+        <>
+          {dbConfiguration && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  ["product", "対象DB製品"],
+                  ["version", "対象バージョン"],
+                  ["description", "説明"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="flex flex-col gap-1 text-xs">
+                  {label}
+                  <Input
+                    value={asString(dbConfiguration[key])}
+                    maxLength={key === "description" ? 3000 : 100}
+                    onChange={(event) =>
+                      setModelSetting(key, event.target.value)
+                    }
+                  />
+                </label>
+              ))}
+              <label className="flex flex-col gap-1 text-xs">
+                スキーマ（カンマ区切り）
+                <Input
+                  key={JSON.stringify(dbConfiguration.schemas)}
+                  defaultValue={
+                    Array.isArray(dbConfiguration.schemas)
+                      ? dbConfiguration.schemas.join(", ")
+                      : ""
+                  }
+                  maxLength={3000}
+                  onBlur={(event) =>
+                    setModelSetting("schemas", [
+                      ...new Set(
+                        event.target.value
+                          .split(",")
+                          .map((name) => name.trim())
+                          .filter(Boolean),
+                      ),
+                    ])
+                  }
+                />
+              </label>
+            </div>
+          )}
+          <details className="text-xs">
+            <summary className="cursor-pointer">DBモデルの詳細設定</summary>
+            <Textarea
+              aria-label="セット・モデルの設定"
+              className="mt-1 font-mono"
+              rows={5}
+              value={settings}
+              onChange={(event) => setSettings(event.target.value)}
+            />
+          </details>
+        </>
       )}
       <div className="flex gap-2">
         <Button
@@ -1172,6 +1264,7 @@ function NodeInspector({
   node,
   groups,
   nodes,
+  logical,
   canEdit,
   onSave,
   onPlacement,
@@ -1185,6 +1278,7 @@ function NodeInspector({
   node: DesignNode;
   groups: CollectionRead[];
   nodes: DesignNode[];
+  logical: boolean;
   canEdit: boolean;
   onSave: () => Promise<void>;
   onPlacement?: () => void;
@@ -1219,17 +1313,45 @@ function NodeInspector({
     Boolean(edge || newConnection),
   );
   const [targetSearch, setTargetSearch] = useState("");
+  const [physical, setPhysical] = useState<DatabaseConstraint>();
+  const [cardinality, setCardinality] =
+    useState<DatabaseRelationship["cardinality"]>();
+  const [optional, setOptional] = useState<boolean>();
+  const [logicalDescription, setLogicalDescription] = useState<string>();
   const search = useDeferredValue(targetSearch.trim());
   const screen = useQuery({
     queryKey: specificationKeys.detail(projectId, node.id),
     queryFn: () => readSpecification(projectId, node.id),
-    enabled: canEdit && connectionOpen && node.kind === "screen",
+    enabled:
+      canEdit &&
+      (node.kind === "database" || (node.kind === "screen" && connectionOpen)),
   });
   const screenContent =
     screen.data?.content.type === "screen" ? screen.data.content : undefined;
   const transition = screenContent?.transitions?.find(
     (item) => item.id === edge?.id,
   );
+  const db =
+    screen.data?.content.type === "database" ? screen.data.content : undefined;
+  const dbLogical =
+    node.kind === "database" && (edge ? edge.kind === "logical" : logical);
+  const existingForeignKey = db?.constraints?.find(
+    (item) => item.id === edge?.id,
+  );
+  const existingRelation = db?.relationships?.find(
+    (item) => item.id === edge?.id,
+  );
+  const foreignKey: DatabaseConstraint = {
+    ...existingForeignKey,
+    ...physical,
+    kind: "foreign_key",
+    target_id: Number(target) || null,
+    target_column_ids:
+      physical?.target_column_ids ??
+      (existingForeignKey?.target_id === Number(target)
+        ? existingForeignKey?.target_column_ids
+        : []),
+  };
   const relay = useQuery({
     queryKey: [
       ...designKey(projectId),
@@ -1248,7 +1370,13 @@ function NodeInspector({
   });
   const targets = new Map(
     [...nodes, ...(relay.data?.nodes ?? [])]
-      .filter((item) => item.kind === node.kind)
+      .filter(
+        (item) =>
+          item.kind === node.kind &&
+          (node.kind !== "database" ||
+            dbLogical ||
+            (item.collection_id ?? null) === (node.collection_id ?? null)),
+      )
       .map((item) => [item.id, item]),
   );
   const memberships = useMutation({
@@ -1293,19 +1421,29 @@ function NodeInspector({
         });
       }
       if (content.type === "database") {
-        if (edge?.kind === "logical") {
+        if (dbLogical) {
           const existing = (content.relationships ?? []).find(
-            (item) => item.id === edge.id,
+            (item) => item.id === edge?.id,
           );
           const relationships = (content.relationships ?? []).filter(
-            (item) => item.id !== edge.id,
+            (item) => item.id !== edge?.id,
           );
           if (!remove)
             relationships.push({
               ...existing,
-              id: edge.id,
+              id: existing?.id ?? crypto.randomUUID(),
               name,
               target_id: Number(target),
+              optional: optional ?? existing?.optional ?? false,
+              description: logicalDescription ?? existing?.description ?? "",
+              cardinality:
+                cardinality === undefined
+                  ? (existing?.cardinality ?? null)
+                  : cardinality,
+              constraint_id:
+                existing?.target_id === Number(target)
+                  ? existing?.constraint_id
+                  : null,
             });
           return updateSpecification(projectId, node.id, {
             title: row.title,
@@ -1323,20 +1461,28 @@ function NodeInspector({
         if (!remove)
           constraints.push({
             ...existing,
+            ...foreignKey,
             id: existing?.id ?? crypto.randomUUID(),
             kind: "foreign_key",
             name,
             target_id: Number(target),
-            target_column_ids:
-              existing?.target_id === Number(target)
-                ? existing?.target_column_ids
-                : [],
           });
         return updateSpecification(projectId, node.id, {
           title: row.title,
           summary: row.summary,
           version: node.version,
-          content: { ...content, constraints },
+          content: {
+            ...content,
+            constraints,
+            relationships:
+              existing && (remove || existing.target_id !== Number(target))
+                ? content.relationships?.map((relationship) =>
+                    relationship.constraint_id === existing.id
+                      ? { ...relationship, constraint_id: null }
+                      : relationship,
+                  )
+                : content.relationships,
+          },
         });
       }
       throw new Error("接続を作成できる設計を選択してください。");
@@ -1366,7 +1512,7 @@ function NodeInspector({
             個別設計を開く
           </Link>
         </Button>
-        {canEdit && node.kind === "screen" && (
+        {canEdit && node.kind !== "api" && (
           <Button asChild size="sm" variant="ghost">
             <Link
               href={{
@@ -1374,16 +1520,50 @@ function NodeInspector({
                 query: {
                   tab: "review",
                   review: edge
-                    ? `content/transitions/${edge.id}/name`
+                    ? `content/${edge.kind === "logical" ? "relationships" : edge.kind === "foreign_key" ? "constraints" : "transitions"}/${edge.id}/name`
                     : "title",
                 },
               }}
             >
-              {edge ? "遷移線に指摘" : "画面に指摘"}
+              {edge
+                ? node.kind === "screen"
+                  ? "遷移線に指摘"
+                  : "関連線に指摘"
+                : node.kind === "screen"
+                  ? "画面に指摘"
+                  : "テーブルに指摘"}
             </Link>
           </Button>
         )}
       </div>
+      {canEdit && db && Boolean(db.columns?.length) && (
+        <details className="space-y-1 rounded-md border p-2 text-xs">
+          <summary className="cursor-pointer">カラムに指摘</summary>
+          <ul className="max-h-48 space-y-1 overflow-auto">
+            {db.columns?.map(
+              (column) =>
+                column.id && (
+                  <li key={column.id}>
+                    <Link
+                      className="block rounded p-1 text-primary hover:bg-muted"
+                      href={{
+                        pathname: specificationHref(projectId, node.id),
+                        query: {
+                          tab: "review",
+                          review: `content/columns/${column.id}/name`,
+                        },
+                      }}
+                    >
+                      {column.name ||
+                        column.physical_name ||
+                        "名称未設定のカラム"}
+                    </Link>
+                  </li>
+                ),
+            )}
+          </ul>
+        </details>
+      )}
       {node.summary && <p className="line-clamp-3 text-sm">{node.summary}</p>}
       {onReference && (
         <Button variant="ghost" size="sm" onClick={onReference}>
@@ -1438,7 +1618,9 @@ function NodeInspector({
               ? "接続を編集"
               : node.kind === "screen"
                 ? "遷移先を接続"
-                : "外部キーを追加"}
+                : dbLogical
+                  ? "論理リレーションを追加"
+                  : "外部キーを追加"}
           </summary>
           <Input
             ref={nameInput}
@@ -1460,7 +1642,11 @@ function NodeInspector({
             className={cn(selectClass, "w-full")}
             aria-label="既存の接続先"
             value={target}
-            onChange={(event) => setTarget(event.target.value)}
+            onChange={(event) => {
+              setTarget(event.target.value);
+              if (node.kind === "database")
+                setPhysical({ ...foreignKey, target_column_ids: [] });
+            }}
           >
             <option value="">接続先を選択</option>
             {target && !targets.has(Number(target)) && (
@@ -1472,6 +1658,59 @@ function NodeInspector({
               </option>
             ))}
           </select>
+          {db && !dbLogical && (
+            <ConstraintDetails
+              projectId={projectId}
+              id={node.id}
+              value={foreignKey}
+              options={[]}
+              columns={db.columns ?? []}
+              readOnly={false}
+              hideTarget
+              onChange={setPhysical}
+            />
+          )}
+          {dbLogical && (
+            <>
+              <select
+                className={cn(selectClass, "w-full")}
+                aria-label="多重度"
+                value={
+                  (cardinality === undefined
+                    ? existingRelation?.cardinality
+                    : cardinality) ?? ""
+                }
+                onChange={(event) =>
+                  setCardinality(
+                    (event.target.value ||
+                      null) as DatabaseRelationship["cardinality"],
+                  )
+                }
+              >
+                <option value="">未設定</option>
+                <option value="one_to_one">1 対 1</option>
+                <option value="one_to_many">1 対 多</option>
+                <option value="many_to_many">多 対 多</option>
+              </select>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={optional ?? existingRelation?.optional ?? false}
+                  onChange={(event) => setOptional(event.target.checked)}
+                />
+                関連先は任意
+              </label>
+              <Input
+                aria-label="論理仕様"
+                placeholder="論理仕様"
+                maxLength={5000}
+                value={
+                  logicalDescription ?? existingRelation?.description ?? ""
+                }
+                onChange={(event) => setLogicalDescription(event.target.value)}
+              />
+            </>
+          )}
           {node.kind === "screen" && (
             <Input
               value={condition}

@@ -20,6 +20,8 @@ export interface DatabaseColumn {
   physical_name?: string;
   /** @maxLength 100 */
   logical_type?: string;
+  /** @maxLength 3000 */
+  logical_constraint?: string;
   data_type?: DatabaseColumnDataType;
   length?: number | null;
   precision?: number | null;
@@ -27,4 +29,5 @@ export interface DatabaseColumn {
   nullable?: boolean;
   default_value?: string | null;
   identity?: DatabaseColumnIdentity;
+  generated_expression?: string | null;
 }

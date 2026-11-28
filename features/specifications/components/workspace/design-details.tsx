@@ -1138,7 +1138,24 @@ function DatabaseDetails({
           },
           { key: "nullable", label: "NULL許容", type: "boolean" },
           { key: "default_value", label: "既定値" },
+          { key: "logical_type", label: "論理型" },
+          { key: "logical_constraint", label: "業務上の制約" },
+          { key: "length", label: "長さ", type: "number" },
+          { key: "precision", label: "精度", type: "number" },
+          { key: "scale", label: "スケール", type: "number" },
+          { key: "generated_expression", label: "生成式", nullable: true },
+          { key: "description", label: "説明" },
         ]}
+        initiallyHidden={[
+          "logical_type",
+          "logical_constraint",
+          "length",
+          "precision",
+          "scale",
+          "generated_expression",
+          "description",
+        ]}
+        bulkLimit={250}
         label="カラム"
         path="content/columns"
         readOnly={readOnly}
@@ -1150,6 +1167,27 @@ function DatabaseDetails({
               value={row.logical_type}
               readOnly={readOnly}
               onChange={(logical_type) => update({ ...row, logical_type })}
+            />
+            <Property
+              label="業務上の制約"
+              value={row.logical_constraint}
+              readOnly={readOnly}
+              onChange={(logical_constraint) =>
+                update({ ...row, logical_constraint })
+              }
+            />
+            <Property
+              label="生成式"
+              value={row.generated_expression}
+              readOnly={readOnly}
+              onChange={(generated_expression) =>
+                update({
+                  ...row,
+                  generated_expression: generated_expression.trim()
+                    ? generated_expression
+                    : null,
+                })
+              }
             />
             <Property
               label="説明"
@@ -1320,13 +1358,14 @@ function DatabaseDetails({
           id: uid(),
           name: "",
           target_id: id ?? options.data?.nodes[0]?.id ?? 1,
-          cardinality: "one_to_many",
+          cardinality: null,
         })}
         columns={[
           { key: "name", label: "論理関連名" },
           {
             key: "cardinality",
             label: "多重度",
+            nullable: true,
             choices: [
               ["one_to_one", "1 対 1"],
               ["one_to_many", "1 対 多"],
@@ -1400,7 +1439,7 @@ function DatabaseDetails({
   return null;
 }
 
-function ConstraintDetails({
+export function ConstraintDetails({
   projectId,
   id,
   value,
@@ -1409,6 +1448,7 @@ function ConstraintDetails({
   readOnly,
   revision,
   onChange,
+  hideTarget = false,
 }: {
   projectId: number;
   id?: number;
@@ -1418,6 +1458,7 @@ function ConstraintDetails({
   readOnly: boolean;
   revision?: number;
   onChange: (item: DatabaseConstraint) => void;
+  hideTarget?: boolean;
 }) {
   const targetId = value.target_id;
   const target = useQuery({
@@ -1456,32 +1497,34 @@ function ConstraintDetails({
       )}
       {value.kind === "foreign_key" && (
         <>
-          <label className="flex flex-col gap-1 text-xs">
-            参照先テーブル
-            <select
-              className={select}
-              value={targetId ?? ""}
-              disabled={readOnly}
-              onChange={(event) =>
-                onChange({
-                  ...value,
-                  target_id: Number(event.target.value) || null,
-                  target_column_ids: [],
-                })
-              }
-            >
-              <option value="">未設定</option>
-              {targetId &&
-                !options.some((option) => option.id === targetId) && (
-                  <option value={targetId}>DB-ID {targetId}</option>
-                )}
-              {options.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.title}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!hideTarget && (
+            <label className="flex flex-col gap-1 text-xs">
+              参照先テーブル
+              <select
+                className={select}
+                value={targetId ?? ""}
+                disabled={readOnly}
+                onChange={(event) =>
+                  onChange({
+                    ...value,
+                    target_id: Number(event.target.value) || null,
+                    target_column_ids: [],
+                  })
+                }
+              >
+                <option value="">未設定</option>
+                {targetId &&
+                  !options.some((option) => option.id === targetId) && (
+                    <option value={targetId}>DB-ID {targetId}</option>
+                  )}
+                {options.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <ColumnSelection
             columns={remote}
             label="参照先カラム（選択順）"

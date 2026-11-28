@@ -11,6 +11,8 @@ export type DesignDiagramProjectsProjectIdDesignWorkspaceDiagramGetParams = {
   group_id?: string | null;
   collection_id?: string | null;
   include_references?: boolean;
+  /** @maxLength 63 */
+  namespace?: string;
   /** @maxLength 200 */
   q?: string;
   /** @minimum 1 */

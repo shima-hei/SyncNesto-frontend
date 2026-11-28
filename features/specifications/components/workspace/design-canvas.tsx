@@ -206,9 +206,9 @@ export function DesignCanvas({
   function connectionTarget(clientX: number, clientY: number) {
     const node = document
       .elementFromPoint(clientX, clientY)
-      ?.closest<HTMLElement>("[data-screen-node-id]");
+      ?.closest<HTMLElement>("[data-design-node-id]");
     return node && stage.current?.contains(node)
-      ? Number(node.dataset.screenNodeId)
+      ? Number(node.dataset.designNodeId)
       : undefined;
   }
   function clearConnection() {
@@ -390,6 +390,7 @@ export function DesignCanvas({
               return (
                 <div
                   key={node.id}
+                  data-design-node-id={node.id}
                   data-screen-node-id={
                     node.kind === "screen" ? node.id : undefined
                   }
@@ -448,46 +449,41 @@ export function DesignCanvas({
                       </span>
                     </button>
                   </div>
-                  {onConnect &&
-                    canEdit &&
-                    node.kind === "screen" &&
-                    !reference && (
-                      <button
-                        type="button"
-                        aria-label={`${title}から遷移先を接続`}
-                        className="absolute top-9 -right-3 z-10 grid size-7 -translate-y-1/2 cursor-crosshair touch-none place-items-center rounded-full border border-primary bg-background text-primary shadow-xs select-none focus-visible:ring-2 focus-visible:ring-primary [-webkit-user-select:none]"
-                        disabled={busy}
-                        onPointerDown={(event) => {
-                          if (event.button !== 0 || connectionDrag.current)
-                            return;
-                          event.stopPropagation();
-                          connectionDrag.current = {
-                            pointer: event.pointerId,
-                            sourceId: node.id,
-                            x: event.clientX,
-                            y: event.clientY,
-                          };
-                          event.currentTarget.setPointerCapture(
-                            event.pointerId,
-                          );
-                        }}
-                        onPointerMove={updateConnection}
-                        onPointerUp={finishConnection}
-                        onLostPointerCapture={clearConnection}
-                        onKeyDown={(event) => {
-                          if (event.key === "Escape") clearConnection();
-                        }}
-                        onClick={(event) => {
-                          if (event.detail === 0) onConnect(node.id);
-                        }}
-                      >
-                        <ArrowRightIcon className="size-4" />
-                      </button>
-                    )}
+                  {onConnect && canEdit && !reference && (
+                    <button
+                      type="button"
+                      aria-label={`${title}から${node.kind === "screen" ? "遷移先" : "テーブル"}を接続`}
+                      className="absolute top-9 -right-3 z-10 grid size-7 -translate-y-1/2 cursor-crosshair touch-none place-items-center rounded-full border border-primary bg-background text-primary shadow-xs select-none focus-visible:ring-2 focus-visible:ring-primary [-webkit-user-select:none]"
+                      disabled={busy}
+                      onPointerDown={(event) => {
+                        if (event.button !== 0 || connectionDrag.current)
+                          return;
+                        event.stopPropagation();
+                        connectionDrag.current = {
+                          pointer: event.pointerId,
+                          sourceId: node.id,
+                          x: event.clientX,
+                          y: event.clientY,
+                        };
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                      }}
+                      onPointerMove={updateConnection}
+                      onPointerUp={finishConnection}
+                      onLostPointerCapture={clearConnection}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") clearConnection();
+                      }}
+                      onClick={(event) => {
+                        if (event.detail === 0) onConnect(node.id);
+                      }}
+                    >
+                      <ArrowRightIcon className="size-4" />
+                    </button>
+                  )}
                   {!!node.field_labels?.length && (
                     <ul className="border-t px-2 py-1 font-mono text-xs">
                       {node.field_labels.slice(0, 3).map((field, index) => (
-                        <li key={index} className="truncate">
+                        <li key={index} className="truncate" title={field}>
                           {field}
                         </li>
                       ))}

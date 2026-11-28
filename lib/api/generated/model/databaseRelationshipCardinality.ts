@@ -6,7 +6,8 @@
  */
 
 export type DatabaseRelationshipCardinality =
-  (typeof DatabaseRelationshipCardinality)[keyof typeof DatabaseRelationshipCardinality];
+  | (typeof DatabaseRelationshipCardinality)[keyof typeof DatabaseRelationshipCardinality]
+  | null;
 
 export const DatabaseRelationshipCardinality = {
   one_to_one: "one_to_one",

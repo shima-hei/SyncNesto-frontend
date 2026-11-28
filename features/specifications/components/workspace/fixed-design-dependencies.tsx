@@ -57,7 +57,7 @@ function fixedEdges({ id, content }: DesignSnapshot): DesignEdge[] {
           : [],
       ),
       ...(content.relationships ?? []).flatMap((item) =>
-        edge(item, "logical", item.cardinality),
+        edge(item, "logical", item.cardinality ?? undefined),
       ),
     ];
   return [];
