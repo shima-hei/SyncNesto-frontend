@@ -34,6 +34,7 @@ import type {
   DesignReviewRead,
   DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
   DesignReviewer,
+  DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
   ExportDesignDdlProjectsProjectIdDesignWorkspaceDdlGetParams,
   ExportDesignOpenapiProjectsProjectIdDesignWorkspaceOpenapiGetParams,
   FormatExport,
@@ -47,6 +48,10 @@ import type {
   PlacementUpdate,
   ReadDesignImpactProjectsProjectIdDesignWorkspaceImpactSpecificationIdGetParams,
   ReadDesignWireframePartProjectsProjectIdDesignWorkspaceWireframePartsPartIdGetParams,
+  ScreenListBatch,
+  ScreenListMember,
+  ScreenListRead,
+  ScreenListSaved,
   SpecificationRead,
   WireframePartCreate,
   WireframePartRead,
@@ -107,6 +112,727 @@ const withQueryKey = <T extends object, K>(
   return result;
 };
 
+export const getDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetUrl =
+  (
+    projectId: number,
+    params?: DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/design-workspace/screen-list?${stringifiedParams}`
+      : `/projects/${projectId}/design-workspace/screen-list`;
+  };
+
+/**
+ * 案件の画面を関連、担当、表示条件とともに取得する。
+ * @summary Design Screen List
+ */
+export const designScreenListProjectsProjectIdDesignWorkspaceScreenListGet =
+  async (
+    projectId: number,
+    params?: DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<ScreenListRead> => {
+    return apiClient<ScreenListRead>(
+      getDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetUrl(
+        projectId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetQueryKey =
+  (
+    projectId: number,
+    params?: DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/design-workspace/screen-list`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    params?: DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetQueryKey(
+        projectId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+        >
+      >
+    > = ({ signal }) =>
+      designScreenListProjectsProjectIdDesignWorkspaceScreenListGet(
+        projectId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+      >
+    >
+  >;
+export type DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 案件の画面を関連、担当、表示条件とともに取得する。
+ * @summary Design Screen List
+ */
+export function useDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params:
+    | undefined
+    | DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 案件の画面を関連、担当、表示条件とともに取得する。
+ * @summary Design Screen List
+ */
+export function useDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 案件の画面を関連、担当、表示条件とともに取得する。
+ * @summary Design Screen List
+ */
+export function useDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 案件の画面を関連、担当、表示条件とともに取得する。
+ * @summary Design Screen List
+ */
+export function useDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: DesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListProjectsProjectIdDesignWorkspaceScreenListGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getDesignScreenListProjectsProjectIdDesignWorkspaceScreenListGetQueryOptions(
+      projectId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/design-workspace/screen-list/members`;
+  };
+
+/**
+ * 画面の担当者に指定できる案件内のメンバーを取得する。
+ * @summary Design Screen List Members
+ */
+export const designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet =
+  async (
+    projectId: number,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<ScreenListMember[]> => {
+    return apiClient<ScreenListMember[]>(
+      getDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetQueryKey =
+  (projectId: number) => {
+    return [
+      `/projects/${projectId}/design-workspace/screen-list/members`,
+    ] as const;
+  };
+
+export const getDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetQueryKey(
+        projectId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+        >
+      >
+    > = ({ signal }) =>
+      designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet(
+        projectId,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type DesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+      >
+    >
+  >;
+export type DesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 画面の担当者に指定できる案件内のメンバーを取得する。
+ * @summary Design Screen List Members
+ */
+export function useDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 画面の担当者に指定できる案件内のメンバーを取得する。
+ * @summary Design Screen List Members
+ */
+export function useDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 画面の担当者に指定できる案件内のメンバーを取得する。
+ * @summary Design Screen List Members
+ */
+export function useDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 画面の担当者に指定できる案件内のメンバーを取得する。
+ * @summary Design Screen List Members
+ */
+export function useDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getDesignScreenListMembersProjectsProjectIdDesignWorkspaceScreenListMembersGetQueryOptions(
+      projectId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getEditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/design-workspace/screen-list/edits`;
+  };
+
+/**
+ * 対象版と権限を照合して、新規行と既存行をまとめて保存する。
+ * @summary Edit Design Screen List
+ */
+export const editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost =
+  async (
+    projectId: number,
+    screenListBatch: ScreenListBatch,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<ScreenListSaved[]> => {
+    return apiClient<ScreenListSaved[]>(
+      getEditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(screenListBatch),
+      },
+    );
+  };
+
+export const getEditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationKey =
+  () =>
+    [
+      "editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost",
+    ] as const;
+
+export const getEditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost
+        >
+      >,
+      TError,
+      EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost
+      >
+    >,
+    TError,
+    EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getEditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost
+        >
+      >,
+      EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationVariables
+    > = (props) => {
+      const { projectId, data } = props ?? {};
+
+      return editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost(
+        projectId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost
+      >
+    >
+  >;
+export type EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationBody =
+  BodyType<ScreenListBatch>;
+export type EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationVariables =
+  { projectId: number; data: BodyType<ScreenListBatch> };
+
+/**
+ * 対象版と権限を照合して、新規行と既存行をまとめて保存する。
+ * @summary Edit Design Screen List
+ */
+export const useEditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost
+          >
+        >,
+        TError,
+        EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof editDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPost
+      >
+    >,
+    TError,
+    EditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getEditDesignScreenListProjectsProjectIdDesignWorkspaceScreenListEditsPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
 export const getDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetUrl =
   (
     projectId: number,

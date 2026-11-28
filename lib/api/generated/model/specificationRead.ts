@@ -29,5 +29,6 @@ export interface SpecificationRead {
   version: number;
   created_by: number;
   updated_by: number;
+  assignee_id?: number | null;
   updated_at: string;
 }

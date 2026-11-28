@@ -66,6 +66,7 @@ import { SpecificationPage } from "./specification-page";
 import { DesignCanvas } from "./workspace/design-canvas";
 import { DesignOverview } from "./workspace/design-overview";
 import { DesignReviewRequestDialog } from "./workspace/design-review-requests";
+import { ScreenListTable } from "./workspace/screen-list-table";
 import { DesignFormats, OpenApiImportPanel } from "./workspace/design-formats";
 
 type View = "all" | Kind;
@@ -184,6 +185,7 @@ function DesignBrowser({
     CollectionRead | "group" | "api_set" | "db_model" | null
   >(null);
   const view = initialView || (kind === "api" ? "tree" : "diagram");
+  const screenList = kind === "screen" && view === "list";
   const refresh = async () => {
     await Promise.all([
       cache.invalidateQueries({ queryKey: designKey(projectId) }),
@@ -212,6 +214,7 @@ function DesignBrowser({
         page_size: 50,
       }),
     retry: false,
+    enabled: !screenList,
   });
   const id = selected.size === 1 ? [...selected][0] : undefined;
   const nodes = graph.data?.nodes ?? [];
@@ -395,7 +398,7 @@ function DesignBrowser({
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-1">
-          {canEdit && reviewTargets.length > 0 && (
+          {!screenList && canEdit && reviewTargets.length > 0 && (
             <DesignReviewRequestDialog
               projectId={projectId}
               defaults={reviewTargets}
@@ -545,7 +548,7 @@ function DesignBrowser({
       ) : (
         <>
           {collections.error && <FormApiError error={collections.error} />}
-          {graph.error ? (
+          {!screenList && graph.error ? (
             <DataLoadError
               resourceName="設計"
               isRetrying={graph.isFetching}
@@ -661,7 +664,18 @@ function DesignBrowser({
                 </aside>
               )}
               <div className="min-w-0 flex-1">
-                {graph.isPending ? (
+                {screenList ? (
+                  <ScreenListTable
+                    projectId={projectId}
+                    canEdit={canEdit}
+                    canCreate={canCreate}
+                    groups={groups}
+                    groupId={group}
+                    search={search}
+                    page={page}
+                    onPage={setPage}
+                  />
+                ) : graph.isPending ? (
                   <p className="p-4" role="status">
                     設計を読み込み中…
                   </p>
@@ -890,7 +904,7 @@ function DesignBrowser({
               )}
             </div>
           )}
-          {!!graph.data && graph.data.total > 50 && (
+          {!screenList && !!graph.data && graph.data.total > 50 && (
             <DataPagination
               page={page}
               total={graph.data.total}
