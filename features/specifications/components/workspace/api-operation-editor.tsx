@@ -8,13 +8,16 @@ import type {
   ApiSpecification,
   ApiSpecificationOperation,
 } from "@/lib/api/generated/model";
+import {
+  asObject,
+  asString,
+  duplicateSchema,
+  orderedProperties,
+  propertyOrderKey,
+  type JsonObject,
+} from "../../lib/openapi-schema";
+import { MediaExamples, SchemaDetails } from "./api-schema-details";
 
-type JsonObject = Record<string, unknown>;
-const asObject = (value: unknown): JsonObject =>
-  value && typeof value === "object" && !Array.isArray(value)
-    ? (value as JsonObject)
-    : {};
-const asString = (value: unknown) => (typeof value === "string" ? value : "");
 const selectClass = "h-8 min-w-0 rounded-md border bg-background px-2 text-sm";
 const schemaTypes = [
   "string",
@@ -521,15 +524,23 @@ function MediaEditor({
         )}
       </div>
       {keys.length > 0 && (
-        <SchemaTree
-          value={asObject(body.schema)}
-          readOnly={readOnly}
-          depth={0}
-          label={current}
-          onChange={(schema) =>
-            onChange({ ...media, [current]: { ...body, schema } })
-          }
-        />
+        <>
+          <SchemaTree
+            value={asObject(body.schema)}
+            readOnly={readOnly}
+            depth={0}
+            label={current}
+            onChange={(schema) =>
+              onChange({ ...media, [current]: { ...body, schema } })
+            }
+          />
+          <MediaExamples
+            key={current}
+            value={body}
+            readOnly={readOnly}
+            onChange={(examples) => onChange({ ...media, [current]: examples })}
+          />
+        </>
       )}
     </section>
   );
@@ -546,24 +557,67 @@ function PropertySchema({
   onChange: (value: JsonObject) => void;
   readOnly: boolean;
 }) {
+  const types = Array.isArray(value.type)
+    ? value.type.filter((type): type is string => typeof type === "string")
+    : typeof value.type === "string"
+      ? [value.type]
+      : [];
+  const nullable = types.includes("null");
+  const concrete = types.filter((type) => type !== "null");
+  const primary =
+    concrete.length > 1
+      ? "multiple"
+      : (concrete[0] ?? (nullable ? "null" : ""));
   return (
-    <select
-      className={selectClass}
-      aria-label={label}
-      value={asString(value.type)}
-      disabled={readOnly}
-      onChange={(event) => {
-        const next = { ...value };
-        if (event.target.value) next.type = event.target.value;
-        else delete next.type;
-        onChange(next);
-      }}
-    >
-      <option value="">未設定</option>
-      {schemaTypes.map((type) => (
-        <option key={type}>{type}</option>
-      ))}
-    </select>
+    <div className="flex flex-wrap items-center gap-2">
+      <select
+        className={selectClass}
+        aria-label={label}
+        value={primary}
+        disabled={readOnly}
+        onChange={(event) => {
+          const next = { ...value };
+          if (event.target.value)
+            next.type =
+              nullable && event.target.value !== "null"
+                ? [event.target.value, "null"]
+                : event.target.value;
+          else delete next.type;
+          onChange(next);
+        }}
+      >
+        <option value="">未設定</option>
+        {primary === "multiple" && (
+          <option value="multiple" disabled>
+            {concrete.join(" | ")}
+          </option>
+        )}
+        {schemaTypes.map((type) => (
+          <option key={type}>{type}</option>
+        ))}
+      </select>
+      {concrete.length > 0 && (
+        <label className="flex items-center gap-1 text-xs">
+          <input
+            type="checkbox"
+            aria-label={`${label}でnullを許可`}
+            checked={nullable}
+            disabled={readOnly}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                type: event.target.checked
+                  ? [...concrete, "null"]
+                  : concrete.length === 1
+                    ? concrete[0]
+                    : concrete,
+              })
+            }
+          />
+          nullを許可
+        </label>
+      )}
+    </div>
   );
 }
 
@@ -583,9 +637,31 @@ function SchemaTree({
   const id = useId();
   const [expanded, setExpanded] = useState(depth < 1);
   const properties = asObject(value.properties);
+  const order = orderedProperties(value);
   const items = asObject(value.items);
-  const type = asString(value.type);
+  const hasType = (type: string) =>
+    value.type === type ||
+    (Array.isArray(value.type) && value.type.includes(type));
   const required = Array.isArray(value.required) ? value.required : [];
+  function moveProperty(index: number, delta: number) {
+    const next = [...order];
+    const [name] = next.splice(index, 1);
+    next.splice(index + delta, 0, name);
+    onChange({ ...value, [propertyOrderKey]: next });
+  }
+  function copyProperty(name: string, schema: unknown, index: number) {
+    let suffix = 1;
+    let copy = `${name}_copy`;
+    while (Object.hasOwn(properties, copy)) copy = `${name}_copy${++suffix}`;
+    const nextOrder = [...order];
+    nextOrder.splice(index + 1, 0, copy);
+    onChange({
+      ...value,
+      properties: { ...properties, [copy]: duplicateSchema(schema) },
+      [propertyOrderKey]: nextOrder,
+      ...(required.includes(name) ? { required: [...required, copy] } : {}),
+    });
+  }
   if (depth > 18)
     return (
       <p className="text-xs">これより深い定義はOpenAPI原文で確認できます。</p>
@@ -629,113 +705,167 @@ function SchemaTree({
               }}
             />
           </label>
-          {Object.entries(properties).map(([name, schema]) => (
-            <div
-              key={asString(asObject(schema)["x-syncnesto-id"]) || name}
-              className="space-y-1 pl-2"
-            >
-              {!readOnly && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <form
-                    className="flex gap-1"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const replacement = String(
-                        new FormData(event.currentTarget).get("name") ?? "",
-                      ).trim();
-                      if (
-                        !replacement ||
-                        replacement === name ||
-                        Object.hasOwn(properties, replacement)
-                      )
-                        return;
-                      onChange({
-                        ...value,
-                        properties: Object.fromEntries(
-                          Object.entries(properties).map(([key, child]) =>
-                            key === name
-                              ? [
-                                  replacement,
-                                  {
-                                    ...asObject(child),
-                                    "x-syncnesto-id":
-                                      asString(
-                                        asObject(child)["x-syncnesto-id"],
-                                      ) || crypto.randomUUID(),
-                                  },
-                                ]
-                              : [key, child],
-                          ),
-                        ),
-                        required: required.map((key) =>
-                          key === name ? replacement : key,
-                        ),
-                      });
-                    }}
-                  >
-                    <Input
-                      name="name"
-                      className="h-7 max-w-36"
-                      aria-label={`${name}の名前`}
-                      key={name}
-                      defaultValue={name}
-                      required
-                    />
-                    <Button size="sm" type="submit" variant="ghost">
-                      名前変更
-                    </Button>
-                  </form>
-                  <label className="flex gap-1 text-xs">
-                    <input
-                      type="checkbox"
-                      className="accent-primary"
-                      checked={required.includes(name)}
-                      onChange={(event) =>
+          <SchemaDetails
+            value={value}
+            onChange={onChange}
+            readOnly={readOnly}
+          />
+          {order.map((name, index) => {
+            const schema = properties[name];
+            return (
+              <div
+                key={asString(asObject(schema)["x-syncnesto-id"]) || name}
+                className="space-y-1 pl-2"
+              >
+                {!readOnly && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <form
+                      className="flex gap-1"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const replacement = String(
+                          new FormData(event.currentTarget).get("name") ?? "",
+                        ).trim();
+                        if (
+                          !replacement ||
+                          replacement === name ||
+                          Object.hasOwn(properties, replacement)
+                        )
+                          return;
                         onChange({
                           ...value,
-                          required: event.target.checked
-                            ? [...required, name]
-                            : required.filter((key) => key !== name),
+                          properties: Object.fromEntries(
+                            Object.entries(properties).map(([key, child]) =>
+                              key === name
+                                ? [
+                                    replacement,
+                                    typeof child === "boolean"
+                                      ? child
+                                      : {
+                                          ...asObject(child),
+                                          "x-syncnesto-id":
+                                            asString(
+                                              asObject(child)["x-syncnesto-id"],
+                                            ) || crypto.randomUUID(),
+                                        },
+                                  ]
+                                : [key, child],
+                            ),
+                          ),
+                          required: required.map((key) =>
+                            key === name ? replacement : key,
+                          ),
+                          [propertyOrderKey]: order.map((key) =>
+                            key === name ? replacement : key,
+                          ),
+                        });
+                      }}
+                    >
+                      <Input
+                        name="name"
+                        className="h-7 max-w-36"
+                        aria-label={`${name}の名前`}
+                        key={name}
+                        defaultValue={name}
+                        required
+                      />
+                      <Button size="sm" type="submit" variant="ghost">
+                        名前変更
+                      </Button>
+                    </form>
+                    <label className="flex gap-1 text-xs">
+                      <input
+                        type="checkbox"
+                        className="accent-primary"
+                        checked={required.includes(name)}
+                        onChange={(event) =>
+                          onChange({
+                            ...value,
+                            required: event.target.checked
+                              ? [...required, name]
+                              : required.filter((key) => key !== name),
+                          })
+                        }
+                      />
+                      必須
+                    </label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={index === 0}
+                      aria-label={`${name}を上に移動`}
+                      onClick={() => moveProperty(index, -1)}
+                    >
+                      上へ
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={index === order.length - 1}
+                      aria-label={`${name}を下に移動`}
+                      onClick={() => moveProperty(index, 1)}
+                    >
+                      下へ
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`${name}を複製`}
+                      onClick={() => copyProperty(name, schema, index)}
+                    >
+                      複製
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        onChange({
+                          ...value,
+                          properties: Object.fromEntries(
+                            Object.entries(properties).filter(
+                              ([key]) => key !== name,
+                            ),
+                          ),
+                          required: required.filter((key) => key !== name),
+                          [propertyOrderKey]: order.filter(
+                            (key) => key !== name,
+                          ),
                         })
                       }
-                    />
-                    必須
-                  </label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
+                    >
+                      削除
+                    </Button>
+                  </div>
+                )}
+                {readOnly && required.includes(name) && (
+                  <span className="text-xs text-muted-foreground">必須</span>
+                )}
+                {typeof schema === "boolean" ? (
+                  <p className="text-xs font-mono">
+                    {name} · {String(schema)}
+                  </p>
+                ) : (
+                  <SchemaTree
+                    value={asObject(schema)}
+                    label={name}
+                    depth={depth + 1}
+                    readOnly={readOnly}
+                    onChange={(next) =>
                       onChange({
                         ...value,
-                        properties: Object.fromEntries(
-                          Object.entries(properties).filter(
-                            ([key]) => key !== name,
-                          ),
-                        ),
-                        required: required.filter((key) => key !== name),
+                        properties: { ...properties, [name]: next },
                       })
                     }
-                  >
-                    削除
-                  </Button>
-                </div>
-              )}
-              <SchemaTree
-                value={asObject(schema)}
-                label={name}
-                depth={depth + 1}
-                readOnly={readOnly}
-                onChange={(next) =>
-                  onChange({
-                    ...value,
-                    properties: { ...properties, [name]: next },
-                  })
-                }
-              />
-            </div>
-          ))}
-          {(value.items !== undefined || type === "array") && (
+                  />
+                )}
+              </div>
+            );
+          })}
+          {(value.items !== undefined || hasType("array")) && (
             <SchemaTree
               value={items}
               label="items"
@@ -745,7 +875,7 @@ function SchemaTree({
             />
           )}
           {!readOnly &&
-            (type === "object" || value.properties !== undefined) && (
+            (hasType("object") || value.properties !== undefined) && (
               <form
                 className="flex gap-2"
                 onSubmit={(event) => {
@@ -763,6 +893,7 @@ function SchemaTree({
                         "x-syncnesto-id": crypto.randomUUID(),
                       },
                     },
+                    [propertyOrderKey]: [...order, name],
                   });
                   event.currentTarget.reset();
                 }}
