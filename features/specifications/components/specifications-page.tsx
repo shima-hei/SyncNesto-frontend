@@ -740,6 +740,7 @@ function DesignBrowser({
                         <Button
                           variant={logical ? "secondary" : "outline"}
                           size="sm"
+                          disabled={connectionSaving}
                           onClick={() => {
                             setLogical((value) => !value);
                             setEdge(undefined);
@@ -932,7 +933,11 @@ function DesignBrowser({
                       canEdit={canEdit}
                       onSave={async () => {
                         await refresh();
-                        setNewConnection(undefined);
+                        setNewConnection((current) =>
+                          current?.request === newConnection?.request
+                            ? undefined
+                            : current,
+                        );
                       }}
                       onConnectionSaving={setConnectionSaving}
                       edge={edge}
