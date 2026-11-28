@@ -1,3 +1,5 @@
+import type { ApiSpecification } from "@/lib/api/generated/model";
+
 export type JsonObject = Record<string, unknown>;
 
 export const asObject = (value: unknown): JsonObject =>
@@ -110,4 +112,114 @@ export function sampleFromSchema(schema: unknown): unknown {
     );
   }
   return example(schema, 0);
+}
+
+export const schemaTypes = [
+  "string",
+  "integer",
+  "number",
+  "boolean",
+  "object",
+  "array",
+  "null",
+] as const;
+
+export function initializeOperation(content: ApiSpecification): JsonObject {
+  const legacyType = (dataType?: string) =>
+    schemaTypes.some((type) => type === dataType) ? dataType : "string";
+  const schema = (fields: typeof content.request_fields) => ({
+    type: "object",
+    properties: Object.fromEntries(
+      (fields ?? [])
+        .filter((field) => field.name)
+        .map((field) => [
+          field.name!,
+          {
+            type: legacyType(field.data_type),
+            description: field.description,
+            "x-syncnesto-id": field.id,
+          },
+        ]),
+    ),
+    required: (fields ?? [])
+      .filter((field) => field.required && field.name)
+      .map((field) => field.name),
+  });
+  const request =
+    content.request_fields?.filter((field) => field.location === "body") ?? [];
+  const parameters = (content.request_fields ?? [])
+    .filter(
+      (field) =>
+        field.name &&
+        ["path", "query", "header", "cookie"].includes(field.location ?? ""),
+    )
+    .map((field) => ({
+      name: field.name,
+      in: field.location,
+      required: Boolean(field.required || field.location === "path"),
+      description: field.description,
+      schema: { type: legacyType(field.data_type) },
+      "x-syncnesto-id": field.id,
+    }));
+  const registered = new Set(
+    parameters.filter((item) => item.in === "path").map((item) => item.name),
+  );
+  for (const match of (content.path ?? "").matchAll(/\{([^{}]+)\}/g)) {
+    if (!registered.has(match[1])) {
+      registered.add(match[1]);
+      parameters.push({
+        name: match[1],
+        in: "path",
+        required: true,
+        description: "",
+        schema: { type: "string" },
+        "x-syncnesto-id": crypto.randomUUID(),
+      });
+    }
+  }
+  const initialResponses = Object.fromEntries(
+    (content.responses ?? [])
+      .filter((item) => /^(?:[1-5](?:\d{2}|XX)|default)$/.test(item.name ?? ""))
+      .map((item) => [
+        item.name!,
+        {
+          description: item.description || item.destination || item.name,
+          "x-syncnesto-id": item.id,
+        },
+      ]),
+  );
+  if (!Object.keys(initialResponses).length)
+    initialResponses["200"] = {
+      description: "正常応答",
+      "x-syncnesto-id": crypto.randomUUID(),
+    };
+  if (content.response_fields?.length) {
+    const success =
+      Object.keys(initialResponses).find((value) => value.startsWith("2")) ??
+      "200";
+    Object.assign(initialResponses, {
+      [success]: {
+        ...initialResponses[success],
+        description: initialResponses[success]?.description ?? "正常応答",
+        content: {
+          "application/json": {
+            schema: schema(content.response_fields),
+          },
+        },
+      },
+    });
+  }
+  return {
+    parameters,
+    responses: initialResponses,
+    ...(request.length
+      ? {
+          requestBody: {
+            content: {
+              "application/json": { schema: schema(request) },
+            },
+          },
+        }
+      : {}),
+  };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
+import { MessageSquarePlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,22 +13,25 @@ import {
   asObject,
   asString,
   duplicateSchema,
+  initializeOperation,
   orderedProperties,
   propertyOrderKey,
+  schemaTypes,
   type JsonObject,
 } from "../../lib/openapi-schema";
+import { reviewElementId } from "../../lib/specification";
 import { MediaExamples, SchemaDetails } from "./api-schema-details";
 
 const selectClass = "h-8 min-w-0 rounded-md border bg-background px-2 text-sm";
-const schemaTypes = [
-  "string",
-  "integer",
-  "number",
-  "boolean",
-  "object",
-  "array",
-  "null",
-] as const;
+const pathSegment = (value: string) =>
+  value.replaceAll("~", "~0").replaceAll("/", "~1");
+type Review = (path: string, label: string) => void;
+const parameterStyles = {
+  path: ["simple", "label", "matrix"],
+  query: ["form", "spaceDelimited", "pipeDelimited", "deepObject"],
+  header: ["simple"],
+  cookie: ["form"],
+};
 
 export function ApiOperationEditor({
   content,
@@ -35,17 +39,25 @@ export function ApiOperationEditor({
   tab,
   readOnly,
   legacy,
+  onReview,
+  focusPath,
 }: {
   content: ApiSpecification;
   onChange: (value: ApiSpecification) => void;
   tab: "request" | "responses";
   readOnly: boolean;
   legacy: ReactNode;
+  onReview?: Review;
+  focusPath?: string | null;
 }) {
   const operation = asObject(content.operation);
   const update = (value: JsonObject) =>
     onChange({ ...content, operation: value as ApiSpecificationOperation });
-  const [responseCode, setResponseCode] = useState("200");
+  const [responseCode, setResponseCode] = useState(
+    focusPath?.startsWith("content/operation/responses/")
+      ? focusPath.split("/")[3]
+      : "200",
+  );
   const parameters = Array.isArray(operation.parameters)
     ? operation.parameters.map(asObject)
     : [];
@@ -56,6 +68,13 @@ export function ApiOperationEditor({
   const response = asObject(responses[selectedResponse]);
   const requestBody = asObject(operation.requestBody);
   const [expanded, setExpanded] = useState(false);
+  const updateParameter = (index: number, value: JsonObject) =>
+    update({
+      ...operation,
+      parameters: parameters.map((parameter, at) =>
+        at === index ? value : parameter,
+      ),
+    });
   const updateResponse = (value: JsonObject) =>
     update({
       ...operation,
@@ -68,122 +87,7 @@ export function ApiOperationEditor({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              const legacyType = (dataType?: string) =>
-                schemaTypes.some((type) => type === dataType)
-                  ? dataType
-                  : "string";
-              const schema = (fields: typeof content.request_fields) => ({
-                type: "object",
-                properties: Object.fromEntries(
-                  (fields ?? [])
-                    .filter((field) => field.name)
-                    .map((field) => [
-                      field.name!,
-                      {
-                        type: legacyType(field.data_type),
-                        description: field.description,
-                        "x-syncnesto-id": field.id,
-                      },
-                    ]),
-                ),
-                required: (fields ?? [])
-                  .filter((field) => field.required && field.name)
-                  .map((field) => field.name),
-              });
-              const request =
-                content.request_fields?.filter(
-                  (field) => field.location === "body",
-                ) ?? [];
-              const parameters = (content.request_fields ?? [])
-                .filter(
-                  (field) =>
-                    field.name &&
-                    ["path", "query", "header", "cookie"].includes(
-                      field.location ?? "",
-                    ),
-                )
-                .map((field) => ({
-                  name: field.name,
-                  in: field.location,
-                  required: Boolean(
-                    field.required || field.location === "path",
-                  ),
-                  description: field.description,
-                  schema: { type: legacyType(field.data_type) },
-                  "x-syncnesto-id": field.id,
-                }));
-              const registered = new Set(
-                parameters
-                  .filter((item) => item.in === "path")
-                  .map((item) => item.name),
-              );
-              for (const match of (content.path ?? "").matchAll(
-                /\{([^{}]+)\}/g,
-              )) {
-                if (!registered.has(match[1])) {
-                  registered.add(match[1]);
-                  parameters.push({
-                    name: match[1],
-                    in: "path",
-                    required: true,
-                    description: "",
-                    schema: { type: "string" },
-                    "x-syncnesto-id": crypto.randomUUID(),
-                  });
-                }
-              }
-              const initialResponses = Object.fromEntries(
-                (content.responses ?? [])
-                  .filter((item) =>
-                    /^(?:[1-5](?:\d{2}|XX)|default)$/.test(item.name ?? ""),
-                  )
-                  .map((item) => [
-                    item.name!,
-                    {
-                      description:
-                        item.description || item.destination || item.name,
-                      "x-syncnesto-id": item.id,
-                    },
-                  ]),
-              );
-              if (!Object.keys(initialResponses).length)
-                initialResponses["200"] = {
-                  description: "正常応答",
-                  "x-syncnesto-id": crypto.randomUUID(),
-                };
-              if (content.response_fields?.length) {
-                const success =
-                  Object.keys(initialResponses).find((value) =>
-                    value.startsWith("2"),
-                  ) ?? "200";
-                Object.assign(initialResponses, {
-                  [success]: {
-                    ...initialResponses[success],
-                    description:
-                      initialResponses[success]?.description ?? "正常応答",
-                    content: {
-                      "application/json": {
-                        schema: schema(content.response_fields),
-                      },
-                    },
-                  },
-                });
-              }
-              update({
-                parameters,
-                responses: initialResponses,
-                ...(request.length
-                  ? {
-                      requestBody: {
-                        content: {
-                          "application/json": { schema: schema(request) },
-                        },
-                      },
-                    }
-                  : {}),
-              });
-            }}
+            onClick={() => update(initializeOperation(content))}
           >
             OpenAPI定義を作成
           </Button>
@@ -198,88 +102,110 @@ export function ApiOperationEditor({
         <>
           <div className="space-y-2 rounded-md border p-3">
             <h3 className="text-sm font-semibold">Parameters</h3>
-            {parameters.map((parameter, index) => (
-              <div
-                key={asString(parameter["x-syncnesto-id"]) || index}
-                className="grid items-start gap-2 border-t pt-2 sm:grid-cols-[1fr_auto_1fr_auto]"
-              >
-                <Input
-                  aria-label={`パラメータ ${index + 1}の名前`}
-                  readOnly={readOnly}
-                  value={asString(parameter.name ?? parameter.$ref)}
-                  onChange={(event) =>
-                    update({
-                      ...operation,
-                      parameters: parameters.map((item, at) =>
-                        at === index
-                          ? {
-                              ...item,
-                              [item.$ref ? "$ref" : "name"]: event.target.value,
-                            }
-                          : item,
-                      ),
-                    })
-                  }
-                />
-                {!parameter.$ref && (
-                  <>
-                    <select
-                      className={selectClass}
-                      aria-label="パラメータの配置"
-                      value={asString(parameter.in) || "query"}
-                      disabled={readOnly}
-                      onChange={(event) =>
+            {parameters.map((parameter, index) => {
+              const id = asString(parameter["x-syncnesto-id"]);
+              const label = asString(parameter.name ?? parameter.$ref);
+              const anchor =
+                id && label
+                  ? `content/operation/parameters/${pathSegment(id)}/${parameter.$ref ? "$ref" : "name"}`
+                  : undefined;
+              return (
+                <div
+                  key={asString(parameter["x-syncnesto-id"]) || index}
+                  className="grid items-start gap-2 border-t pt-2 sm:grid-cols-[1fr_auto_1fr_auto]"
+                >
+                  <Input
+                    aria-label={`パラメータ ${index + 1}の名前`}
+                    readOnly={readOnly}
+                    id={anchor ? reviewElementId(anchor) : undefined}
+                    value={asString(parameter.name ?? parameter.$ref)}
+                    onChange={(event) =>
+                      updateParameter(index, {
+                        ...parameter,
+                        [parameter.$ref ? "$ref" : "name"]: event.target.value,
+                      })
+                    }
+                  />
+                  {!parameter.$ref && (
+                    <>
+                      <select
+                        className={selectClass}
+                        aria-label="パラメータの配置"
+                        value={asString(parameter.in) || "query"}
+                        disabled={readOnly}
+                        onChange={(event) => {
+                          const location = event.target
+                            .value as keyof typeof parameterStyles;
+                          const next = {
+                            ...parameter,
+                            in: location,
+                            required:
+                              location === "path" ||
+                              parameter.required === true,
+                          } as JsonObject;
+                          if (
+                            !parameterStyles[location].includes(
+                              asString(next.style),
+                            )
+                          )
+                            delete next.style;
+                          updateParameter(index, next);
+                        }}
+                      >
+                        {["path", "query", "header", "cookie"].map((value) => (
+                          <option key={value}>{value}</option>
+                        ))}
+                      </select>
+                      {!parameter.content && (
+                        <PropertySchema
+                          label="パラメータ型"
+                          value={asObject(parameter.schema)}
+                          readOnly={readOnly}
+                          onChange={(schema) =>
+                            updateParameter(index, { ...parameter, schema })
+                          }
+                        />
+                      )}
+                    </>
+                  )}
+                  {anchor && onReview && (
+                    <SchemaReviewButton
+                      path={anchor}
+                      label={label}
+                      onReview={onReview}
+                    />
+                  )}
+                  {!parameter.$ref && (
+                    <details className="space-y-2 sm:col-span-full">
+                      <summary className="cursor-pointer text-xs">
+                        パラメータ設定
+                      </summary>
+                      <ParameterSettings
+                        parameter={parameter}
+                        readOnly={readOnly}
+                        onChange={(next) => updateParameter(index, next)}
+                      />
+                    </details>
+                  )}
+                  {!readOnly && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
                         update({
                           ...operation,
-                          parameters: parameters.map((item, at) =>
-                            at === index
-                              ? {
-                                  ...item,
-                                  in: event.target.value,
-                                  required:
-                                    event.target.value === "path" ||
-                                    item.required === true,
-                                }
-                              : item,
+                          parameters: parameters.filter(
+                            (_, at) => at !== index,
                           ),
                         })
                       }
                     >
-                      {["path", "query", "header", "cookie"].map((value) => (
-                        <option key={value}>{value}</option>
-                      ))}
-                    </select>
-                    <PropertySchema
-                      label="パラメータ型"
-                      value={asObject(parameter.schema)}
-                      readOnly={readOnly}
-                      onChange={(schema) =>
-                        update({
-                          ...operation,
-                          parameters: parameters.map((item, at) =>
-                            at === index ? { ...item, schema } : item,
-                          ),
-                        })
-                      }
-                    />
-                  </>
-                )}
-                {!readOnly && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      update({
-                        ...operation,
-                        parameters: parameters.filter((_, at) => at !== index),
-                      })
-                    }
-                  >
-                    削除
-                  </Button>
-                )}
-              </div>
-            ))}
+                      削除
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
             {!readOnly && (
               <Button
                 variant="outline"
@@ -304,17 +230,26 @@ export function ApiOperationEditor({
               </Button>
             )}
           </div>
-          <MediaEditor
-            label="Request Body"
-            media={asObject(requestBody.content)}
-            readOnly={readOnly}
-            onChange={(value) =>
-              update({
-                ...operation,
-                requestBody: { ...requestBody, content: value },
-              })
-            }
-          />
+          {requestBody.$ref ? (
+            <p className="rounded-md border p-3 font-mono text-xs break-all">
+              {asString(requestBody.$ref)}
+            </p>
+          ) : (
+            <MediaEditor
+              label="Request Body"
+              path="content/operation/requestBody/content"
+              onReview={onReview}
+              focusPath={focusPath}
+              media={asObject(requestBody.content)}
+              readOnly={readOnly}
+              onChange={(value) =>
+                update({
+                  ...operation,
+                  requestBody: { ...requestBody, content: value },
+                })
+              }
+            />
+          )}
         </>
       ) : (
         <>
@@ -371,6 +306,9 @@ export function ApiOperationEditor({
           <label className="flex flex-col gap-1 text-sm">
             レスポンスの説明
             <Input
+              id={reviewElementId(
+                `content/operation/responses/${selectedResponse}/description`,
+              )}
               value={asString(response.description)}
               readOnly={readOnly}
               onChange={(event) =>
@@ -378,14 +316,38 @@ export function ApiOperationEditor({
               }
             />
           </label>
-          <MediaEditor
-            label="Response Body"
-            media={asObject(response.content)}
-            readOnly={readOnly}
-            onChange={(value) =>
-              updateResponse({ ...response, content: value })
-            }
-          />
+          {onReview && typeof response.description === "string" && (
+            <SchemaReviewButton
+              path={`content/operation/responses/${selectedResponse}/description`}
+              label={`${selectedResponse}の説明`}
+              onReview={onReview}
+            />
+          )}
+          {response.$ref ? (
+            <p className="rounded-md border p-3 font-mono text-xs break-all">
+              {asString(response.$ref)}
+            </p>
+          ) : (
+            <>
+              <ResponseHeaders
+                key={selectedResponse}
+                headers={asObject(response.headers)}
+                readOnly={readOnly}
+                onChange={(headers) => updateResponse({ ...response, headers })}
+              />
+              <MediaEditor
+                label="Response Body"
+                path={`content/operation/responses/${selectedResponse}/content`}
+                onReview={onReview}
+                focusPath={focusPath}
+                media={asObject(response.content)}
+                readOnly={readOnly}
+                onChange={(value) =>
+                  updateResponse({ ...response, content: value })
+                }
+              />
+            </>
+          )}
         </>
       )}
       <Button
@@ -408,6 +370,212 @@ export function ApiOperationEditor({
         <summary className="cursor-pointer text-sm">移行前の項目定義</summary>
         {legacy}
       </details>
+    </section>
+  );
+}
+
+function ParameterSettings({
+  parameter,
+  readOnly,
+  onChange,
+}: {
+  parameter: JsonObject;
+  readOnly: boolean;
+  onChange: (value: JsonObject) => void;
+}) {
+  const location = asString(parameter.in) as keyof typeof parameterStyles;
+  const styles = parameterStyles[location] ?? [];
+  const style = asString(parameter.style);
+  const explode = parameter.explode;
+  return (
+    <div className="mt-2 space-y-2 rounded-md bg-muted/30 p-2">
+      <label className="flex flex-col gap-1 text-xs">
+        説明
+        <Input
+          value={asString(parameter.description)}
+          readOnly={readOnly}
+          onChange={(event) =>
+            onChange({ ...parameter, description: event.target.value })
+          }
+        />
+      </label>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex items-center gap-1 text-xs">
+          <input
+            type="checkbox"
+            checked={location === "path" || parameter.required === true}
+            disabled={readOnly || location === "path"}
+            onChange={(event) =>
+              onChange({ ...parameter, required: event.target.checked })
+            }
+          />
+          必須
+        </label>
+        {!parameter.content && (
+          <>
+            <label className="flex flex-col gap-1 text-xs">
+              シリアライズ方式
+              <select
+                className={selectClass}
+                value={style}
+                disabled={readOnly}
+                onChange={(event) => {
+                  const next = { ...parameter };
+                  if (event.target.value) next.style = event.target.value;
+                  else delete next.style;
+                  onChange(next);
+                }}
+              >
+                <option value="">既定値</option>
+                {style && !styles.includes(style) && (
+                  <option value={style}>{style}</option>
+                )}
+                {styles.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs">
+              explode
+              <select
+                className={selectClass}
+                value={typeof explode === "boolean" ? String(explode) : ""}
+                disabled={readOnly}
+                onChange={(event) => {
+                  const next = { ...parameter };
+                  if (event.target.value)
+                    next.explode = event.target.value === "true";
+                  else delete next.explode;
+                  onChange(next);
+                }}
+              >
+                <option value="">既定値</option>
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+            </label>
+          </>
+        )}
+      </div>
+      {!parameter.content && (
+        <SchemaTree
+          label={asString(parameter.name) || "パラメータ"}
+          depth={0}
+          value={asObject(parameter.schema)}
+          readOnly={readOnly}
+          onChange={(schema) => onChange({ ...parameter, schema })}
+        />
+      )}
+    </div>
+  );
+}
+
+function ResponseHeaders({
+  headers,
+  readOnly,
+  onChange,
+}: {
+  headers: JsonObject;
+  readOnly: boolean;
+  onChange: (value: JsonObject) => void;
+}) {
+  const [error, setError] = useState("");
+  return (
+    <section className="space-y-2 rounded-md border p-3">
+      <h3 className="text-sm font-semibold">レスポンスヘッダー</h3>
+      {Object.entries(headers).map(([name, raw]) => {
+        const header = asObject(raw);
+        const change = (value: JsonObject) =>
+          onChange({ ...headers, [name]: value });
+        return (
+          <details key={name} className="space-y-2 rounded border p-2">
+            <summary className="cursor-pointer font-mono text-xs">
+              {name}
+            </summary>
+            <label className="flex flex-col gap-1 text-xs">
+              {header.$ref ? "共通ヘッダー参照" : "説明"}
+              <Input
+                value={asString(header.$ref ?? header.description)}
+                readOnly={readOnly}
+                onChange={(event) =>
+                  change({
+                    ...header,
+                    [header.$ref ? "$ref" : "description"]: event.target.value,
+                  })
+                }
+              />
+            </label>
+            {!header.$ref && !header.content && (
+              <SchemaTree
+                label={name}
+                depth={0}
+                value={asObject(header.schema)}
+                readOnly={readOnly}
+                onChange={(schema) => change({ ...header, schema })}
+              />
+            )}
+            {!readOnly && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  const next = { ...headers };
+                  delete next[name];
+                  onChange(next);
+                }}
+              >
+                ヘッダーを削除
+              </Button>
+            )}
+          </details>
+        );
+      })}
+      {!readOnly && (
+        <form
+          className="flex flex-wrap gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const name = String(new FormData(form).get("name") ?? "").trim();
+            if (
+              !/^[!#$%&'*+.^_`|~0-9a-z-]+$/i.test(name) ||
+              name.toLowerCase() === "content-type"
+            ) {
+              setError(
+                "Content-Type以外の有効なヘッダー名を入力してください。",
+              );
+              return;
+            }
+            if (
+              Object.keys(headers).some(
+                (key) => key.toLowerCase() === name.toLowerCase(),
+              )
+            ) {
+              setError("同じ名前のヘッダーが定義されています。");
+              return;
+            }
+            onChange({ ...headers, [name]: { schema: { type: "string" } } });
+            setError("");
+            form.reset();
+          }}
+        >
+          <Input
+            name="name"
+            aria-label="レスポンスヘッダー名"
+            placeholder="X-Request-Id"
+            className="h-8 max-w-52"
+            required
+          />
+          <Button type="submit" size="sm" variant="outline">
+            ヘッダーを追加
+          </Button>
+        </form>
+      )}
+      {error && (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </section>
   );
 }
@@ -465,13 +633,27 @@ function MediaEditor({
   media,
   onChange,
   readOnly,
+  path,
+  onReview,
+  focusPath,
 }: {
   label: string;
   media: JsonObject;
   onChange: (media: JsonObject) => void;
   readOnly: boolean;
+  path?: string;
+  onReview?: Review;
+  focusPath?: string | null;
 }) {
-  const [selected, setSelected] = useState("application/json");
+  const [selected, setSelected] = useState(() => {
+    if (path && focusPath?.startsWith(`${path}/`))
+      return (
+        Object.keys(media).find((key) =>
+          focusPath.startsWith(`${path}/${pathSegment(key)}/`),
+        ) ?? "application/json"
+      );
+    return "application/json";
+  });
   const keys = Object.keys(media);
   const current = keys.includes(selected) ? selected : (keys.at(0) ?? selected);
   const body = asObject(media[current]);
@@ -530,6 +712,9 @@ function MediaEditor({
             readOnly={readOnly}
             depth={0}
             label={current}
+            path={path ? `${path}/${pathSegment(current)}/schema` : undefined}
+            onReview={onReview}
+            focusPath={focusPath}
             onChange={(schema) =>
               onChange({ ...media, [current]: { ...body, schema } })
             }
@@ -627,15 +812,27 @@ export function SchemaTree({
   readOnly,
   depth,
   label,
+  path,
+  onReview,
+  focusPath,
 }: {
   value: JsonObject;
   onChange: (value: JsonObject) => void;
   readOnly: boolean;
   depth: number;
   label: string;
+  path?: string;
+  onReview?: Review;
+  focusPath?: string | null;
 }) {
   const id = useId();
-  const [expanded, setExpanded] = useState(depth < 1);
+  const [expanded, setExpanded] = useState(
+    depth < 1 || Boolean(path && focusPath?.startsWith(`${path}/`)),
+  );
+  const reviewKey = ["type", "$ref", "description", "format"].find(
+    (key) => typeof value[key] === "string",
+  );
+  const anchor = path && reviewKey ? `${path}/${reviewKey}` : undefined;
   const properties = asObject(value.properties);
   const order = orderedProperties(value);
   const items = asObject(value.items);
@@ -668,7 +865,11 @@ export function SchemaTree({
     );
   return (
     <div className="min-w-0 border-l pl-2">
-      <div className="flex flex-wrap items-center gap-1 border-b py-1">
+      <div
+        className="flex flex-wrap items-center gap-1 border-b py-1"
+        id={anchor ? reviewElementId(anchor) : undefined}
+        tabIndex={anchor ? -1 : undefined}
+      >
         <Button
           size="sm"
           variant="ghost"
@@ -685,6 +886,9 @@ export function SchemaTree({
         />
         {!!value.$ref && (
           <span className="font-mono text-xs">{asString(value.$ref)}</span>
+        )}
+        {anchor && onReview && (
+          <SchemaReviewButton path={anchor} label={label} onReview={onReview} />
         )}
       </div>
       {expanded && (
@@ -852,6 +1056,13 @@ export function SchemaTree({
                   <SchemaTree
                     value={asObject(schema)}
                     label={name}
+                    path={
+                      path
+                        ? `${path}/properties/${pathSegment(asString(asObject(schema)["x-syncnesto-id"]) || name)}`
+                        : undefined
+                    }
+                    onReview={onReview}
+                    focusPath={focusPath}
                     depth={depth + 1}
                     readOnly={readOnly}
                     onChange={(next) =>
@@ -869,6 +1080,9 @@ export function SchemaTree({
             <SchemaTree
               value={items}
               label="items"
+              path={path ? `${path}/items` : undefined}
+              onReview={onReview}
+              focusPath={focusPath}
               depth={depth + 1}
               readOnly={readOnly}
               onChange={(next) => onChange({ ...value, items: next })}
@@ -913,5 +1127,29 @@ export function SchemaTree({
         </div>
       )}
     </div>
+  );
+}
+
+function SchemaReviewButton({
+  path,
+  label,
+  onReview,
+}: {
+  path: string;
+  label: string;
+  onReview: Review;
+}) {
+  if (path.length > 300) return null;
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      aria-label={`${label}に指摘を追加`}
+      onClick={() => onReview(path, label)}
+    >
+      <MessageSquarePlusIcon data-icon="inline-start" />
+      指摘
+    </Button>
   );
 }

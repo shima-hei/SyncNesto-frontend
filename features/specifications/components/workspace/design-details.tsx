@@ -138,6 +138,11 @@ export function detailsTab(kind: Content["type"], path: string): string {
         processing_steps: "processing",
         authentication: "security",
         authorization: "security",
+        operation: path.startsWith("content/operation/responses/")
+          ? "responses"
+          : /^content\/operation\/(requestBody|parameters)(\/|$)/.test(path)
+            ? "request"
+            : "content",
       }[field] ?? "content"
     );
   return ["columns", "constraints", "indexes", "relationships"].includes(field)
@@ -590,6 +595,8 @@ export function DesignDetails({
           content={content}
           onChange={(next) => set({ ...next, type: "api" })}
           tab={tab}
+          onReview={onReview}
+          focusPath={focusPath}
           readOnly={readOnly}
           legacy={
             <FieldGrid

@@ -15,6 +15,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { LinkedText } from "@/components/shared/smart-links/linked-text";
 import { LinkTextarea } from "@/components/shared/smart-links/link-textarea";
 import { MarkdownBodyText } from "@/components/shared/forms/markdown-body-text";
@@ -31,9 +32,11 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog";
 import type {
+  ApiSpecification,
   SpecificationField,
   SpecificationRule,
 } from "@/lib/api/generated/model";
+import { asObject, asString, initializeOperation } from "../lib/openapi-schema";
 import { reviewElementId, type Values } from "../lib/specification";
 
 type Review = (path: string, label: string) => void;
@@ -592,6 +595,73 @@ function Rules({
   );
 }
 
+function ApiOperationMetadata({
+  content,
+  onChange,
+  readOnly,
+  onReview,
+}: {
+  content: ApiSpecification;
+  onChange: (operation: ApiSpecification["operation"]) => void;
+  readOnly: boolean;
+  onReview?: Review;
+}) {
+  const operation = asObject(content.operation);
+  const [editedTags, setEditedTags] = useState<string>();
+  const tags = Array.isArray(operation.tags)
+    ? operation.tags.filter((tag): tag is string => typeof tag === "string")
+    : [];
+  const set = (key: string, value: unknown) => {
+    const next = { ...(content.operation ?? initializeOperation(content)) };
+    if (value === undefined) delete next[key];
+    else next[key] = value;
+    onChange(next);
+  };
+  return (
+    <section className="grid items-start gap-3 sm:grid-cols-2">
+      <TextField
+        path="content/operation/operationId"
+        label="operationId"
+        value={asString(operation.operationId)}
+        onChange={(value) => set("operationId", value.trim() || undefined)}
+        readOnly={readOnly}
+        onReview={onReview}
+        maxLength={200}
+      />
+      <label className="space-y-1 text-sm font-medium">
+        タグ（1行につき1個）
+        <Textarea
+          value={editedTags ?? tags.join("\n")}
+          readOnly={readOnly}
+          rows={2}
+          onChange={(event) => setEditedTags(event.target.value)}
+          onBlur={() => {
+            if (editedTags === undefined) return;
+            const next = [
+              ...new Set(
+                editedTags
+                  .split(/\r?\n/)
+                  .map((tag) => tag.trim())
+                  .filter(Boolean),
+              ),
+            ];
+            set("tags", next.length ? next : undefined);
+            setEditedTags(undefined);
+          }}
+        />
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox
+          checked={operation.deprecated === true}
+          disabled={readOnly}
+          onCheckedChange={(checked) => set("deprecated", checked === true)}
+        />
+        非推奨
+      </label>
+    </section>
+  );
+}
+
 export function SpecificationFields({
   values,
   onChange,
@@ -683,6 +753,7 @@ export function SpecificationFields({
                           "DELETE",
                           "HEAD",
                           "OPTIONS",
+                          "TRACE",
                         ].map((method) => (
                           <SelectItem key={method} value={method}>
                             {method}
@@ -704,6 +775,12 @@ export function SpecificationFields({
                 placeholder="例: /auth/login…"
               />
             </div>
+            <ApiOperationMetadata
+              content={content}
+              onChange={(operation) => set("operation", operation)}
+              readOnly={readOnly}
+              onReview={onReview}
+            />
             <TextField
               path="content/authentication"
               label="認証方法"

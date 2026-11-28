@@ -11,6 +11,7 @@ import {
   type FormEvent,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   PanelLeftIcon,
   PanelRightIcon,
@@ -351,9 +352,17 @@ function DesignBrowser({
       }
       return { row: created };
     },
-    onSuccess: async ({ row }) => {
+    onSuccess: async ({ row, partial }) => {
       setName("");
       setCreation(null);
+      if (
+        (graph.data?.total ?? 0) >= 50 ||
+        (q && !row.title.toLowerCase().includes(q.toLowerCase()))
+      ) {
+        setPage(1);
+        setQ(row.title);
+      }
+      if (partial) toast.warning(partial);
       select(row.id);
       await refresh();
     },
