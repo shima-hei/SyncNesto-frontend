@@ -146,7 +146,7 @@ export function RelatedSpecifications({
   }
   return (
     <section className="flex min-w-0 flex-col gap-3 border-t pt-4">
-      <h3 className="font-semibold">関連する画面・API設計</h3>
+      <h3 className="font-semibold">関連する設計</h3>
       {needsImpactReview && !!query.data?.length ? (
         <p className="text-sm text-[var(--status-warning-fg)]">
           承認済み版から要件が変更されています。関連する設計への影響を確認してください。

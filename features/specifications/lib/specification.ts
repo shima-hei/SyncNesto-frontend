@@ -1,5 +1,6 @@
 import type {
   ApiSpecification,
+  DatabaseSpecification,
   ScreenSpecification,
   SpecificationRead,
   SpecificationLinkRead,
@@ -7,10 +8,11 @@ import type {
   SpecificationListItem,
 } from "@/lib/api/generated/model";
 
-export type Kind = "api" | "screen";
+export type Kind = "api" | "screen" | "database";
 export type Content =
   | (ApiSpecification & { type: "api" })
-  | (ScreenSpecification & { type: "screen" });
+  | (ScreenSpecification & { type: "screen" })
+  | (DatabaseSpecification & { type: "database" });
 export type Values = { title: string; summary: string; content: Content };
 export const specificationKeys = {
   all: (projectId: number) => ["specifications", projectId] as const,
@@ -19,7 +21,11 @@ export const specificationKeys = {
 };
 export const specificationHref = (projectId: number, id?: number) =>
   `/projects/joined/${projectId}/specifications${id ? `/${id}` : ""}`;
-export const kindLabels = { api: "API設計書", screen: "画面設計書" } as const;
+export const kindLabels = {
+  api: "API設計",
+  screen: "画面設計",
+  database: "DB設計",
+} as const;
 export const statusLabels = {
   draft: "下書き",
   in_review: "レビュー待ち",
@@ -30,7 +36,7 @@ export const targetLabels = {
   requirement: "要件",
   task: "タスク",
   test_item: "テスト項目",
-  specification: "画面・API設計書",
+  specification: "設計対象",
   document: "参考ドキュメント",
 } as const;
 
@@ -42,7 +48,9 @@ export function initialValues(kind: Kind, row?: SpecificationRead): Values {
       content:
         row.kind === "api"
           ? { ...(row.content as ApiSpecification), type: "api" }
-          : { ...(row.content as ScreenSpecification), type: "screen" },
+          : row.kind === "screen"
+            ? { ...(row.content as ScreenSpecification), type: "screen" }
+            : { ...(row.content as DatabaseSpecification), type: "database" },
     };
   return {
     title: "",
@@ -51,13 +59,20 @@ export function initialValues(kind: Kind, row?: SpecificationRead): Values {
       kind === "api"
         ? {
             type: "api",
-            method: "GET",
+            method: null,
             path: "",
             request_fields: [],
             response_fields: [],
             responses: [],
           }
-        : { type: "screen", route: "", fields: [], actions: [], states: [] },
+        : kind === "screen"
+          ? { type: "screen", route: "", fields: [], actions: [], states: [] }
+          : {
+              type: "database",
+              namespace: "public",
+              columns: [],
+              constraints: [],
+            },
   };
 }
 
@@ -84,9 +99,13 @@ export function relatedHref(projectId: number, target: SpecificationLinkRead) {
 
 export const specificationCode = (
   row: Pick<SpecificationListItem, "kind" | "id">,
-) => `${row.kind === "api" ? "API" : "SCR"}-${String(row.id).padStart(4, "0")}`;
+) =>
+  `${{ api: "API", screen: "SCR", database: "DB" }[row.kind]}-${String(row.id).padStart(4, "0")}`;
 export const reviewElementId = (path: string) =>
   `specification-field-${encodeURIComponent(path)}`;
+
+export type DesignReviewQuote = { quote: string; quote_start: number };
+export type DesignReviewTarget = { path: string; quote?: DesignReviewQuote };
 
 export function reviewPathLabel(values: Values, path: string): string {
   const labels: Record<string, string> = {
@@ -100,6 +119,19 @@ export function reviewPathLabel(values: Values, path: string): string {
     audience: "利用者・権限",
     reference_url: "参考URL",
     notes: "補足",
+    transitions: "画面遷移",
+    columns: "カラム",
+    constraints: "制約",
+    indexes: "インデックス",
+    relationships: "論理リレーション",
+    artboards: "ワイヤーフレーム",
+    area: "範囲",
+    mockups: "HTMLモックアップ",
+    html: "HTML",
+    css: "CSS",
+    processing_steps: "処理ステップ",
+    physical_name: "物理名",
+    screen_kind: "画面種別",
     request_fields: "リクエスト項目",
     response_fields: "レスポンス項目",
     fields: "画面項目",

@@ -6,7 +6,7 @@
  */
 
 export type ApiSpecificationMethod =
-  (typeof ApiSpecificationMethod)[keyof typeof ApiSpecificationMethod];
+  (typeof ApiSpecificationMethod)[keyof typeof ApiSpecificationMethod] | null;
 
 export const ApiSpecificationMethod = {
   GET: "GET",
@@ -16,4 +16,5 @@ export const ApiSpecificationMethod = {
   DELETE: "DELETE",
   HEAD: "HEAD",
   OPTIONS: "OPTIONS",
+  TRACE: "TRACE",
 } as const;

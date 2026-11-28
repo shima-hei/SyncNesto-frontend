@@ -9,8 +9,6 @@ import type { SpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCand
 export type SpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandidatesGetParams =
   {
     target_type: SpecificationLinkCandidatesProjectsProjectIdSpecificationsLinkCandidatesGetTargetType;
-    /**
-     * @maxLength 200
-     */
+    /** @maxLength 200 */
     q?: string;
   };

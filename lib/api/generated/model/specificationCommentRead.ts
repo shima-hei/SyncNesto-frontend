@@ -14,6 +14,7 @@ export interface SpecificationCommentRead {
   author_avatar_url?: string | null;
   field_path: string;
   field_snapshot: string;
+  quote_start?: number | null;
   specification_version: number;
   body: string;
   is_resolved: boolean;

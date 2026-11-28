@@ -7,9 +7,7 @@
 
 export type SpecificationCommentsProjectsProjectIdSpecificationsSpecificationIdCommentsGetParams =
   {
-    /**
-     * @minimum 1
-     */
+    /** @minimum 1 */
     page?: number;
     /**
      * @minimum 1

@@ -9,6 +9,7 @@ export type SpecificationReadKind =
   (typeof SpecificationReadKind)[keyof typeof SpecificationReadKind];
 
 export const SpecificationReadKind = {
-  api: "api",
   screen: "screen",
+  api: "api",
+  database: "database",
 } as const;

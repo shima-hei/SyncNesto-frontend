@@ -36,7 +36,7 @@ const kindLabels: Record<string, string> = {
   section: "セクション",
   requirement: "要件",
   requirement_detail: "種別別の詳細",
-  specification: "画面・API設計",
+  specification: "設計",
 };
 
 export function SnapshotNode({ node }: { node: ArtifactNodeRead }) {

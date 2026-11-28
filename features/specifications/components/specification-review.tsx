@@ -29,12 +29,15 @@ import {
 } from "@/components/shared/comments/comment-composer";
 import { getApiErrorMessage } from "@/lib/messages/api-error-message";
 import { listComments, createComment, resolveComment } from "../lib/api";
+import { designKey } from "../lib/workspace";
 import {
   initialValues,
   reviewElementId,
   reviewPathLabel,
   specificationHref,
   specificationKeys,
+  type DesignReviewQuote,
+  type DesignReviewTarget,
 } from "../lib/specification";
 
 export function SpecificationReview({
@@ -44,19 +47,28 @@ export function SpecificationReview({
   target,
   onTarget,
   onNavigate,
+  onHistory,
 }: {
   projectId: number;
   row: SpecificationRead;
   canEdit: boolean;
-  target: string | null;
-  onTarget: (path: string | null) => void;
-  onNavigate: (path: string) => void;
+  target: DesignReviewTarget | null;
+  onTarget: (value: DesignReviewTarget | null) => void;
+  onNavigate: (path: string, quote?: DesignReviewQuote) => void;
+  onHistory: (version: number, path: string, quote?: DesignReviewQuote) => void;
 }) {
   const cache = useQueryClient();
   const [body, setBody] = useState("");
   const media = useCommentComposeMedia(projectId, "specification");
   const [showResolved, setShowResolved] = useState(false);
   const key = [...specificationKeys.detail(projectId, row.id), "comments"];
+  const refreshComments = () =>
+    Promise.all([
+      cache.invalidateQueries({ queryKey: key }),
+      cache.invalidateQueries({
+        queryKey: [...designKey(projectId), "overview"],
+      }),
+    ]);
   const query = useInfiniteQuery({
     queryKey: key,
     initialPageParam: 1,
@@ -69,7 +81,8 @@ export function SpecificationReview({
   const post = useMutation({
     mutationFn: (imageIds: string[]) =>
       createComment(projectId, row.id, {
-        field_path: target!,
+        field_path: target!.path,
+        ...target!.quote,
         body,
         specification_version: row.version,
         image_ids: imageIds.length ? imageIds : undefined,
@@ -77,7 +90,7 @@ export function SpecificationReview({
     onSuccess: async () => {
       setBody("");
       onTarget(null);
-      await cache.invalidateQueries({ queryKey: key });
+      await refreshComments();
       toast.success("指摘を追加しました。");
     },
     onError: () =>
@@ -95,7 +108,7 @@ export function SpecificationReview({
       version: number;
       is_resolved: boolean;
     }) => resolveComment(projectId, row.id, id, { version, is_resolved }),
-    onSuccess: () => cache.invalidateQueries({ queryKey: key }),
+    onSuccess: refreshComments,
     onError: (error) => {
       toast.error(getApiErrorMessage(error));
       void cache.invalidateQueries({ queryKey: key });
@@ -133,8 +146,16 @@ export function SpecificationReview({
           }}
         >
           <p className="text-sm font-medium">
-            指摘先: {reviewPathLabel(values, target)}
+            指摘先: {reviewPathLabel(values, target.path)}
           </p>
+          {target.quote && (
+            <pre
+              className="max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted p-2 text-xs"
+              aria-label="指摘するコード"
+            >
+              {target.quote.quote}
+            </pre>
+          )}
           <CommentComposer>
             <div className="flex flex-col gap-2">
               <Field>
@@ -217,9 +238,49 @@ export function SpecificationReview({
                 type="button"
                 variant="link"
                 className="h-auto justify-start whitespace-normal p-0 text-left"
-                onClick={() => onNavigate(comment.field_path)}
+                onClick={() =>
+                  onNavigate(
+                    comment.field_path,
+                    comment.quote_start != null
+                      ? {
+                          quote: comment.field_snapshot,
+                          quote_start: comment.quote_start,
+                        }
+                      : undefined,
+                  )
+                }
               >
                 {reviewPathLabel(values, comment.field_path)}
+              </Button>
+              {comment.quote_start != null && (
+                <div className="space-y-1">
+                  <pre
+                    className="max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted p-2 text-xs"
+                    aria-label="指摘したコード"
+                  >
+                    {comment.field_snapshot}
+                  </pre>
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="px-0"
+                onClick={() =>
+                  onHistory(
+                    comment.specification_version,
+                    comment.field_path,
+                    comment.quote_start == null
+                      ? undefined
+                      : {
+                          quote: comment.field_snapshot,
+                          quote_start: comment.quote_start,
+                        },
+                  )
+                }
+              >
+                指摘時の版 {comment.specification_version}
               </Button>
               <p className="whitespace-pre-wrap break-words text-sm">
                 <CommentContent body={comment.body} />
@@ -229,7 +290,7 @@ export function SpecificationReview({
                   <AlertTitle>指摘後に対象が変わっています</AlertTitle>
                   <AlertDescription>
                     現在の内容と指摘を照らし合わせて、対応を確認してください。
-                    {comment.field_snapshot && (
+                    {comment.quote_start == null && comment.field_snapshot && (
                       <details>
                         <summary className="cursor-pointer">
                           指摘時の内容（先頭800文字）

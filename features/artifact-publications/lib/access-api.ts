@@ -18,4 +18,5 @@ export {
   sharedPublicationSharedPublicationsPublicationIdGet as readShared,
   sharedPublicationNodesSharedPublicationsPublicationIdNodesGet as readSharedNodes,
   sharedPublicationFilesSharedPublicationsPublicationIdFilesGet as readSharedFiles,
+  sharedDesignMockupPreviewSharedPublicationsPublicationIdNodesNodeIdMockupsMockupIdPreviewGet as readSharedDesignMockup,
 } from "@/lib/api/generated/shared-publications/shared-publications";

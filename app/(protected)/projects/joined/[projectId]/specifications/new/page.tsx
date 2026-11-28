@@ -15,7 +15,7 @@ export default async function Page({
     <SpecificationPage
       projectId={projectId}
       mode="create"
-      kind={kind === "screen" ? "screen" : "api"}
+      kind={kind === "screen" || kind === "database" ? kind : "api"}
     />
   );
 }

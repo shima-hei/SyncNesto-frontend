@@ -44,15 +44,19 @@ export function RequirementPublicationPrepare({
     test_design: "テスト設計書",
   }[source.kind];
   const canIncludeSources =
-    source.kind === "requirement" || source.kind === "requirement_document";
+    source.kind === "requirement" ||
+    source.kind === "requirement_document" ||
+    source.kind === "specification";
   const sourceQuery = useQuery({
     queryKey: [
       "publication-source-to-prepare",
       projectId,
       source.kind,
       source.id,
+      source.version,
     ],
-    queryFn: () => readSource(projectId, source.kind, source.id),
+    queryFn: () =>
+      readSource(projectId, source.kind, source.id, source.version),
     retry: false,
   });
   const prepare = useMutation({
@@ -145,6 +149,7 @@ export function RequirementPublicationPrepare({
           <div className="mt-3">
             <IncludedSourcesPicker
               projectId={projectId}
+              exclude={source}
               value={attachments}
               onChange={(value) => {
                 attempt.current = {};

@@ -7,7 +7,7 @@ export const TRASH_LABELS = {
   task: "タスク",
   test_design: "テスト設計書",
   document: "ドキュメント",
-  specification: "画面・API設計書",
+  specification: "設計書",
   document_attachment: "文書添付",
 } as const;
 

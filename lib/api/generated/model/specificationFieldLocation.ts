@@ -12,6 +12,8 @@ export const SpecificationFieldLocation = {
   path: "path",
   query: "query",
   header: "header",
+  cookie: "cookie",
   body: "body",
   display: "display",
+  action: "action",
 } as const;

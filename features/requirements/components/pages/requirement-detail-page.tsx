@@ -828,7 +828,7 @@ function RequirementRelatedSummary({
   const tests = useRequirementTestItems(projectId, requirementId);
   const counts = [
     {
-      label: "画面・API設計",
+      label: "設計",
       target: "design",
       count: canRead ? designs.data?.length : undefined,
     },

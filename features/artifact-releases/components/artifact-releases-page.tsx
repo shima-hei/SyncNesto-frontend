@@ -56,7 +56,7 @@ import { displayBytes, displayDate } from "../lib/display";
 const kinds: Record<string, string> = {
   requirement_document: "要件定義書",
   requirement: "要件",
-  specification: "画面・API設計",
+  specification: "設計",
   test_design: "テスト設計",
   test_design_part: "本文データの分割",
   section: "セクション",

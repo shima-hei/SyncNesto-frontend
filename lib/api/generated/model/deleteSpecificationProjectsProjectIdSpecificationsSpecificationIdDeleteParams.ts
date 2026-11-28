@@ -7,8 +7,6 @@
 
 export type DeleteSpecificationProjectsProjectIdSpecificationsSpecificationIdDeleteParams =
   {
-    /**
-     * @minimum 1
-     */
+    /** @minimum 1 */
     version: number;
   };

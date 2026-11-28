@@ -24,7 +24,7 @@ export const searchKindLabels: Record<SearchItem["kind"], string> = {
   test_item: "テスト項目",
   test_case: "テストケース",
   document: "ドキュメント",
-  specification: "画面・API設計書",
+  specification: "設計書",
 };
 
 export function readSearchState(

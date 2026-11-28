@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ApiSpecification } from "./apiSpecification";
+import type { DatabaseSpecification } from "./databaseSpecification";
 import type { ScreenSpecification } from "./screenSpecification";
 
 /**
@@ -18,7 +19,7 @@ export interface SpecificationUpdate {
   title: string;
   /** @maxLength 10000 */
   summary?: string;
-  content: ApiSpecification | ScreenSpecification;
+  content: ApiSpecification | ScreenSpecification | DatabaseSpecification;
   /** @minimum 1 */
   version: number;
 }
