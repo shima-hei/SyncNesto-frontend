@@ -63,6 +63,7 @@ import {
   updateMemberships,
 } from "../lib/workspace";
 import { SpecificationPage } from "./specification-page";
+import { ApiSetSettings } from "./workspace/api-set-settings";
 import { DesignCanvas } from "./workspace/design-canvas";
 import { DesignNodeList } from "./workspace/design-node-list";
 import { DesignOverview } from "./workspace/design-overview";
@@ -958,6 +959,7 @@ function CollectionEditor({
   onCancel: () => void;
 }) {
   const field = useId();
+  const form = `${field}-settings`;
   const existing = typeof editing === "string" ? null : editing;
   const kind = typeof editing === "string" ? editing : editing.kind;
   const [name, setName] = useState(existing?.name ?? "");
@@ -989,48 +991,61 @@ function CollectionEditor({
     onSuccess: onSaved,
   });
   return (
-    <form
-      className="space-y-2 rounded-md border p-3"
-      onSubmit={(event) => {
-        event.preventDefault();
-        save.mutate();
-      }}
-    >
-      <label className="text-sm font-medium" htmlFor={field}>
-        {kind === "group"
-          ? "グループ名"
-          : kind === "api_set"
-            ? "仕様セット名"
-            : "DBモデル名"}
-      </label>
-      <Input
-        id={field}
-        autoFocus
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        maxLength={200}
-        required
-      />
-      {kind === "group" ? (
-        <label className="flex items-center gap-2 text-sm">
-          親グループ
-          <select
-            className={selectClass}
-            value={parent}
-            onChange={(event) => setParent(event.target.value)}
-          >
-            <option value="">なし</option>
-            {orderedGroups(groups)
-              .filter(({ item }) => item.id !== existing?.id)
-              .map(({ item, depth }) => (
-                <option
-                  key={item.id}
-                  value={item.id}
-                >{`${"　".repeat(depth)}${item.name}`}</option>
-              ))}
-          </select>
+    <div className="space-y-2 rounded-md border p-3">
+      <form
+        id={form}
+        className="space-y-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          save.mutate();
+        }}
+      >
+        <label className="text-sm font-medium" htmlFor={field}>
+          {kind === "group"
+            ? "グループ名"
+            : kind === "api_set"
+              ? "仕様セット名"
+              : "DBモデル名"}
         </label>
-      ) : (
+        <Input
+          id={field}
+          autoFocus
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          maxLength={200}
+          required
+        />
+        {kind === "group" && (
+          <label className="flex items-center gap-2 text-sm">
+            親グループ
+            <select
+              className={selectClass}
+              value={parent}
+              onChange={(event) => setParent(event.target.value)}
+            >
+              <option value="">なし</option>
+              {orderedGroups(groups)
+                .filter(({ item }) => item.id !== existing?.id)
+                .map(({ item, depth }) => (
+                  <option
+                    key={item.id}
+                    value={item.id}
+                  >{`${"　".repeat(depth)}${item.name}`}</option>
+                ))}
+            </select>
+          </label>
+        )}
+      </form>
+      {kind === "api_set" && (
+        <ApiSetSettings
+          projectId={projectId}
+          collectionId={existing?.id}
+          name={name}
+          value={settings}
+          onChange={setSettings}
+        />
+      )}
+      {kind === "db_model" && (
         <textarea
           className="w-full rounded-md border bg-background p-2 font-mono text-xs"
           aria-label="セット・モデルの設定"
@@ -1044,6 +1059,7 @@ function CollectionEditor({
           size="sm"
           disabled={save.isPending || !name.trim()}
           type="submit"
+          form={form}
         >
           保存
         </Button>
@@ -1052,7 +1068,7 @@ function CollectionEditor({
         </Button>
       </div>
       <FormApiError error={save.error} />
-    </form>
+    </div>
   );
 }
 

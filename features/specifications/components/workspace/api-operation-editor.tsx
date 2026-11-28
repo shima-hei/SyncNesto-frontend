@@ -621,7 +621,7 @@ function PropertySchema({
   );
 }
 
-function SchemaTree({
+export function SchemaTree({
   value,
   onChange,
   readOnly,

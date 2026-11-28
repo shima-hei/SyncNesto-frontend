@@ -23,6 +23,7 @@ import type {
 import type {
   CollectionInput,
   CollectionRead,
+  DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
   DesignCollectionsProjectsProjectIdDesignWorkspaceCollectionsGetParams,
   DesignDiagram,
   DesignDiagramProjectsProjectIdDesignWorkspaceDiagramGetParams,
@@ -44,6 +45,7 @@ import type {
   MockupPreviewRead,
   OpenApiImport,
   OpenApiResult,
+  OpenApiUsageRead,
   PlacementRead,
   PlacementUpdate,
   ReadDesignImpactProjectsProjectIdDesignWorkspaceImpactSpecificationIdGetParams,
@@ -2412,6 +2414,325 @@ export const useCreateDesignCollectionProjectsProjectIdDesignWorkspaceCollection
       queryClient,
     );
   };
+export const getDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetUrl =
+  (
+    projectId: number,
+    collectionId: string,
+    params: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/design-workspace/collections/${collectionId}/api-usage?${stringifiedParams}`
+      : `/projects/${projectId}/design-workspace/collections/${collectionId}/api-usage`;
+  };
+
+/**
+ * 共通コンポーネントを参照するAPIと版を返す。
+ * @summary Design Api Component Usage
+ */
+export const designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet =
+  async (
+    projectId: number,
+    collectionId: string,
+    params: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<OpenApiUsageRead> => {
+    return apiClient<OpenApiUsageRead>(
+      getDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetUrl(
+        projectId,
+        collectionId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetQueryKey =
+  (
+    projectId: number,
+    collectionId: string,
+    params?: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/design-workspace/collections/${collectionId}/api-usage`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    collectionId: string,
+    params: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetQueryKey(
+        projectId,
+        collectionId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+        >
+      >
+    > = ({ signal }) =>
+      designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet(
+        projectId,
+        collectionId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled:
+        projectId !== null &&
+        projectId !== undefined &&
+        collectionId !== null &&
+        collectionId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+      >
+    >
+  >;
+export type DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 共通コンポーネントを参照するAPIと版を返す。
+ * @summary Design Api Component Usage
+ */
+export function useDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  collectionId: string,
+  params: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 共通コンポーネントを参照するAPIと版を返す。
+ * @summary Design Api Component Usage
+ */
+export function useDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  collectionId: string,
+  params: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 共通コンポーネントを参照するAPIと版を返す。
+ * @summary Design Api Component Usage
+ */
+export function useDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  collectionId: string,
+  params: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 共通コンポーネントを参照するAPIと版を返す。
+ * @summary Design Api Component Usage
+ */
+export function useDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  collectionId: string,
+  params: DesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getDesignApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetQueryOptions(
+      projectId,
+      collectionId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getUpdateDesignCollectionProjectsProjectIdDesignWorkspaceCollectionsCollectionIdPatchUrl =
   (projectId: number, collectionId: string) => {
     return `/projects/${projectId}/design-workspace/collections/${collectionId}`;

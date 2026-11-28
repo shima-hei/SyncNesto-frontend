@@ -105,6 +105,8 @@ export * from "./deleteSpecificationProjectsProjectIdSpecificationsSpecification
 export * from "./deleteTestDesignCommentProjectsProjectIdTestDesignsDesignIdCommentsCommentIdDeleteParams";
 export * from "./deleteTestDesignProjectsProjectIdTestDesignsDesignIdDeleteParams";
 export * from "./demoStatus";
+export * from "./designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetCategory";
+export * from "./designApiComponentUsageProjectsProjectIdDesignWorkspaceCollectionsCollectionIdApiUsageGetParams";
 export * from "./designCollectionsProjectsProjectIdDesignWorkspaceCollectionsGetKind";
 export * from "./designCollectionsProjectsProjectIdDesignWorkspaceCollectionsGetParams";
 export * from "./designCount";
@@ -432,6 +434,8 @@ export * from "./openApiImport";
 export * from "./openApiImportDocument";
 export * from "./openApiImportSelections";
 export * from "./openApiResult";
+export * from "./openApiUsageItem";
+export * from "./openApiUsageRead";
 export * from "./overviewAttention";
 export * from "./passkeyAlgorithm";
 export * from "./passkeyDescriptor";
