@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { DataLoadError } from "@/components/shared/feedback/data-load-error";
+import { canUpdateDocument } from "@/features/auth/utils/authorization";
+import { useCurrentProjectRole } from "@/features/projects/hooks/use-current-project-role";
 import { formatDateTime } from "@/lib/format/date";
 import type { SpecificationListItem } from "@/lib/api/generated/model";
 import { designKey, readDesignOverview } from "../../lib/workspace";
@@ -10,8 +12,10 @@ import {
   specificationHref,
   statusLabels,
 } from "../../lib/specification";
+import { DesignReviewQueue } from "./design-review-requests";
 
 export function DesignOverview({ projectId }: { projectId: number }) {
+  const { currentProjectRole } = useCurrentProjectRole(projectId);
   const overview = useQuery({
     queryKey: [...designKey(projectId), "overview"],
     queryFn: () => readDesignOverview(projectId),
@@ -92,6 +96,10 @@ export function DesignOverview({ projectId }: { projectId: number }) {
           );
         })}
       </section>
+      <DesignReviewQueue
+        projectId={projectId}
+        canEdit={canUpdateDocument(currentProjectRole)}
+      />
       <div className="grid gap-7 lg:grid-cols-[1fr_0.8fr]">
         <section>
           <h2 className="border-b pb-2 text-base font-semibold">

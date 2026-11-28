@@ -29,6 +29,11 @@ import type {
   DesignImpactRead,
   DesignImpactUpdate,
   DesignOverview,
+  DesignReviewCreate,
+  DesignReviewDecision,
+  DesignReviewRead,
+  DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+  DesignReviewer,
   ExportDesignDdlProjectsProjectIdDesignWorkspaceDdlGetParams,
   ExportDesignOpenapiProjectsProjectIdDesignWorkspaceOpenapiGetParams,
   FormatExport,
@@ -102,6 +107,876 @@ const withQueryKey = <T extends object, K>(
   return result;
 };
 
+export const getDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetUrl =
+  (
+    projectId: number,
+    params?: DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(key, value === null ? "null" : String(value));
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/projects/${projectId}/design-workspace/review-requests?${stringifiedParams}`
+      : `/projects/${projectId}/design-workspace/review-requests`;
+  };
+
+/**
+ * 自分宛て、または自分が依頼したレビュー・承認を取得する。
+ * @summary Design Review Requests
+ */
+export const designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet =
+  async (
+    projectId: number,
+    params?: DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<DesignReviewRead[]> => {
+    return apiClient<DesignReviewRead[]>(
+      getDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetUrl(
+        projectId,
+        params,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetQueryKey =
+  (
+    projectId: number,
+    params?: DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+  ) => {
+    return [
+      `/projects/${projectId}/design-workspace/review-requests`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    params?: DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetQueryKey(
+        projectId,
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+        >
+      >
+    > = ({ signal }) =>
+      designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet(
+        projectId,
+        params,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+      >
+    >
+  >;
+export type DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * 自分宛て、または自分が依頼したレビュー・承認を取得する。
+ * @summary Design Review Requests
+ */
+export function useDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params:
+    | undefined
+    | DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 自分宛て、または自分が依頼したレビュー・承認を取得する。
+ * @summary Design Review Requests
+ */
+export function useDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 自分宛て、または自分が依頼したレビュー・承認を取得する。
+ * @summary Design Review Requests
+ */
+export function useDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * 自分宛て、または自分が依頼したレビュー・承認を取得する。
+ * @summary Design Review Requests
+ */
+export function useDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  params?: DesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getDesignReviewRequestsProjectsProjectIdDesignWorkspaceReviewRequestsGetQueryOptions(
+      projectId,
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/design-workspace/review-requests`;
+  };
+
+/**
+ * 対象の版を照合して、まとめて1件の依頼にする。
+ * @summary Create Design Review Request
+ */
+export const createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost =
+  async (
+    projectId: number,
+    designReviewCreate: DesignReviewCreate,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<DesignReviewRead> => {
+    return apiClient<DesignReviewRead>(
+      getCreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(designReviewCreate),
+      },
+    );
+  };
+
+export const getCreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationKey =
+  () =>
+    [
+      "createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost",
+    ] as const;
+
+export const getCreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost
+        >
+      >,
+      TError,
+      CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost
+      >
+    >,
+    TError,
+    CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getCreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost
+        >
+      >,
+      CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationVariables
+    > = (props) => {
+      const { projectId, data } = props ?? {};
+
+      return createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost(
+        projectId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost
+      >
+    >
+  >;
+export type CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationBody =
+  BodyType<DesignReviewCreate>;
+export type CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationVariables =
+  { projectId: number; data: BodyType<DesignReviewCreate> };
+
+/**
+ * 対象の版を照合して、まとめて1件の依頼にする。
+ * @summary Create Design Review Request
+ */
+export const useCreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost
+          >
+        >,
+        TError,
+        CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof createDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPost
+      >
+    >,
+    TError,
+    CreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getCreateDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
+export const getDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetUrl =
+  (projectId: number) => {
+    return `/projects/${projectId}/design-workspace/review-requests/candidates`;
+  };
+
+/**
+ * レビューと設計編集権限を持つ案件内の依頼先を返す。
+ * @summary Design Review Candidates
+ */
+export const designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet =
+  async (
+    projectId: number,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<DesignReviewer[]> => {
+    return apiClient<DesignReviewer[]>(
+      getDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetUrl(
+        projectId,
+      ),
+      {
+        ...options,
+        method: "GET",
+      },
+    );
+  };
+
+export const getDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetQueryKey =
+  (projectId: number) => {
+    return [
+      `/projects/${projectId}/design-workspace/review-requests/candidates`,
+    ] as const;
+  };
+
+export const getDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<
+        typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+      >
+    >,
+    TError = ErrorType<HTTPValidationError>,
+  >(
+    projectId: number,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetQueryKey(
+        projectId,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+        >
+      >
+    > = ({ signal }) =>
+      designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet(
+        projectId,
+        { signal, ...requestOptions },
+      );
+
+    return {
+      queryKey,
+      queryFn,
+      enabled: projectId !== null && projectId !== undefined,
+      ...queryOptions,
+    } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type DesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+      >
+    >
+  >;
+export type DesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetQueryError =
+  ErrorType<HTTPValidationError>;
+
+/**
+ * レビューと設計編集権限を持つ案件内の依頼先を返す。
+ * @summary Design Review Candidates
+ */
+export function useDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * レビューと設計編集権限を持つ案件内の依頼先を返す。
+ * @summary Design Review Candidates
+ */
+export function useDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * レビューと設計編集権限を持つ案件内の依頼先を返す。
+ * @summary Design Review Candidates
+ */
+export function useDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * レビューと設計編集権限を持つ案件内の依頼先を返す。
+ * @summary Design Review Candidates
+ */
+export function useDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet<
+  TData = Awaited<
+    ReturnType<
+      typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+    >
+  >,
+  TError = ErrorType<HTTPValidationError>,
+>(
+  projectId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof designReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getDesignReviewCandidatesProjectsProjectIdDesignWorkspaceReviewRequestsCandidatesGetQueryOptions(
+      projectId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getDecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostUrl =
+  (projectId: number, requestId: string) => {
+    return `/projects/${projectId}/design-workspace/review-requests/${requestId}/decision`;
+  };
+
+/**
+ * 指定された依頼先が固定した設計を確認・承認する。
+ * @summary Decide Design Review Request
+ */
+export const decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost =
+  async (
+    projectId: number,
+    requestId: string,
+    designReviewDecision: DesignReviewDecision,
+    options?: Parameters<typeof apiClient>[1],
+  ): Promise<DesignReviewRead> => {
+    return apiClient<DesignReviewRead>(
+      getDecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostUrl(
+        projectId,
+        requestId,
+      ),
+      {
+        ...options,
+        method: "POST",
+        headers: getHeaders(
+          { "Content-Type": "application/json" },
+          options?.headers,
+        ),
+        body: JSON.stringify(designReviewDecision),
+      },
+    );
+  };
+
+export const getDecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationKey =
+  () =>
+    [
+      "decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost",
+    ] as const;
+
+export const getDecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationOptions =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost
+        >
+      >,
+      TError,
+      DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiClient>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost
+      >
+    >,
+    TError,
+    DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getDecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationKey();
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost
+        >
+      >,
+      DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationVariables
+    > = (props) => {
+      const { projectId, requestId, data } = props ?? {};
+
+      return decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost(
+        projectId,
+        requestId,
+        data,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost
+      >
+    >
+  >;
+export type DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationBody =
+  BodyType<DesignReviewDecision>;
+export type DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationError =
+  ErrorType<HTTPValidationError>;
+export type DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationVariables =
+  {
+    projectId: number;
+    requestId: string;
+    data: BodyType<DesignReviewDecision>;
+  };
+
+/**
+ * 指定された依頼先が固定した設計を確認・承認する。
+ * @summary Decide Design Review Request
+ */
+export const useDecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost =
+  <TError = ErrorType<HTTPValidationError>, TContext = unknown>(
+    options?: {
+      mutation?: UseMutationOptions<
+        Awaited<
+          ReturnType<
+            typeof decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost
+          >
+        >,
+        TError,
+        DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationVariables,
+        TContext
+      >;
+      request?: SecondParameter<typeof apiClient>;
+    },
+    queryClient?: QueryClient,
+  ): UseMutationResult<
+    Awaited<
+      ReturnType<
+        typeof decideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPost
+      >
+    >,
+    TError,
+    DecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationVariables,
+    TContext
+  > => {
+    return useMutation(
+      getDecideDesignReviewRequestProjectsProjectIdDesignWorkspaceReviewRequestsRequestIdDecisionPostMutationOptions(
+        options,
+      ),
+      queryClient,
+    );
+  };
 export const getDesignOverviewProjectsProjectIdDesignWorkspaceOverviewGetUrl = (
   projectId: number,
 ) => {

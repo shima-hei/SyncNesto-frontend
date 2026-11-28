@@ -65,6 +65,7 @@ import {
 import { SpecificationPage } from "./specification-page";
 import { DesignCanvas } from "./workspace/design-canvas";
 import { DesignOverview } from "./workspace/design-overview";
+import { DesignReviewRequestDialog } from "./workspace/design-review-requests";
 import { DesignFormats, OpenApiImportPanel } from "./workspace/design-formats";
 
 type View = "all" | Kind;
@@ -355,6 +356,9 @@ function DesignBrowser({
       ? a.title.localeCompare(b.title, "ja")
       : b.title.localeCompare(a.title, "ja"),
   );
+  const reviewTargets = matches.filter(
+    (design) => selected.has(design.id) && design.status !== "approved",
+  );
   const content = (
     <div className="min-w-0 space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
@@ -391,6 +395,12 @@ function DesignBrowser({
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-1">
+          {canEdit && reviewTargets.length > 0 && (
+            <DesignReviewRequestDialog
+              projectId={projectId}
+              defaults={reviewTargets}
+            />
+          )}
           {view === "diagram" && (
             <>
               <Button
